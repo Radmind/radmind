@@ -14,7 +14,6 @@
 #include <snet.h>
 
 #include "afile.h"
-#include "bprint.h"
 
 extern struct timeval	timeout;
 
