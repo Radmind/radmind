@@ -438,8 +438,10 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 	break;
 
     case 'l':			    /* link */
-	if ( strcmp( fs->pi_link, tran->t_pinfo.pi_link ) != 0 ) {
-	    t_print( fs, tran, PR_STATUS );
+	if ( tran->t_type != T_NEGATIVE ) {
+	    if ( strcmp( fs->pi_link, tran->t_pinfo.pi_link ) != 0 ) {
+		t_print( fs, tran, PR_STATUS );
+	    }
 	}
 	break;
 
