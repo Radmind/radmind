@@ -98,7 +98,7 @@ apply( FILE *f, char *parent, SNET *sn )
 	if ( tac == 1 ) {
 	    if ( verbose ) printf( "Command file: %s\n", targv[ 0 ] );
 	    strcpy( transcript, targv[ 0 ] );
-	    continue;
+	    goto donext;
 	}
 
 	/* Get argument offset */
@@ -144,7 +144,7 @@ apply( FILE *f, char *parent, SNET *sn )
 		present = 0;
 	    }
 	    if ( verbose ) printf( "%s deleted\n", path );
-	    continue;
+	    goto donext;
 	}
 
 	/* DOWNLOAD */
@@ -172,7 +172,7 @@ apply( FILE *f, char *parent, SNET *sn )
 	}
 
 	/* check for child */
-
+donext:
 	if ( ! ischild( parent, path ) ) {
 	    return( 0 );
 	}
