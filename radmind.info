@@ -1,0 +1,11 @@
+Title                Radmind
+Version              0.6.0
+Description          Remote Administration Tools
+
+DefaultLocation      /
+Relocatable          NO
+
+NeedsAuthorization   YES
+Application          NO
+InstallOnly          NO
+DisableStop          NO
