@@ -161,8 +161,7 @@ main( int argc, char **argv )
     }
 
     /* initialize the transcripts */
-    transcript_init(  cmd );
-
+    transcript_init( cmd );
     root = ll_allocate( argv[ optind ] );
 
     fs_walk( root );
