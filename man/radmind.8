@@ -154,11 +154,17 @@ RETR
 retrieve a file, transcript command or special file
 .TP 10
 STOR
-store a file or transcript
+store a file or transcript.  If user authentication been
+turned on,
+this command is only valid after the client sends a successful LOGI.
 .TP 10
 STAR
 Start TLS.  If the server is run with an authorization level of 2, this
 command must be given before a client can send a STAT, RETR, or STOR.
+.TP 10
+LOGI
+Login user.  This command is only valid after TLS has been
+started. 
 .sp
 .SH OPTIONS
 .TP 19
@@ -185,7 +191,9 @@ specifies the umask the server uses to write files to the disk, defaulting
 to the user's umask.
 .TP 19
 .B \-U
-Turn on PAM user authorization.
+Turn on PAM user authentication.
+.B radmind
+uses the PAM service name radmind.
 .TP 19
 .B \-V
 displays the version of 
@@ -238,4 +246,16 @@ _RADMIND_PATH/config
 .BR lcksum (1),
 .BR lfdiff (1),
 .BR lmerge (1),
-.BR twhich (1).
+.BR twhich (1),
+.BR pam.conf (4).
+.sp
+Also see the three
+.B Linux-PAM
+Guides, for
+.B System
+.BR administrators ,
+.B module
+.BR developers ,
+and
+.B application
+.BR developers .
