@@ -184,13 +184,6 @@ main( int argc, char **argv )
 		fprintf( stderr, "line %d: path too long\n", linenum );
 		exit( 2 );
 	    } 
-	    if ( pathcmp( d_path, pattern ) == 0 ) {
-		match++;
-		printf( "special.T:\ns %s\n", d_path );
-		if ( !displayall ) {
-		    goto done;
-		}
-	    } 
 	    break;
 
 	case 'n':
