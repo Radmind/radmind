@@ -42,18 +42,22 @@ void output( char* string);
 int check( SNET *sn, char *type, char *path); 
 int createspecial( SNET *sn, struct list *special_list );
 int getstat( SNET *sn, char *description, char *stats );
+int read_kfile( char * );
+SNET *sn;
 
 void			(*logger)( char * ) = NULL;
-int			linenum = 0;
+int		linenum = 0;
 int			cksum = 0;
 int			verbose = 0;
 int			dodots= 0;
 int			quiet = 0;
 int			update = 1;
-char			*kfile= _RADMIND_COMMANDFILE;
+int			change = 0;
+char			*base_kfile= _RADMIND_COMMANDFILE;
 char			*kdir= "";
 const EVP_MD		*md;
 SSL_CTX  		*ctx;
+struct list		*special_list, *kfile_list, *kfile_seen;
 
 extern struct timeval	timeout;
 extern char		*version, *checksumlist;
@@ -251,14 +255,14 @@ check( SNET *sn, char *type, char *file )
 	}
 	strcpy( pathdesc, type );
 
-	file = kfile;
+	file = base_kfile;
 
 	/* create full path */
-	if ( strlen( kfile ) >= MAXPATHLEN ) {
-	    fprintf( stderr, "%s: path too long\n", kfile );
+	if ( strlen( base_kfile ) >= MAXPATHLEN ) {
+	    fprintf( stderr, "%s: path too long\n", base_kfile );
 	    return( 2 );
 	}
-	strcpy( path, kfile );
+	strcpy( path, base_kfile );
     }
 
     if ( getstat( sn, (char *)&pathdesc, stats ) != 0 ) {
@@ -361,24 +365,20 @@ check( SNET *sn, char *type, char *file )
 main( int argc, char **argv )
 {
     int			c, port = htons( 6662 ), err = 0;
-    int			len, tac, change = 0, lnbf = 0;
+    int			lnbf = 0;
     int			authlevel = _RADMIND_AUTHLEVEL;
     int			use_randfile = 0;
+    char	lcksum[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
+    char	tcksum[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
+    struct stat		tst, lst;
     extern int          optind;
     char		*host = _RADMIND_HOST, *p;
-    char                **targv;
-    char                cline[ 2 * MAXPATHLEN ];
-    char		tempfile[ MAXPATHLEN ];
     char		path[ MAXPATHLEN ];
-    char		lcksum[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
-    char		tcksum[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
+    char		tempfile[ MAXPATHLEN ];
     struct servent	*se;
-    SNET		*sn;
-    FILE		*f;
-    struct list		*special_list;
-    struct stat		tst, lst;
+    struct node		*node;
 
-    while (( c = getopt ( argc, argv, "c:h:iK:np:qrvVw:x:y:z:" )) != EOF ) {
+    while (( c = getopt( argc, argv, "c:h:iK:np:qrvVw:x:y:z:" )) != EOF ) {
 	switch( c ) {
 	case 'c':
             OpenSSL_add_all_digests();
@@ -400,7 +400,7 @@ main( int argc, char **argv )
 	    break;
 
 	case 'K':
-	    kfile = optarg;
+	    base_kfile = optarg;
 	    break;
 
 	case 'n':
@@ -443,7 +443,7 @@ main( int argc, char **argv )
             if (( authlevel < 0 ) || ( authlevel > 2 )) {
                 fprintf( stderr, "%s: invalid authorization level\n",
                         optarg );
-                exit( 1 );
+                exit( 2 );
             }    
             break;
 
@@ -462,38 +462,41 @@ main( int argc, char **argv )
 	case '?':
 	    err++;
 	    break;
+
 	default:
 	    err++;
 	    break;
 	}
     }
 
-    if ( verbose && quiet ) {
-	err++;
-    }
-    if ( verbose && lnbf ) {
+    if ( verbose && ( quiet || lnbf )) {
 	err++;
     }
 
     if ( err || ( argc - optind != 0 )) {
-	fprintf( stderr,
-		"usage: ktcheck -c checksum [ -nrV ] [ -q | -v | -i ] " );
-	fprintf( stderr, "[ -K command file ] " );
+	fprintf( stderr, "usage: %s ", argv[ 0 ] );
+	fprintf( stderr, "[ -nrV ] [ -q | -vi ] " );
+	fprintf( stderr, "[ -c checksum ] [ -K command file ] " );
 	fprintf( stderr, "[ -h host ] [ -p port ] " );
 	fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );
 	fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ]\n" );
 	exit( 2 );
     }
 
-    if ( authlevel != 0 ) {
-	if ( tls_client_setup( use_randfile, authlevel, ca, cert,
-		privatekey ) != 0 ) {
-	    /* error message printed in tls_setup */
-	    exit( 2 );
-	}
+    if (( special_list = list_new( )) == NULL ) {
+	perror( "list_new" );
+	exit( 2 );
+    }
+    if (( kfile_list = list_new( )) == NULL ) {
+	perror( "list_new" );
+	exit( 2 );
+    }
+    if (( kfile_seen = list_new( )) == NULL ) {
+	perror( "list_new" );
+	exit( 2 );
     }
 
-    if (( kdir = strdup( kfile )) == NULL ) {
+    if (( kdir = strdup( base_kfile )) == NULL ) {
         perror( "strdup failed" );
         exit( 2 );
     }
@@ -504,17 +507,22 @@ main( int argc, char **argv )
         p++;
         *p = (char)'\0';
     }
-    if ( strlen( kfile ) >= MAXPATHLEN ) {
-	fprintf( stderr, "%s: path too long\n", kfile );
+    if ( strlen( base_kfile ) >= MAXPATHLEN ) {
+	fprintf( stderr, "%s: path too long\n", base_kfile );
 	exit( 2 );
     }
-    strcpy( path, kfile );
+    strcpy( path, base_kfile );
 
     if (( sn = connectsn( host, port )) == NULL ) {
 	exit( 2 );
     }
 
     if ( authlevel != 0 ) {
+	if ( tls_client_setup( use_randfile, authlevel, ca, cert,
+		privatekey ) != 0 ) {
+	    /* error message printed in tls_setup */
+	    exit( 2 );
+	}
 	if ( tls_client_start( sn, host, authlevel ) != 0 ) {
 	    /* error message printed in tls_cleint_starttls */
 	    exit( 2 );
@@ -534,57 +542,14 @@ main( int argc, char **argv )
 	exit( 2 );
     }
 
-    if (( f = fopen( kfile, "r" )) == NULL ) {
-	perror( kfile );
+    if ( read_kfile( base_kfile ) != 0 ) {
 	exit( 2 );
     }
-
-    if (( special_list = list_new( )) == NULL ) {
-	perror( "list_new" );
-	exit( 2 );
-    }
-
-    while ( fgets( cline, MAXPATHLEN, f ) != NULL ) {
-	linenum++;
-
-	len = strlen( cline );
-	if (( cline[ len - 1 ] ) != '\n' ) {
-	    fprintf( stderr, "%s: %d: line too long\n", kfile, linenum );
+    while (( node = list_pop_head( kfile_list )) != NULL ) {
+	if ( read_kfile( node->n_path ) != 0 ) {
 	    exit( 2 );
 	}
-
-	tac = acav_parse( NULL, cline, &targv );
-
-	if (( tac == 0 ) || ( *targv[ 0 ] == '#' )) {
-	    continue;
-	}
-
-	if ( tac != 2 ) {
-	    fprintf( stderr, "%s: %d: invalid command line\n",
-		    kfile, linenum );
-	    exit( 2 );
-	}
-
-	if ( *targv[ 0 ] == 's' ) {
-	    if ( list_insert( special_list, targv[ 1 ] ) != 0 ) {
-		perror( "list_insert" );
-		exit( 2 );
-	    }
-	    continue;
-	}
-	    
-	switch( check( sn, "TRANSCRIPT", targv[ tac - 1] )) {
-	case 0:
-	    break;
-	case 1:
-	    change++;
-	    if ( !update ) {
-		goto done;
-	    }
-	    break;
-	case 2:
-	    exit( 2 );
-	}
+	free( node );
     }
 
     if ( special_list->l_count > 0 ) {
@@ -676,16 +641,128 @@ main( int argc, char **argv )
 	}
     }
 
-done:
     if (( closesn( sn )) !=0 ) {
 	fprintf( stderr, "can not close sn\n" );
 	exit( 2 );
     }
 
+done:
     if ( change ) {
 	exit( 1 );
     } else {
 	if ( !quiet ) printf( "No updates needed\n" );
 	exit( 0 );
     }
+}
+
+    int
+read_kfile( char * kfile )
+{
+    int		ac;
+    char	**av;
+    char        line[ MAXPATHLEN ];
+    char	path[ MAXPATHLEN ];
+    ACAV	*acav;
+    FILE	*f;
+
+    if (( acav = acav_alloc( )) == NULL ) {
+	perror( "acav_alloc" );
+	return( -1 );
+    }
+
+    if (( f = fopen( kfile, "r" )) == NULL ) {
+	perror( kfile );
+	return( -1 );
+    }
+
+    while ( fgets( line, MAXPATHLEN, f ) != NULL ) {
+	linenum++;
+
+	ac = acav_parse( acav, line, &av );
+
+	if (( ac == 0 ) || ( *av[ 0 ] == '#' )) {
+	    continue;
+	}
+
+	if ( ac != 2 ) {
+	    fprintf( stderr, "%s: %d: invalid command line\n",
+		kfile, linenum );
+	    goto error;
+	}
+
+	switch( *av[ 0 ] ) {
+	case 'k':
+	    if ( snprintf( path, MAXPATHLEN, "%s%s", kdir,
+		    av[ 1 ] ) >= MAXPATHLEN ) {
+		fprintf( stderr, "path too long: %s%s\n", kdir, av[ 1 ] );
+		goto error;
+	    }
+	    if ( !list_check( kfile_seen, path )) {
+		if ( list_insert_tail( kfile_list, path ) != 0 ) {
+		    perror( "list_insert_tail" );
+		    goto error;
+		}
+		if ( list_insert_tail( kfile_seen, path ) != 0 ) {
+		    perror( "list_insert_tail" );
+		    goto error;
+		}
+	    }
+	    switch( check( sn, "COMMAND", av[ ac - 1] )) {
+	    case 0:
+		break;
+	    case 1:
+		change++;
+		if ( !update ) {
+		    goto done;
+		}
+		break;
+	    case 2:
+		goto error;
+	    }
+	    break;
+
+	case 's':
+	    if ( list_insert( special_list, av[ 1 ] ) != 0 ) {
+		perror( "list_insert" );
+		exit( 2 );
+	    }
+	    continue;
+	    
+	case 'p':
+	case 'n':
+	    switch( check( sn, "TRANSCRIPT", av[ ac - 1] )) {
+	    case 0:
+		break;
+	    case 1:
+		change++;
+		if ( !update ) {
+		    goto done;
+		}
+		break;
+	    case 2:
+		exit( 2 );
+	    }
+	    break;
+	}
+    }
+    if ( ferror( f )) {
+	perror( "fgets" );
+	return( -1 );
+    }
+
+done:
+    if ( fclose( f ) != 0 ) {
+	perror( "fclose" );
+	return( -1 );
+    }
+    if ( acav_free( acav ) != 0 ) {
+	perror( "acav_free" );
+	return( -1 );
+    }
+    return( 0 );
+
+error:
+    fclose( f );
+    acav_free( acav );
+    return( -1 );
 }

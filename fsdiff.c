@@ -154,7 +154,6 @@ main( int argc, char **argv )
     extern char 	*optarg;
     extern int		optind;
     char		*kfile = _RADMIND_COMMANDFILE;
-    int			gotkfile = 0;
     int 		c, len, edit_path_change = 0;
     int 		errflag = 0, use_outfile = 0;
     int			finish = 0;
@@ -185,7 +184,6 @@ main( int argc, char **argv )
 
 	case 'K':
 	    kfile = optarg;
-	    gotkfile = 1;
 	    break;
 
 	case '1':
@@ -249,7 +247,7 @@ main( int argc, char **argv )
     }
 
     /* initialize the transcripts */
-    transcript_init( kfile, gotkfile );
+    transcript_init( kfile );
 
     fs_walk( argv[ optind ], 0, finish );
 

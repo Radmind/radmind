@@ -52,7 +52,7 @@ struct transcript {
 };
 
 int			transcript( char * );
-void			transcript_init( char *, int );
+void			transcript_init( char * );
 struct transcript	*transcript_select( void );
 void			transcript_parse( struct transcript * );
 void			transcript_free( void );

@@ -65,7 +65,7 @@ extern SSL_CTX  *ctx;
 #define K_SPECIAL 3
 #define K_FILE 4
 
-int 		list_transcripts( SNET *sn );
+int 		read_kfile( SNET *sn, char *kfile );
 
 int		f_quit( SNET *, int, char *[] );
 int		f_noop( SNET *, int, char *[] );
@@ -92,7 +92,7 @@ char		special_dir[ MAXPATHLEN ];
 char		command_file[ MAXPATHLEN ];
 char		upload_xscript[ MAXPATHLEN ];
 const EVP_MD    *md = NULL;
-struct list	*tran_list = NULL;
+struct list	*access_list = NULL;
 int		ncommands = 0;
 int		authorized = 0;
 char		hostname[ MAXHOSTNAMELEN ];
@@ -192,15 +192,17 @@ keyword( int ac, char *av[] )
     }
 
     if ( strcasecmp( av[ 1 ], "COMMAND" ) == 0 ) {
-	if ( ac != 2 ) {
+	if ( ac > 3 ) {
 	    return( -1 );
+	}
+	if ( ac == 2 ) {
+	    if ( strlen( command_file + 5 ) > MAXPATHLEN )  {
+		syslog( LOG_WARNING, "[tmp]/%s longer than MAXPATHLEN",
+			command_file );
+		return( -1 );
+	    }
 	}
 
-	if ( strlen( command_file + 5 ) > MAXPATHLEN )  {
-	    syslog( LOG_WARNING, "[tmp]/%s longer than MAXPATHLEN",
-		    command_file );
-	    return( -1 );
-	}
 	return( K_COMMAND );
     }
 
@@ -283,8 +285,37 @@ f_retr( SNET *sn, int ac, char **av )
 
     switch ( keyword( ac, av )) {
     case K_COMMAND:
-	/* command_file length checked in command_K */
-        strcpy( path, command_file );
+	if ( ac == 2 ) { 
+
+	    if ( snprintf( path, MAXPATHLEN, "command/%s", command_file )
+		    >= MAXPATHLEN ) {
+		syslog( LOG_ERR, "f_retr: command/%s: path too long",
+		    command_file );
+		snet_writef( sn, "%d Path too long\r\n", 540 );
+		return( 1 );
+	    }
+	} else {
+	    if (( d_path = decode( av[ 2 ] )) == NULL ) {
+		syslog( LOG_ERR, "f_retr: decode: buffer too small" );
+		snet_writef( sn, "%d Line too long\r\n", 540 );
+		return( 1 );
+	    } 
+
+	    /* Check for access */
+	    if ( !list_check( access_list, d_path )) {
+		syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s",
+		    d_path );
+		snet_writef( sn, "%d No access for %s\r\n", 540, d_path );
+		return( 1 );
+	    }
+
+	    if ( snprintf( path, MAXPATHLEN, "command/%s", d_path )
+		    >= MAXPATHLEN ) {
+		syslog( LOG_ERR, "f_retr: command path too long" );
+		snet_writef( sn, "%d Path too long\r\n", 540 );
+		return( 1 );
+	    }
+	}
 	break;
 
     case K_TRANSCRIPT:
@@ -295,7 +326,7 @@ f_retr( SNET *sn, int ac, char **av )
 	} 
 
 	/* Check for access */
-	if ( !list_check( tran_list, d_tran )) {
+	if ( !list_check( access_list, d_tran )) {
 	    syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s", d_tran );
 	    snet_writef( sn, "%d No access for %s\r\n", 540, d_tran );
 	    return( 1 );
@@ -342,7 +373,7 @@ f_retr( SNET *sn, int ac, char **av )
 	} 
 
 	/* Check for access */
-	if ( !list_check( tran_list, d_tran )) {
+	if ( !list_check( access_list, d_tran )) {
 	    syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s", d_tran );
 	    snet_writef( sn, "%d No access for %s:%s\r\n", 540, d_tran,
 		d_path );
@@ -363,7 +394,7 @@ f_retr( SNET *sn, int ac, char **av )
 	return( 1 );
     }
 
-    if ( ( fd = open( path, O_RDONLY, 0 ) ) < 0 ) {
+    if (( fd = open( path, O_RDONLY, 0 )) < 0 ) {
     	syslog( LOG_ERR, "open: %s: %m", path );
 	snet_writef( sn, "%d Unable to access %s.\r\n", 543, path );
 	return( 1 );
@@ -465,8 +496,36 @@ f_stat( SNET *sn, int ac, char *av[] )
 
     switch ( key = keyword( ac, av )) {
     case K_COMMAND:
-	/* command_file length checked in command_K */
-        strcpy( path, command_file );
+	if ( ac == 2 ) { 
+	    if ( snprintf( path, MAXPATHLEN, "command/%s", command_file )
+		    >= MAXPATHLEN ) {
+		syslog( LOG_ERR, "f_stat: command/%s: path too long",
+		    command_file );
+		snet_writef( sn, "%d Path too long\r\n", 540 );
+		return( 1 );
+	    }
+	} else {
+	    if (( d_path = decode( av[ 2 ] )) == NULL ) {
+		syslog( LOG_ERR, "f_stat: decode: buffer too small" );
+		snet_writef( sn, "%d Line too long\r\n", 540 );
+		return( 1 );
+	    } 
+
+	    /* Check for access */
+	    if ( !list_check( access_list, d_path )) {
+		syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s",
+		    d_path );
+		snet_writef( sn, "%d No access for %s\r\n", 540, d_path );
+		return( 1 );
+	    }
+
+	    if ( snprintf( path, MAXPATHLEN, "command/%s", d_path )
+		    >= MAXPATHLEN ) {
+		syslog( LOG_ERR, "f_stat: command path too long" );
+		snet_writef( sn, "%d Path too long\r\n", 540 );
+		return( 1 );
+	    }
+	}
 	break;
 
     case K_TRANSCRIPT:
@@ -477,7 +536,7 @@ f_stat( SNET *sn, int ac, char *av[] )
 	} 
 
 	/* Check for access */
-	if ( !list_check( tran_list, d_tran )) {
+	if ( !list_check( access_list, d_tran )) {
 	    syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s", d_tran );
 	    snet_writef( sn, "%d No access for %s\r\n", 540, d_tran );
 	    return( 1 );
@@ -535,10 +594,15 @@ f_stat( SNET *sn, int ac, char *av[] )
     snet_writef( sn, "%d Returning STAT information\r\n", 230 );
     switch ( key ) {
     case K_COMMAND:
-	snet_writef( sn, "%s %s %o %d %d %d %" PRIofft "d %s\r\n",
-		"f", "command", 
-		DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID,
+	if ( ac == 2 ) {
+	    snet_writef( sn, "%s %s %o %d %d %d %" PRIofft "d %s\r\n",
+		"f", "command", DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID,
 		st.st_mtime, st.st_size, cksum_b64 );
+	} else {
+	    snet_writef( sn, "%s %s %o %d %d %d %" PRIofft "d %s\r\n",
+		"f", av[ 2 ], DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID,
+		st.st_mtime, st.st_size, cksum_b64 );
+	}
 	return( 0 );
         
 		    
@@ -862,7 +926,7 @@ f_starttls( SNET *sn, int ac, char **av )
 	commands  = auth;
 	ncommands = sizeof( auth ) / sizeof( auth[ 0 ] );
 
-	if ( list_transcripts( sn ) != 0 ) {
+	if ( read_kfile( sn, command_file ) != 0 ) {
 	    /* error message given in list_transcripts */
 	    exit( 1 );
 	}
@@ -1070,12 +1134,12 @@ command_k( char *path_config )
 	}
 
 	if (( remote_cn != NULL ) && wildcard( av[ 0 ], remote_cn, 0 )) {
-	    if ( snprintf( command_file, MAXPATHLEN, "command/%s", av[ 1 ] )
-		    >= MAXPATHLEN ) {
+	    if ( strlen( av[ 1 ] ) >= MAXPATHLEN ) {
 		syslog( LOG_ERR,
 		    "config file: line %d: command file too long\n", linenum );
 		continue;
 	    }
+	    strcpy( command_file, av[ 1 ] );
 	    if ( snprintf( temp, MAXPATHLEN, "%s/%s", special_dir,
 		    remote_cn ) >= MAXPATHLEN ) {
 		syslog( LOG_ERR, "config file: line %d: special dir too long\n",
@@ -1086,12 +1150,12 @@ command_k( char *path_config )
 	    return( 0 );
 	}
 	if ( wildcard( av[ 0 ], remote_host, 0 )) {
-	    if ( snprintf( command_file, MAXPATHLEN, "command/%s", av[ 1 ] )
-		    >= MAXPATHLEN ) {
+	    if ( strlen( av[ 1 ] ) >= MAXPATHLEN ) {
 		syslog( LOG_ERR,
 		    "config file: line %d: command file too long\n", linenum );
 		continue;
 	    }
+	    strcpy( command_file, av[ 1 ] );
 	    if ( snprintf( temp, MAXPATHLEN, "%s/%s", special_dir,
 		    remote_host ) >= MAXPATHLEN ) {
 		syslog( LOG_ERR, "config file: line %d: special dir too long\n",
@@ -1102,12 +1166,12 @@ command_k( char *path_config )
 	    return( 0 );
 	} 
 	if ( wildcard( av[ 0 ], remote_addr, 1 )) {
-	    if ( snprintf( command_file, MAXPATHLEN, "command/%s", av[ 1 ] )
-		    >= MAXPATHLEN ) {
+	    if ( strlen( av[ 1 ] ) >= MAXPATHLEN ) {
 		syslog( LOG_ERR,
 		    "config file: line %d: command file too long\n", linenum );
 		continue;
 	    }
+	    strcpy( command_file, av[ 1 ] );
 	    if ( snprintf( temp, MAXPATHLEN, "%s/%s", special_dir,
 		    remote_addr ) >= MAXPATHLEN ) {
 		syslog( LOG_ERR, "config file: line %d: special dir too long\n",
@@ -1127,65 +1191,125 @@ command_k( char *path_config )
 }
 
     int
-list_transcripts( SNET *sn )
+read_kfile( SNET *sn, char *kfile )
 {
-    int			ac, linenum;
-    char		kline[ MAXPATHLEN * 2 ];
-    FILE		*f;
-    char                **av;
+    int		ac;
+    int		linenum = 0;
+    char	**av;
+    char        line[ MAXPATHLEN ];
+    char	path[ MAXPATHLEN ];
+    ACAV	*acav;
+    FILE	*f;
 
-    if (( tran_list = list_new( )) == NULL ) {
+    if ( snprintf( path, MAXPATHLEN, "command/%s", kfile ) >= MAXPATHLEN ) {
 	snet_writef( sn,
 	    "%d Service not available, closing transmission channel\r\n", 421 );
-	syslog( LOG_ERR, "new_list: %m" );
+	syslog( LOG_ERR, "read_kfile: command/%s: path too long", kfile );
 	return( -1 );
     }
 
-    /* Create list of transcripts */
-    if (( f = fopen( command_file, "r" )) == NULL ) {
+    if (( acav = acav_alloc( )) == NULL ) {
 	snet_writef( sn,
 	    "%d Service not available, closing transmission channel\r\n", 421 );
-	syslog( LOG_ERR, "fopen: %s: %m", command_file );
+	syslog( LOG_ERR, "acav_alloc: %m" );
 	return( -1 );
     }
-    linenum = 0;
-    while ( fgets( kline, MAXPATHLEN, f ) != NULL ) {
+
+    if (( f = fopen( path, "r" )) == NULL ) {
+	snet_writef( sn,
+	    "%d Service not available, closing transmission channel\r\n", 421 );
+	syslog( LOG_ERR, "fopen: %s: %m", path );
+	return( -1 );
+    }
+
+    while ( fgets( line, MAXPATHLEN, f ) != NULL ) {
 	linenum++;
-	ac = acav_parse( NULL, kline, &av );
-	if (( ac == 0 ) || ( *av[ 0 ] == '#' )
-		|| ( *av[ 0 ] == 's')) {
+
+	ac = acav_parse( acav, line, &av );
+
+	if (( ac == 0 ) || ( *av[ 0 ] == '#' )) {
 	    continue;
 	}
+
 	if ( ac != 2 ) {
 	    snet_writef( sn,
 		"%d Service not available, closing transmission channel\r\n",
 		421 );
-	    syslog( LOG_ERR, "%s: %d: invalid command line\n",
-		    command_file, linenum );
-	    return( -1 );
+	    syslog( LOG_ERR, "%s: line %d: invalid number of arguments",
+		kfile, linenum );
+	    goto error;
 	}
-	if ( list_insert( tran_list, av[ 1 ] ) != 0 ) {
+
+	switch( *av[ 0 ] ) {
+	case 'k':
+	    if ( !list_check( access_list, av[ 1 ] )) {
+		if ( list_insert( access_list, av[ 1 ] ) != 0 ) {
+		    snet_writef( sn,
+	"%d Service not available, closing transmission channel\r\n", 421 );
+			syslog( LOG_ERR, "list_insert: %m" );
+		    goto error;
+		}
+		if ( read_kfile( sn, av[ 1 ] ) != 0 ) {
+		    goto error;
+		}
+	    }
+	    break;
+
+	case 'p':
+	case 'n':
+	    if ( !list_check( access_list, av[ 1 ] )) {
+		if ( list_insert( access_list, av[ 1 ] ) != 0 ) {
+		    snet_writef( sn,
+	"%d Service not available, closing transmission channel\r\n", 421 );
+			syslog( LOG_ERR, "list_insert: %m" );
+		    goto error;
+		}
+	    }
+	    break;
+
+	case 's':
+	    break;
+
+	default:
 	    snet_writef( sn,
 		"%d Service not available, closing transmission channel\r\n",
 		421 );
-	    syslog( LOG_ERR, "list_insert: %m" );
-	    return( -1 );
+	    syslog( LOG_ERR, "%s: line %d: %c: unknown file type", kfile,
+		linenum, *av[ 0 ] );
+	    goto error;
+
 	}
 
+	if ( ferror( f )) {
+	    snet_writef( sn,
+		"%d Service not available, closing transmission channel\r\n",
+		421 );
+	    syslog( LOG_ERR, "fgets: %m" );
+	    goto error;
+	}
     }
-    if ( ferror( f )) {
-	snet_writef( sn,
-	    "%d Service not available, closing transmission channel\r\n", 421 );
-	syslog( LOG_ERR, "fgets: %m" );
-	return( -1 );
-    }
-    if ( fclose( f ) < 0 ) {
+
+    if ( fclose( f ) != 0 ) {
 	snet_writef( sn,
 	    "%d Service not available, closing transmission channel\r\n", 421 );
 	syslog( LOG_ERR, "fclose: %m" );
+	goto error;
+    }
+
+    if ( acav_free( acav ) != 0 ) {
+	snet_writef( sn,
+	    "%d Service not available, closing transmission channel\r\n", 421 );
+	syslog( LOG_ERR, "acav_free: %m" );
 	return( -1 );
     }
+
     return( 0 );
+
+error:
+    fclose( f );
+    acav_free( acav );
+
+    return( -1 );
 }
 
     int
@@ -1239,6 +1363,13 @@ cmdloop( int fd, struct sockaddr_in *sin )
 	    exit( 1 );
 	}
     }
+
+    if (( access_list = list_new( )) == NULL ) {
+	snet_writef( sn,
+	    "%d Service not available, closing transmission channel\r\n", 421 );
+	syslog( LOG_ERR, "new_list: %m" );
+	return( -1 );
+    }
     
     if ( authlevel == 0 ) {
 	/* lookup proper command file based on the hostname, IP or CN */
@@ -1248,8 +1379,8 @@ cmdloop( int fd, struct sockaddr_in *sin )
 		    remote_host );
 	    exit( 1 );
 	} else {
-	    if ( list_transcripts( sn ) != 0 ) {
-		/* error message given in list_transcripts */
+	    if ( read_kfile( sn, command_file ) != 0 ) {
+		/* error message given in read_kfile */
 		exit( 1 );
 	    }
 	    commands = auth;

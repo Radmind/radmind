@@ -25,10 +25,16 @@
 #include "cksum.h"
 #include "pathcmp.h"
 #include "largefile.h"
+#include "list.h"
 
-static struct transcript	*tran_head = NULL;
+int read_kfile( char * );
+
+struct transcript		*tran_head = NULL;
 static struct transcript	*prev_tran = NULL;
 extern int			edit_path;
+static int			foundspecial = 0;
+static char			*kdir;
+static struct list		*kfile_list;
 
     void 
 transcript_parse( struct transcript *tran ) 
@@ -668,17 +674,11 @@ t_new( int type, char *fullname, char *shortname )
 }
 
     void
-transcript_init( char *kfile, int kfilemustexist )
+transcript_init( char *kfile )
 {
-    char	**av;
     char	*special = "special.T";
-    char	line[ MAXPATHLEN ];
-    char	fullpath[ MAXPATHLEN ];
     char	*p;
-    int		length, ac, linenum = 0;
-    int		foundspecial = 0;
-    FILE	*fp;
-    char	*kdir;
+    char	fullpath[ MAXPATHLEN ];
 
     /*
      * Make sure that there's always a transcript to read, so other code
@@ -687,14 +687,6 @@ transcript_init( char *kfile, int kfilemustexist )
     t_new( T_NULL, NULL, NULL );
 
     if ( skip ) {
-	return;
-    }
-
-    if (( fp = fopen( kfile, "r" )) == NULL ) {
-	if ( kfilemustexist || ( edit_path == APPLICABLE )) {
-	    perror( kfile );
-	    exit( 2 );
-	}
 	return;
     }
 
@@ -709,53 +701,17 @@ transcript_init( char *kfile, int kfilemustexist )
         p++;
         *p = (char)'\0';
     }
-
-    while ( fgets( line, sizeof( line ), fp ) != NULL ) {
-	linenum++;
-	length = strlen( line );
-	if ( line[ length - 1 ] != '\n' ) {
-	    fprintf( stderr, "command: line %d: line too long\n", linenum );
-	    exit( 2 );
-	}
-
-	/* skips blank lines and comments */
-	if ((( ac = argcargv( line, &av )) == 0 ) || ( *av[ 0 ] == '#' )) {
-	    continue;
-	}
-
-	if ( ac != 2 ) {
-	    fprintf( stderr, "command: line %d: expected 2 arguments, got %d\n",
-		    linenum, ac );
-	    exit( 2 );
-	} 
-
-	if ( strlen( kdir ) + strlen( av[ 1 ] ) + 2 > MAXPATHLEN ) {
-	    fprintf( stderr, "command: line %d: transcript name too long\n",
-		    linenum );
-	    fprintf( stderr, "command: line %d: %s%s\n",
-		    linenum, kdir, av[ 1 ] );
-	    exit( 2 );
-	}
-	sprintf( fullpath, "%s%s", kdir, av[ 1 ] );
-
-	switch( *av[ 0 ] ) {
-	case 'p':				/* positive */
-	    t_new( T_POSITIVE, fullpath, av[ 1 ] );
-	    break;
-	case 'n':				/* negative */
-	    t_new( T_NEGATIVE, fullpath, av[ 1 ] );
-	    break;
-	case 's':				/* special */
-	    foundspecial++;
-	    continue;
-	default:
-	    fprintf( stderr, "command: line %d: '%s' invalid\n",
-		    linenum, av[ 0 ] );
-	    exit( 2 );
-	}
+    if (( kfile_list = list_new( )) == NULL ) {
+	perror( "list_new" );
+	exit( 2 );
     }
-
-    fclose( fp );
+    if ( list_insert( kfile_list, kfile ) != 0 ) {
+	perror( "list_insert" );
+	exit( 2 );
+    }
+    if ( read_kfile( kfile ) != 0 ) {
+	exit( 2 );
+    }
 
     /* open the special transcript if there were any special files */
     if ( foundspecial ) {
@@ -767,13 +723,99 @@ transcript_init( char *kfile, int kfilemustexist )
 	sprintf( fullpath, "%s%s", kdir, special );
 	t_new( T_SPECIAL, fullpath, special );
     }
-
     if ( tran_head->t_type == T_NULL  && edit_path == APPLICABLE ) {
 	fprintf( stderr, "-A option requires a non-NULL transcript\n" );
 	exit( 2 );
     }
-
     return;
+}
+
+    int
+read_kfile( char *kfile )
+{
+    int		length, ac, linenum = 0;
+    char	line[ MAXPATHLEN ];
+    char	fullpath[ MAXPATHLEN ];
+    char	**av;
+    FILE	*fp;
+
+    if (( fp = fopen( kfile, "r" )) == NULL ) {
+	perror( kfile );
+	return( -1 );
+    }
+
+    while ( fgets( line, sizeof( line ), fp ) != NULL ) {
+	linenum++;
+	length = strlen( line );
+	if ( line[ length - 1 ] != '\n' ) {
+	    fprintf( stderr, "command: line %d: line too long\n", linenum );
+	    return( -1 );
+	}
+
+	/* skips blank lines and comments */
+	if ((( ac = argcargv( line, &av )) == 0 ) || ( *av[ 0 ] == '#' )) {
+	    continue;
+	}
+
+	if ( ac != 2 ) {
+	    fprintf( stderr, "command: line %d: expected 2 arguments, got %d\n",
+		    linenum, ac );
+	    return( -1 );
+	} 
+
+	if ( snprintf( fullpath, MAXPATHLEN, "%s%s", kdir,
+		av[ 1 ] ) >= MAXPATHLEN ) {
+	    fprintf( stderr, "command: line %d: path too long\n",
+		    linenum );
+	    fprintf( stderr, "command: line %d: %s%s\n",
+		    linenum, kdir, av[ 1 ] );
+	    return( -1 );
+	}
+
+	switch( *av[ 0 ] ) {
+	case 'k':				/* command file */
+	    if ( list_check( kfile_list, fullpath )) {
+		fprintf( stderr,
+		    "%s: line %d: command file loop: %s already included\n",
+		    kfile, linenum, av[ 1 ] );
+		return( -1 );
+	    }
+	    if ( list_insert( kfile_list, fullpath ) != 0 ) {
+		perror( "list_insert" );
+		return( -1 );
+	    }
+
+	    if ( read_kfile( fullpath ) != 0 ) {
+		return( -1 );
+	    }
+	    break;
+
+	case 'n':				/* negative */
+	
+	    t_new( T_NEGATIVE, fullpath, av[ 1 ] );
+	    break;
+
+	case 'p':				/* positive */
+	    t_new( T_POSITIVE, fullpath, av[ 1 ] );
+	    break;
+
+	case 's':				/* special */
+	    foundspecial++;
+	    continue;
+
+	default:
+	    fprintf( stderr, "command: line %d: '%s' invalid\n",
+		    linenum, av[ 0 ] );
+	    return( -1 );
+	}
+    }
+
+    if ( fclose( fp ) != 0 ) {
+	perror( kfile );
+	return( -1 );
+    }
+
+    return( 0 );
 }
 
     void

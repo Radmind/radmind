@@ -11,7 +11,10 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "argcargv.h"
+#include <openssl/evp.h>
+
+#include "applefile.h"
+#include "transcript.h"
 #include "code.h"
 #include "pathcmp.h"
 
@@ -24,6 +27,8 @@ struct node {
 struct node* create_node( char *path );
 void free_node( struct node *node );
 void free_list( struct node *head );
+
+const EVP_MD    *md;
 
    struct node *
 create_node( char *path )
@@ -67,20 +72,13 @@ free_list( struct node *head )
 main( int argc, char **argv )
 {
 
-    int		c, err = 0, len, linenum = 0, ac, defaultkfile = 1, cmp = 0;
-    int		server = 0, specialfile = 0, displayall = 0, match = 0;
-    int		remove = 0;
-    extern char	*version;
-    char	*kfile = _RADMIND_COMMANDFILE;
-    char	*kdir = "";
-    char	*pattern, *p, *tline, **av, *d_path;
-    char	line[ MAXPATHLEN * 2 ];
-    char	tran[ MAXPATHLEN ];
-    char	path[ MAXPATHLEN ];
-    char            prepath[ MAXPATHLEN ] = { 0 };
-    FILE	*f;
-    ACAV	*acav;
-    struct node	*head = NULL, *new_node, *node;
+    int			c, err = 0, defaultkfile = 1, cmp = 0;
+    int			server = 0, displayall = 0, match = 0;
+    extern char		*version;
+    char		*kfile = _RADMIND_COMMANDFILE;
+    char		*pattern;
+    struct transcript	*tran;
+    extern struct transcript	*tran_head;
 
     while (( c = getopt( argc, argv, "aK:sV" )) != EOF ) {
 	switch( c ) {
@@ -124,218 +122,61 @@ main( int argc, char **argv )
         exit( 2 );
     }
 
-    if (( kdir = strdup( kfile )) == NULL ) {
-	perror( "strdup failed" );
-	exit( 2 );
-    }
-    if (( p = strrchr( kdir, '/' )) == NULL ) { 
-	/* No '/' in kfile - use working directory */
-	kdir = "./";
-    } else {
-	p++;
-	*p = (char)'\0';
-    }
+    /* initialize the transcripts */
+    transcript_init( kfile );
 
-    if (( f = fopen( kfile, "r" )) == NULL ) {
-	perror( kfile );
-	exit( 2 );
-    }
+    for ( tran = tran_head; !tran->t_eof; tran = tran->t_next ) {
 
-    if (( acav = acav_alloc( )) == NULL ) {
-	perror( "acav_alloc failed" );
-	exit( 2 );
-    }
-
-    /* Read command file */
-    while( fgets( line, sizeof( line ), f ) != NULL ) {
-	linenum++;
-
-	/* Check line length */
-        len = strlen( line );
-        if (( line[ len - 1 ] ) != '\n' ) {
-            fprintf( stderr, "%s: line %d too long\n", kfile, linenum );
-            exit( 2 );
-        }
-
-	if (( ac = acav_parse( acav, line, &av )) < 0 ) {
-	    perror( "acav_parse failed" );
-	    exit( 2 );
+	while (( cmp = pathcmp( tran->t_pinfo.pi_name, pattern )) < 0 ) {
+	    transcript_parse( tran );
+	    if ( tran->t_eof ) {
+		break;
+	    }
 	}
-
-	/* Skip blank lines and comments */
-	if (( ac == 0 ) || ( *av[ 0 ] == '#' )) {
+	if ( tran->t_eof ) {
 	    continue;
 	}
 
-	/* Check for valid command file line */
-	if ( ac < 2 ) {
-	    fprintf( stderr,
-		"%s: line %d: Invalid command line - too many arguments\n",
-		kfile, linenum );
-	    exit( 2 );
+	if ( cmp > 0 ) {
+	    continue;
 	}
 
-	switch( *av[ 0 ] ) {
-	case 's':
-	    if (( d_path = decode( av[ 1 ] )) == NULL ) {
-		fprintf( stderr, "line %d: path too long\n", linenum );
+	if ( cmp == 0 ) {
+	    match++;
+	    switch( tran->t_type ) {
+	    case T_POSITIVE:
+		 printf( "# Positive\n" );
+		 break;
+
+	    case T_NEGATIVE:
+		 printf( "# Negative\n" );
+		 break;
+
+	    case T_SPECIAL:
+		 printf( "# Special\n" );
+		 break;
+
+	    default:
+		fprintf( stderr, "unknown transcript type\n" );
 		exit( 2 );
 	    }
 
-	    if ( !strncmp( d_path, pattern, strlen( d_path ) ) ) {
-		specialfile++;
+	    if (( !tran->t_pinfo.pi_minus ) &&
+		    (( tran->t_pinfo.pi_type == 'f' )
+		    || ( tran->t_pinfo.pi_type  == 'a' ))) {
+		printf( "%s:\n+ %s\n", tran->t_shortname, 
+		    tran->t_pinfo.pi_name );
+	    } else {
+		printf( "%s:\n%s\n", tran->t_shortname, 
+		    tran->t_pinfo.pi_name );
 	    }
-
-	    break;
-
-	case 'n':
-	    new_node = create_node( av[ 1 ] );
-	    new_node->next = head;
-	    head = new_node;
-	    new_node->negative++;
-	    break;
-
-	case 'p':
-	    new_node = create_node( av[ 1 ] );
-	    new_node->next = head;
-	    head = new_node;
-	    break;
-
-	default:
-	    fprintf( stderr,
-		"%s: line %d: Invalid command line - unknown type\n",
-		kfile, linenum );
-	    exit( 2 );
-	}
-    }
-
-    /* special transcript should always be searched first */
-    if ( specialfile ) {
-	new_node = create_node( "special.T" );
-	new_node->next = head;
-	head = new_node;
-    }
-
-    /* Close kfile */
-    if ( fclose( f ) != 0 ) {
-	perror( kfile );
-	exit( 2 );
-    }
-
-    for ( node = head; node != NULL; node = node->next ) {
-	strncpy( tran, node->path, MAXPATHLEN );
-	if ( server ) {
-	    if ( snprintf( path, MAXPATHLEN, "%s../transcript/%s", kdir,
-		    tran ) > MAXPATHLEN - 1 ) {
-		fprintf( stderr, "path too long: %s%s\n", kdir, tran );
-		exit( 2 );
+	    if ( !displayall ) {
+		goto done;
 	    }
-	} else {
-	    if ( snprintf( path, MAXPATHLEN, "%s%s", kdir, tran )
-		    > MAXPATHLEN - 1 ) {
-		fprintf( stderr, "path too long: %s%s\n", kdir, tran );
-		exit( 2 );
-	    }
-	}
-	if (( f = fopen( path, "r" )) == NULL ) {
-	    perror( path );
-	    exit( 2 );
-	}
-
-	linenum = 0;
-	sprintf( prepath, "%s", "" );
-
-	while( fgets( line, sizeof( line ), f ) != NULL ) {
-	    remove = 0;
-	    linenum++;
-
-	    /* Check line length */
-	    len = strlen( line );
-	    if (( line[ len - 1 ] ) != '\n' ) {
-		fprintf( stderr, "%s: line %d too long\n", path, linenum );
-		exit( 2 );
-	    }
-
-	    /* Save transcript line - must free later */
-	    if (( tline = strdup( line )) == NULL ) {
-		perror( "strdup" );
-		exit( 2 );
-	    }
-
-	    if (( ac = acav_parse( acav, line, &av )) < 0 ) {
-		perror( "acav_parse failed" );
-		exit( 2 );
-	    }
-
-	    /* Skip blank lines, comments and transcript names */
-	    if (( ac < 2 ) || ( *av[ 0 ] == '#' )) {
-		continue;
-	    }
-
-	    /* Move past leading '-' */
-	    if ( *av[ 0 ] == '-' ) {
-		remove = 1;
-		av++;
-	    }
-
-	    if (( d_path = decode( av[ 1 ] )) == NULL ) {
-		fprintf( stderr, "%s: line %d: path too long\n", tran,
-		    linenum );
-		exit( 2 );
-	    } 
-
-	    /* Check transcript order */
-	    if ( prepath != 0 ) {
-		if ( pathcmp( d_path, prepath ) < 0 ) {
-		    fprintf( stderr, "%s: line %d: bad sort order\n",
-				tran, linenum );
-		    exit( 2 );
-		}
-	    }
-	    if ( strlen( d_path ) >= MAXPATHLEN ) {
-		fprintf( stderr, "%s: line %d: path too long\n",
-			tran, linenum );
-		exit( 2 );
-	    }
-	    strcpy( prepath, d_path );
-
-	    cmp = pathcmp( d_path, pattern );
-	    if ( cmp == 0 ) {
-		match++;
-		if ( node->negative ) {
-		     printf( "# Negative\n" );
-		} else {
-		     printf( "# Positive\n" );
-		}
-
-		if (( !remove ) &&
-			(( *av[ 0 ] == 'f' ) || ( *av[ 0 ] == 'a' ))) {
-		    printf( "%s:\n+ %s", tran, tline );
-		} else {
-		    printf( "%s:\n%s", tran, tline );
-		}
-		if ( !displayall ) {
-		    break;
-		}
-	    } else if ( cmp > 0 ) {
-		/* We have passed where pattern should be - stop looking */
-		break;
-	    }
-	    free( tline );
-	}
-	if ( fclose( f ) != 0 ) {
-	    perror( path );
-	    exit( 2 );
-	}
-	if ( !displayall && match ) {
-	    goto done;
 	}
     }
 
 done:
-    free_list( head );
-    acav_free( acav );
-
     if ( match ) {
 	exit( 0 );
     } else {
