@@ -1,5 +1,7 @@
 For 1.0:
     TLS
+	radmind -x ( 0 | 1 | 2 )
+	lapply -x ( 0 | 1 | 2 )
     users file
 
 For after 1.0:

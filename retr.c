@@ -72,12 +72,12 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, ssize_t transize,
 	EVP_DigestInit( &mdctx, md );
     }
 
+    if ( verbose ) printf( ">>> RETR %s\n", pathdesc );
     if ( snet_writef( sn, "RETR %s\n", pathdesc ) < 0 ) {
 	fprintf( stderr, "retrieve %s failed: 1-%s\n", pathdesc,
 	    strerror( errno ));
 	return( -1 );
     }
-    if ( verbose ) printf( ">>> RETR %s\n", pathdesc );
 
     tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
@@ -221,12 +221,12 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
         EVP_DigestInit( &mdctx, md );
     }
 
+    if ( verbose ) printf( ">>> RETR %s\n", pathdesc );
     if ( snet_writef( sn, "RETR %s\n", pathdesc ) < 0 ) {
 	fprintf( stderr, "retrieve applefile %s failed: 1-%s\n", pathdesc,
 	    strerror( errno ));
 	return( -1 );
     }
-    if ( verbose ) printf( ">>> RETR %s\n", pathdesc );
 
     tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
