@@ -22,10 +22,6 @@ t_parse( struct transcript *tran )
     char			c;
     int				ac;
 
-    if ( tran == NULL ) {
-	return;
-    }
-
     if (( fgets( line, MAXPATHLEN, tran->t_in )) == NULL ) {
 	tran->t_flag = T_EOF;
 	return;
@@ -287,8 +283,6 @@ transcript( struct llist *new, char *name, char *rpath, FILE *out )
     struct transcript	*t_cur = NULL;
     struct transcript	*begin_tran = NULL;
 
-printf( "in tran\n" );
-
     if ( lstat( name, &new->ll_info.i_stat ) != 0 ) {
 	perror( name );
 	exit( 1 );
@@ -333,8 +327,7 @@ printf( "in tran\n" );
 		    }
 		}
 	    }
-     	}
-
+	}
      	/* move ahead other transcripts that match */
 	if ( begin_tran != NULL ) {
      	   for( t_cur = begin_tran->t_next; t_cur != NULL; 
@@ -353,11 +346,9 @@ printf( "in tran\n" );
 	case -1 :		/* either there is no transcript, or the
 				   fs value is alphabetically before the
 				   transcript value. move the fs forward. */
-printf( "case -1: %d %s %s\n", move, begin_tran->t_info.i_name, new->ll_info.i_name );
 	    return( move ? 1 : 0 );
 
 	case 0 :		/* the two values match.  move ahead in both */
-printf( "case 0: %d %s %s\n", move, begin_tran->t_info.i_name, new->ll_info.i_name );
 	    /* t_compare() can't return 0 if begin_tran is NULL */
 	    t_parse( begin_tran );
 	    if ( begin_tran->t_type == T_NEGATIVE ) {
@@ -369,7 +360,6 @@ printf( "case 0: %d %s %s\n", move, begin_tran->t_info.i_name, new->ll_info.i_na
 	case 1 :		/* the fs value is alphabetically after the
 				   transcript value.  move the transcript
 				   forward */
-printf( "case 1: %d %s %s\n", move, begin_tran->t_info.i_name, new->ll_info.i_name );
 	    /* t_compare() can't return -1 if begin_tran is NULL */
 	    t_parse( begin_tran );
 	    break;
@@ -436,7 +426,9 @@ transcript_init( )
 		tran_head->t_flag = 1;
 		/*parse first line of this transcript */
 		t_parse( tran_head );
-	}
+        }
+     } else {
+	t_new ( "NULL", tran_head );
      }
 
      return;
@@ -448,10 +440,6 @@ transcript_free( )
 {
     struct transcript    *next;
     FILE		 *com;
-
-    if ( tran_head == NULL ) { 
-	return;
-    }
 
     for ( ; tran_head != NULL; tran_head = next ) {
 	next = tran_head->t_next;
