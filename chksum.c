@@ -21,14 +21,30 @@ extern struct as_header as_header;
 do_chksum( char *path, char *chksum_b64 )
 {
     int			fd;
+    ssize_t		rr;
+    unsigned char	buf[ 8192 ];
+    unsigned char	md[ SHA_DIGEST_LENGTH ];
+    unsigned char	mde[ SZ_BASE64_E( sizeof( md )) ];
+    SHA_CTX		sha_ctx;
 
     if (( fd = open( path, O_RDONLY, 0 )) < 0 ) {
 	return( -1 );
     }
 
-    if ( do_chksum_fd( fd, chksum_b64 ) != 0 ) {
+    SHA1_Init( &sha_ctx );
+
+    while (( rr = read( fd, buf, sizeof( buf ))) > 0 ) {
+	SHA1_Update( &sha_ctx, buf, (size_t)rr );
+    }
+
+    if ( rr < 0 ) {
 	return( -1 );
     }
+
+    SHA1_Final( md, &sha_ctx );
+
+    base64_e( md, sizeof( md ), mde );
+    strcpy( chksum_b64, mde );
 
     if ( close( fd ) != 0 ) {
 	return( -1 );
@@ -185,30 +201,3 @@ do_achksum( char *path, char *chksum_b64 )
     return( 0 );
 }
 #endif __APPLE__
-
-    int
-do_chksum_fd( int fd, char *chksum_b64 )
-{
-    ssize_t		rr;
-    unsigned char	buf[ 8192 ];
-    unsigned char	md[ SHA_DIGEST_LENGTH ];
-    unsigned char	mde[ SZ_BASE64_E( sizeof( md )) ];
-    SHA_CTX		sha_ctx;
-
-    SHA1_Init( &sha_ctx );
-
-    while (( rr = read( fd, buf, sizeof( buf ))) > 0 ) {
-	SHA1_Update( &sha_ctx, buf, (size_t)rr );
-    }
-
-    if ( rr < 0 ) {
-	return( -1 );
-    }
-
-    SHA1_Final( md, &sha_ctx );
-
-    base64_e( md, sizeof( md ), mde );
-    strcpy( chksum_b64, mde );
-
-    return( 0 );
-}
