@@ -14,10 +14,8 @@
 #define FS2TRAN		0
 #define TRAN2FS		1
 
-#define FLAG_SKIP	( 1 << 0 )
-#define FLAG_INIT	( 1 << 1 )
-
 int			edit_path;
+int			skip;
 FILE			*outtran;
 
 struct pathinfo {
@@ -40,7 +38,7 @@ struct transcript {
 };
  
 int	transcript( struct pathinfo *, char * );
-void	transcript_init( int, char * );
+void	transcript_init( char * );
 void	transcript_free( void );
 char	*hardlink( struct pathinfo * );
 void	hardlink_free( void );
