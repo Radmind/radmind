@@ -70,8 +70,9 @@ v_logger( char *line )
 main( int argc, char **argv )
 {
     int			c, err = 0, port = htons(6662), tac; 
-    int			network = 1, exitcode = 0, len, rc, lnbf = 0;
+    int			network = 1, len, rc, lnbf = 0;
     int			negative = 0, tran_only = 0;
+    int			respcount = 0;
     extern int		optind;
     struct servent	*se;
     SNET          	*sn = NULL;
@@ -300,8 +301,7 @@ main( int argc, char **argv )
 	if ( cksum ) {
 	    if ( do_cksum( argv[ optind ], cksumval ) < 0 ) {
 		perror( tname );
-		exitcode = 2;
-		goto done;
+		exit( 2 );
 	    }
 	}
 
@@ -314,15 +314,14 @@ main( int argc, char **argv )
 	/* Get transcript size */
 	if ( stat( argv[ optind ], &st ) != 0 ) {
 	    perror( argv[ optind ] );
-	    exitcode = 2;
-	    goto done;
+	    exit( 2 );
 	}
 
 	if (( rc = stor_file( sn, pathdesc, argv[ optind ], st.st_size,
 		cksumval )) <  0 ) {
-	    exitcode = 2;
-	    goto done;
+	    exit( 2 );
 	}
+	respcount += 2;
 
 	if ( tran_only ) {	/* don't upload files */
 	    goto done;
@@ -335,11 +334,16 @@ main( int argc, char **argv )
     }
 
     while ( fgets( tline, MAXPATHLEN, tran ) != NULL ) {
+	if ( network && respcount > 0 ) {
+	    if ( stor_response( sn, &respcount ) < 0 ) {
+		exit( 2 );
+	    }
+	}
+
 	len = strlen( tline );
 	if (( tline[ len - 1 ] ) != '\n' ) {
 	    fprintf( stderr, "%s: line too long\n", tline );
-	    exitcode = 2;
-	    break;
+	    exit( 2 );
 	}
 	linenum++;
 	tac = argcargv( tline, &targv );
@@ -351,15 +355,13 @@ main( int argc, char **argv )
 
 	if ( tac == 1 ) {
 	    fprintf( stderr, "Appliable transcripts cannot be uploaded.\n" );
-	    exitcode = 2;
-	    break;
+	    exit( 2 );
 	}
 	if ( *targv[ 0 ] == 'f' || *targv[ 0 ] == 'a' ) {
 	    if ( tac != 8 ) {
 		fprintf( stderr, "line %d: invalid transcript line\n",
 			linenum );
-		exitcode = 2;
-		break;
+		exit( 2 );
 	    }
 
 	    dpath = decode( targv[ 1 ] );
@@ -368,13 +370,11 @@ main( int argc, char **argv )
 		/* Verify transcript line is correct */
 		if ( radstat( dpath, &st, &type, &afinfo ) != 0 ) {
 		    perror( dpath );
-		    exitcode = 2;
-		    break;
+		    exit( 2 );
 		}
 		if ( *targv[ 0 ] != type ) {
 		    fprintf( stderr, "line %d: file type wrong\n", linenum );
-		    exitcode = 2;
-		    break;
+		    exit( 2 );
 		}
 	    }
 
@@ -388,13 +388,11 @@ main( int argc, char **argv )
 		    }
 		    if ( size < 0 ) {
 			fprintf( stderr, "%s: %s\n", dpath, strerror( errno ));
-			exitcode = 2;
-			break;
+			exit( 2 );
 		    } else if ( size != strtoofft( targv[ 6 ], NULL, 10 )) {
 			fprintf( stderr, "line %d: size in transcript does "
 			    "not match size of file\n", linenum );
-			exitcode = 2;
-			break;
+			exit( 2 );
 		    }
 		    if ( strcmp( cksumval, targv[ 7 ] ) != 0 ) {
 			fprintf( stderr,
@@ -405,61 +403,61 @@ main( int argc, char **argv )
 		}
 		if ( access( dpath,  R_OK ) < 0 ) {
 		    perror( dpath );
-		    exitcode = 2;
-		    break;
+		    exit( 2 );
 		}
 	    } else {
 		if ( snprintf( pathdesc, MAXPATHLEN * 2, "STOR FILE %s %s\r\n", 
 			tname, targv[ 1 ] ) > ( MAXPATHLEN * 2 ) - 1 ) {
 		    fprintf( stderr, "STOR FILE %s %s: path description too \
 			long\n", tname, dpath );
-		    exitcode = 2;
-		    break;
+		    exit( 2 );
 		}
 
 		if ( negative ) {
 		    if ( *targv[ 0 ] == 'a' ) {
-			if (( rc = n_stor_applefile( sn, pathdesc,
-				decode( targv[ 1 ] ))) < 0 ) {
-			    fprintf( stderr, "failed to store file %s\n",
-				dpath );
-			    exitcode = 2;
-			    break;
-			}
+			rc = n_stor_applefile( sn, pathdesc,
+				decode( targv[ 1 ] ));
 		    } else {
-			if (( rc = n_stor_file( sn, pathdesc,
-				decode( targv[ 1 ] ))) < 0 ) {
-			    fprintf( stderr, "failed to store file %s\n",
-				dpath );
-			    exitcode = 2;
-			    break;
-			}
+			rc = n_stor_file( sn, pathdesc, decode( targv[ 1 ] ));
 		    }
+		    if ( rc < 0 ) {
+			fprintf( stderr, "failed to store file %s\n",
+			    dpath );
+			exit( 2 );
+		    }
+		    respcount += 2;
+
 		} else {
 		    if ( *targv[ 0 ] == 'a' ) {
 			rc = stor_applefile( sn, pathdesc, decode( targv[ 1 ] ),
-			    strtoofft( targv[ 6 ], NULL, 10 ), targv[ 7 ], &afinfo );
+			    strtoofft( targv[ 6 ], NULL, 10 ), targv[ 7 ],
+			    &afinfo );
 		    } else {
 			rc = stor_file( sn, pathdesc, decode( targv[ 1 ] ), 
 			    strtoofft( targv[ 6 ], NULL, 10 ), targv[ 7 ]); 
 		    }
 		    if ( rc < 0 ) {
 			if ( dodots ) { putchar( (char)'\n' ); }
-			exitcode = 2;
-			goto done;
+			exit( 2 );
 		    }
+		    respcount += 2;
 		}
 	    }
 	}
     }
 
 done:
-     if ( network ) {
-	 if (( closesn( sn )) != 0 ) {
-	     fprintf( stderr, "cannot close sn\n" );
-	     exitcode = 2;
-	 }
-     }
+    if ( network ) {
+	while ( respcount > 0 ) {
+	    if ( stor_response( sn, &respcount ) < 0 ) {
+		exit( 2 );
+	    }
+	}
+	if (( closesn( sn )) != 0 ) {
+	    fprintf( stderr, "cannot close sn\n" );
+	    exit( 2 );
+	}
+    }
 
-    exit( exitcode );
+    exit( 0 );
 }

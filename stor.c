@@ -46,11 +46,58 @@ extern void            	(*logger)( char * );
 extern SSL_CTX  	*ctx;
 
     int
+stor_response( SNET *sn, int *respcount )
+{
+    fd_set		fds;
+    struct timeval	tv;
+    char		*line;
+
+    for (;;) {
+	if ( ! snet_hasdata( sn )) {
+	    FD_ZERO( &fds );
+	    FD_SET( snet_fd( sn ), &fds );
+
+	    tv.tv_sec = 0;
+	    tv.tv_usec = 0;
+
+	    if ( select( snet_fd( sn ) + 1, &fds, NULL, NULL, &tv ) < 0 ) {
+		return( -1 );
+	    }
+	    if ( ! FD_ISSET( snet_fd( sn ), &fds )) {
+		return( 0 );
+	    }
+	}
+
+	tv = timeout;
+	if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
+	    if ( snet_eof( sn )) {
+		fprintf( stderr, "store failed: Connection closed\n" );
+	    } else {
+		fprintf( stderr, "store failed: %s\n", strerror( errno ));
+	    }
+	    return( -1 );
+	}
+
+	if ( (*respcount) % 2 ) {
+	    if ( *line != '2' ) {
+		/* Error from server - transaction aborted */
+		fprintf( stderr, "%s\n", line );
+		return( -1 );
+	    }
+	} else {
+	    if ( *line != '3' ) {
+		/* Error from server - transaction aborted */
+		fprintf( stderr, "%s\n", line );
+		return( -1 );
+	    }
+	}
+	(*respcount)--;
+    }
+}
+
+    int
 n_stor_file( SNET *sn, char *pathdesc, char *path )
 {
-    struct timeval      tv;
-    char                *line;
-
     /* tell server what it is getting */
     if ( snet_writef( sn, "%s", pathdesc ) < 0 ) {
 	fprintf( stderr, "store %s failed: %s\n", pathdesc,
@@ -58,22 +105,6 @@ n_stor_file( SNET *sn, char *pathdesc, char *path )
 	goto sn_error;
     }
     if ( verbose ) printf( ">>> %s", pathdesc );
-    tv = timeout;
-    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-	if ( snet_eof( sn )) {
-	    fprintf( stderr, "store %s failed: Connection closed\n",
-		pathdesc );
-	} else {
-	    fprintf( stderr, "store %s failed: %s\n", pathdesc,
-		strerror( errno ));
-	}
-	goto sn_error;
-    }
-    if ( *line != '3' ) {
-	/* Error from server - transaction aborted */
-        fprintf( stderr, "%s\n", line );
-        return( -1 );
-    }
 
     /* tell server how much data to expect and send '.' */
     if ( snet_writef( sn, "0\r\n.\r\n" ) < 0 ) {
@@ -82,25 +113,6 @@ n_stor_file( SNET *sn, char *pathdesc, char *path )
 	goto sn_error;
     }
     if ( verbose ) fputs( ">>> 0\n\n>>> .\n", stdout );
-
-    tv = timeout;
-    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-	if ( snet_eof( sn )) {
-	    fprintf( stderr, "store %s failed: Connection closed\n",
-		pathdesc );
-	} else {
-	    fprintf( stderr, "store %s failed: %s\n", pathdesc,
-		strerror( errno ));
-	}
-	goto sn_error;
-    }
-    if ( *line != '2' ) {
-	/* Error from server - transaction aborted */
-        fprintf( stderr, "%s\n", line );
-        return( -1 );
-    }
-
-    /* Done with server */
 
     if ( !quiet && !verbose ) {
         printf( "%s: stored as zero length file\n", path );
@@ -117,7 +129,6 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
     char *trancksum )
 {
     int			fd;
-    char                *line;
     unsigned char       buf[ 8192 ];
     struct stat         st;
     struct timeval      tv;
@@ -170,23 +181,6 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
 	goto sn_error;
     }
     if ( verbose ) printf( ">>> %s", pathdesc );
-    tv = timeout;
-    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-	if ( snet_eof( sn )) {
-	    fprintf( stderr, "store %s failed: Connection closed\n",
-		pathdesc );
-	} else {
-	    fprintf( stderr, "store %s failed: %s\n", pathdesc,
-		strerror( errno ));
-	}
-	goto sn_error;
-    }
-    if ( *line != '3' ) {
-	/* Error from server - transaction aborted */
-        fprintf( stderr, "%s\n", line );
-	close( fd );
-        return( -1 );
-    }
 
     /* tell server how much data to expect */
     if ( snet_writef( sn, "%" PRIofft "d\r\n", st.st_size ) < 0 ) {
@@ -230,25 +224,6 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
 	goto sn_error;
     }
     if ( verbose ) fputs( "\n>>> .\n", stdout );
-    tv = timeout;
-    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-	if ( snet_eof( sn )) {
-	    fprintf( stderr, "store %s failed: Connection closed\n",
-		pathdesc );
-	} else {
-	    fprintf( stderr, "store %s failed: %s\n", pathdesc,
-		strerror( errno ));
-	}
-	goto sn_error;
-    }
-    if ( *line != '2' ) {
-	/* Error from server - transaction aborted */
-        fprintf( stderr, "%s\n", line );
-	close( fd );
-        return( -1 );
-    }
-
-    /* Done with server */
 
     if ( close( fd ) < 0 ) {
 	perror( path );
@@ -283,7 +258,6 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     int			rc = 0, dfd = 0, rfd = 0;
     off_t		size;
     char		buf[ 8192 ];
-    char	        *line;
     struct timeval   	tv;
     int		      	md_len;
     extern EVP_MD      	*md;
@@ -331,28 +305,6 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     }
     if ( verbose ) {
 	printf( ">>> %s", pathdesc );
-    }
-
-    /* tell server what it is getting */
-    tv = timeout;
-    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-	if ( snet_eof( sn )) {
-	    fprintf( stderr, "store %s failed: Connection closed\n",
-		pathdesc );
-	} else {
-	    fprintf( stderr, "store %s failed: %s\n", pathdesc,
-		strerror( errno ));
-	}
-	goto sn_error;
-    }
-    if ( *line != '3' ) {
-	/* Error from server - transaction aborted */
-        fprintf( stderr, "%s\n", line );
-	close( dfd );
-	if ( afinfo->as_ents[ AS_RFE ].ae_length > 0 ) {
-	    close( rfd );
-	}
-        return( -1 );
     }
 
     /* tell server how much data to expect */
@@ -464,24 +416,6 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 	goto sn_error;
     }
     if ( verbose ) fputs( "\n>>> .\n", stdout );
-    tv = timeout;
-    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-	if ( snet_eof( sn )) {
-	    fprintf( stderr, "store %s failed: Connection closed\n",
-		pathdesc );
-	} else {
-	    fprintf( stderr, "store %s failed: %s\n", pathdesc,
-		strerror( errno ));
-	}
-	goto sn_error;
-    }
-    if ( *line != '2' ) {
-	/* Error from server - transaction aborted */
-        fprintf( stderr, "%s\n", line );
-        return( -1 );
-    }
-
-    /* Done with server */
 
     /* Close file descriptors */
     if ( close( dfd ) < 0 ) {
@@ -521,7 +455,6 @@ sn_error:
 n_stor_applefile( SNET *sn, char *pathdesc, char *path )
 {
     struct timeval      	tv;
-    char                	*line; 
     struct applefileinfo	afinfo;
     off_t			size;
 
@@ -560,22 +493,6 @@ n_stor_applefile( SNET *sn, char *pathdesc, char *path )
 	goto sn_error;
     }
     if ( verbose ) printf( ">>> %s", pathdesc );
-    tv = timeout;
-    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-	if ( snet_eof( sn )) {
-	    fprintf( stderr, "store %s failed: Connection closed\n",
-		pathdesc );
-	} else {
-	    fprintf( stderr, "store %s failed: %s\n", pathdesc,
-		strerror( errno ));
-	}
-	goto sn_error;
-    }
-    if ( *line != '3' ) {
-	/* Error from server - transaction aborted */
-        fprintf( stderr, "%s\n", line );
-        return( -1 );
-    }
 
     /* tell server how much data to expect and send '.' */
     if ( snet_writef( sn, "%" PRIofft "d\r\n", afinfo.as_size ) < 0 ) {
@@ -633,22 +550,6 @@ n_stor_applefile( SNET *sn, char *pathdesc, char *path )
 	goto sn_error;
     }
     if ( verbose ) fputs( "\n>>> .\n", stdout );
-    tv = timeout;
-    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-	if ( snet_eof( sn )) {
-	    fprintf( stderr, "store %s failed: Connection closed\n",
-		pathdesc );
-	} else {
-	    fprintf( stderr, "store %s failed: %s\n", pathdesc,
-		strerror( errno ));
-	}
-	goto sn_error;
-    }
-    if ( *line != '2' ) {
-	/* Error from server - transaction aborted */
-        fprintf( stderr, "%s\n", line );
-        return( -1 );
-    }
 
     if ( !quiet && !verbose ) {
         printf( "%s: stored as zero length applefile\n", path );

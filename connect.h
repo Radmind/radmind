@@ -17,3 +17,4 @@ int stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
 int n_stor_applefile( SNET *sn, char *pathdesc, char *path );
 int stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     char *trancksum, struct applefileinfo *afinfo );
+int stor_response( SNET *sn, int *respcount );

@@ -589,7 +589,7 @@ f_stor( SNET *sn, int ac, char *av[] )
 
     if ( checkuser && ( !authorized )) {
 	snet_writef( sn, "%d Not logged in\r\n", 551 );
-	return( 1 );
+	exit( 1 );
     }
     switch ( keyword( ac, av )) {
 
@@ -606,11 +606,11 @@ f_stor( SNET *sn, int ac, char *av[] )
 	if ( mkdir( xscriptdir, 0777 ) < 0 ) {
 	    if ( errno == EEXIST ) {
 	        snet_writef( sn, "%d Transcript exists\r\n", 551 );
-		return( 1 );
+		exit( 1 );
 	    }
 	    snet_writef( sn, "%d %s: %s\r\n",
 		    551, xscriptdir, strerror( errno ));
-	    return( 1 );
+	    exit( 1 );
 	}
 	break;
 
@@ -620,7 +620,7 @@ f_stor( SNET *sn, int ac, char *av[] )
 	 */
 	if (( strcmp( upload_xscript, av[ 2 ] ) != 0 )) {
 	    snet_writef( sn, "%d Incorrect Transcript\r\n", 552 );
-	    return( 1 );
+	    exit( 1 );
 	}
 
 	/* decode() uses static mem, so strdup() */
@@ -638,7 +638,7 @@ f_stor( SNET *sn, int ac, char *av[] )
 
     default:
         snet_writef( sn, "%d STOR Syntax error\r\n", 550 );
-	return( 1 ); 
+	exit( 1 ); 
     }
 
 
@@ -646,12 +646,12 @@ f_stor( SNET *sn, int ac, char *av[] )
 	if ( mkdirs( upload ) < 0 ) {
 	    syslog( LOG_ERR, "f_stor: mkdir: %s: %m", upload );
 	    snet_writef( sn, "%d %s: %s\r\n", 555, upload, strerror( errno ));
-	    return( 1 );
+	    exit( 1 );
 	}
 	if (( fd = open( upload, O_CREAT|O_EXCL|O_WRONLY, 0666 )) < 0 ) {
 	    syslog( LOG_ERR, "f_stor: open: %s: %m", upload );
 	    snet_writef( sn, "%d %s: %s\r\n", 555, upload, strerror( errno ));
-	    return( 1 );
+	    exit( 1 );
 	}
     }
 
@@ -678,13 +678,13 @@ f_stor( SNET *sn, int ac, char *av[] )
 
 	if ( write( fd, buf, rc ) != rc ) {
 	    snet_writef( sn, "%d %s: %s\r\n", 555, upload, strerror( errno ));
-	    return( 1 );
+	    exit( 1 );
 	}
     }
 
     if ( close( fd ) < 0 ) {
 	snet_writef( sn, "%d %s: %s\r\n", 555, upload, strerror( errno ));
-	return( 1 );
+	exit( 1 );
     }
 
     syslog( LOG_DEBUG, "f_stor: file %s stored", upload );
