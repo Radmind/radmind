@@ -147,8 +147,9 @@ main( ac, av )
     }
 
     if ( err || optind != ac ) {
-	fprintf( stderr, "Usage: radmind [ -D path ] [ -d ] [ -c ] " );
-	fprintf( stderr, "[ -p port ] [ -b backlog ] [ -u umask ]\n" );
+	fprintf( stderr, "Usage: radmind [ -b backlog ] " );
+	fprintf( stderr, "[ -D path ] [ -d ] [ -L syslog-facility ] " );
+	fprintf( stderr, "[ -p port ] [ -u umask ] [ -V ]\n" );
 	exit( 1 );
     }
 
