@@ -43,7 +43,7 @@ pathcmp( const unsigned char *p1, const unsigned char *p2 )
 	    } else {
 		return( rc );
 	    }
-#endif notdef
+#endif /* notdef */
 
 	    if (( *p2 != '\0' ) && ( *p1 == '/' )) {
 		return( -1 );
