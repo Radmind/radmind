@@ -168,25 +168,6 @@ check( SNET *sn, char *type, char *file )
 	}
     }
 
-    /* Check file is a regular file */
-    if ((stat( path, &st )) != 0 ) {
-	if ( errno != ENOENT ) {
-	    perror( path );
-	    return( 2 );
-	}
-    } else {
-	if (( st.st_mode & S_IFMT ) != S_IFREG ) {
-	    fprintf( stderr, "%s: not a file\n", path );
-	    return( 2 );
-	}
-    }
-
-    if ( access( path, R_OK | W_OK ) != 0 ) {
-	if ( errno != ENOENT ) {
-	    perror( path );
-	}
-    }
-
     if (( stats = getstat( sn, (char *)&filedesc )) == NULL ) {
 	return( 2 );
     }

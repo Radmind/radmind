@@ -31,7 +31,7 @@ do_chksum( char *path, char *chksum_b64 )
     int
 do_chksum_fd( int fd, char *chksum_b64 )
 {
-    unsigned long	rr;
+    ssize_t		rr;
     unsigned char	buf[ 8192 ];
     unsigned char	md[ SHA_DIGEST_LENGTH ];
     unsigned char	mde[ SZ_BASE64_E( sizeof( md )) ];
@@ -40,7 +40,7 @@ do_chksum_fd( int fd, char *chksum_b64 )
     SHA1_Init( &sha_ctx );
 
     while (( rr = read( fd, buf, sizeof( buf ))) > 0 ) {
-	SHA1_Update( &sha_ctx, buf, rr );
+	SHA1_Update( &sha_ctx, buf, (size_t)rr );
     }
 
     if ( rr < 0 ) {
