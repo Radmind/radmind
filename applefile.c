@@ -23,7 +23,7 @@
 #include "base64.h"
 
 extern int		verbose;
-extern int		dotots;
+extern int		dodots;
 extern int              cksum;
 void            	(*logger)( char * );
 extern struct timeval	timeout;
