@@ -262,11 +262,7 @@ filechecklist:
 
 	/* DOWNLOAD */
 	if ( *command == '+' ) {
-#ifdef __APPLE__
 	    if (( *targv[ 0 ] != 'f' ) && ( *targv[ 0 ] != 'a' )) {
-#else !__APPLE__
-	    if ( *targv[ 0 ] != 'f' ) {
-#endif __APPLE__
 		fprintf( stderr, "line %d: \"%c\" invalid download type\n",
 			linenum, *targv[ 0 ] );
 		return( 1 );
@@ -289,7 +285,6 @@ filechecklist:
 		}
 	    }
 
-#ifdef __APPLE__
 	    if ( *targv[ 0 ] == 'a' ) {
 		if ( retr_applefile( sn, pathdesc, path, NULL,
 			chksum_b64, temppath, linenum ) != 0 ) {
@@ -299,15 +294,8 @@ filechecklist:
 		    (char *)&temppath ) != 0 ) {
 		return( 1 );
 	    }
-#else !__APPLE__
-	    if ( retr( sn, pathdesc, path, NULL, chksum_b64,
-		    (char *)&temppath ) != 0 ) {
-		return( 1 );
-	    }
-#endif __APPLE__
 
 	    if ( getfsoinfo( temppath, &st, &fstype, finfo ) < 0 ) {
-printf( "getfso failed\n" );
 		perror( temppath );
 		return( 1 );
 	    }
