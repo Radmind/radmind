@@ -20,8 +20,8 @@
 # lcreate -l -U
 # -c sha1
 
-SERVER="-h _RADMIND_HOST"
-AUTHLEVEL="-w _RADMIND_AUTHLEVEL"
+SERVER="_RADMIND_HOST"
+TLSLEVEL="_RADMIND_AUTHLEVEL"
 EDITOR=${EDITOR:-vi}
 DEFAULTS="/etc/defaults/radmind"
 FSDIFFROOT="."
@@ -87,14 +87,14 @@ dopostapply() {
 }
 
 update() {
-    local opt="$1"
-    local kopt=""
+    opt="$1"
+    kopt=
 
     if [ x"$opt" = x"interactive" ]; then
 	kopt="-n"
     fi
 
-    ktcheck ${kopt} ${AUTHLEVEL} ${SERVER} -c sha1
+    ktcheck ${kopt} -w ${TLSLEVEL} -h ${SERVER} -c sha1
     case "$?" in
     0)  if [ x"$opt" = x"hook" -a ! -f "${FLAG}" ]; then
 	    cleanup
@@ -105,7 +105,7 @@ update() {
     1)	if [ x"$opt" = x"interactive" ]; then
 	    Yn "Update command file and/or transcripts?"
 	    if [ $? -eq 1 ]; then
-		ktcheck ${AUTHLEVEL} ${SERVER} -c sha1
+		ktcheck -w ${TLSLEVEL} -h ${SERVER} -c sha1
 		RC=$?
 		if [ $RC -ne 1 ]; then
 		    echo Nothing to update
@@ -154,7 +154,7 @@ update() {
 	    exit 0
 	fi
     fi
-    lapply ${PROGRESS} ${AUTHLEVEL} ${SERVER} ${CHECKSUM} ${FTMP}
+    lapply ${PROGRESS} -w ${TLSLEVEL} -h ${SERVER} ${CHECKSUM} ${FTMP}
     case "$?" in
     0)	;;
 
@@ -199,7 +199,7 @@ while getopts %ch:ltw: opt; do
     c)	CHECKSUM="-csha1"
 	;;
 
-    h)	SERVER="-h $OPTARG"
+    h)	SERVER="$OPTARG"
     	;;
 
     l)  USERAUTH="-l"
@@ -208,7 +208,7 @@ while getopts %ch:ltw: opt; do
     t)	TEMPFILES="TRUE"
     	;;
 
-    w)	AUTHLEVEL="-w $OPTARG"
+    w)	TLSLEVEL="$OPTARG"
     	;;
 
     *)  usage
@@ -246,13 +246,13 @@ update)
     ;;
 
 create)
-    ktcheck ${AUTHLEVEL} ${SERVER} -n -c sha1
+    ktcheck -w ${TLSLEVEL} -h ${SERVER} -n -c sha1
     case "$?" in
     0)	;;
 
     1)	Yn "Update command file and/or transcripts?"
 	if [ $? -eq 1 ]; then
-	    ktcheck ${AUTHLEVEL} ${SERVER} -c sha1
+	    ktcheck -w ${TLSLEVEL} -h ${SERVER} -c sha1
 	    rc = $?
 	    if [ $rc -ne 0 ]; then
 		cleanup
@@ -294,8 +294,8 @@ create)
 	    read USERNAME
 	    USERNAME="-U ${USERNAME}"
 	fi
-	lcreate ${PROGRESS} ${AUTHLEVEL} ${USERAUTH} ${USERNAME} \
-			${CHECKSUM} ${SERVER} ${FTMP}
+	lcreate ${PROGRESS} -w ${AUTHLEVEL} ${USERAUTH} ${USERNAME} \
+			${CHECKSUM} -h ${SERVER} ${FTMP}
 	if [ $? -ne 0 ]; then
 	    cleanup
 	    exit 1
@@ -305,7 +305,7 @@ create)
     ;;
 
 trip)
-    ktcheck ${AUTHLEVEL} ${SERVER} -qn -c sha1
+    ktcheck -w ${TLSLEVEL} -h ${SERVER} -qn -c sha1
     case "$?" in
     0)
 	;;
@@ -346,7 +346,7 @@ auto)
     fi
 
     # XXX - if this fails, do we loop, or just report error?
-    ktcheck ${AUTHLEVEL} ${SERVER} -q -c sha1
+    ktcheck -w ${TLSLEVEL} -h ${SERVER} -q -c sha1
     if [ $? -eq 1 ]; then
 	while true; do
 	    fsdiff -A ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
@@ -356,7 +356,7 @@ auto)
 		exit 1
 	    fi
 	    if [ -s ${FTMP} ]; then
-		lapply ${AUTHLEVEL} ${SERVER} -q ${CHECKSUM} \
+		lapply -w ${TLSLEVEL} -h ${SERVER} -q ${CHECKSUM} \
 			${FTMP} 2>&1 > ${LTMP}
 		case $? in
 		0)
@@ -377,7 +377,7 @@ auto)
 		    cat ${LTMP}
 		    sleep ${RETRY}
 		    RETRY=${RETRY}0
-		    ktcheck ${AUTHLEVEL} ${SERVER} -q -c sha1
+		    ktcheck -w ${TLSLEVEL} -h ${SERVER} -q -c sha1
 		    ;;
 		esac
 	    fi
@@ -386,7 +386,7 @@ auto)
     ;;
 
 force)
-    ktcheck ${AUTHLEVEL} ${SERVER} -c sha1
+    ktcheck -w ${TLSLEVEL} -h ${SERVER} -c sha1
     case "$?" in
     0)	;;
     1)	;;
@@ -409,7 +409,7 @@ force)
     fi
     
     dopreapply ${FTMP}
-    lapply ${PROGRESS} ${AUTHLEVEL} ${SERVER} ${CHECKSUM} ${FTMP}
+    lapply ${PROGRESS} -w ${TLSLEVEL} -h ${SERVER} ${CHECKSUM} ${FTMP}
     case "$?" in
     0)	;;
 
