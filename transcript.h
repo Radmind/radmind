@@ -18,6 +18,7 @@
 #define PR_FS_ONLY	2
 #define PR_DOWNLOAD	3 
 #define PR_STATUS	4 
+#define PR_STATUS_NEG	5
 
 int			edit_path;
 int			skip;
