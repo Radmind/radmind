@@ -65,7 +65,6 @@ char		command_file[ MAXPATHLEN ];
 char		upload_xscript[ MAXPATHLEN ];
 const EVP_MD    *md;
 struct node	*tran_list = NULL;
-extern char	path_config;
 
     int
 f_quit( sn, ac, av )
@@ -449,7 +448,7 @@ f_stat( SNET *sn, int ac, char *av[] )
 	}
 
 	if (( av = special_t( path, enc_file )) == NULL ) {
-	    sprintf( stranpath, "%s/special.T", _PATH_TRANSCRIPTS );
+	    sprintf( stranpath, "transcript/special.T" );
 	    if (( av = special_t( stranpath, enc_file )) == NULL ) {
 		snet_writef( sn, "%s %s %o %d %d %d %d %s\r\n", "f", enc_file, 
 		    DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, 
@@ -703,7 +702,7 @@ cmdloop( int fd, struct sockaddr_in *sin )
 	    inet_ntoa( sin->sin_addr ), remote_host );
     
     /* lookup proper command file based on the hostname */
-    if ( command_k( &path_config ) < 0 ) {
+    if ( command_k( "config" ) < 0 ) {
         snet_writef( sn, "%d No access for %s\r\n", 500, remote_host );
 	exit( 1 );
     }

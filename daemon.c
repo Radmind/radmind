@@ -37,8 +37,7 @@ int		backlog = 5;
 int		verbose = 0;
 int		dodots = 0;
 int		cksum = 0;
-char		*path_radmind = _PATH_RADMIND;
-char		path_config[ MAXPATHLEN ];
+char		*radmind_path = _RADMIND_PATH;
 
 extern char	*version;
 
@@ -97,7 +96,7 @@ main( ac, av )
     int			dontrun = 0;
     char		*prog;
     unsigned short	port = 0;
-    int			facility = LOG_RADMIND;
+    int			facility = _RADMIND_LOG;
     extern int		optind;
     extern char		*optarg;
 
@@ -115,7 +114,7 @@ main( ac, av )
 	    exit( 0 );
 
 	case 'D':		/* Set radmind path */
-	    path_radmind = optarg;
+	    radmind_path = optarg;
 	    break;
 
 	case 'L' :		/* syslog facility */
@@ -153,16 +152,8 @@ main( ac, av )
 	exit( 1 );
     }
 
-    if ( chdir( path_radmind ) < 0 ) {
-	perror( path_radmind );
-	exit( 1 );
-    }
-
-    /* Set path to config file */
-    memset( path_config, 0, MAXPATHLEN );
-    if ( snprintf( path_config, MAXPATHLEN, "%s/%s", path_radmind, 
-	    _CONFIG_FILE ) > MAXPATHLEN -1 ) {
-	fprintf( stderr, "%s/%s: path too long\n", path_radmind, _CONFIG_FILE );
+    if ( chdir( radmind_path ) < 0 ) {
+	perror( radmind_path );
 	exit( 1 );
     }
 
