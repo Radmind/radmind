@@ -6,12 +6,12 @@
 #include <sys/paths.h>
 #endif __APPLE__
 #include <fcntl.h>
-#include <snet.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 
-#include <sha.h>
+#include <openssl/evp.h>
+#include <snet.h>
 
 #include "connect.h"
 #ifdef __APPLE__
@@ -43,21 +43,21 @@ retr( SNET *sn, char *pathdesc, char *path, char *cksumval, char *temppath,
 {
     struct timeval      tv;
     char 		*line;
-    int			fd;
+    int			fd, md_len;
     size_t              size;
     unsigned char       buf[ 8192 ]; 
     ssize_t             rr;
-    unsigned char       md[ SHA_DIGEST_LENGTH ];
-    unsigned char       mde[ SZ_BASE64_E( sizeof( md )) ];
-    SHA_CTX             sha_ctx;
-
+    extern EVP_MD       *md;
+    EVP_MD_CTX          mdctx;
+    unsigned char       md_value[ EVP_MAX_MD_SIZE ];
+    unsigned char       cksum_b64[ EVP_MAX_MD_SIZE ];
 
     if ( cksum ) {
 	if ( strcmp( cksumval, "-" ) == 0 ) {
 	    fprintf( stderr, "line %d: cksum not listed\n", linenum);
 	    return( -1 );
 	}
-	SHA1_Init( &sha_ctx );
+	EVP_DigestInit( &mdctx, md );
     }
 
     if( snet_writef( sn, "RETR %s\n", pathdesc ) == NULL ) {
@@ -106,7 +106,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *cksumval, char *temppath,
 	    return( -1 );
 	}
     }
-    if ( verbose ) printf( "<<< %d\n<<< ", size );
+    if ( verbose ) printf( "<<< %ld\n<<< ", size );
 
     /* Get file from server */
     while ( size > 0 ) {
@@ -121,7 +121,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *cksumval, char *temppath,
 	    goto error;
 	}
 	if ( cksum ) {
-	    SHA1_Update( &sha_ctx, buf, (size_t)rr );
+	    EVP_DigestUpdate( &mdctx, buf, (unsigned int)rr );
 	}
 	if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 	size -= rr;
@@ -145,9 +145,9 @@ retr( SNET *sn, char *pathdesc, char *path, char *cksumval, char *temppath,
 
     /* cksum file */
     if ( cksum ) {
-	SHA1_Final( md, &sha_ctx );
-	base64_e( md, sizeof( md ), mde );
-	if ( strcmp( cksumval, mde ) != 0 ) {
+	EVP_DigestFinal( &mdctx, md_value, &md_len );
+	base64_e( ( char*)&md_value, md_len, cksum_b64 );
+	if ( strcmp( cksumval, cksum_b64 ) != 0 ) {
 	    fprintf( stderr, "checksum failed: %s\n", path );
 	    goto error;
 	}
@@ -173,7 +173,7 @@ error3:
 retr_applefile( SNET *sn, char *pathdesc, char *path, char *cksumval,
     char *temppath, size_t transize )
 {
-    int				dfd, rfd, rc;
+    int				dfd, rfd, rc, md_len;
     size_t			size, rsize;
     char			finfo[ 32 ];
     char			buf[ 8192 ];
@@ -184,12 +184,17 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *cksumval,
     extern struct atterlist	alist;
     struct as_entry		ae_ents[ 3 ]; 
     struct timeval		tv;
-    unsigned char      		md[ SHA_DIGEST_LENGTH ];
-    unsigned char      		mde[ SZ_BASE64_E( sizeof( md )) ];
-    SHA_CTX            		sha_ctx;
+    extern EVP_MD       	*md;
+    EVP_MD_CTX   	       	mdctx;
+    unsigned char       md_value[ EVP_MAX_MD_SIZE ];
+    unsigned char       cksum_b64[ EVP_MAX_MD_SIZE ];
 
     if ( cksum ) {
-	SHA1_Init( &sha_ctx );
+        if ( strcmp( cksumval, "-" ) == 0 ) {
+            fprintf( stderr, "line %d: cksum not listed\n", linenum);
+            return( -1 );
+        }
+        EVP_DigestInit( &mdctx, md );
     }
 
     if( snet_writef( sn, "RETR %s\n", pathdesc ) == NULL ) {
@@ -211,18 +216,18 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *cksumval,
 
     /* Get file size from server */
     tv = timeout;
-    if (( line = snet_getline( sn, &tv )) == NULL ) {
+    if ( ( line = snet_getline( sn, &tv ) ) == NULL ) {
         fprintf( stderr, "snet_getline" );
-        return( -1 );
+	return( -1 );
     }
     size = atol( line );
-    if ( size != 0 ) {
-	if ( size != transize ) {
-	    fprintf( stderr,
-		"%s: size in transcript does not match size from server\n",
-		decode( path ));
-	    return( -1 );
-	}
+    if ( transize != 0 ) {
+        if ( size != transize ) {
+            fprintf( stderr,
+                "%s: size in transcript does not match size from server\n",
+                decode( path ));
+            return( -1 );
+        }
     }
     if ( verbose ) printf( "<<< %ld\n<<< ", size );
 
@@ -238,7 +243,9 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *cksumval,
 	fprintf( stderr, "%s is not a radmind AppleSingle file.\n", path );
 	return( -1 );
     }
-    if ( cksum ) SHA1_Update( &sha_ctx, ( char * )&ah, (size_t)rc );
+    if ( cksum ) {
+	EVP_DigestUpdate( &mdctx, (char *)&ah, (unsigned int)rc );
+    }
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
     size -= rc;
 
@@ -250,7 +257,9 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *cksumval,
 	perror( "snet_read" );
 	return( -1 );
     }
-    if ( cksum ) SHA1_Update( &sha_ctx, ( char * )&ae_ents, (size_t)rc );
+    if ( cksum ) {
+	EVP_DigestUpdate( &mdctx, (char *)&ae_ents, (unsigned int)rc );
+    }
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 
     size -= rc;
@@ -262,7 +271,9 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *cksumval,
 	perror( "snet_read" );
 	return( -1 );
     }
-    if ( cksum ) SHA1_Update( &sha_ctx, finfo, (size_t)rc );
+    if ( cksum ) {
+	EVP_DigestUpdate( &mdctx, finfo, (unsigned int)rc );
+    }
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
     size -= rc;
 
@@ -303,7 +314,9 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *cksumval,
 	    perror( "rfd write" );
 	    goto error2;
 	}
-	if ( cksum ) SHA1_Update( &sha_ctx, buf, (size_t)rc );
+	if ( cksum ) {
+	    EVP_DigestUpdate( &mdctx, buf, (unsigned int)rc );
+	}
 	if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
     }
 
@@ -328,7 +341,9 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *cksumval,
 	    goto error2;
 	}
 
-	if ( cksum ) SHA1_Update( &sha_ctx, buf, (size_t)rc );
+	if ( cksum ) {
+	    EVP_DigestUpdate( &mdctx, buf, (unsigned int)rc );
+	}
 	if ( dodots ) { putc( '.', stdout ); fflush( stdout); }
     }
 
@@ -356,9 +371,9 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *cksumval,
     if ( verbose ) printf( "<<< .\n" );
 
     if ( cksum ) {
-        SHA1_Final( md, &sha_ctx );
-        base64_e( md, sizeof( md ), mde );
-        if ( strcmp( cksumval, mde ) != 0 ) {
+	EVP_DigestFinal( &mdctx, md_value, &md_len );
+	base64_e( ( char*)&md_value, md_len, cksum_b64 );
+        if ( strcmp( cksumval, cksum_b64 ) != 0 ) {
             fprintf( stderr, "checksum failed: %s\n", path );
             return( -1 );
         }

@@ -3,13 +3,13 @@
 #include <netinet/in.h>
 #include <fcntl.h>
 #include <netdb.h>
-#include <snet.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
 #include <unistd.h>
 
-#include <sha.h>
+#include <openssl/evp.h>
+#include <snet.h>
 
 #include "base64.h"
 #include "cksum.h"
@@ -35,6 +35,7 @@ int		cksum = 0;
 int		quiet = 0;
 int		linenum = 0;
 extern char	*version;
+const EVP_MD    *md;
 
     static void
 v_logger( char *line )
@@ -62,10 +63,12 @@ main( int argc, char **argv )
     while (( c = getopt( argc, argv, "c:h:nNp:qt:TvV" )) != EOF ) {
 	switch( c ) {
         case 'c':
-            if ( strcasecmp( optarg, "sha1" ) != 0 ) {
-		fprintf( stderr, "%s: unsupported checksum\n", optarg );
-                exit( 1 ); 
-            }   
+            OpenSSL_add_all_digests();
+            md = EVP_get_digestbyname( optarg );
+            if ( !md ) {
+                fprintf( stderr, "%s: unsupported checksum\n", optarg );
+                exit( 1 );
+            }
             cksum = 1;
             break;
 	case 'h':
@@ -148,11 +151,13 @@ main( int argc, char **argv )
 	    exit( 1 );
 	}
 
-	if ( do_cksum( argv[ optind ], cksumval ) < 0 ) {
-	   perror( tname );
-	    exitcode = 1;
-	    (void)close( fd );
-	    goto done;
+	if ( cksum ) {
+	    if ( do_cksum( argv[ optind ], cksumval ) < 0 ) {
+	       perror( tname );
+		exitcode = 1;
+		(void)close( fd );
+		goto done;
+	    }
 	}
 
 	if (( rc = stor_file( fd, sn, NULL, cksumval, tname, "f", 0 )) <  0 ) {

@@ -2,13 +2,13 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <netdb.h>
-#include <snet.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
 #include <unistd.h>
 
-#include <sha.h>
+#include <openssl/evp.h>
+#include <snet.h>
 
 #include "cksum.h"
 #include "connect.h"
@@ -33,6 +33,7 @@ int		network = 1;
 char		transcript[ 2 * MAXPATHLEN ] = { 0 };
 char		prepath[ MAXPATHLEN ]  = { 0 };
 extern char	*version, *checksumlist;
+const EVP_MD    *md;
 
 struct node {
     char                *path;
@@ -358,12 +359,14 @@ main( int argc, char **argv )
     while (( c = getopt ( argc, argv, "c:h:np:qVv" )) != EOF ) {
 	switch( c ) {
 	case 'c':
-	    if ( strcasecmp( optarg, "sha1" ) != 0 ) {
-		fprintf( stderr, "%s: unsupported checksum\n", optarg );
-		exit( 1 );
-	    }
-	    cksum = 1;
-	    break;
+            OpenSSL_add_all_digests();
+            md = EVP_get_digestbyname( optarg );
+            if ( !md ) {
+                fprintf( stderr, "%s: unsupported checksum\n", optarg );
+                exit( 1 );
+            }
+            cksum = 1;
+            break;
 	case 'h':
 	    host = optarg;
 	    break;

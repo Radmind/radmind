@@ -9,9 +9,9 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <snet.h>
 
-#include <sha.h>
+#include <openssl/evp.h>
+#include <snet.h>
 
 #include "cksum.h"
 #include "base64.h"
@@ -23,32 +23,30 @@ extern struct as_header as_header;
     ssize_t 
 do_cksum( char *path, char *cksum_b64 )
 {
-    int			fd;
+    int			fd, md_len;
     ssize_t		rr, size = 0;
     unsigned char	buf[ 8192 ];
-    unsigned char	md[ SHA_DIGEST_LENGTH ];
-    unsigned char	mde[ SZ_BASE64_E( sizeof( md )) ];
-    SHA_CTX		sha_ctx;
+    extern EVP_MD	*md;
+    EVP_MD_CTX		mdctx;
+    unsigned char 	md_value[ EVP_MAX_MD_SIZE ];
 
     if (( fd = open( path, O_RDONLY, 0 )) < 0 ) {
 	return( -1 );
     }
 
-    SHA1_Init( &sha_ctx );
+    EVP_DigestInit( &mdctx, md );
 
     while (( rr = read( fd, buf, sizeof( buf ))) > 0 ) {
 	size += rr;
-	SHA1_Update( &sha_ctx, buf, (size_t)rr );
+	EVP_DigestUpdate( &mdctx, buf, (unsigned int)rr );
     }
 
     if ( rr < 0 ) {
 	return( -1 );
     }
 
-    SHA1_Final( md, &sha_ctx );
-
-    base64_e( md, sizeof( md ), mde );
-    strcpy( cksum_b64, mde );
+    EVP_DigestFinal( &mdctx, md_value, &md_len );
+    base64_e( ( char*)&md_value, md_len, cksum_b64 );
 
     if ( close( fd ) != 0 ) {
 	return( -1 );

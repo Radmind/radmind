@@ -3,13 +3,13 @@
 #include <netinet/in.h>
 #include <fcntl.h>
 #include <netdb.h>
-#include <snet.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
 #include <unistd.h>
 
-#include <sha.h>
+#include <openssl/evp.h>
+#include <snet.h>
 
 #include "connect.h"
 #include "argcargv.h"
@@ -22,6 +22,7 @@ int			verbose = 0;
 int			dodots = 0;
 int			linenum = 0;
 int			cksum = 0;
+const EVP_MD    	*md;
 
     void
 output( char *string )

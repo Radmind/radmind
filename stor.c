@@ -12,8 +12,8 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <openssl/evp.h>
 #include <snet.h>
-#include <sha.h>
 
 #include "connect.h"
 #include "cksum.h"
@@ -85,20 +85,22 @@ n_stor_file( SNET *sn, char *filename, char *transcript )
 stor_file( int fd, SNET *sn, char *filename, char *cksumval, char *transcript,
     char *filetype, size_t size )
 {
+    int			md_len;
+    char                *line;
+    unsigned char       buf[ 8192 ];
     struct stat         st;
     struct timeval      tv;
-    unsigned char       buf[ 8192 ];
     ssize_t             rr;
-    char                *line;
-    unsigned char       md[ SHA_DIGEST_LENGTH ];
-    unsigned char       mde[ SZ_BASE64_E( sizeof( md )) ];
-    SHA_CTX             sha_ctx;
+    extern EVP_MD       *md;
+    EVP_MD_CTX          mdctx;
+    unsigned char       md_value[ EVP_MAX_MD_SIZE ];
+    unsigned char       cksum_b64[ EVP_MAX_MD_SIZE ];
 
     if ( cksum ) {
         if ( strcmp( cksumval, "-" ) == 0 ) {
             return( -3 );
         }
-        SHA1_Init( &sha_ctx );
+	EVP_DigestInit( &mdctx, md );
     }
 
     /* STOR "TRANSCRIPT" <transcript-name>  "\r\n" */
@@ -133,59 +135,49 @@ stor_file( int fd, SNET *sn, char *filename, char *cksumval, char *transcript,
         return( -1 );
     }
 
-    switch( *filetype ) {
-    case 'a':
-        if ( stor_applefile( fd, sn, decode( filename ), &sha_ctx, size )
-		!= 0 ) {
-            return( -1 );
-        }
-        break;
-    case 'f':
-	if ( fstat( fd, &st) < 0 ) {
-	    perror( filename );
+    if ( fstat( fd, &st) < 0 ) {
+	perror( filename );
+	return( -1 );
+    }
+
+    /* Check size listed in transcript */
+    if ( size != 0 ) {
+	if ( st.st_size != size ) {
+	    fprintf( stderr,
+		"%s: size in transcript does not match size of file\n",
+		decode( filename ));
 	    return( -1 );
 	}
+    }
 
-	if ( size != 0 ) {
-	    if ( st.st_size != size ) {
-		fprintf( stderr,
-		    "%s: size in transcript does not match size of file\n",
-		    decode( filename ));
-		return( -1 );
-	    }
-	}
-        if ( snet_writef( sn, "%d\r\n", (int)st.st_size ) == NULL ) {
-            perror( "snet_writef" );
-            return( -1 );
-        }
-        if ( verbose ) printf( ">>> %d\n", (int)st.st_size );
+     /* tell server how much data to expect */
+    if ( snet_writef( sn, "%d\r\n", (int)st.st_size ) == NULL ) {
+	perror( "snet_writef" );
+	return( -1 );
+    }
+    if ( verbose ) printf( ">>> %d\n", (int)st.st_size );
 
-        while (( rr = read( fd, buf, sizeof( buf ))) > 0 ) {
-            tv = timeout;
-            if ( snet_write( sn, buf, (int)rr, &tv ) != rr ) {
-                perror( "snet_write" );
-                return( -1 );
-	    }
-            if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
-	    if ( cksum ) {
-		SHA1_Update( &sha_ctx, buf, (size_t)rr );
-            }
-        }
-	if ( rr < 0 ) {
-	    perror( filename );
+    while (( rr = read( fd, buf, sizeof( buf ))) > 0 ) {
+	tv = timeout;
+	if ( snet_write( sn, buf, (int)rr, &tv ) != rr ) {
+	    perror( "snet_write" );
 	    return( -1 );
 	}
-        break;
-    default:
-        fprintf( stderr, "%c: unknown file type\n", *filetype );
-        return( -1 );
+	if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
+	if ( cksum ) {
+	    EVP_DigestUpdate( &mdctx, buf, (unsigned int)rr );
+	}
+    }
+    if ( rr < 0 ) {
+	perror( filename );
+	return( -1 );
     }
 
     /* cksum data sent */
     if ( cksum ) {
-        SHA1_Final( md, &sha_ctx );
-        base64_e( md, sizeof( md ), mde );
-        if ( strcmp( cksumval, mde ) != 0 ) {
+	EVP_DigestFinal( &mdctx, md_value, &md_len );
+	base64_e( ( char*)&md_value, md_len, cksum_b64 );
+        if ( strcmp( cksumval, cksum_b64 ) != 0 ) {
             return( -2 );
         }
     }
@@ -212,13 +204,14 @@ stor_file( int fd, SNET *sn, char *filename, char *cksumval, char *transcript,
 
 #ifdef __APPLE__
     int    
-stor_applefile( int dfd, SNET *sn, char *filename, SHA_CTX *sha_ctx,
-    size_t size )
+stor_applefile( int dfd, SNET *sn, char *filename, char *cksumval,
+    char *transcript, char *filetype, size_t transize )
 {
-    int		    	    rfd, rc;
+    int		    	    rfd, rc, md_len;
     size_t		    asingle_size = 0;
     char	    	    rsrc_path[ MAXPATHLEN ];
     char		    buf[ 8192 ];
+    char                *line;
     static char		    null_buf[ 32 ] = { 0 };
     struct timeval	    tv;
     struct stat		    r_stp;	    /* for rsrc fork */
@@ -231,6 +224,49 @@ stor_applefile( int dfd, SNET *sn, char *filename, SHA_CTX *sha_ctx,
 	unsigned long	fs_ssize;
 	char		fs_fi[ 32 ];
     } fi_struct;
+    extern EVP_MD       *md;
+    EVP_MD_CTX          mdctx;
+    unsigned char       md_value[ EVP_MAX_MD_SIZE ];
+    unsigned char       cksum_b64[ EVP_MAX_MD_SIZE ];
+
+    if ( cksum ) {
+        if ( strcmp( cksumval, "-" ) == 0 ) {
+            return( -3 );
+        }
+        EVP_DigestInit( &mdctx, md );
+    }
+
+    /* STOR "TRANSCRIPT" <transcript-name>  "\r\n" */
+    if ( filename == NULL ) {
+        filename = transcript;
+        if ( snet_writef( sn,
+                "STOR TRANSCRIPT %s\r\n", transcript ) == NULL ) {
+            perror( "snet_writef" );
+            return( -1 );
+        }
+        if ( verbose ) {
+            printf( ">>> STOR TRANSCRIPT %s\n", transcript );
+        }
+    } else {  /* STOR "FILE" <transcript-name> <path> "\r\n" */
+        if ( snet_writef( sn,
+                "STOR FILE %s %s\r\n", transcript, filename ) == NULL ) {
+            perror( "snet_writef" );
+            return( -1 );
+        }
+        if ( verbose ) {
+            printf( ">>> STOR FILE %s %s\n", transcript, filename );
+        }
+    }
+
+    tv = timeout;
+    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
+        perror( "snet_getline_multi" );
+        return( -1 );
+    }
+    if ( *line != '3' ) {
+        fprintf( stderr, "%s\n", line );
+        return( -1 );
+    }
 
     /* must check for finder info here first */
     if ( getattrlist( filename, &alist, &fi_struct, sizeof( fi_struct ),
@@ -284,8 +320,8 @@ stor_applefile( int dfd, SNET *sn, char *filename, SHA_CTX *sha_ctx,
 		+ ae_ents[ AS_DFE ].ae_length );
 
     /* Check size listed in transcript */
-    if ( size != 0 ) {
-	if ( asingle_size != size ) {
+    if ( transize != 0 ) {
+	if ( asingle_size != transize ) {
 	    fprintf( stderr,
 		"%s: size in transcript does not match size of file\n",
 		decode( filename ));
@@ -309,7 +345,7 @@ stor_applefile( int dfd, SNET *sn, char *filename, SHA_CTX *sha_ctx,
 	goto error2;
     }
     if ( cksum ) {
-	SHA1_Update( sha_ctx, ( char * )&as_header, AS_HEADERLEN );
+	EVP_DigestUpdate( &mdctx, (char *)&as_header, AS_HEADERLEN );
     }
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 
@@ -322,8 +358,8 @@ stor_applefile( int dfd, SNET *sn, char *filename, SHA_CTX *sha_ctx,
 	goto error2;
     }
     if ( cksum ) {
-        SHA1_Update( sha_ctx, ( char * )&ae_ents,
-	    ( 3 * sizeof( struct as_entry )));
+	EVP_DigestUpdate( &mdctx, (char *)&ae_ents,
+	    (unsigned int)( 3 * sizeof( struct as_entry )));
     }
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 
@@ -335,7 +371,7 @@ stor_applefile( int dfd, SNET *sn, char *filename, SHA_CTX *sha_ctx,
 	goto error2;
     }
     if ( cksum ) {
-        SHA1_Update( sha_ctx, fi_struct.fs_fi, sizeof( fi_struct.fs_fi ));
+	EVP_DigestUpdate( &mdctx, fi_struct.fs_fi, sizeof( fi_struct.fs_fi ));
     }
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 
@@ -348,7 +384,7 @@ stor_applefile( int dfd, SNET *sn, char *filename, SHA_CTX *sha_ctx,
 		goto error2;
 	    }
 	    if ( cksum ) {
-		SHA1_Update( sha_ctx, buf, (size_t)rc );
+		EVP_DigestUpdate( &mdctx, buf, (unsigned int)rc );
 	    } 
 	    if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 	}
@@ -366,11 +402,40 @@ stor_applefile( int dfd, SNET *sn, char *filename, SHA_CTX *sha_ctx,
 	    goto error2;
 	}
 	if ( cksum ) {
-	    SHA1_Update( sha_ctx, buf, (size_t)rc );
+	    EVP_DigestUpdate( &mdctx, buf, (unsigned int)rc );
 	}
     	if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
     }
     /* dfd is closed in main() of lcreate.c */
+
+    /* cksum data sent */
+    if ( cksum ) {
+        EVP_DigestFinal( &mdctx, md_value, &md_len );
+        base64_e( ( char*)&md_value, md_len, cksum_b64 );
+        if ( strcmp( cksumval, cksum_b64 ) != 0 ) {
+            return( -2 );
+        }
+    }
+
+    if ( snet_writef( sn, ".\r\n" ) == NULL ) {
+        perror( "snet_writef" );
+        return( -1 );
+    }
+    if ( verbose ) fputs( "\n>>> .\n", stdout );
+
+    tv = timeout;
+    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
+        perror( "snet_getline_multi" );
+        return( -1 );
+    }
+    if ( *line != '2' ) {
+        fprintf( stderr, "%s\n", line );
+        return( -1 );
+    }
+
+    if ( !quiet && !verbose ) printf( "%s: stored\n", decode( filename ));
+    return( 0 );
+
 
     return( 0 ); 
 
@@ -392,8 +457,8 @@ error2:
 #include "connect.h"
 
     int
-stor_applefile( int dfd, SNET *sn, char *filename, SHA_CTX *sha_ctx,
-    size_t size )
+stor_applefile( int dfd, SNET *sn, char *filename, char *trancksum,
+    char *transcript, char *filetype, size_t transize )
 {
     return( -1 );
 }

@@ -9,12 +9,14 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
-#include <snet.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <strings.h>
 #include <syslog.h>
 #include <unistd.h>
+
+#include <openssl/evp.h>
+#include <snet.h>
 
 #include "command.h"
 #include "argcargv.h"
@@ -46,6 +48,7 @@ int		f_stor ___P(( SNET *, int, char *[] ));
 
 char		command_file[ MAXPATHLEN ];
 char		upload_xscript[ MAXPATHLEN ];
+const EVP_MD    *md;
 
     int
 f_quit( sn, ac, av )
@@ -330,6 +333,12 @@ f_stat( SNET *sn, int ac, char *av[] )
     }
 
     /* cksums here */
+    OpenSSL_add_all_digests();
+    md = EVP_get_digestbyname( "sha1" );
+    if ( !md ) {
+	fprintf( stderr, "%s: unsupported checksum\n", "sha1" );
+	exit( 1 );
+    }
     if ( do_cksum( path, cksum_b64 ) < 0 ) {
 	snet_writef( sn, "%d Checksum Error: %s: %m\r\n", 500, path );
 	syslog( LOG_ERR, "do_cksum: %s: %m", path );

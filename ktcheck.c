@@ -3,13 +3,13 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <netdb.h>
-#include <snet.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
 #include <unistd.h>
 
-#include <sha.h>
+#include <openssl/evp.h>
+#include <snet.h>
 
 #include "cksum.h"
 #include "connect.h"
@@ -23,13 +23,14 @@ char * getstat( SNET *sn, char *description );
 
 void			(*logger)( char * ) = NULL;
 int			linenum = 0;
-int			cksum = 1;
+int			cksum = 0;
 int			verbose = 0;
 int			dodots= 0;
 int			quiet = 0;
 int			update = 1;
 char			*kfile= _RADMIND_COMMANDFILE;
 char			*kdir= "";
+const EVP_MD		*md;
 
 extern struct timeval	timeout;
 extern char		*version, *checksumlist;
@@ -281,12 +282,14 @@ main( int argc, char **argv )
     while (( c = getopt ( argc, argv, "c:K:nh:p:qVv" )) != EOF ) {
 	switch( c ) {
 	case 'c':
-	    if ( strcasecmp( optarg, "sha1" ) != 0 ) {
-		perror( optarg );
-		exit( 1 );
-	    }
-	    cksum = 1;
-	    break;
+            OpenSSL_add_all_digests();
+            md = EVP_get_digestbyname( optarg );
+            if ( !md ) {
+                fprintf( stderr, "%s: unsupported checksum\n", optarg );
+                exit( 1 );
+            }
+            cksum = 1;
+            break;
 	case 'h':
 	    host = optarg;
 	    break;
@@ -328,19 +331,17 @@ main( int argc, char **argv )
 	}
     }
 
-    /* Check that kfile isn't an obvious directory */
-    len = strlen( kfile );
-    if ( kfile[ len - 1 ] == '/' ) {
-	err++;
-    }
-
     if ( verbose && quiet ) {
 	err++;
     }
 
+    if ( !cksum ) {
+	err++;
+    }
+
     if ( err || ( argc - optind != 0 )) {
-	fprintf( stderr, "usage: ktcheck [ -nV ] [ -q | -v ]" );
-	fprintf( stderr, "[ -c checksum ] [ -K command file ] " );
+	fprintf( stderr, "usage: ktcheck -c checksum [ -nV ] [ -q | -v ] " );
+	fprintf( stderr, "[ -K command file ] " );
 	fprintf( stderr, "[ -h host ] [ -p port ]\n" );
 	exit( 2 );
     }

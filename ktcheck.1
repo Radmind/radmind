@@ -4,11 +4,10 @@
 \- verify and download command file and transcripts
 .SH SYNOPSIS
 .B ktcheck 
+.BI \-c\  checksum 
 .RB [ \-nV ]
 [
 .RB \-q\ |\ \-v
-] [
-.BI \-c\  checksum 
 ] [
 .BI \-K\  command-file 
 ] [
@@ -49,8 +48,7 @@ special.T is created for verification and is removed on exit.
 .SH OPTIONS
 .TP 19
 .BI \-c\  checksum
-enables checksuming. sha1 is the only currently supported checksuming
-algorithm.
+enables checksuming.
 .TP 19
 .BI \-K\  command
 specifies a command file name, by default

@@ -7,6 +7,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <openssl/evp.h>
+
 #include "argcargv.h"
 #include "cksum.h"
 #include "code.h"
@@ -18,6 +20,7 @@ int		linenum = 0;
 int		cksum = 0;
 int		verbose = 0;
 int		dodots = 0;
+const EVP_MD	*md;
 extern char	*version, *checksumlist;
 char            prepath[ MAXPATHLEN ] = {0};
 
@@ -49,7 +52,9 @@ main( int argc, char **argv )
     while ( ( c = getopt ( argc, argv, "c:oP:nvV" ) ) != EOF ) {
 	switch( c ) {
 	case 'c':
-	    if ( strcasecmp( optarg, "sha1" ) != 0 ) {
+	    OpenSSL_add_all_digests();
+	    md = EVP_get_digestbyname( optarg );
+	    if ( !md ) {
 		fprintf( stderr, "%s: unsupported checksum\n", optarg );
 		exit( 1 );
 	    }

@@ -7,8 +7,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include <openssl/sha.h>
 #include <snet.h>
-#include <sha.h>
 
 #include "cksum.h"
 #include "connect.h"

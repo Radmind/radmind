@@ -5,6 +5,8 @@
 #include <dirent.h>
 #include <stdio.h>
 #include <strings.h>
+
+#include <openssl/evp.h>
 #include <snet.h>
 
 #include "transcript.h"
@@ -18,6 +20,7 @@ extern char	*version, *checksumlist;
 void	fs_walk( struct llist * );
 int	verbose = 0;
 int	dodots = 0;
+const EVP_MD    *md;
 
     void
 fs_walk( struct llist *path  ) 
@@ -116,13 +119,14 @@ main( int argc, char **argv )
     while (( c = getopt( argc, argv, "Ac:Co:K:T1V" )) != EOF ) {
 	switch( c ) {
 	case 'c':
-	    if ( strcasecmp( optarg, "sha1" ) != 0 ) {
-		fprintf( stderr, "%s: unsupported checksum\n", optarg );
-		exit( 1 );
-	    }
-	    cksum = 1;
-	    break;
-
+            OpenSSL_add_all_digests();
+            md = EVP_get_digestbyname( optarg );
+            if ( !md ) {
+                fprintf( stderr, "%s: unsupported checksum\n", optarg );
+                exit( 1 );
+            }
+            cksum = 1;
+            break;
 	case 'o':
 	    if (( outtran = fopen( optarg, "w" )) == NULL ) {
 		perror( optarg );
