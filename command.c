@@ -711,7 +711,7 @@ cmdloop( int fd, struct sockaddr_in *sin )
     /* Create list of transcripts */
     if (( f = fopen( command_file, "r" )) == NULL ) {
 	syslog( LOG_ERR, "fopen: %s: %m", command_file );
-	snet_writef( sn, "%d Unable to access %s.\r\n", 543, command_file );
+	snet_writef( sn, "%d %s: %s\r\n", 543, command_file, strerror( errno ));
 	exit( 1 );
     }
     linenum = 0;
@@ -724,6 +724,8 @@ cmdloop( int fd, struct sockaddr_in *sin )
 	}
 	if ( ac != 2 ) {
 	    syslog( LOG_ERR, "%s: %d: invalid command line\n",
+		    command_file, linenum );
+	    snet_writef( sn, "%d %s: %d:invalid command line\r\n", 543,
 		    command_file, linenum );
 	    exit( 1 );
 	}
