@@ -5,6 +5,8 @@
 .SH SYNOPSIS
 .B radmind
 [
+.BI \-D\  path
+] [
 .B \-d
 ] [
 .B \-V
@@ -25,7 +27,13 @@ _PATH_RADMIND/command, _PATH_RADMIND/file, _PATH_RADMIND/tmp,
 _PATH_RADMIND/tmp/file, _PATH_RADMIND/tmp/transcript and
 _PATH_RADMIND/transcript ( with permissions 0750 ) if they do not
 exist, and begins listening on the radmind port ( by default 6662 ) for
-incoming connections.  Radmind forks a child for each connection.
+incoming connections.
+With the
+-D option, radmind will use
+.I path
+as its working directory.
+Radmind forks a child for each connection.
+
 
 The file _PATH_RADMIND/config contains the list of known clients that
 can connect to radmind, one per line.  Each line contains the fully
@@ -59,6 +67,9 @@ file.
 Defines the maximum queue of pending connections to
 .BR listen (2),
 by default five.
+.TP 19
+.BI \-D\  path
+specifies the radmind working directory, by default _PATH_RADMIND
 .TP 19
 .B \-d
 debug mode. Does not disassociate from controlling tty.
