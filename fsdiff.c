@@ -90,9 +90,10 @@ main( int argc, char **argv )
 #ifndef linux
     extern int		errno;
 #endif
-    char		*cmd = _RADMIND_COMMANDFILE;
-    char		*prepath = _RADMIND_COMMANDPATH;
-    int 		c;
+    char		*kfile = _RADMIND_COMMANDFILE;
+    char		*kdir = "";
+    char		*p;
+    int 		c, len;
     int 		errflag = 0;
 
     edit_path = TRAN2FS;
@@ -117,13 +118,7 @@ main( int argc, char **argv )
 	    break;
 
 	case 'K':
-	    if (( cmd = strrchr( optarg, '/' )) == NULL ) {
-		cmd = optarg;
-	    } else {
-		prepath = optarg;
-		*cmd = (char) '\0';
-		cmd++;
-	    }
+	    kfile = optarg;
 	    break;
 
 	case '1':
@@ -152,14 +147,32 @@ main( int argc, char **argv )
 	errflag++;
     }
 
+    /* Check that kfile isn't an abvious directory */
+    len = strlen( kfile );
+    if ( kfile[ len - 1 ] == '/' ) {
+        errflag++;
+    }
+
     if ( errflag || ( argc - optind != 1 )) {
 	fprintf( stderr, "usage: fsdiff [ -T | -1 ] [ -K command ] " );
 	fprintf( stderr, "[ -c chksumtype ] [ -o file ] path\n" );
 	exit ( 1 );
     }
 
+    if (( kdir = strdup( kfile )) == NULL ) {
+        perror( "strdup failed" );
+        exit( 2 );
+    }
+    if (( p = strrchr( kdir, '/' )) == NULL ) {
+        /* No '/' in kfile - use working directory */
+        kdir = "./";
+    } else {
+        p++;
+        *p = (char)'\0';
+    }
+
     /* initialize the transcripts */
-    transcript_init( prepath, cmd );
+    transcript_init( kdir, kfile );
     root = ll_allocate( argv[ optind ] );
 
     fs_walk( root );

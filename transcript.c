@@ -519,7 +519,7 @@ t_new( int type, char *fullname, char *shortname )
 }
 
     void
-transcript_init( char *prepath, char *cmd )
+transcript_init( char *kdir, char *kfile)
 {
     char	**av;
     char	*special = "special.T";
@@ -539,15 +539,9 @@ transcript_init( char *prepath, char *cmd )
 	return;
     }
 
-    if ( strlen( prepath ) + strlen( cmd ) + 2 > MAXPATHLEN ) {
-	fprintf( stderr, "command path too long: %s/%s\n", prepath, cmd );
-	exit( 1 );
-    }
-    sprintf( fullpath, "%s/%s", prepath, cmd);
-
-    if (( fp = fopen( fullpath, "r" )) == NULL ) {
+    if (( fp = fopen( kfile, "r" )) == NULL ) {
 	if ( edit_path == FS2TRAN ) {
-	    perror( cmd );
+	    perror( kfile );
 	    exit( 1 );
 	}
 	return;
@@ -572,14 +566,14 @@ transcript_init( char *prepath, char *cmd )
 	    exit ( 1 );
 	} 
 
-	if ( strlen( prepath ) + strlen( av[ 1 ] ) + 2 > MAXPATHLEN ) {
+	if ( strlen( kdir ) + strlen( av[ 1 ] ) + 2 > MAXPATHLEN ) {
 	    fprintf( stderr, "command: line %d: transcript name too long\n",
 		    linenum );
-	    fprintf( stderr, "command: line %d: %s/%s\n",
-		    linenum, prepath, av[ 1 ] );
+	    fprintf( stderr, "command: line %d: %s%s\n",
+		    linenum, kdir, av[ 1 ] );
 	    exit( 1 );
 	}
-	sprintf( fullpath, "%s/%s", prepath, av[ 1 ] );
+	sprintf( fullpath, "%s%s", kdir, av[ 1 ] );
 
 	switch( *av[ 0 ] ) {
 	case 'p':				/* positive */
@@ -602,12 +596,12 @@ transcript_init( char *prepath, char *cmd )
 
     /* open the special transcript if there were any special files */
     if ( foundspecial ) {
-	if ( strlen( prepath ) + strlen( special ) + 2 > MAXPATHLEN ) {
+	if ( strlen( kdir ) + strlen( special ) + 2 > MAXPATHLEN ) {
 	    fprintf( stderr, 
-		    "special path too long: %s/%s\n", prepath, special );
+		    "special path too long: %s%s\n", kdir, special );
 	    exit( 1 );
 	}
-	sprintf( fullpath, "%s/%s", prepath, special );
+	sprintf( fullpath, "%s%s", kdir, special );
 	t_new( T_SPECIAL, fullpath, special );
     }
 
