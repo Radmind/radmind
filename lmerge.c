@@ -508,8 +508,10 @@ skipline:
 		exit( 2 );
 	    }
 	    if ( rmdir( opath ) != 0 ) {
-		perror( opath );
-		exit( 2 );
+		if ( errno != ENOENT ) {
+		    perror( opath );
+		    exit( 2 );
+		}
 	    }
 	    if ( verbose ) printf( "%s: %s: unlinked\n", tname, node->path );
 	    free_node( node );
