@@ -4,10 +4,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
-#ifdef __APPLE__
 #include <sys/paths.h>
 #include <sys/attr.h>
-#endif __APPLE__
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -340,4 +338,26 @@ chk_for_finfo( const char *path, char *finfo )
 
     return( err );
 }
+
+#else !__APPLE__
+
+#include <sys/time.h>
+
+#include <snet.h>
+
+#include "applefile.h"
+
+    int
+retr_applefile( SNET *sn, char *pathdesc, char *path, char *location, 
+	char *chksumval, char *temppath, int linenum )
+{
+    return( -1 );
+}
+
+    int
+chk_for_finfo( const char *path, char *finfo )
+{
+    return( -1 );
+}
+
 #endif __APPLE__
