@@ -141,50 +141,35 @@ struct command	auth[] = {
 struct command *commands  = NULL;
 
     int
-f_quit( sn, ac, av )
-    SNET	*sn;
-    int		ac;
-    char	*av[];
+f_quit( SNET *sn, int ac, char **av )
 {
     snet_writef( sn, "%d QUIT OK, closing connection\r\n", 201 );
     exit( 0 );
 }
 
     int
-f_noop( sn, ac, av )
-    SNET	*sn;
-    int		ac;
-    char	*av[];
+f_noop( SNET *sn, int ac, char **av )
 {
     snet_writef( sn, "%d NOOP OK\r\n", 202 );
     return( 0 );
 }
 
     int
-f_help( sn, ac, av )
-    SNET	*sn;
-    int		ac;
-    char	*av[];
+f_help( SNET *sn, int ac, char **av )
 {
     snet_writef( sn, "%d What is this, SMTP?\r\n", 203 );
     return( 0 );
 }
 
     int
-f_noauth( sn, ac, av )
-    SNET	*sn;
-    int		ac;
-    char	*av[];
+f_noauth( SNET *sn, int ac, char **av )
 {
     snet_writef( sn, "%d No access for %s\r\n", 500, remote_host );
     exit( 1 );
 }
 
     int
-f_notls( sn, ac, av )
-    SNET	*sn;
-    int		ac;
-    char	*av[];
+f_notls( SNET *sn, int ac, char **av )
 {
     snet_writef( sn, "%d Must issue a STARTTLS command first\r\n", 530 );
     exit( 1 );
@@ -285,10 +270,7 @@ keyword( int ac, char *av[] )
 }
 
     int
-f_retr( sn, ac, av )
-    SNET	*sn;
-    int		ac;
-    char	*av[];
+f_retr( SNET *sn, int ac, char **av )
 {
 
     ssize_t		readlen;
@@ -815,20 +797,17 @@ f_stor( SNET *sn, int ac, char *av[] )
 }
 
     int
-f_starttls( snet, ac, av )
-    SNET                        *snet;
-    int                         ac;    
-    char                        *av[];
+f_starttls( SNET *sn, int ac, char **av )
 {
     int                         rc;
     X509                        *peer;
     char                        buf[ 1024 ];
 
     if ( ac != 1 ) {  
-        snet_writef( snet, "%d Syntax error (no parameters allowed)\r\n", 501 );
+        snet_writef( sn, "%d Syntax error (no parameters allowed)\r\n", 501 );
         return( 1 );
     } else {
-	snet_writef( snet, "%d Ready to start TLS\r\n", 220 );
+	snet_writef( sn, "%d Ready to start TLS\r\n", 220 );
     }
 
     /* We get here when the client asks for TLS with the STARTTLS verb */
@@ -845,15 +824,15 @@ f_starttls( snet, ac, av )
     /* This is where the TLS start */
     /* At this point the client is also staring TLS */
     /* 1 is for server, 0 is client */
-    if (( rc = snet_starttls( snet, ctx, 1 )) != 1 ) {
+    if (( rc = snet_starttls( sn, ctx, 1 )) != 1 ) {
         syslog( LOG_ERR, "f_starttls: snet_starttls: %s",
                 ERR_error_string( ERR_get_error(), NULL ) );
-        snet_writef( snet, "%d SSL didn't work error! XXX\r\n", 501 );
+        snet_writef( sn, "%d SSL didn't work error! XXX\r\n", 501 );
         return( 1 );
     }
 
     if ( authlevel == 2 ) {
-	if (( peer = SSL_get_peer_certificate( snet->sn_ssl ))
+	if (( peer = SSL_get_peer_certificate( sn->sn_ssl ))
 		== NULL ) {
 	    syslog( LOG_ERR, "no peer certificate" );
 	    return( -1 );
@@ -883,7 +862,7 @@ f_starttls( snet, ac, av )
 	commands  = auth;
 	ncommands = sizeof( auth ) / sizeof( auth[ 0 ] );
 
-	if ( list_transcripts( snet ) != 0 ) {
+	if ( list_transcripts( sn ) != 0 ) {
 	    /* error message given in list_transcripts */
 	    exit( 1 );
 	}
@@ -965,10 +944,7 @@ exchange_failed:
 }
 
     int
-f_login( snet, ac, av )
-    SNET                        *snet;
-    int                         ac;    
-    char                        *av[];
+f_login( SNET *sn, int ac, char **av )
 {
     int				retval;
     pam_handle_t		*pamh;
@@ -978,17 +954,17 @@ f_login( snet, ac, av )
     };
 
     if ( !checkuser ) {
-	snet_writef( snet, "%d login not enabled\r\n", 502 );
+	snet_writef( sn, "%d login not enabled\r\n", 502 );
 	return( 1 );
     }
     /*
     if ( authlevel < 1 ) {
-	snet_writef( snet, "%d login requires TLS\r\n", 503 );
+	snet_writef( sn, "%d login requires TLS\r\n", 503 );
 	return( 1 );
     }
     */
     if ( ac != 3 ) {  
-        snet_writef( snet, "%d Syntax error\r\n", 501 );
+        snet_writef( sn, "%d Syntax error\r\n", 501 );
         return( 1 );
     }
     if ( user != NULL ) {
@@ -1011,7 +987,7 @@ f_login( snet, ac, av )
 
     if (( retval =  pam_start( "radmind", user, &pam_conv,
 	    &pamh )) != PAM_SUCCESS ) {
-        snet_writef( snet, "%d Authentication Failed\r\n", 535 );
+        snet_writef( sn, "%d Authentication Failed\r\n", 535 );
         syslog( LOG_ERR, "f_login: pam_start: %s\n",
 	    pam_strerror( pamh, retval ));
 	return( 1 );
@@ -1019,7 +995,7 @@ f_login( snet, ac, av )
 
     /* is user really user? */
     if (( retval =  pam_authenticate( pamh, PAM_SILENT )) != PAM_SUCCESS ) {
-        snet_writef( snet, "%d Authentication Failed\r\n", 535 );
+        snet_writef( sn, "%d Authentication Failed\r\n", 535 );
         syslog( LOG_ERR, "f_login: pam_authenticate: %s\n",
 	    pam_strerror( pamh, retval ));
 	return( 1 );
@@ -1028,20 +1004,20 @@ f_login( snet, ac, av )
 
     /* permitted access? */
     if (( retval = pam_acct_mgmt( pamh, 0 )) != PAM_SUCCESS ) {
-        snet_writef( snet, "%d Authentication Failed\r\n", 535 );
+        snet_writef( sn, "%d Authentication Failed\r\n", 535 );
         syslog( LOG_ERR, "f_login: pam_acct_mgmt: %s\n",
 	    pam_strerror( pamh, retval ));
 	return( 1 );
     }
 
     if (( retval = pam_end( pamh, retval )) != PAM_SUCCESS ) {
-        snet_writef( snet, "%d Authentication Failed\r\n", 535 );
+        snet_writef( sn, "%d Authentication Failed\r\n", 535 );
         syslog( LOG_ERR, "f_login: pam_end: %s\n",
 	    pam_strerror( pamh, retval ));
 	return( 1 );
     }
     syslog( LOG_INFO, "%s: successfully logged in\n", user );
-    snet_writef( snet, "%d %s successfully logged in\r\n", 205, user );
+    snet_writef( sn, "%d %s successfully logged in\r\n", 205, user );
     authorized = 1;
 
     return( 0 );

@@ -84,8 +84,8 @@ struct save_line {
 } *lines;
 int linecount;
 
-save_it(buffer, pathname)
-	char *buffer, *pathname;
+    void
+save_it( char *buffer, char *pathname)
 {
 	struct save_line *sp;
 	sp = malloc(sizeof *sp + strlen(buffer) + strlen(pathname) + 4);
@@ -98,12 +98,13 @@ save_it(buffer, pathname)
 	++linecount;
 }
 
-lsort_cmp(a,b)
-	struct save_line **a,**b;
+    void
+lsort_cmp( strcut save_line **a, struct save_line **b)
 {
 	return pathcmp((*a)->key, (*b)->key);
 }
 
+    void
 sort_them()
 {
 	struct save_line **x, *sp, **y;
@@ -121,6 +122,7 @@ sort_them()
 	lines = sp;
 }
 
+    void
 print_them()
 {
 	struct save_line *sp;
@@ -136,8 +138,8 @@ print_them()
 	}
 }
 
-process(arg)
-	char *arg;
+    void
+process( char * arg )
 {
 	FILE *fd;
 	char buffer[4096];
@@ -185,8 +187,8 @@ Done:
 		fclose(fd);
 }
 
-main(argc,argv)
-	char **argv;
+    int
+main( int argc, char **argv)
 {
 	char *argp;
 	int didit;

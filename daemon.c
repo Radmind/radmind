@@ -60,8 +60,7 @@ void		chld( int );
 int		main( int, char *av[] );
 
     void
-hup( sig )
-    int			sig;
+hup( int sig )
 {
 
     syslog( LOG_INFO, "reload %s", version );
@@ -69,8 +68,7 @@ hup( sig )
 }
 
     void
-chld( sig )
-    int			sig;
+chld( int sig )
 {
     int			pid, status;
     extern int		errno;
@@ -135,9 +133,7 @@ register_service( unsigned int port, DNSServiceRegistrationReply callback )
 #endif /* HAVE_ZEROCONF */
 
     int
-main( ac, av )
-    int		ac;
-    char	*av[];
+main( int ac, char **av )
 {
     struct sigaction	sa, osahup, osachld;
     struct sockaddr_in	sin;
