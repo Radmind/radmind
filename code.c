@@ -4,6 +4,10 @@
 
 #include "code.h"
 
+/*
+ * Escape certain characters.  This code must match decode() *and*
+ * argcargv().
+ */
     char *
 encode( char *line )
 {
