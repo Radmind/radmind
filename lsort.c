@@ -98,9 +98,13 @@ save_it( char *buffer, char *pathname)
 	++linecount;
 }
 
-    void
-lsort_cmp( strcut save_line **a, struct save_line **b)
+    int
+lsort_cmp( void *a1, void *b1 )
 {
+	const struct save_line **a, **b;
+
+	a = a1;
+	b = b1;
 	return pathcmp((*a)->key, (*b)->key);
 }
 
@@ -180,7 +184,7 @@ fprintf(stderr,"%s(%d): discarding because not enough fields\n", fn, lineno);
 		}
 		save_it(buffer,decode(pathname));
 	}
-Done:
+
 	if (fd == stdin)
 		clearerr(fd);
 	else
@@ -192,7 +196,6 @@ main( int argc, char **argv)
 {
 	char *argp;
 	int didit;
-	char *cp;
 
 	didit = 0;
 
@@ -202,8 +205,6 @@ main( int argc, char **argv)
 	case '-':
 		break;
 	default:
-		fprintf (stderr, "Bad char <%c>\n", *argp);
-	Usage:
 		fprintf (stderr,
 			"Usage: lsort [files...]\n");
 		exit(1);
