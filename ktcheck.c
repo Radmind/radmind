@@ -28,6 +28,7 @@ struct timeval 	timeout = { 10 * 60, 0 };
 int		linenum = 0;
 int		chksum = 1;
 int		verbose = 0;
+char		*command = "command.K";
 
     void
 output( char *string ) {
@@ -37,18 +38,24 @@ output( char *string ) {
 
     int
 check( SNET *sn, char* type, char *path) {
-    //FILE	*f = NULL;
     char	*schksum, *stats;
     char	**targv;
-    char 	command[ 2 * MAXPATHLEN ];
+    char 	pathdesc[ 2 * MAXPATHLEN ];
     char        cchksum[ 29 ];
     int		error, tac;
 
-    printf( "Checking %s\n", path);
-    sprintf( command, "%s %s", type, path);
-    printf( "%s\n", command );
+    if ( verbose ) printf( "\n" );
 
-    stats = getstat( sn, (char *)&command );
+    if ( path != NULL ) {
+	sprintf( pathdesc, "%s %s", type, path);
+    } else {
+	sprintf( pathdesc, "%s", type );
+	path = command;
+    }
+
+    if ( verbose ) printf( "*** Statting %s\n", path );
+
+    stats = getstat( sn, (char *)&pathdesc);
 
     tac = acav_parse( NULL, stats, &targv );
 
@@ -62,32 +69,36 @@ check( SNET *sn, char* type, char *path) {
 	return( 1 );
     }
 
-    printf( "path: %s\n", path );
-
     error = do_chksum( path, cchksum );
 
     if ( error == 2 ) {
-	printf( "File is not present -- must download\n" );
-	if ( download( sn, command, path, schksum ) != 0 ) {
+	if ( verbose ) printf( "*** Downloading missing file: %s\n", path ); 
+	if ( download( sn, pathdesc, path, schksum ) != 0 ) {
 	    perror( "download" );
 	    return( 1 );
 	}
-	chmod( path, 0400 );
 	return( 0 );
     } else if ( error == 1 ) {
 	perror( "do_chksum" );
 	return( 1 );
     }
 
+    if ( verbose ) printf( "*** chskum " );
+
     if ( strcmp( schksum, cchksum) != 0 ) {
-	printf( "Chksum mismatch.  Must download\n" );
+	if ( verbose ) printf( "mismatch on %s\n", path );
 	if ( unlink( path ) != 0 ) {
 	    perror( "unlink" );
 	    return( 1 );
 	}
-	printf( "Unlinked %s\n", path );
+	if ( verbose ) printf( "*** %s deleted\n", path );
+	if ( verbose ) printf( "*** Downloading %s\n", path ); 
+	if ( download( sn, pathdesc, path, schksum ) != 0 ) {
+	    perror( "download" );
+	    return( 1 );
+	}
     } else {
-	printf( "Chksum match\n" );
+	if ( verbose ) printf( "match\n" );
     }
 
     return( 0 );
@@ -97,16 +108,20 @@ check( SNET *sn, char* type, char *path) {
 main( int argc, char **argv )
 {
     int			i, c, s, port = htons( 6662 ), err = 0, network = 1;
+    int			len, tac;
     extern int          optind;
     char		*host = NULL, *line = NULL, *version = "1.0";
-    char		*command = "command.K";
+    char		*transcript = NULL;
+    char                **targv;
+    char                cline[ 2 * MAXPATHLEN ];
     struct servent	*se;
     struct hostent	*he;
     struct sockaddr_in	sin;
     SNET		*sn;
     struct timeval	tv;
+    FILE		*f;
 
-    while ( ( c = getopt ( argc, argv, "c:h:k:np:Vv" ) ) != EOF ) {
+    while ( ( c = getopt ( argc, argv, "c:h:K:np:T:Vv" ) ) != EOF ) {
 	switch( c ) {
 	case 'c':
 	    if ( strcasecmp( optarg, "sha1" ) != 0 ) {
@@ -118,13 +133,6 @@ main( int argc, char **argv )
 	case 'h':
 	    host = optarg;
 	    break;
-	case 'k':
-	    command = optarg;
-	    break;
-	case 'n':
-	    printf( "No network connection\n" );
-	    network = 0;
-	    break;
 	case 'p':
 	    if ( ( port = htons ( atoi( optarg ) ) ) == 0 ) {
 		if ( ( se = getservbyname( optarg, "tcp" ) ) == NULL ) {
@@ -133,6 +141,16 @@ main( int argc, char **argv )
 		}
 		port = se->s_port;
 	    }
+	    break;
+	case 'K':
+	    command = optarg;
+	    break;
+	case 'n':
+	    printf( "No network connection\n" );
+	    network = 0;
+	    break;
+	case 'T':
+	    transcript = optarg;
 	    break;
 	case 'V':
 	    printf( "%s\n", version );
@@ -150,11 +168,11 @@ main( int argc, char **argv )
 	}
     }
 
-    if ( err || ( argc - optind != 1 ) ) {
+    if ( err || ( argc - optind != 0 ) ) {
 	fprintf( stderr, "usage: ktcheck [ -nvV ] " );
 	fprintf( stderr, "[ -c checksum ] " );
-	fprintf( stderr, "[ -k command-file ] [ -h host ] [ -p port ] " );
-	fprintf( stderr, "difference-transcript\n" );
+	fprintf( stderr, "[ -h host ] [ -p port ] " );
+	fprintf( stderr, "[-T transcript ]\n" );
 	exit( 1 );
     }
 
@@ -215,9 +233,35 @@ main( int argc, char **argv )
 	}
     }
 
-    if ( check( sn, "TRANSCRIPT", argv[ optind ] ) != 0 ) { 
+    if ( check( sn, "COMMAND", NULL ) != 0 ) { 
 	perror( "check" );
 	exit( 1 );
+    }
+
+    if ( ( f = fopen( command, "r" ) ) == NULL ) {
+	perror( argv[ 1 ] );
+	exit( 1 );
+    }
+
+    while ( fgets( cline, MAXPATHLEN, f ) != NULL ) {
+	linenum++;
+
+	len = strlen( cline );
+	if (( cline[ len - 1 ] ) != '\n' ) {
+	    fprintf( stderr, "%s: line too long\n", cline );
+	    return( 1 );
+	}
+
+	tac = acav_parse( NULL, cline, &targv );
+
+	if ( ( tac == 0 ) || ( *targv[ 0 ] == '#' ) ) {
+	    continue;
+	}
+
+	if ( check( sn, "TRANSCRIPT", targv[ tac - 1] ) != 0 ) {
+	    perror( "check" );
+	    exit( 1 );
+	}
     }
 
     if ( network ) {
