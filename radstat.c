@@ -79,6 +79,7 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 	return ( 1 );
     }
 
+#ifdef __APPLE__
     /* Calculate full size of applefile */
     if ( *type == 'a' ) {
  
@@ -123,6 +124,7 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 	/* Set st->st_size to size of encoded apple single file */
 	st->st_size = afinfo->as_size;
     }
+#endif __APPLE__
 
     return( 0 );
 }
