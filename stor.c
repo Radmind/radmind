@@ -52,8 +52,13 @@ n_stor_file( SNET *sn, char *pathdesc, char *path )
     if ( verbose ) printf( ">>> %s", pathdesc );
     tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-	fprintf( stderr, "store %s failed: %s\n", pathdesc,
-	    strerror( errno ));
+	if ( snet_eof( sn )) {
+	    fprintf( stderr, "store %s failed: Connection closed\n",
+		pathdesc );
+	} else {
+	    fprintf( stderr, "store %s failed: %s\n", pathdesc,
+		strerror( errno ));
+	}
 	goto sn_error;
     }
     if ( *line != '3' ) {
@@ -72,8 +77,13 @@ n_stor_file( SNET *sn, char *pathdesc, char *path )
 
     tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-	fprintf( stderr, "store %s failed: %s\n", pathdesc,
-	    strerror( errno ));
+	if ( snet_eof( sn )) {
+	    fprintf( stderr, "store %s failed: Connection closed\n",
+		pathdesc );
+	} else {
+	    fprintf( stderr, "store %s failed: %s\n", pathdesc,
+		strerror( errno ));
+	}
 	goto sn_error;
     }
     if ( *line != '2' ) {
@@ -151,8 +161,13 @@ stor_file( SNET *sn, char *pathdesc, char *path, size_t transize,
     if ( verbose ) printf( ">>> %s", pathdesc );
     tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-	fprintf( stderr, "store %s failed: %s\n", pathdesc,
-	    strerror( errno ));
+	if ( snet_eof( sn )) {
+	    fprintf( stderr, "store %s failed: Connection closed\n",
+		pathdesc );
+	} else {
+	    fprintf( stderr, "store %s failed: %s\n", pathdesc,
+		strerror( errno ));
+	}
 	goto sn_error;
     }
     if ( *line != '3' ) {
@@ -206,8 +221,13 @@ stor_file( SNET *sn, char *pathdesc, char *path, size_t transize,
     if ( verbose ) fputs( "\n>>> .\n", stdout );
     tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-	fprintf( stderr, "store %s failed: %s\n", pathdesc,
-	    strerror( errno ));
+	if ( snet_eof( sn )) {
+	    fprintf( stderr, "store %s failed: Connection closed\n",
+		pathdesc );
+	} else {
+	    fprintf( stderr, "store %s failed: %s\n", pathdesc,
+		strerror( errno ));
+	}
 	goto sn_error;
     }
     if ( *line != '2' ) {
@@ -306,8 +326,13 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
     /* tell server what it is getting */
     tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-	fprintf( stderr, "store %s failed: %s\n", pathdesc,
-	    strerror( errno ));
+	if ( snet_eof( sn )) {
+	    fprintf( stderr, "store %s failed: Connection closed\n",
+		pathdesc );
+	} else {
+	    fprintf( stderr, "store %s failed: %s\n", pathdesc,
+		strerror( errno ));
+	}
 	goto sn_error;
     }
     if ( *line != '3' ) {
@@ -431,8 +456,13 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
     if ( verbose ) fputs( "\n>>> .\n", stdout );
     tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-	fprintf( stderr, "store %s failed: %s\n", pathdesc,
-	    strerror( errno ));
+	if ( snet_eof( sn )) {
+	    fprintf( stderr, "store %s failed: Connection closed\n",
+		pathdesc );
+	} else {
+	    fprintf( stderr, "store %s failed: %s\n", pathdesc,
+		strerror( errno ));
+	}
 	goto sn_error;
     }
     if ( *line != '2' ) {
