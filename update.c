@@ -135,12 +135,12 @@ update( char *path, char *displaypath, int present, int newfile, struct stat st,
 		"%d: incorrect number of arguments\n", linenum );
 	    return( 1 );
 	}
-	if ( link( targv[ 2 ], path ) != 0 ) {
+	if ( link( decode( targv[ 2 ] ), path ) != 0 ) {
 	    perror( path );
 	    return( 1 );
 	}
 	if ( !quiet ) printf( "%s: hard linked to %s",
-	    displaypath, targv[ 2 ] );
+	    displaypath, decode( targv[ 2 ] ));
 	break;
 
     case 'l':
@@ -156,12 +156,12 @@ update( char *path, char *displaypath, int present, int newfile, struct stat st,
 	    }
 	    present = 0;
 	}
-	if ( symlink( targv[ 2 ] , path ) != 0 ) {
+	if ( symlink( decode( targv[ 2 ] ), path ) != 0 ) {
 	    perror( path );
 	    return( 1 );
 	}
 	if ( !quiet ) printf( "%s: symbolic linked to %s",
-	    displaypath, targv[ 2 ] );
+	    displaypath, decode( targv[ 2 ] ));
 	break;
 
     case 'p':
