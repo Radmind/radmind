@@ -224,7 +224,15 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 	uid = atoi( targv[ 3 ] );
 	gid = atoi( targv[ 4 ] );
 	if ( !present ) {
+#ifdef SOLARIS
+	    if ( ( dev = makedev( (major_t)atoi( targv[ 5 ] ),
+		   (minor_t)atoi( targv[ 6 ] ) ) ) == NODEV ) {
+	       perror( path );
+	       return( 1 );
+	    }
+#else !SOLARIS
 	    dev = makedev( atoi( targv[ 5 ] ), atoi( targv[ 6 ] ));
+#endif SOLARIS
 	    if ( mknod( path, mode, dev ) != 0 ) {
 		perror( path );
 		return( 1 );
