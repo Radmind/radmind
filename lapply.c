@@ -48,10 +48,10 @@ ischild( const char *parent, const char *child)
 	return 1;
     } else {
 	parentlen = strlen( parent );
-	if( parentlen > strlen( child ) ) {
+	if( parentlen > strlen( child )) {
 	    return 0;
 	}
-	if( ( strncmp( parent, child, parentlen ) == 0 ) &&
+	if(( strncmp( parent, child, parentlen ) == 0 ) &&
 		child[ parentlen ] == '/' ) {
 	    return 1;
 	} else {
@@ -118,22 +118,22 @@ apply( FILE *f, char *parent, SNET *sn )
 	}
 
 	/* Get argument offset */
-	if ( ( *targv[ 0 ] ==  '+' )
-		|| ( *targv[ 0 ] == '-' ) ) {
+	if (( *targv[ 0 ] ==  '+' )
+		|| ( *targv[ 0 ] == '-' )) {
 	    command = targv[ 0 ];
 	    targv++;
 	    tac--;
 	}
 
-	if ( ( *command == '+' ) && ( !network ) ) {
+	if (( *command == '+' ) && ( !network )) {
 	    goto linedone;
 	}
 
-	strcpy( path, decode( targv[ 1 ] ) );
+	strcpy( path, decode( targv[ 1 ] ));
 
 	/* Do type check on local file */
 	if ( lstat( path, &st ) ==  0 ) {
-	    fstype = t_convert ( (int)( S_IFMT & st.st_mode ) );
+	    fstype = t_convert ((int)( S_IFMT & st.st_mode ));
 	    present = 1;
 	} else if ( errno == ENOENT ) { 
 	    present = 0;
@@ -143,7 +143,7 @@ apply( FILE *f, char *parent, SNET *sn )
 	}
 
 	if ( *command == '-'
-		|| ( present && fstype != *targv[ 0 ] ) ) {
+		|| ( present && fstype != *targv[ 0 ] )) {
 	    if ( fstype == 'd' ) {
 
 		/* Recurse */
@@ -180,7 +180,7 @@ apply( FILE *f, char *parent, SNET *sn )
 		sprintf( pathdesc, "FILE %s %s", transcript, path );
 	    }
 
-	    if ( ( temppath = retr( sn, pathdesc, path, NULL, chksum_b64 ) )
+	    if (( temppath = retr( sn, pathdesc, path, NULL, chksum_b64 ))
 		    == NULL ) {
 		perror( "download" );
 		return( 1 );
@@ -196,7 +196,7 @@ apply( FILE *f, char *parent, SNET *sn )
 		perror( "path" );
 		return( 1 );
 	    }
-	    fstype = t_convert( (int)( S_IFMT & st.st_mode ));
+	    fstype = t_convert((int)( S_IFMT & st.st_mode ));
 	    present = 1;
 	}
 
@@ -226,7 +226,7 @@ main( int argc, char **argv )
     struct servent	*se;
     SNET		*sn;
 
-    while ( ( c = getopt ( argc, argv, "c:h:np:sVv" ) ) != EOF ) {
+    while (( c = getopt ( argc, argv, "c:h:np:sVv" )) != EOF ) {
 	switch( c ) {
 	case 'c':
 	    if ( strcasecmp( optarg, "sha1" ) != 0 ) {
@@ -242,8 +242,8 @@ main( int argc, char **argv )
 	    network = 0;
 	    break;
 	case 'p':
-	    if ( ( port = htons ( atoi( optarg ) ) ) == 0 ) {
-		if ( ( se = getservbyname( optarg, "tcp" ) ) == NULL ) {
+	    if (( port = htons ( atoi( optarg )) ) == 0 ) {
+		if (( se = getservbyname( optarg, "tcp" )) == NULL ) {
 		    fprintf( stderr, "%s: service unkown\n", optarg );
 		    exit( 1 );
 		}
@@ -270,15 +270,15 @@ main( int argc, char **argv )
 	}
     }
 
-    if ( ( ( host == NULL ) && ( network ) )
-	    || ( ( host != NULL ) && ( !network ) ) ) {
+    if (( ( host == NULL ) && ( network ))
+	    || (( host != NULL ) && ( !network )) ) {
 	err++;
     }
 
     if ( argc - optind == 0 ) {
 	f = stdin; 
     } else if ( argc - optind == 1 ) {
-	if ( ( f = fopen( argv[ optind ], "r" ) ) == NULL ) { 
+	if (( f = fopen( argv[ optind ], "r" )) == NULL ) { 
 	    perror( argv[ 1 ] );
 	    goto error0;
 	}
@@ -294,7 +294,7 @@ main( int argc, char **argv )
     }
 
     if ( network ) {
-	if( ( sn = connectsn( host, port )  ) == NULL ) {
+	if(( sn = connectsn( host, port )  ) == NULL ) {
 	    fprintf( stderr, "%s:%d connection failed.\n", host, port );
 	    goto error0;
 	}
@@ -312,7 +312,7 @@ main( int argc, char **argv )
     }
 
     if ( network ) {
-	if ( ( closesn( sn ) ) !=0 ) {
+	if (( closesn( sn )) !=0 ) {
 	    fprintf( stderr, "can not close sn\n" );
 	    goto error0;
 	}
@@ -328,7 +328,7 @@ error2:
 
 error1:
     if ( network ) {
-	if ( ( closesn( sn ) ) !=0 ) {
+	if (( closesn( sn )) !=0 ) {
 	    fprintf( stderr, "can not close sn\n" );
 	    exit( 1 );
 	}
