@@ -47,4 +47,3 @@ void	transcript_init( char * );
 void	transcript_free( void );
 char	*hardlink( struct pathinfo * );
 void	hardlink_free( void );
-void	do_chksum( struct pathinfo * );
