@@ -493,7 +493,7 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 transcript( struct pathinfo *new )
 {
 
-    int			move = -1; 
+    int			enter; 
     int 		len;
     char		epath[ MAXPATHLEN ];
     char		*path;
@@ -529,11 +529,11 @@ transcript( struct pathinfo *new )
 	    strcpy( new->pi_link, epath );
 	}
 
-	/* only go into the file if it is a directory */
+	/* By default, go into directories */
 	if ( S_ISDIR( new->pi_stat.st_mode )) {
-	    move = 1;
+	    enter = 1;
 	} else { 
-	    move = 0;
+	    enter = 0;
 	}
 
 	/* initialize cksum field. */
@@ -571,15 +571,16 @@ transcript( struct pathinfo *new )
 
 	switch ( t_compare( new, begin_tran )) {
 	case T_MOVE_FS :
-	    return( move );
+	    return( enter );
 
 	case T_MOVE_BOTH :
-	    t_parse( begin_tran );
-	    if ( begin_tran->t_type == T_NEGATIVE ) {
-		return( 0 );
-	    } else {
-		return( move );
+	    /* But don't go into negative directories */
+	    if (( begin_tran->t_type == T_NEGATIVE ) &&
+		    ( begin_tran->t_pinfo.pi_type == 'd' )) {
+		enter = 0;
 	    }
+	    t_parse( begin_tran );
+	    return( enter );
 
 	case T_MOVE_TRAN :
 	    t_parse( begin_tran );
