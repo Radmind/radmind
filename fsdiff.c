@@ -68,7 +68,6 @@ fs_walk( char *path, int start, int finish )
 		 */
 		strcpy( temp, tran->t_pinfo.pi_name );
 		fs_walk( temp, start, finish );
-		transcript_parse( tran );
 	    } else {
 		return;
 	    }
