@@ -246,7 +246,7 @@ update( const char *path, char *displaypath, int present, int newfile,
 	if ( !present ) {
 	    fprintf( stderr, "%d: Warning: %c %s not created...continuing\n",
 		    linenum, *targv[ 0 ], path );
-	    break;
+	    return( 0 );
 	}
 
 	break;
