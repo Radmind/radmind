@@ -14,30 +14,14 @@
 #include <errno.h>
 #include <strings.h>
 
+#include "argcargv.h"
 #include "lmerge.h"
 #include "pathcmp.h"
+#include "mkdirs.h"
 
 int		linenum = 0;
 int		chksum = 1;
 int		verbose = 0;
-
-    int 
-create_directories( char *path ) 
-{
-    char 	*p;
-
-    for ( p = path; p != NULL; p = strchr( p, '/' )) {
-	*p = '\0';
-	if ( mkdir( path, 0777 ) < 0 ) {
-	    if ( errno != EEXIST ) {
-		return( -1 );
-	    }
-	}
-	*p++ = '/';
-    }
-
-    return( 0 );
-}
 
     int
 getnextline( struct tran *tran )

@@ -1,5 +1,3 @@
-#include "argcargv.h"
-
 struct tran 
 {
     int			num;
@@ -15,4 +13,3 @@ struct tran
     struct node 	*next;
 };
 int getnextline( struct tran *tran ); 
-int create_directories( char *path );
