@@ -53,9 +53,19 @@ fs_walk( struct llist *path  )
 	}
 
 	if ( path->ll_pinfo.pi_name[ len - 1 ] == '/' ) {
-	    sprintf( temp, "%s%s", path->ll_pinfo.pi_name, de->d_name );
+	    if ( snprintf( temp, MAXPATHLEN, "%s%s", path->ll_pinfo.pi_name,
+		    de->d_name ) > MAXPATHLEN ) {
+		fprintf( stderr, "%s%s: path too long\n",
+		    path->ll_pinfo.pi_name, de->d_name );
+		exit( 1 );
+	    }
 	} else {
-	    sprintf( temp, "%s/%s", path->ll_pinfo.pi_name, de->d_name );
+	    if ( snprintf( temp, MAXPATHLEN, "%s/%s", path->ll_pinfo.pi_name,
+		    de->d_name ) > MAXPATHLEN ) {
+		fprintf( stderr, "%s/%s: path too long\n",
+		    path->ll_pinfo.pi_name, de->d_name );
+		exit( 1 );
+	    }
 	}
 
 	/* allocate new node for newly created relative pathname */
