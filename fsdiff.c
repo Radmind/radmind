@@ -32,14 +32,14 @@ fs_walk( struct llist *path, int flag )
     char		temp[ MAXPATHLEN ];
 
     /* call the transcript code */
-    if (( transcript( &path->ll_info, path->ll_info.i_name ) == 0 ) ||
+    if (( transcript( &path->ll_pinfo, path->ll_pinfo.pi_name ) == 0 ) ||
 	    ( flag & FLAG_SKIP )) {
 	return;				
     }
 
     /* open directory */
-    if (( dir = opendir( path->ll_info.i_name )) == NULL ) {
-	perror( path->ll_info.i_name );
+    if (( dir = opendir( path->ll_pinfo.pi_name )) == NULL ) {
+	perror( path->ll_pinfo.pi_name );
 	exit( 1 );	
     }
 
@@ -54,12 +54,12 @@ fs_walk( struct llist *path, int flag )
 
 	/* construct relative pathname to put in list */
 	if ( !( flag & FLAG_INIT )) {
-	    if (( strlen( path->ll_info.i_name ) + strlen( de->d_name + 2 )) > 
-			MAXPATHLEN ) {
+	    if (( strlen( path->ll_pinfo.pi_name ) +
+		    strlen( de->d_name + 2 )) > MAXPATHLEN ) {
 		fprintf( stderr, "ERROR: Illegal length of path\n" );
 		exit( 1 );
 	    }
-	    sprintf( temp, "%s/%s", path->ll_info.i_name, de->d_name );
+	    sprintf( temp, "%s/%s", path->ll_pinfo.pi_name, de->d_name );
 	} else {
 	    sprintf( temp, "%s", de->d_name );
 	}
@@ -96,6 +96,7 @@ main( int argc, char **argv )
 #ifndef linux
     extern int		errno;
 #endif
+    char		*cmd = "command.K";
     int 		c;
     int 		errflag = 0;
     int			flag = 0;	/* XXX do we need a flag  */  
@@ -104,13 +105,17 @@ main( int argc, char **argv )
     edit_path = TRAN2FS;
     outtran = stdout;
 
-    while (( c = getopt( argc, argv, "o:t1V" )) != EOF ) {
+    while (( c = getopt( argc, argv, "o:K:t1V" )) != EOF ) {
 	switch( c ) {
 	case 'o':
 	    if (( outtran = fopen( optarg, "w" )) == NULL ) {
 		perror( optarg );
 		exit( 1 );
 	    }
+	    break;
+
+	case 'K':
+	    cmd = optarg;
 	    break;
 
 	case '1':
@@ -139,12 +144,13 @@ main( int argc, char **argv )
     }
 
     if ( errflag || ( argc - optind != 1 )) {
-	fprintf( stderr, "usage: fsdiff [ -t | -1 ] [ -o file ] path\n" );
+	fprintf( stderr, 
+		"usage: fsdiff [ -t | -1 ] [ -K command ] [ -o file ] path\n" );
 	exit ( 1 );
     }
 
     /* initialize the transcripts */
-    transcript_init( flag );
+    transcript_init( flag, cmd );
 
     if ( flag & FLAG_SKIP ) {
 	root = ll_allocate( argv[ optind ] );
