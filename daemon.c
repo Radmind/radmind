@@ -195,6 +195,11 @@ main( ac, av )
 	exit( 1 );
     }
 
+    if ( maxconnections < 0 ) {
+	fprintf( stderr, "%d: invalid max-connections\n", maxconnections );
+	exit( 1 );
+    }
+
     if ( dontrun ) {
 	exit( 0 );
     }

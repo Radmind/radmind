@@ -186,7 +186,8 @@ specifies which syslog-facilty to log messages to.
 .TP 19
 .BI \-m\  max-connections 
 specifies the maximum number of simultaneous connections, by
-default _RADMIND_MAXCONNECTIONS.  0 indicates no limit.
+default _RADMIND_MAXCONNECTIONS.
+Value must be greater then or equal to 0 with 0 indicating no limit.
 .TP 19
 .BI \-p\  port 
 specifies the port of the radmind server, by default
