@@ -1,10 +1,11 @@
+# Do not use sym links when creating packages for OS X
+
 DESTDIR=/usr/local
 MANDIR=${DESTDIR}/share/man
 BINDIR=${DESTDIR}/bin
 SBINDIR=${DESTDIR}/sbin
 
 # For server
-# Do not use sym links when creating packages for OS X
 VARDIR=/private/var/radmind
 CONFIGFILE=${VARDIR}/config
 TRANSCRIPTDIR=${VARDIR}/transcript
@@ -118,7 +119,6 @@ lcreate.o : lcreate.c
 twhich.o : twhich.c
 	${CC} ${CFLAGS} \
 		-D_RADMIND_COMMANDFILE=\"${COMMANDFILE}\" \
-		-D_RADMIND_TRANSCRIPT_DIR=\"${TRANSCRIPTDIR}/\" \
 		-c twhich.c
 
 radmind : libsnet/libsnet.a ${RADMIND_OBJ} Makefile
