@@ -37,7 +37,7 @@ main( int argc, char **argv )
     int			ucount = 0, len, tac, amode = R_OK | W_OK;
     extern int          optind;
     char		*transcript = NULL, *tpath = NULL, *line;
-    char		*filter = NULL;
+    char		*prefix = NULL;
     char                **targv;
     char                tline[ 2 * MAXPATHLEN ];
     char		path[ 2 * MAXPATHLEN ];
@@ -46,10 +46,10 @@ main( int argc, char **argv )
     FILE		*f, *ufs;
     struct stat		st;
 
-    while ( ( c = getopt ( argc, argv, "f:nvV" ) ) != EOF ) {
+    while ( ( c = getopt ( argc, argv, "P:nvV" ) ) != EOF ) {
 	switch( c ) {
-	case 'f':
-	    filter = optarg;
+	case 'P':
+	    prefix = optarg;
 	    break;
 	case 'n':
 	    amode = R_OK;
@@ -57,6 +57,7 @@ main( int argc, char **argv )
 	    break;
 	case 'V':
 	    printf( "%s\n", version );
+	    printf( "%s\n", checksumlist );
 	    exit( 0 );
 	case 'v':
 	    verbose = 1;
@@ -73,7 +74,7 @@ main( int argc, char **argv )
     tpath = argv[ optind ];
 
     if ( err || ( argc - optind != 1 ) ) {
-	fprintf( stderr, "usage: lcksum [ -nvV ] [ -f filter ] " );
+	fprintf( stderr, "usage: lcksum [ -nvV ] [ -P prefix ] " );
 	fprintf( stderr, "transcript\n" );
 	exit( 2 );
     }
@@ -145,9 +146,9 @@ main( int argc, char **argv )
 	    goto done;
 	}
 
-	/* check to see if file against filter */
-	if ( filter != NULL ) {
-	    if ( strncmp( targv[ 1 ], filter, strlen( filter ) ) != 0 ) {
+	/* check to see if file against prefix */
+	if ( prefix != NULL ) {
+	    if ( strncmp( targv[ 1 ], prefix, strlen( prefix ) ) != 0 ) {
 		if ( updatetran ) {
 		    fprintf( ufs, "%s", line );
 		}
