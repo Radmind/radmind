@@ -28,15 +28,15 @@ int check( SNET *sn, char *type, char *path);
 int createspecial( SNET *sn, struct node *head );
 char * getstat( SNET *sn, char *description );
 
-void		(*logger)( char * ) = NULL;
-struct timeval 	timeout = { 10 * 60, 0 };
-int		linenum = 0;
-int		chksum = 1;
-int		verbose = 0;
-int		update = 1;
-char		*command = "command.K";
-char		*commandpath = ".";
-char		fullpath[ MAXPATHLEN ];
+void			(*logger)( char * ) = NULL;
+extern struct timeval	timeout;
+int			linenum = 0;
+int			chksum = 1;
+int			verbose = 0;
+int			update = 1;
+char			*command = "command.K";
+char			*commandpath = ".";
+char			fullpath[ MAXPATHLEN ];
 
     char * 
 getstat( SNET *sn, char *description ) 
