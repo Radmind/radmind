@@ -571,6 +571,7 @@ command_k( char *path_config )
     SNET	*sn;
     char	**av, *line;
     int		ac;
+    int		linenum = 0;
 
     if (( sn = snet_open( path_config, O_RDONLY, 0, 0 )) == NULL ) {
         syslog( LOG_ERR, "command_k: snet_open: %s: %m", path_config );
@@ -578,6 +579,8 @@ command_k( char *path_config )
     }
 
     while (( line = snet_getline( sn, NULL )) != NULL ) {
+	linenum++;
+
         if (( ac = argcargv( line, &av )) < 0 ) {
 	    syslog( LOG_ERR, "argvargc: %m" );
 	    return( -1 );
@@ -585,6 +588,11 @@ command_k( char *path_config )
 
 	if ( ( ac == 0 ) || ( *av[ 0 ] == '#' ) ) {
 	    continue;
+	}
+	if ( ac != 2 ) {
+	    syslog( LOG_ERR, "config file: line %d: invalid number of \
+		arguments\n" );
+	    return( -1 );
 	}
 
 	if (( strcasecmp( av[ 0 ], remote_host ) == 0 )
