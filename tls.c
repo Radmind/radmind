@@ -137,7 +137,6 @@ tls_client_start( SNET *sn, char *host, int authlevel )
 	fprintf( stderr, "%s: invalid server CN\n", buf );
 	return( -1 );
     }
-    if ( verbose ) printf( "Server's CN: %s\n", buf );
 
     return( 0 );
 }
