@@ -49,6 +49,7 @@ int		cksum = 0;
 int		authlevel = _RADMIND_AUTHLEVEL;
 int		checkuser = 0;
 int		connections = 0;
+int             child_signal = 0;
 int		maxconnections = _RADMIND_MAXCONNECTIONS; /* 0 = no limit */
 char		*radmind_path = _RADMIND_PATH;
 SSL_CTX         *ctx = NULL;
@@ -62,39 +63,16 @@ int		main( int, char *av[] );
     void
 hup( int sig )
 {
-
-    syslog( LOG_INFO, "reload %s", version );
+    /* Hup does nothing at the moment */
     return;
 }
 
     void
 chld( int sig )
 {
-    int			pid, status;
-    extern int		errno;
-
-    while (( pid = waitpid( 0, &status, WNOHANG )) > 0 ) {
-	connections--;
-	if ( WIFEXITED( status )) {
-	    if ( WEXITSTATUS( status )) {
-		syslog( LOG_ERR, "child %d exited with %d", pid,
-			WEXITSTATUS( status ));
-	    } else {
-		syslog( LOG_INFO, "child %d done", pid );
-	    }
-	} else if ( WIFSIGNALED( status )) {
-	    syslog( LOG_ERR, "child %d died on signal %d", pid,
-		    WTERMSIG( status ));
-	} else {
-	    syslog( LOG_ERR, "child %d died", pid );
-	}
-    }
-
-    if ( pid < 0 && errno != ECHILD ) {
-	syslog( LOG_ERR, "wait3: %m" );
-	exit( 1 );
-    }
+    child_signal++;
     return;
+
 }
 
 /*
@@ -150,6 +128,8 @@ main( int ac, char **av )
     char		*ca = "cert/ca.pem";
     char		*cert = "cert/cert.pem";
     char		*privatekey = "cert/cert.pem";
+    pid_t		pid;
+    int			status;
 #ifdef HAVE_ZEROCONF
     int			regservice = 0;
     dns_service_discovery_ref	mdnsref = NULL;
@@ -472,6 +452,32 @@ main( int ac, char **av )
      * Begin accepting connections.
      */
     for (;;) {
+
+	if ( child_signal > 0 ) {
+	    child_signal = 0;
+	    /* check to see if any children need to be accounted for */
+	    while (( pid = waitpid( 0, &status, WNOHANG )) > 0 ) {
+		connections--;
+		if ( WIFEXITED( status )) {
+		    if ( WEXITSTATUS( status )) {
+			syslog( LOG_ERR, "child %d exited with %d", pid,
+				WEXITSTATUS( status ));
+		    } else {
+			syslog( LOG_INFO, "child %d done", pid );
+		    }
+		} else if ( WIFSIGNALED( status )) {
+		    syslog( LOG_ERR, "child %d died on signal %d", pid,
+			    WTERMSIG( status ));
+		} else {
+		    syslog( LOG_ERR, "child %d died", pid );
+		}
+	    }
+	    if ( pid < 0 && errno != ECHILD ) {
+		syslog( LOG_ERR, "waitpid: %m" );
+		exit( 1 );
+	    }
+	}
+
 	sinlen = sizeof( struct sockaddr_in );
 	if (( fd = accept( s, (struct sockaddr *)&sin, &sinlen )) < 0 ) {
 	    if ( errno != EINTR ) {
