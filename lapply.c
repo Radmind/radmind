@@ -28,7 +28,6 @@
 #define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
 
 void		(*logger)( char * ) = NULL;
-struct timeval 	timeout = { 10 * 60, 0 };
 int		linenum = 0;
 int		chksum = 0;
 int		verbose = 0;
