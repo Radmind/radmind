@@ -88,8 +88,6 @@ createspecial( SNET *sn, struct node *head )
     char		pathdesc[ MAXPATHLEN * 2 ];
     char		*stats;
 
-    if ( verbose ) printf( "\n*** Creating special.T\n" );
-
     /* Open file */
     if ( ( strlen( "special.T" ) + strlen( commandpath ) + 2 ) >
 	    MAXPATHLEN ) {
@@ -97,6 +95,8 @@ createspecial( SNET *sn, struct node *head )
 	exit( 2 );
     }
     sprintf( fullpath, "%s/special.T", commandpath );
+
+    if ( verbose ) printf( "\n*** Creating %s\n", fullpath );
 
     if ( ( fd = open( fullpath, O_WRONLY | O_CREAT | O_TRUNC, 0666 ) )
 	    < 0 ) {
@@ -151,7 +151,7 @@ createspecial( SNET *sn, struct node *head )
     int
 check( SNET *sn, char *type, char *path)
 {
-    char	*schksum, *stats;
+    char	*schksum, *stats, *temppath;
     char	**targv;
     char 	pathdesc[ 2 * MAXPATHLEN ];
     char        cchksum[ 29 ];
@@ -166,7 +166,16 @@ check( SNET *sn, char *type, char *path)
 	path = command;
     }
 
-    if ( verbose ) printf( "*** Statting %s\n", path );
+    /* create full path */
+    if ( ( strlen( command ) + strlen( commandpath ) + 2 ) >
+	    MAXPATHLEN ) {
+	fprintf( stderr, "path too long:%s\%s\n", commandpath,
+		path );
+	exit( 2 );
+    }
+    sprintf( fullpath, "%s/%s", commandpath, path );
+
+    if ( verbose ) printf( "*** Statting %s\n", fullpath );
 
     if ( ( stats = getstat( sn, (char *)&pathdesc) ) == NULL ) {
 	return( 2 );
@@ -183,13 +192,6 @@ check( SNET *sn, char *type, char *path)
 	perror( "strdup" );
 	return( 2 );
     }
-    if ( ( strlen( command ) + strlen( commandpath ) + 2 ) >
-	    MAXPATHLEN ) {
-	fprintf( stderr, "path too long:%s\%s\n", commandpath,
-		path );
-	exit( 2 );
-    }
-    sprintf( fullpath, "%s/%s", commandpath, path );
 
     if ( do_chksum( fullpath, cchksum ) != 0 ) {
 	if ( errno != ENOENT ) {
@@ -197,10 +199,15 @@ check( SNET *sn, char *type, char *path)
 	    return( 2 );
 	}
 	if ( update ) {
-	    if ( verbose ) printf( "*** Retrieving missing file: %s/%s\n",
-		    commandpath, path ); 
-	    if ( retr( sn, pathdesc, commandpath, path, schksum ) != 0 ) {
+	    if ( verbose ) printf( "*** Retrieving missing file: %s\n",
+		    fullpath ); 
+	    if ( ( temppath = retr( sn, pathdesc, fullpath, schksum ) )
+		    == NULL ) {
 		fprintf( stderr, "retr failed\n" );
+		return( 2 );
+	    }
+	    if ( rename( temppath, fullpath ) != 0 ) {
+		perror( temppath );
 		return( 2 );
 	    }
 	}
@@ -210,16 +217,21 @@ check( SNET *sn, char *type, char *path)
     if ( verbose ) printf( "*** chskum " );
 
     if ( strcmp( schksum, cchksum) != 0 ) {
-	if ( verbose ) printf( "wrong on %s\n", path );
+	if ( verbose ) printf( "wrong on %s\n", fullpath );
 	if ( update ) {
-	    if ( unlink( path ) != 0 ) {
-		perror( "unlink" );
+	    if ( unlink( fullpath ) != 0 ) {
+		perror( fullpath );
 		return( 2 );
 	    }
-	    if ( verbose ) printf( "*** %s deleted\n", path );
-	    if ( verbose ) printf( "*** Retrieving %s\n", path ); 
-	    if ( retr( sn, pathdesc, commandpath, path, schksum ) != 0 ) {
+	    if ( verbose ) printf( "*** %s deleted\n", fullpath );
+	    if ( verbose ) printf( "*** Retrieving %s\n", fullpath ); 
+	    if ( ( temppath = retr( sn, pathdesc, fullpath, schksum ) )
+		    == NULL ) {
 		fprintf( stderr, "retr failed\n" );
+		return( 2 );
+	    }
+	    if ( rename( temppath, fullpath ) != 0 ) {
+		perror( temppath );
 		return( 2 );
 	    }
 	}
