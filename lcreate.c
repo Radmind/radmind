@@ -34,6 +34,7 @@
 #include "code.h"
 #include "tls.h"
 #include "largefile.h"
+#include "progress.h"
 
 /*
  * STOR
@@ -52,6 +53,8 @@ int		cksum = 0;
 int		quiet = 0;
 int		linenum = 0;
 int		force = 0;
+extern int	progress;
+extern off_t	lsize, total;
 extern char	*version;
 extern char	*checksumlist;
 extern struct timeval   timeout;   
@@ -85,7 +88,7 @@ main( int argc, char **argv )
     char                cksumval[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
     extern char		*optarg;
     struct timeval	tv;
-    FILE		*tran; 
+    FILE		*tran = NULL;
     struct stat		st;
     struct applefileinfo	afinfo;
     off_t		size = 0;
@@ -163,11 +166,13 @@ main( int argc, char **argv )
             break;
 
 	case 'v':
-	    verbose = 1;
-	    logger = v_logger;
-	    if ( isatty( fileno( stdout ))) {
-		dodots = 1;
+	    if ( ++verbose >= 2 ) {
+		logger = v_logger;
+		if ( isatty( fileno( stdout ))) {
+		    dodots = 1;
+		}
 	    }
+
 	    break;
 
 	case 'V':
@@ -221,6 +226,13 @@ main( int argc, char **argv )
         fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ] " );
 	fprintf( stderr, "create-able-transcript\n" );
 	exit( 2 );
+    }
+
+    if ( ! tran_only ) {
+	if (( tran = fopen( argv[ optind ], "r" )) == NULL ) {
+	    perror( argv[ optind ] );
+	    exit( 2 );
+	}
     }
 
     if ( network ) {
@@ -286,7 +298,7 @@ main( int argc, char **argv )
 		/* get the length of the password so we can zero it later */
 		len = strlen( password );
             }
-            if ( verbose ) printf( ">>> LOGIN %s %s\n", user, password );
+            if ( verbose == 2 ) printf( ">>> LOGIN %s %s\n", user, password );
             if ( snet_writef( sn, "LOGIN %s %s\n", user, password ) < 0 ) {
                 fprintf( stderr, "login %s failed: 1-%s\n", user, 
                     strerror( errno ));
@@ -328,6 +340,11 @@ main( int argc, char **argv )
 	    exit( 2 );
 	}
 
+	if ( ! tran_only ) {
+	    lsize = loadsetsize( tran );
+	}
+	lsize += st.st_size;
+
 	respcount += 2;
 	if (( rc = stor_file( sn, pathdesc, argv[ optind ], st.st_size,
 		cksumval )) <  0 ) {
@@ -337,11 +354,6 @@ main( int argc, char **argv )
 	if ( tran_only ) {	/* don't upload files */
 	    goto done;
 	}
-    }
-
-    if (( tran = fopen( argv[ optind ], "r" )) < 0 ) {
-	perror( argv[ optind ] );
-	exit( 2 );
     }
 
     while ( fgets( tline, MAXPATHLEN, tran ) != NULL ) {
