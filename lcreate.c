@@ -14,7 +14,6 @@
 #include "argcargv.h"
 #include "code.h"
 #include "applefile.h"
-#include "store_applefile.h"
 
 /*
  * STOR
@@ -143,7 +142,7 @@ store_file( int fd, SNET *sn, char *filename, char *transcript, char *filetype )
 
     switch( *filetype ) {
     case 'a':
-	if ( store_applefile( decode( filename ), fd, sn, dodots ) != 0 ) {
+	if ( stor_applefile( fd, sn, decode( filename )) != 0 ) {
 	    perror( "store_applefile" );
 	    return( -1 );
 	}
@@ -166,7 +165,7 @@ store_file( int fd, SNET *sn, char *filename, char *transcript, char *filetype )
 	}
 	break;
     default:
-	fprintf( stderr, "%c: unkown file type\n", *filetype );
+	fprintf( stderr, "%c: unknown file type\n", *filetype );
 	return( -1 );
     }
     if ( rr < 0 ) {
@@ -282,7 +281,6 @@ main( int argc, char **argv )
 		tname = ++p;
 	    }
 	}
-
 
 	if (( sn = connectsn( host, port )) == NULL ) {
 	    fprintf( stderr, "%s:%d connection failed.\n", host, port );
