@@ -1,6 +1,6 @@
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/param.h>
+#include <sys/stat.h>
 #ifdef __APPLE__
 #include <sys/paths.h>
 #include <sys/attr.h>
