@@ -659,6 +659,11 @@ f_starttls( snet, ac, av )
     X509                        *peer;
     char                        buf[ 1024 ];
 
+    if ( authlevel == 0 ) {
+        syslog( LOG_ERR, "f_starttls: STAR given but TLS not offered" );
+	snet_writef( snet, "%d TLS not supported\n", 502 );
+	return( 1 );
+    };
     ncommands = sizeof( noauth ) / sizeof( noauth [ 0 ] );
 
     /* We get here when the client asks for TLS with the STARTTLS verb */
