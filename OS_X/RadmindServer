@@ -13,6 +13,6 @@ if [ -f /var/radmind/config ]; then
 
     ConsoleMessage "Starting Radmind Server"
 
-    /usr/local/sbin/radmind
+    /usr/local/sbin/radmind -u 077
 
 fi
