@@ -92,8 +92,6 @@ apply( FILE *f, char *parent, SNET *sn )
     while ( fgets( tline, MAXPATHLEN, f ) != NULL ) {
 	linenum++;
 
-	if ( verbose ) printf( "\n" );
-
 	len = strlen( tline );
         if (( tline[ len - 1 ] ) != '\n' ) {
 	    fprintf( stderr, "%s: line too long\n", tline );
