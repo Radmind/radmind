@@ -54,6 +54,10 @@ main( int argc, char **argv )
     char		*transcript = NULL, *tpath = NULL, *line;
     char		*prefix = NULL, *d_path = NULL;
     char                **targv;
+    char		cwd[ MAXPATHLEN ];
+    char		radmind_real_path[ PATH_MAX ];
+    char		file_root[ MAXPATHLEN ];
+    char		transcript_root[ MAXPATHLEN ];
     char                tline[ 2 * MAXPATHLEN ];
     char		path[ 2 * MAXPATHLEN ];
     char		upath[ 2 * MAXPATHLEN ];
@@ -111,6 +115,59 @@ main( int argc, char **argv )
 	fprintf( stderr, "usage: %s [ -nqVv ] [ -P prefix ] ", argv[ 0 ] );
 	fprintf( stderr, "-c checksum transcript\n" );
 	exit( 2 );
+    }
+
+    /* Guess at file location:
+     *  1 check to see if our cwd contains _RADMIND_PATH/tmp
+     *	  -> assume files are at _RADMIND_PATH/tmp/file/tpath
+     *  2 check to see if our cwd contains _RADMIND_PATH
+     *	  -> assume files are at _RADMIND_PATH/file/tpath
+     *  3 use "."
+     *	  -> assume files are at ./../file/tpath
+     */
+    if ( realpath( _RADMIND_PATH, radmind_real_path ) == NULL ) {
+	perror( radmind_real_path );
+	exit( 2 );
+    }
+    printf( "radmind_real_path: %s\n", radmind_real_path );
+    if ( getcwd( cwd, MAXPATHLEN ) == NULL ) {
+	perror( "getcwd" );
+	exit( 2 );
+    }
+    printf( "cwd: %s\n", cwd );
+    if ( snprintf( transcript_root, MAXPATHLEN, "%s/tmp/transcript",
+	    radmind_real_path ) > MAXPATHLEN - 1 ) {
+	fprintf( stderr, "%s/tmp: path too long\n", radmind_real_path );
+	exit( 2 );
+    }
+
+    if ( strstr( cwd, transcript_root ) != NULL ) {
+	if ( snprintf( file_root, MAXPATHLEN, "%s/tmp/file%s",
+		radmind_real_path,
+		&cwd[ strlen( transcript_root ) ]) > MAXPATHLEN - 1 ) {
+	    fprintf( stderr, "%s/tmp/file: path too long\n",
+		radmind_real_path );
+	    exit( 2 );
+	}
+    } else {
+	if ( snprintf( transcript_root, MAXPATHLEN, "%s/transcript",
+		radmind_real_path ) > MAXPATHLEN - 1 ) {
+	    fprintf( stderr, "%s/tmp: path too long\n", radmind_real_path );
+	    exit( 2 );
+	}
+
+	if ( strstr( cwd, transcript_root ) != NULL ) {
+	    if ( snprintf( file_root, MAXPATHLEN, "%s/file%s",
+		    radmind_real_path,
+		    &cwd[ strlen( transcript_root ) ]) > MAXPATHLEN - 1 ) {
+		fprintf( stderr, "%s/file: path too long\n",
+		    radmind_real_path );
+		exit( 2 );
+	    }
+	} else {
+	    sprintf( file_root, "../file" );
+	    sprintf( transcript_root, "." );
+	}
     }
 
     if ( stat( tpath, &st ) != 0 ) {
@@ -258,9 +315,9 @@ main( int argc, char **argv )
 	    prefixfound = 1;
 	}
 
-	if ( snprintf( path, MAXPATHLEN, "%s/../file/%s/%s", tpath, transcript,
-		d_path ) > MAXPATHLEN - 1 ) {
-	    fprintf( stderr, "%s/../file/%s/%s: path too long\n", tpath,
+	if ( snprintf( path, MAXPATHLEN, "%s/%s/%s/%s", file_root, tpath,
+		transcript, d_path ) > MAXPATHLEN - 1 ) {
+	    fprintf( stderr, "%s/file/%s/%s: path too long\n", file_root,
 		transcript, d_path );
 	    exit( 2 );
 	}

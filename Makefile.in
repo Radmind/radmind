@@ -88,6 +88,11 @@ daemon.o : daemon.c
 		-D_RADMIND_MAXCONNECTIONS=${RADMIND_MAXCONNECTIONS} \
 		-c ${srcdir}/daemon.c
 
+lcksum.o : lcksum.c
+	${CC} ${CFLAGS} \
+		-D_RADMIND_PATH=\"${RADMINDDIR}\" \
+		-c ${srcdir}/lcksum.c
+
 command.o : command.c
 	${CC} ${CFLAGS} \
 		-c ${srcdir}/command.c
