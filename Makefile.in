@@ -2,7 +2,6 @@ SHELL = /bin/sh
 VPATH = @srcdir@
 
 prefix=@prefix@
-exec_prefix=@exec_prefix@
 MANDIR=@mandir@
 BINDIR=@bindir@
 SBINDIR=@sbindir@
@@ -169,7 +168,6 @@ man :
 	done
 
 install	: all man
-	-mkdir -p ${exec_prefix}
 	-mkdir -p ${SBINDIR}
 	${INSTALL} -m 0755 -c radmind ${SBINDIR}/
 	-mkdir -p ${BINDIR}
