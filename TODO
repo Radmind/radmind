@@ -1,15 +1,7 @@
-
-* not a big deal
-
-* anything that is in a -L dir should be with <include.h> not "include.h"
-which is for local dir.
-
 Have Makefile update man pages with correct DEFAULTHOST info.
 
 * use sed
 man pages have marker, and install script runs sed to replace defines in
 make file
 
-* Set Makefile to take on path to command file, then -K code just resets
-this sting.  Then, add code to parse the string every time.  Make this code
-shared.
+Add server option to twhich to search transcripts - similar to lcksum
