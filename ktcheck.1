@@ -4,13 +4,8 @@
 \- verify and download command file and transcripts
 .SH SYNOPSIS
 .B ktcheck 
+.RB [ \-nvV ]
 [
-.B -n
-] [
-.B -v
-] [
-.B -V
-] [
 .BI \-c\  checksum 
 ] [
 .BI \-K\  command-file 
@@ -39,24 +34,24 @@ Each special file listed in the command file is converted into a
 transcript line in special.T with information provided by 
 .I host. 
 
-When run with the -n option,
+When run with the \-n option,
 .B ktcheck
 verifies but never downloads the command file or transcripts.  A tempory 
-special.T is create for verification purposes and is removed on exit.
+special.T is created for verification and is removed on exit.
 .sp
 .SH OPTIONS
 .TP 19
 .BI \-c\  checksum
 enables checksuming. sha1 is the only currently supported checksuming
-algorithim.
+algorythim.
 .TP 19
 .BI \-K\  command
 specifies a command
 file name, by default
-.B command.K
+.BR command.K .
 .TP 19
 .BI \-p\  port
-specifies a port, by default 6662
+specifies a port, by default 6662.
 .TP 19
 .B \-n
 no files are created or downloaded.
@@ -75,9 +70,17 @@ name of the default command file.
 .B special.T 
 name of the special transcript.
 .sp
-.SH DIAGNOSTICS
-An exit code of 0 means no differences were found, 1 means differences were
-found and 2 means trouble.
+.SH EXIT STATUS
+The following exit values are returned:
+.TP 5
+0
+No differences were found. 
+.TP 5
+1
+Differences were found.
+.TP 5
+>1
+An error occurred.
 .sp
 .SH SEE ALSO
 .BR fsdiff (1),

@@ -1,4 +1,4 @@
-.TH lfdiff "1" "6 November 2001" "RSUG" "User Commands"
+.TH lfdiff "1" "November 2001" "RSUG" "User Commands"
 .SH NAME
 .B lfdiff 
 \- compare local files with copies on radmind server
@@ -13,7 +13,7 @@
 ] [
 .BI \-p\  port
 ] [
-.B -V
+.B \-V
 ] [
 .I supported\ diff\ options
 ] [
@@ -51,7 +51,7 @@ options not duplicated in
 .BR lfdiff .
 All other
 .BR diff (1) 
-options are given using the -X option.
+options are given using the \-X option.
 .sp
 .SH OPTIONS
 .TP 19
@@ -78,17 +78,20 @@ displays the version of
 and exits.
 .TP 19
 .BI \-X\  unsupported\ diff\ options
-passes options directly to. 
-.BR diff (1) 
+passes options directly to
+.BR diff (1). 
 .sp
 .SH EXIT STATUS 
 The following exit values are returned:
-
-0   No differences were found.
-
-1   Differences were found.
-
->1  An error occurred.
+.TP 5
+0
+No differences were found.
+.TP 5
+1
+Differences were found.
+.TP 5
+>1
+An error occurred.
 .sp
 .SH SEE ALSO
 .BR diff (1),

@@ -4,13 +4,8 @@
 \- verifies a transcript's checksums and file sizes
 .SH SYNOPSIS
 .B lcksum 
+.RB [ \-nvV ]
 [
-.B -n
-] [
-.B -v
-] [
-.B -V
-] [
 .BI \-P\  prefix 
 ]
 .I transcript 
@@ -20,15 +15,16 @@
 verifies and updates the checksums and file sizes of the 
 appliable transcript 
 .I transcript 
-line by line.
-.B lcksum compares the checksum and
+line-by-line.
+.B lcksum
+compares the checksum and
 file size listed in
 .I transcript
 to that  
 of the file in the file system.  Files must be located in
 file directory associated with
 .IR transcript .
-With the -n option
+With the \-n option
 .B lcksum
 verifies but does not modify
 .IR transcript .
@@ -44,7 +40,7 @@ modifies the file size and/or checksum of
 the user must have write access to
 .IR transcript .
 
-With the -f option,
+With the \-P option,
 .B lcksum
 will only verify transcript lines with paths starting with
 .IR prefix .
@@ -69,12 +65,15 @@ order of preference and then exits.
 .sp
 .SH EXIT STATUS
 The following exit values are returned:
-
-0   Transcript was verified.
-
-1   Differences were found.
-
->1  An error occurred.
+.TP 5
+0
+Transcript was verified.
+.TP 5
+1
+Differences were found.
+.TP 5
+>1
+An error occurred.
 .sp
 .SH SEE ALSO
 .BR ktcheck (1),

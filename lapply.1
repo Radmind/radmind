@@ -5,13 +5,8 @@
 \- modify file system to match appliable-transcript 
 .SH SYNOPSIS
 .B lapply
+.RB [ \-nvV ]
 [
-.B -n
-] [
-.B -v
-] [
-.B -V
-] [
 .BI \-c\  checksum
 ] [
 .BI \-h\  host
@@ -22,7 +17,7 @@
 }
 .sp
 .SH DESCRIPTION
-lapply reads an appliable transcript line by line, modifying the file
+lapply reads an appliable transcript line-by-line, modifying the file
 system to match the transcript. Transcript lines are applied in order
 unless they are directories marked for deletion.  In such cases,
 subsequent transcript lines are first applied until the file system object 
@@ -61,13 +56,22 @@ displays the version of lapply and exits.
 .TP 19
 .BI \-c\  checksum
 enables checksuming. sha1 is the only currently supported checksuming
-algorithim.
+algorythim.
 .TP 19
 .BI \-h\  host
 specifies the radmind server.
 .TP 19
 .BI \-p\  port
 specifies the port of the radmind server, by default 6662.
+.sp
+.SH EXIT STATUS
+The following exit values are returned:
+.TP 5
+0
+Transcript was applied.
+.TP 5
+1
+An error occurred.
 .sp
 .SH SEE ALSO
 .BR ktcheck (1),

@@ -4,7 +4,7 @@
 \- lmerge combines multiple transcripts into one.
 .SH SYNOPSIS
 .B lmerge
-.RB [ -vV ]
+.RB [ \-vV ]
 [
 .BI \-u\  umask 
 ]
@@ -12,16 +12,16 @@
 .I dest 
 .br
 .B lmerge 
-.B -f
-.RB [ -vV ]
+.B \-f
+.RB [ \-vV ]
 [
 .BI \-u\  umask
 ]
 .I transcript1 transcript2 
 .br
 .B lmerge 
-.B -n
-.RB [ -vV ]
+.B \-n
+.RB [ \-vV ]
 [
 .BI \-u\  umask
 ]
@@ -37,7 +37,7 @@ If multiple transcripts list the same file system object, the transcript
 line from the highest precedence transcript is written to
 .IR dest .
 
-With the -f option
+With the \-f option
 .B lmerge
 does not create a new transcript and merges the first transcript into the
 second transcipt.  Only two transcripts are allowed.
@@ -56,20 +56,20 @@ Since files are linked, all transcripts ( including
 .I dest
 ) and files must be located on the same volume.
 
-Using the -f option,
+Using the \-f option,
 .B lmerge
 links all files from the lowest precedence
 transcript.  If the transcript line for a file is preceded with a "-"
 it is also removed from the file directory associated with the lowest precedence
 transcript.
 
-The -n option indicates that the highest precedence transcript has no
+The \-n option indicates that the highest precedence transcript has no
 associated file directory.  All files listed in the highest precedence
 transcript must be in the file directory associated with the lowest precedence
 transcript.  A transcript line in the highest precedence transcript written to
 .IR dest ,
 but files are linked from the lowest precedence transcript.  Only two
-transcripts can be merged with the -n option.
+transcripts can be merged with the \-n option.
 .SH OPTIONS
 .TP 19
 .B \-f
@@ -94,10 +94,12 @@ and exits.
 .sp
 .SH EXIT STATUS
 The following exit values are returned:
-
-0   Merge successful.
-
-1   An error occurred.
+.TP 5
+0
+Merge successful.
+.TP 5
+1
+An error occurred.
 .sp
 .SH SEE ALSO
 .BR ktcheck (1),
