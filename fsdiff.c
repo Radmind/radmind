@@ -98,6 +98,7 @@ main( int argc, char **argv )
     int 		errflag = 0;
 
     edit_path = TRAN2FS;
+    chksum = 0;
     outtran = stdout;
 
     while (( c = getopt( argc, argv, "o:K:T1V" )) != EOF ) {
