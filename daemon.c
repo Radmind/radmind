@@ -14,12 +14,13 @@
 #include <errno.h>
 #include <netdb.h>
 #include <signal.h>
-#include <snet.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <syslog.h>
 #include <strings.h>
 #include <unistd.h>
+
+#include <snet.h>
 
 #include "command.h"
 
@@ -90,7 +91,6 @@ main( ac, av )
     unsigned short	port = 0;
     extern int		optind;
     extern char		*optarg;
-    mode_t		defumask = 077;
 
 
     if (( prog = strrchr( av[ 0 ], '/' )) == NULL ) {
@@ -122,15 +122,13 @@ main( ac, av )
 	    break;
 
 	case 'u' :		/* umask */
-	    defumask = strtol( optarg, (char **)NULL, 0 );
+	    umask( strtol( optarg, (char **)NULL, 0 ));
 	    break;
 
 	default :
 	    err++;
 	}
     }
-
-    umask( defumask );
 
     if ( chdir( _PATH_RADMIND ) < 0 ) {
 	perror( _PATH_RADMIND );
