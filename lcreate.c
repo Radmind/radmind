@@ -25,6 +25,7 @@
 
 void		(*logger)( char * ) = NULL;
 int		verbose = 0;
+int		quiet = 0;
 extern char	*version;
 
     static void
@@ -78,8 +79,10 @@ n_store_file( SNET *sn, char *filename, char *transcript )
         return( -1 );
     }
 
+    if ( !quiet && !verbose ) {
+	printf( "%s: stored as zero length file\n", filename );
+    }
     return( 0 );
-
 }
 
     static int
@@ -99,6 +102,7 @@ store_file( int fd, SNET *sn, char *filename, char *transcript )
 
     /* STOR "TRANSCRIPT" <transcript-name>  "\r\n" */
     if ( filename == NULL ) {
+	filename = transcript;
 	if ( snet_writef( sn,
 		"STOR TRANSCRIPT %s\r\n", transcript ) == NULL ) {
 	    perror( "snet_writef" );
@@ -171,8 +175,8 @@ store_file( int fd, SNET *sn, char *filename, char *transcript )
 	return( -1 );
     }
 
+    if ( !quiet && !verbose ) printf( "%s: stored\n", filename );
     return( 0 );
-
 }
 
     int
@@ -190,7 +194,7 @@ main( int argc, char **argv )
     extern char		*optarg;
     FILE		*fdiff; 
 
-    while (( c = getopt( argc, argv, "h:nNp:t:TvV" )) != EOF ) {
+    while (( c = getopt( argc, argv, "h:nNp:qt:TvV" )) != EOF ) {
 	switch( c ) {
 	case 'h':
 	    host = optarg; 
@@ -212,15 +216,15 @@ main( int argc, char **argv )
 		port = se->s_port;
 	    }
 	    break;
-
+	case 'q':
+	    quiet = 1;
+	    break;
 	case 't':
 	    tname = optarg;
 	    break;
-
 	case 'T':
 	    tran_only = 1;
 	    break;
-
 	case 'v':
 	    verbose = 1;
 	    logger = v_logger;
@@ -235,6 +239,10 @@ main( int argc, char **argv )
 	    err++;
 	    break;
 	}
+    }
+
+    if ( verbose && quiet ) {
+	err++;
     }
 
     if ( err || ( argc - optind != 1 ))   {
@@ -333,7 +341,6 @@ main( int argc, char **argv )
 		    exitcode = 1;
 		    break;
 		}
-
 	    }
 	}
     }

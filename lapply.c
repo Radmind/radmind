@@ -25,7 +25,6 @@ int		chksum = 0;
 int		quiet = 0;
 int		verbose = 0;
 int		special = 0;
-int		safe = 0;
 int		network = 1;
 char		transcript[ 2 * MAXPATHLEN ] = { 0 };
 char		prepath[ MAXPATHLEN ]  = { 0 };
@@ -327,7 +326,7 @@ main( int argc, char **argv )
     struct servent	*se;
     SNET		*sn;
 
-    while (( c = getopt ( argc, argv, "c:h:np:qsVv" )) != EOF ) {
+    while (( c = getopt ( argc, argv, "c:h:np:qVv" )) != EOF ) {
 	switch( c ) {
 	case 'c':
 	    if ( strcasecmp( optarg, "sha1" ) != 0 ) {
@@ -353,10 +352,6 @@ main( int argc, char **argv )
 	    break;
 	case 'q':
 	    quiet = 1;
-	    logger = NULL;
-	    break;
-	case 's':
-	    safe = 1;
 	    break;
 	case 'V':
 	    printf( "%s\n", version );
@@ -387,6 +382,9 @@ main( int argc, char **argv )
 	    goto error0;
 	}
     } else {
+	err++;
+    }
+    if ( verbose && quiet ) {
 	err++;
     }
 

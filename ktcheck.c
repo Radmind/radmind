@@ -25,6 +25,7 @@ extern struct timeval	timeout;
 int			linenum = 0;
 int			chksum = 1;
 int			verbose = 0;
+int			quiet = 0;
 int			update = 1;
 char			*kfile= _RADMIND_COMMANDFILE;
 char			*kdir= "";
@@ -196,6 +197,9 @@ check( SNET *sn, char *type, char *file )
 		perror( tempfile );
 		return( 2 );
 	    }
+	    if ( !quiet ) printf( "%s: updated\n", path );
+	} else {
+	    if ( !quiet ) printf ( "%s: missing\n", path );
 	}
 	return( 1 );
     }
@@ -221,6 +225,9 @@ check( SNET *sn, char *type, char *file )
 		perror( path );
 		return( 2 );
 	    }
+	    if ( !quiet ) printf( "%s: updated\n", path );
+	} else {
+	    if ( !quiet ) printf( "%s: out of date\n", path );
 	}
 	return( 1 );
     } else {
@@ -253,7 +260,7 @@ main( int argc, char **argv )
     struct node		*head = NULL;
     struct stat		tst, lst;
 
-    while (( c = getopt ( argc, argv, "c:K:nh:p:Vv" )) != EOF ) {
+    while (( c = getopt ( argc, argv, "c:K:nh:p:qVv" )) != EOF ) {
 	switch( c ) {
 	case 'c':
 	    if ( strcasecmp( optarg, "sha1" ) != 0 ) {
@@ -280,6 +287,9 @@ main( int argc, char **argv )
 	case 'n':
 	    update = 0;
 	    break;
+	case 'q':
+	    quiet = 1;
+	    break;
 	case 'V':
 	    printf( "%s\n", version );
 	    printf( "%s\n", checksumlist );
@@ -300,6 +310,10 @@ main( int argc, char **argv )
     /* Check that kfile isn't an abvious directory */
     len = strlen( kfile );
     if ( kfile[ len - 1 ] == '/' ) {
+	err++;
+    }
+
+    if ( verbose && quiet ) {
 	err++;
     }
 
@@ -472,16 +486,9 @@ main( int argc, char **argv )
 
 done:
     if ( change ) {
-	if ( verbose ) {
-	    if ( update )  {
-		printf( "Update made\n" );
-	    } else {
-		printf( "Update needed\n" );
-	    }
-	}
 	exit( 1 );
     } else {
-	if ( verbose ) printf( "No updates needed\n" );
+	if ( !quiet ) printf( "No updates needed\n" );
 	exit( 0 );
     }
 }
