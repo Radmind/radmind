@@ -50,7 +50,7 @@ Lines that are blank or begin with '#' are ignored.  '*' is a wildcard and
 will match any string.  A number range can be given 
 by "<\c
 .IR min -\c
-.IR max\   >"
+.IR max >"
 where 
 .I min
 is the lower bound and
@@ -89,7 +89,9 @@ All special files are stored in
 .BR special .
 The special files for a given host are stored in
 .BI file/ <host>
-where <host> is the fully qualified domain name or IP address of the client.
+where
+.I <host>
+is the fully qualified domain name or IP address of the client.
 Individual special files are stored in
 .BI special/ <host>\c
 .RI / <path>
@@ -107,8 +109,11 @@ is no domain name returned by
 All files stored on the server using the STOR command are saved in
 .BR tmp/file .
 Files for a given transcript are stored in
-tmp/transcript/<TRANSCRIPT>/<PATH>
-where <TRANSCRIPT> is the name of the transcript and <PATH> is the file's path
+.BI tmp/transcript/ <transcript>
+.BI / <path>
+where
+.I <transcript> is the name of the transcript and
+.I <path> is the file's path
 as given in the STOR command.
 .TP 19
 .B tmp/transcript
