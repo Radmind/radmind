@@ -9,7 +9,10 @@
 #include <strings.h>
 #include <unistd.h>
 
+#include <sha.h>
+
 #include "base64.h"
+#include "cksum.h"
 #include "connect.h"
 #include "argcargv.h"
 #include "code.h"
@@ -28,8 +31,9 @@
 void		(*logger)( char * ) = NULL;
 int		verbose = 0;
 int		dodots = 0;
-int		cksum = 0;	/* needed to compile */
+int		cksum = 0;
 int		quiet = 0;
+int		linenum = 0;
 extern char	*version;
 
     static void
@@ -37,157 +41,6 @@ v_logger( char *line )
 {
     printf( "<<< %s\n", line );
     return;
-}
-
-    static int
-n_store_file( SNET *sn, char *filename, char *transcript )
-{
-    struct timeval	tv;
-    char		*line;
-
-    if ( snet_writef( sn,
-                "STOR FILE %s %s\r\n", transcript, filename ) == NULL ) {
-            perror( "snet_writef" );
-            return( -1 );
-    }
-
-    if ( verbose ) {
-	printf( ">>> STOR FILE %s %s\n", transcript, filename );
-    }
-
-    tv.tv_sec = 120;
-    tv.tv_usec = 0;
-    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-        perror( "snet_getline_multi" );
-        return( -1 );
-    }
-    if ( *line != '3' ) {
-        fprintf( stderr, "%s\n", line );
-        return( -1 );
-    }
-
-    if ( snet_writef( sn, "0\r\n.\r\n" ) == NULL ) {
-        perror( "snet_writef" );
-        return( -1 );
-    }
-    if ( verbose ) fputs( ">>> 0\n\n>>> .\n", stdout );
-
-    tv.tv_sec = 120;
-    tv.tv_usec = 0;
-    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-        perror( "snet_getline_multi" );
-        return( -1 );
-    }
-    if ( *line != '2' ) {
-        fprintf( stderr, "%s\n", line );
-        return( -1 );
-    }
-
-    if ( !quiet && !verbose ) {
-	printf( "%s: stored as zero length file\n", decode( filename ));
-    }
-    return( 0 );
-}
-
-    static int
-store_file( int fd, SNET *sn, char *filename, char *transcript, char *filetype ) 
-{
-    struct stat 	st;
-    struct timeval 	tv;
-    unsigned char	buf[ 8192 ];
-    ssize_t		rr;
-    char		*line;
-
-    if ( fstat( fd, &st) < 0 ) {
-	perror( filename );
-	return( -1 );
-    }
-
-    /* STOR "TRANSCRIPT" <transcript-name>  "\r\n" */
-    if ( filename == NULL ) {
-	filename = transcript;
-	if ( snet_writef( sn,
-		"STOR TRANSCRIPT %s\r\n", transcript ) == NULL ) {
-	    perror( "snet_writef" );
-	    return( -1 );
-	}
-	if ( verbose ) {
-	    printf( ">>> STOR TRANSCRIPT %s\n", transcript );
-	}
-    } else {  /* STOR "FILE" <transcript-name> <path> "\r\n" */
-	if ( snet_writef( sn,
-		"STOR FILE %s %s\r\n", transcript, filename ) == NULL ) {
-	    perror( "snet_writef" );
-	    return( -1 );
-	}
-	if ( verbose ) {
-	    printf( ">>> STOR FILE %s %s\n", transcript, filename );
-	}
-    }
-
-    tv.tv_sec = 120;
-    tv.tv_usec = 0;
-    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-	perror( "snet_getline_multi" );
-	return( -1 );
-    }
-    if ( *line != '3' ) {
-	fprintf( stderr, "%s\n", line );
-	return( -1 );
-    }
-
-    switch( *filetype ) {
-    case 'a':
-	if ( stor_applefile( fd, sn, decode( filename )) != 0 ) {
-	    perror( "store_applefile" );
-	    return( -1 );
-	}
-	break;
-    case 'f':
-	if ( snet_writef( sn, "%d\r\n", (int)st.st_size ) == NULL ) {
-	    perror( "snet_writef" );
-	    return( -1 );
-	}
-	if ( verbose ) printf( ">>> %d\n", (int)st.st_size );
-
-	while (( rr = read( fd, buf, sizeof( buf ))) > 0 ) {
-	    if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
-	    tv.tv_sec = 120;
-	    tv.tv_usec = 0;
-	    if ( snet_write( sn, buf, (int)rr, &tv ) != rr ) {
-		perror( "snet_write" );
-		return( -1 );
-	    }
-	}
-	break;
-    default:
-	fprintf( stderr, "%c: unknown file type\n", *filetype );
-	return( -1 );
-    }
-    if ( rr < 0 ) {
-	perror( filename );
-	return( -1 );
-    }
-
-    if ( snet_writef( sn, ".\r\n" ) == NULL ) {
-	perror( "snet_writef" );
-	return( -1 );
-    }
-    if ( verbose ) fputs( "\n>>> .\n", stdout );
-
-    tv.tv_sec = 120;
-    tv.tv_usec = 0;
-    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-	perror( "snet_getline_multi" );
-	return( -1 );
-    }
-    if ( *line != '2' ) {
-	fprintf( stderr, "%s\n", line );
-	return( -1 );
-    }
-
-    if ( !quiet && !verbose ) printf( "%s: stored\n", decode( filename ));
-    return( 0 );
 }
 
     int
@@ -202,11 +55,19 @@ main( int argc, char **argv )
     char		*tname = NULL, *host = _RADMIND_HOST; 
     char		*p,*dpath, tline[ 2 * MAXPATHLEN ];
     char		**targv;
+    char                cksumval[ 29 ];
     extern char		*optarg;
     FILE		*fdiff; 
 
-    while (( c = getopt( argc, argv, "h:nNp:qt:TvV" )) != EOF ) {
+    while (( c = getopt( argc, argv, "c:h:nNp:qt:TvV" )) != EOF ) {
 	switch( c ) {
+        case 'c':
+            if ( strcasecmp( optarg, "sha1" ) != 0 ) {
+		fprintf( stderr, "%s: unsupported checksum\n", optarg );
+                exit( 1 ); 
+            }   
+            cksum = 1;
+            break;
 	case 'h':
 	    host = optarg; 
 	    break;
@@ -287,10 +148,28 @@ main( int argc, char **argv )
 	    exit( 1 );
 	}
 
-	if ( store_file( fd, sn, NULL, tname, "f" ) != 0 ) {
-	    fprintf( stderr, "failed to store transcript \"%s\"\n", tname );
+	if ( do_cksum( argv[ optind ], cksumval ) < 0 ) {
+	   perror( tname );
 	    exitcode = 1;
 	    (void)close( fd );
+	    goto done;
+	}
+
+	if (( rc = stor_file( fd, sn, NULL, cksumval, tname, "f", 0 )) <  0 ) {
+	    if ( dodots ) { printf( "\n"); }
+	    (void)close( fd );
+	    exitcode = 1;
+	    switch( rc ) {
+	    case -3:
+		fprintf( stderr, "failed to store transcript \"%s\": checksum not listed in transcript\n", dpath );
+		break;
+	    case -2:
+		fprintf( stderr, "failed to store transcript \"%s\": checksum list in transcript wrong\n", dpath );
+		break;
+	    default:
+		fprintf( stderr, "failed to store transcript \"%s\"\n", tname );
+		break;
+	    }
 	    goto done;
 	}
 
@@ -319,6 +198,7 @@ main( int argc, char **argv )
 	    exitcode = 1;
 	    break;
 	}
+	linenum++;
 	tac = argcargv( tline, &targv );
 
 	if ( tac == 1 ) {
@@ -334,7 +214,7 @@ main( int argc, char **argv )
 		    exitcode = 1;
 		}
 	    } else if ( negative ) {
-		if (( rc = n_store_file( sn, targv[ 1 ], tname )) != 0 ) {
+		if (( rc = n_stor_file( sn, targv[ 1 ], tname )) < 0 ) {
 		    fprintf( stderr, "failed to store file %s\n", dpath );
 		    exitcode = 1;
 		    break;
@@ -345,12 +225,24 @@ main( int argc, char **argv )
 		    exitcode = 1;
 		    break;
 		} 
-		rc = store_file( fdt, sn, targv[ 1 ], tname, targv[ 0 ] ); 
+		rc = stor_file( fdt, sn, targv[ 1 ], targv[ 7 ], tname,
+		    targv[ 0 ], (size_t)atol( targv[ 6 ] )); 
 		(void)close( fdt ); 
-		if ( rc != 0 ) {
-		    fprintf( stderr, "failed to store file %s\n", dpath );
+		if ( rc < 0 ) {
+		    if ( dodots ) { printf( "\n"); }
+		    switch( rc ) {
+		    case -3:
+			fprintf( stderr, "failed to store file %s: checksum no listed in transcript\n", dpath );
+			break;
+		    case -2:
+			fprintf( stderr, "failed to store file %s: checksum list in transcript wrong\n", dpath );
+			break;
+		    default:
+			fprintf( stderr, "failed to store file %s\n", dpath );
+			break;
+		    }
 		    exitcode = 1;
-		    break;
+		    goto done;
 		}
 	    }
 	}

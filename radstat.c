@@ -23,23 +23,15 @@
     int
 radstat( char *path, struct stat *st, char *type, char *finfo )
 {
-    char		rsrc_path[ MAXPATHLEN ];
-    struct stat		rsrc_st;
+    char			rsrc_path[ MAXPATHLEN ];
+    struct stat			rsrc_st;
 #ifdef __APPLE__
-    static char		null_buf[ 32 ] = { 0 };
+    static char			null_buf[ 32 ] = { 0 };
     struct {
         unsigned long   ssize;
         char            finfo_buf[ 32 ];
     } finfo_struct;
-    struct attrlist             alist = {
-        ATTR_BIT_MAP_COUNT,
-        0,
-        ATTR_CMN_FNDRINFO,
-        0,
-        0,      
-        0,
-        0,
-    };
+    extern struct attrlist 	alist;
 #endif __APPLE__
 
     if ( lstat( path, st ) != 0 ) {

@@ -49,7 +49,7 @@ LAPPLY_OBJ=     version.o lapply.o argcargv.o code.o base64.o retr.o \
                 applefile.o
 
 LCREATE_OBJ=    version.o lcreate.o argcargv.o code.o connect.o \
-                stor_applefile.o applefile.o base64.o
+                stor.o applefile.o base64.o cksum.o
 
 LCKSUM_OBJ=     version.o lcksum.o argcargv.o cksum.o base64.o code.o \
                 pathcmp.o applefile.o connect.o
@@ -57,7 +57,7 @@ LCKSUM_OBJ=     version.o lcksum.o argcargv.o cksum.o base64.o code.o \
 LMERGE_OBJ=     version.o lmerge.o argcargv.o code.o pathcmp.o mkdirs.o list.o
 
 LFDIFF_OBJ=     version.o lfdiff.o argcargv.o connect.o retr.o cksum.o \
-                base64.o applefile.o
+                base64.o applefile.o code.o
 
 TWHICH_OBJ=     version.o argcargv.o code.o twhich.o pathcmp.o
 

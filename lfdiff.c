@@ -9,8 +9,9 @@
 #include <strings.h>
 #include <unistd.h>
 
+#include <sha.h>
+
 #include "connect.h"
-#include "retr.h"
 #include "argcargv.h"
 
 void output( char* string);
@@ -189,7 +190,7 @@ main( int argc, char **argv, char **envp )
 	}
     }
 
-    if ( retr( sn, pathdesc, path, NULL, (char *)&temppath ) != 0 ) {
+    if ( retr( sn, pathdesc, path, NULL, (char *)&temppath, 0 ) != 0 ) {
 	fprintf( stderr, "%s: retr failed\n", file );
 	exit( 2 );
     }

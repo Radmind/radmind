@@ -44,12 +44,13 @@ main( int argc, char **argv )
     char		lcksum[ 29 ];
     FILE		*f, *ufs;
     struct stat		st;
+    ssize_t		cksumsize;
 
     while ( ( c = getopt ( argc, argv, "c:oP:nvV" ) ) != EOF ) {
 	switch( c ) {
 	case 'c':
 	    if ( strcasecmp( optarg, "sha1" ) != 0 ) {
-		perror( optarg );
+		fprintf( stderr, "%s: unsupported checksum\n", optarg );
 		exit( 1 );
 	    }
 	    cksum = 1;  
@@ -225,8 +226,13 @@ main( int argc, char **argv )
 	 * do_acksum( ) creates a cksum for the associated applesingle file.
 	 */
 
-	if ( do_cksum( path, lcksum ) != 0 ) {
+	if (( cksumsize = do_cksum( path, lcksum )) < 0 ) {
 	    perror( path );
+	    exit( 2 );
+	}
+	if ( cksumsize != atol( targv[ 6 ] )) {
+	    fprintf( stderr, "line %d: checksum wrong in transcript\n",
+		linenum );
 	    exit( 2 );
 	}
 

@@ -9,10 +9,11 @@
 #include <strings.h>
 #include <unistd.h>
 
-#include "connect.h"
-#include "retr.h"
-#include "argcargv.h"
+#include <sha.h>
+
 #include "cksum.h"
+#include "connect.h"
+#include "argcargv.h"
 #include "list.h"
 
 void output( char* string);
@@ -37,7 +38,7 @@ extern char		*version, *checksumlist;
 getstat( SNET *sn, char *description ) 
 {
     struct timeval      tv;
-    char 		*line;
+    char		*line;
 
     if( snet_writef( sn, "STAT %s\n", description ) == NULL ) {
 	perror( "snet_writef" );
@@ -155,6 +156,7 @@ check( SNET *sn, char *type, char *file )
     char	path[ MAXPATHLEN ];
     int		tac;
     struct stat	st;
+    ssize_t	cksumsize;
 
     if ( file != NULL ) {
 	if ( snprintf( filedesc, MAXPATHLEN * 2, "%s %s", type, file  )
@@ -196,14 +198,15 @@ check( SNET *sn, char *type, char *file )
 	perror( "strdup" );
 	return( 2 );
     }
-    if ( do_cksum( path, ccksum ) != 0 ) {
+
+    if (( cksumsize = do_cksum( path, ccksum )) < 0 ) {
 	if ( errno != ENOENT ) {
 	    perror( path );
 	    return( 2 );
 	}
 	if ( update ) {
-	    if ( retr( sn, filedesc, path, scksum, (char *)&tempfile )
-		    != 0 ) {
+	    if ( retr( sn, filedesc, path, scksum, (char *)&tempfile,
+		    (size_t)atol( targv[ 6 ] )) != 0 ) {
 		fprintf( stderr, "%s: retr failed\n", path );
 		return( 2 );
 	    }
@@ -230,8 +233,8 @@ check( SNET *sn, char *type, char *file )
 		perror( path );
 		return( 2 );
 	    }
-	    if ( retr( sn, filedesc, path, scksum, (char *)&tempfile )
-		    != 0 ) {
+	    if ( retr( sn, filedesc, path, scksum, (char *)&tempfile,
+		    (size_t)atol( targv[ 6 ] )) != 0 ) {
 		fprintf( stderr, "retr failed\n" );
 		return( 2 );
 	    }
@@ -429,17 +432,19 @@ main( int argc, char **argv )
 	if ( snprintf( path, MAXPATHLEN, "%sspecial.T", kdir ) >
 		MAXPATHLEN - 1 ) {
 	    fprintf( stderr, "path too long: %sspecial.T\n", kdir );
+	    exit( 2 );
 	}
 	if ( snprintf( tempfile, MAXPATHLEN, "%sspecial.T.%i", kdir,
 		getpid()) > MAXPATHLEN - 1 ) {
 	    fprintf( stderr, "path too long: %sspecial.T.%i\n", kdir,
 		    (int)getpid());
+	    exit( 2 );
 	}
-	if ( do_cksum( tempfile, tcksum ) != 0 ) {
+	if ( do_cksum( tempfile, tcksum ) < 0 ) {
 	    perror( tempfile );
 	    exit( 2 );
 	}
-	if ( do_cksum( path, lcksum ) != 0 ) {
+	if ( do_cksum( path, lcksum ) < 0 ) {
 	    if ( errno != ENOENT ) {
 		perror( path );
 		exit( 2 );

@@ -159,8 +159,9 @@ main( int argc, char **argv )
 
 	/* Check for valid command file line */
 	if ( ac < 2 ) {
-	    fprintf( stderr, "%s: line %d: Invalid command line - too many
-		arguments\n", kfile, linenum );
+	    fprintf( stderr,
+		"%s: line %d: Invalid command line - too many arguments\n",
+		kfile, linenum );
 	    exit( 2 );
 	}
 
@@ -182,8 +183,9 @@ main( int argc, char **argv )
 	    head = new_node;
 	    break;
 	default:
-	    fprintf( stderr, "%s: line %d: Invalid command line -
-		unknown type\n", kfile, linenum );
+	    fprintf( stderr,
+		"%s: line %d: Invalid command line - unknown type\n",
+		kfile, linenum );
 	    exit( 2 );
 	}
     }
@@ -243,14 +245,15 @@ main( int argc, char **argv )
 	    }
 	    /* Check transcript order */
 	    if ( prepath != 0 ) {
-		if ( pathcmp( av[ 1 ], prepath ) < 0 ) {
+		if ( pathcmp( decode( av[ 1 ] ), prepath ) < 0 ) {
 		    fprintf( stderr, "%s: line %d: bad sort order\n",
 				tran, linenum );
 		    exit( 2 );
 		}
 	    }
 	    len = strlen( path );
-	    if ( snprintf( prepath, MAXPATHLEN, "%s", av[ 1 ]) > MAXPATHLEN ) {
+	    if ( snprintf( prepath, MAXPATHLEN, "%s", decode( av[ 1 ] ))
+			> MAXPATHLEN ) {
 		fprintf( stderr, "%s: line %d: path too long\n",
 			tran, linenum );
 		exit( 2 );

@@ -117,7 +117,7 @@ main( int argc, char **argv )
 	switch( c ) {
 	case 'c':
 	    if ( strcasecmp( optarg, "sha1" ) != 0 ) {
-		perror( optarg );
+		fprintf( stderr, "%s: unsupported checksum\n", optarg );
 		exit( 1 );
 	    }
 	    cksum = 1;

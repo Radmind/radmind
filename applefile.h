@@ -28,12 +28,16 @@
 #define AS_RFE		1
 #define AS_DFE		2	
 
+#define FINFOLEN	32
+
+/* applesingle entry */
 struct as_entry {
     unsigned long	ae_id;
     unsigned long	ae_offset;
     unsigned long	ae_length;
 };
 
+/* applesingle header */
 struct as_header {
     unsigned long	ah_magic;
     unsigned long	ah_version;
@@ -41,6 +45,14 @@ struct as_header {
     unsigned short	ah_num_entries;
 };
 
-int retr_applefile( SNET *sn, char *pathdesc, char *path, 
-	char *cksumval, char *temppath, int linenum );
-int stor_applefile( int dfd, SNET *sn, char *filename );
+struct finderinfo {
+    unsigned long   	fi_size;
+    char		fi_data[ FINFOLEN ];
+};
+
+struct applefileinfo {
+    struct finderinfo	fi;		// finder info
+    struct as_entry	as_entry[ 3 ];	// Apple Single entries
+					// For Finder info, rcrs and data forks
+    size_t		as_size;	// Total size 
+};

@@ -11,7 +11,6 @@
 #include "argcargv.h"
 #include "code.h"
 #include "list.h"
-#include "lmerge.h"
 #include "mkdirs.h"
 #include "pathcmp.h"
 
@@ -19,6 +18,26 @@ int		cksum = 1;
 int		verbose = 0;
 int		noupload = 0;
 extern char   	*version;
+
+struct tran {
+    int                 num;
+    int                 eof;
+    int                 tac;
+    int                 remove;
+    int                 linenum;
+    char                *path;
+    char                *name;
+    char                *line;
+    char                tline[ 2 * MAXPATHLEN ];
+    char                prepath[ MAXPATHLEN ];
+    char                filepath[ MAXPATHLEN ];
+    char                **targv;
+    FILE                *fs;
+    ACAV                *acav;
+    struct node         *next;
+};
+
+int getnextline( struct tran *tran ); 
 
     int
 getnextline( struct tran *tran )

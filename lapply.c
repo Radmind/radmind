@@ -8,9 +8,11 @@
 #include <strings.h>
 #include <unistd.h>
 
+#include <sha.h>
+
+#include "cksum.h"
 #include "connect.h"
 #include "argcargv.h"
-#include "retr.h"
 #include "radstat.h"
 #include "code.h"
 #include "pathcmp.h"
@@ -288,11 +290,11 @@ filechecklist:
 
 	    if ( *targv[ 0 ] == 'a' ) {
 		if ( retr_applefile( sn, pathdesc, path, cksum_b64, temppath,
-			linenum ) != 0 ) {
+			(size_t)atol( targv[ 6 ] )) != 0 ) {
 		    return( 1 );
 		}
 	    } else if ( retr( sn, pathdesc, path, cksum_b64,
-		    (char *)&temppath ) != 0 ) {
+		    (char *)&temppath, (size_t)atol( targv[ 6 ] )) != 0 ) {
 		return( 1 );
 	    }
 
@@ -357,7 +359,7 @@ main( int argc, char **argv )
 	switch( c ) {
 	case 'c':
 	    if ( strcasecmp( optarg, "sha1" ) != 0 ) {
-		perror( optarg );
+		fprintf( stderr, "%s: unsupported checksum\n", optarg );
 		exit( 1 );
 	    }
 	    cksum = 1;
@@ -419,7 +421,7 @@ main( int argc, char **argv )
     }
 
     if ( err ) {
-	fprintf( stderr, "usage: lapply [ -nsV ] [ -q | -v ]" );
+	fprintf( stderr, "usage: %s [ -nsV ] [ -q | -v ] ", argv[ 0 ] );
 	fprintf( stderr, "[ -c checksum ] [ -h host ] [ -p port ] " );
 	fprintf( stderr, "[ appliable-transcript ]\n" );
 	exit( 1 );
