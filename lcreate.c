@@ -22,6 +22,7 @@
 
 #include "snet.h"
 #include "code.h"
+#include "connect.h"
 #include "argcargv.h"
 
 void		(*logger)( char * ) = NULL;
@@ -169,17 +170,14 @@ store_file( int fd, SNET *sn, char *filename, char *transcript )
     int
 main( int argc, char **argv )
 {
-    int			i, s, c, err = 0, port = htons(6662), tac, fd, fdt;
+    int			c, err = 0, port = htons(6662), tac, fd, fdt;
     int			network = 1, exitcode = 0, len, rc;
     int			negative = 0, tran_only = 0;
     extern int		optind;
-    struct hostent	*he;
     struct servent	*se;
-    struct timeval	tv; 
-    struct sockaddr_in	sin;
     SNET          	*sn;
     char		*tname = NULL, *host = "rsug.itd.umich.edu"; 
-    char		*p,*line, *dpath, tline[ 2 * MAXPATHLEN ];
+    char		*p,*dpath, tline[ 2 * MAXPATHLEN ];
     char		**targv;
     extern char		*optarg;
     FILE		*fdiff; 
@@ -253,58 +251,10 @@ main( int argc, char **argv )
 	    }
 	}
 
-	if (( he = gethostbyname( host )) == NULL ) {
-	    fprintf( stderr, "%s: host unknown\n", host );
-	    exit( 1 );
-	}
 
-	for ( i = 0; he->h_addr_list[ i ] != NULL; i++ ) {
-	    if (( s = socket( PF_INET, SOCK_STREAM, NULL)) < 0 ) {
-		perror( "socket failed" );
-		exit( 1 );
-	    }
-	    memset( &sin, 0, sizeof( struct sockaddr_in ));
-	    sin.sin_family = AF_INET;
-	    sin.sin_port =  port;
-	    memcpy( &sin.sin_addr.s_addr, he->h_addr_list[ i ],
-		    (unsigned int)he->h_length );
-	    fprintf( stderr, "trying %s... ", inet_ntoa( *(struct
-		    in_addr *)he->h_addr_list[ i ] ));
-	    if ( connect( s, (struct sockaddr *)&sin,
-		    sizeof( struct sockaddr_in )) != 0 ) {
-		perror( "connect" );
-		(void)close( s );
-		continue;
-	    }
-	    fprintf( stderr, "success!\n" );
-
-	    if (( sn = snet_attach( s, 1024 * 1024 )) == NULL ) {
-		perror( "snet_attach failed");
-		continue;
-	    }
-
-	    tv.tv_sec = 120;
-	    tv.tv_usec = 0;
-	    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-		perror( "snet_getline_multi" );
-		if ( snet_close( sn ) != 0 ) {
-		    perror( "snet_close" );
-		}
-		continue;
-	    }
-
-	    if ( *line != '2' ) {
-		fprintf( stderr, "%s\n", line );
-		if ( snet_close( sn ) != 0 ) {
-		    perror( "snet_close" );
-		}
-		continue;
-	    }
-	    break;
-	}
-
-	if ( he->h_addr_list[ i ] == NULL ) {
-	    fprintf( stderr, "connection failed\n" );
+	if (( sn = connectsn( host, port )) == NULL ) {
+	    fprintf( stderr, "%s:%d connection failed.\n", host, port );
+	    (void)close( fd );
 	    exit( 1 );
 	}
 
@@ -376,28 +326,12 @@ main( int argc, char **argv )
     (void)fclose( fdiff );
 
 done:
-    if ( network ) {
-	if ( snet_writef( sn, "QUIT\r\n" ) == NULL ) {
-	    perror( "snet_writef" );
-	    exit( 1 );
-	}
-	if ( verbose ) fputs( ">>> QUIT\n", stderr );
-
-	tv.tv_sec = 120;
-	tv.tv_usec = 0;
-	if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-	    perror( "snet_getline_multi" );
-	    exit( 1 );
-	}
-	if ( *line != '2' ) {
-	    fprintf( stderr, "%s\n", line );
-	}
-    
-	if ( snet_close( sn ) != 0 ) {
-	    perror( "snet_close" );
-	    exit( 1 );
-	} 
-    }
+     if ( network ) {
+	 if (( closesn( sn )) != 0 ) {
+	     fprintf( stderr, "cannot close sn\n" );
+	     exitcode = 1;
+	 }
+     }
 
     exit( exitcode );
 }
