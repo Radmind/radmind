@@ -70,15 +70,18 @@ ischild( const char *parent, const char *child)
 }
 
     int 
-apply( FILE *f, char *parent )
+apply( FILE *f, char *parent, SNET *sn )
 {
     char		tline[ 2 * MAXPATHLEN ];
-    int			tac, present, len;
-    char		**targv, *path, *command;
+    char		transcript[ 2 * MAXPATHLEN ];
+    char		buf[ 8192 ]; 
+    int			tac, present, len, fd, size, rr;
+    char		**targv, *path, *command, *line;
     char		fstype;
     struct stat		st;
     mode_t	   	mode;
     struct utimbuf	times;
+    struct timeval	tv;
     uid_t		uid;
     gid_t		gid;
 
@@ -102,6 +105,7 @@ apply( FILE *f, char *parent )
 
 	if ( tac == 1 ) {
 	    printf( "Command file: %s\n", targv[ 0 ] );
+	    strcpy( transcript, targv[ 0 ] );
 	} else {
 
 	    /* Get argument offset */
@@ -131,7 +135,7 @@ apply( FILE *f, char *parent )
 		    printf( "Calling apply to handle dir\n" );
 
 		    /* Recurse */
-		    apply( f, path );
+		    apply( f, path, sn );
 
 		    /* Directory is now empty */
 		    if ( rmdir( path ) != 0 ) {
@@ -152,14 +156,76 @@ apply( FILE *f, char *parent )
 		}
 	    }
 
-	    /* Do transcript line */
+	    /* DOWNLOAD */
 	    if ( *command == '+' ) { 
 
-		/* DOWNLOAD */
-		printf( "Have to download something\n" );
+		/* Open file */
+		if ( ( fd = open( path, O_WRONLY | O_CREAT, 0 ) ) > 0 ) {
+		    perror( path );
+		    return( -1 );
+		}
+
+		/* Connect to server */ 
+		if( snet_writef( sn,
+			"RETR FILE %s %s\r\n",
+			transcript,
+			encode( path ) ) == NULL ) {
+		    perror( "snet_writef" );
+		    return( -1 );
+		}
+		tv.tv_sec = 10;
+		tv.tv_usec = 0;
+		if ( ( line = snet_getline_multi( sn, logger, &tv ) ) == NULL ) {
+		    perror( "snet_getline_multi" );
+		    return( -1 );
+		}
+		if ( *line != '2' ) {
+		    perror( line );
+		    return( -1 );
+		}
+		tv.tv_sec = 10;
+		tv.tv_usec = 0;
+		if ( ( line = snet_getline_multi( sn, logger, &tv ) ) == NULL ) {
+		    perror( "snet_getline_multi" );
+		    return( -1 );
+		}
+		size = atoi( line );
+
+		/* Get file from server */
+		while ( ( rr = snet_read( sn, buf, sizeof( buf ), &tv ) ) > 0 ) {
+		    tv.tv_sec = 10;
+		    tv.tv_usec = 0;
+		    if ( write( fd, buf, (int)rr ) != rr ) {
+			perror( path );
+			return ( -1 );
+		    }
+		    size -= rr;
+		}
+
+		if ( size != 0 ) {
+		    perror( "Did not write correct number of bytes" );
+		    return( -1 );
+		}
+
+		tv.tv_sec = 10;
+		tv.tv_usec = 0;
+		if ( ( line = snet_getline_multi( sn, logger, &tv ) ) == NULL ) {
+		    perror( "snet_getline_multi" );
+		    return( -1 );
+		}
+		if ( *line != '.' ) {
+		    perror( line );
+		    return( -1 );
+		}
+
+		close( fd );
 
 		/* DO LSTAT ON NEW FILE */
-
+		if ( lstat( path, &st ) !=  0 ) {
+		    perror( "path" );
+		    return ( -1 );
+		}
+		fstype = t_convert ( S_IFMT & st.st_mode );
 		present = 1;
 	    }
 
@@ -474,7 +540,7 @@ main( int argc, char **argv )
 	exit( 1 );
     }
 
-    if ( apply( f, NULL ) != 0 ) {
+    if ( apply( f, NULL, sn ) != 0 ) {
 	fclose( f );
 	exit( 1 );
     }
