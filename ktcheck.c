@@ -365,7 +365,6 @@ check( SNET *sn, char *type, char *file )
 main( int argc, char **argv )
 {
     int			c, port = htons( 6662 ), err = 0;
-    int			change = 0;
     int			authlevel = _RADMIND_AUTHLEVEL;
     int			use_randfile = 0;
     char	lcksum[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
@@ -491,6 +490,10 @@ main( int argc, char **argv )
 	exit( 2 );
     }
 
+    if ( strlen( base_kfile ) >= MAXPATHLEN ) {
+	fprintf( stderr, "%s: path too long\n", base_kfile );
+	exit( 2 );
+    }
     if (( kdir = strdup( base_kfile )) == NULL ) {
         perror( "strdup failed" );
         exit( 2 );
@@ -501,10 +504,6 @@ main( int argc, char **argv )
     } else {
         p++;
         *p = (char)'\0';
-    }
-    if ( strlen( base_kfile ) >= MAXPATHLEN ) {
-	fprintf( stderr, "%s: path too long\n", base_kfile );
-	exit( 2 );
     }
     strcpy( path, base_kfile );
 
@@ -524,6 +523,7 @@ main( int argc, char **argv )
 	}
     }
 
+    /* Chack/get correct base command file */
     switch( check( sn, "COMMAND", NULL )) { 
     case 0:
 	break;
@@ -540,6 +540,8 @@ main( int argc, char **argv )
     if ( read_kfile( base_kfile ) != 0 ) {
 	exit( 2 );
     }
+
+    /* Parse any included command files */
     while (( node = list_pop_head( kfile_list )) != NULL ) {
 	if ( read_kfile( node->n_path ) != 0 ) {
 	    exit( 2 );
