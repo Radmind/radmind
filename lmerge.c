@@ -133,8 +133,8 @@ getline:
 
     /* Decode file path */
     if (( d_path = decode( tran->t_argv[ 1 ] )) == NULL ) {
-	fprintf( stderr, "%s: line %d: %s: path too long\n",
-		tran->t_tran_name, tran->t_linenum, decode( tran->t_argv[ 1 ]));
+	fprintf( stderr, "%s: line %d: path too long\n", tran->t_tran_name,
+	    tran->t_linenum );
 	return( 1 );
     } 
     if ( snprintf( tran->t_filepath, MAXPATHLEN, "%s", d_path )
