@@ -57,14 +57,13 @@ do_chksum( char *path, char *chksum_b64 )
 
 #ifdef __APPLE__
     int
-do_achksum( char *path, char *chksum_b64 )
+do_achksum( char *path, char *chksum_b64, char *finfo_buf )
 {
     int			afd;
     int		    	rfd, r_cc, d_cc, d_size, r_size, err, has_rsrc = 0;
     unsigned char	md[ SHA_DIGEST_LENGTH ];
     unsigned char	mde[ SZ_BASE64_E( sizeof( md )) ];
     char		data_buf[ 8192 ];
-    char		finfo_buf[ 32 ] = { 0 };
     char	    	rsrc_path[ MAXPATHLEN ];
     const char	    	*rsrc_suffix = _PATH_RSRCFORKSPEC; /* sys/paths.h */
     struct as_entry	as_entry_finfo = { ASEID_FINFO, 62, 32 };
@@ -136,14 +135,14 @@ do_achksum( char *path, char *chksum_b64 )
     /* checksum header entry for data fork */
     SHA1_Update( &sha_ctx, &as_entry_dfork, (size_t)sizeof( as_entry_dfork ));
 
-    err = chk_for_finfo( path, finfo_buf );
-    if ( err ) {
+    if ( finfo_buf == NULL ) {
 	fprintf( stderr, "Non-hfs system\n" );
 	return( -1 );
     }
 
     /* checksum finder info data to server */
-    SHA1_Update( &sha_ctx, &finfo_buf, (size_t)sizeof( finfo_buf ));
+    printf( "%d: size of finfo_bif\n", 32);
+    SHA1_Update( &sha_ctx, finfo_buf, 32);
 
     /* checksum rsrc fork data to server */
     if ( has_rsrc ) {
