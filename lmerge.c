@@ -131,7 +131,7 @@ main( int argc, char **argv )
     if ( err ) {
 	fprintf( stderr, "usage: %s [ -fnvV ] [ -u umask ] ", argv[ 0 ] );
 	fprintf( stderr, "transcript1, transcript2, ..., dest\n" );
-	exit( 2 );
+	exit( 1 );
     }
 
     tpath = argv[ argc - 1 ];
@@ -258,7 +258,7 @@ main( int argc, char **argv )
 			    trans[ j ]->targv[ 1 ] );
 			if ( unlink( opath ) != 0 ) {
 			    perror( opath );
-			    exit( 2 );
+			    exit( 1 );
 			}
 			if ( verbose ) printf( "unlinked %s\n", opath );
 		    }
@@ -290,13 +290,13 @@ main( int argc, char **argv )
 		    trans[ candidate ]->targv[ 1 ] );
 		if ( mkdirs( npath ) != 0 ) {
 		    perror( npath );
-		    exit( 2 );
+		    exit( 1 );
 		}
 		sprintf( npath, "%s/../file/%s/%s", tpath, tname,
 		    trans[ candidate ]->targv[ 1 ] );
 		if ( mkdir( npath, 0777 ) != 0 ) {
 		    perror( npath );
-		    exit( 2 );
+		    exit( 1 );
 		}
 		if ( verbose ) printf( "created %s\n", npath );
 	    }
@@ -311,7 +311,7 @@ main( int argc, char **argv )
 		sprintf( npath, "%s/../file/%s/%s", tpath, tname,
 		    trans[ candidate ]->targv[ 1 ] );
 		if ( copy( opath, npath ) != 0 ) {
-		    exit( 2 );
+		    exit( 1 );
 		}
 		if ( verbose ) printf( "copied %s to %s\n", opath, npath );
 		goto outputline;
@@ -368,7 +368,7 @@ skipline:
 	    sprintf( opath, "%s/../file/%s/%s", tpath, tname, dirlist->path );
 	    if ( unlink( opath ) != 0 ) {
 		perror( opath );
-		exit( 2 );
+		exit( 1 );
 	    }
 	    if ( verbose ) printf( "unlinked %s\n", opath );
 	    dirlist = dirlist->next;
