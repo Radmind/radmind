@@ -25,53 +25,17 @@ This package installs software into standard file locations.  If you have moved 
 \
 You will need administrator privileges to install radmind.  Click on the lock icon in the installer to authenticate as a different user.  The default install includes only the client tools along with some example files.  To install the radmind server, click on customize and select the packages you wish to install.  The client tools are required for all installs.\
 \
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
-
-\f0\b \cf0 Upgrading Radmind
-\f1\b0 \
-If you are upgrading the radmind tools from version 0.8.1 or later simply install the tools as described above.\
-\
-If you are upgrading the radmind tools from a version prior to 0.8.1, here are the suggested upgrade paths:\
-\
-How to upgrade without adding finder information to the load\
-\
-1 - Prepare clients and server for new transcripts\
-	* Install the tools on the server.\
-	* Add the tools to the load.\
-	* Have every clients get the new tools.\
-2 - Run the tools as you have in the past.  Since the transcript does not list finder information, the first time the tools are run, any finder information will be removed.  In our testing we have not had any problems with using a set of transcripts that does not include finder information.  It appears that it is not crucial to OS 10.1.5.
-\f0\b \
-
-\f1\b0 \
-How to upgrade the tools and add finder information to an existing load\
-\
-1 - Prepare clients and server for new transcripts\
-	* Install the tools on the server.\
-	* Add the tools to the load.\
-	* Have every clients get the new tools.\
-2 - Create an overload that includes the finder information\
-	* fsdiff -C -c sha1 -o finderinfo.T /\
-4 - Store the overload on the server\
-	* lcreate finderinfo.T\
-5 - Verify the overload on the server\
-	* lcksum -c sha1 finderinfo.T\
-6 - Merge the overload into the base load\
-	* lmerge -fv finderinfo.T yourbaseload.T\
-\
-Now, the next time the clients run ktcheck, they will get the new transcripts that include directory finder information.\
-\
-If you get stuck with a client trying to use old versions of the tools with a transcript containing finder information you can manually install the new tools on the client or create a transcript that does include the finder information.  This awk script will remove any finder information listings from a transcript:\
-\
-	awk '\{ if ( $1 == "d" ) print $1, $2, $3, $4, $5 \}' < new.T > temp.T\
-\pard\ql\qnatural
-\cf0 \
 
 \f0\b Known Bugs
 \f1\b0 \
-The installer displays incorrect space reuirements ( >100 MB ) during the install process.\
+The installer displays incorrect space requirements ( >100 MB ) during the install process.\
 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
+\cf0 During an upgrade, all packages are selected by default.  If you are upgrading the tools select a custom install of only the packages you need.\
+\
+\pard\ql\qnatural
 
-\f0\b For more information\
+\f0\b \cf0 For more information\
 
 \f1\b0 For help using any of the radmind tools, see their man page.\
 \
