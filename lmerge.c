@@ -84,6 +84,7 @@ main( int argc, char **argv )
 {
     int			c, i, j, cmpval, err = 0, tcount = 0, canidate = NULL;
     int			ofd, new = 0;
+int	ccount = 0;
     extern int          optind;
     char		*tname = NULL, *version = "1.0", *file = NULL;
     char		*tpath = NULL;
@@ -207,6 +208,7 @@ main( int argc, char **argv )
 		if ( trans[ j ]->eof ) {
 		    continue;
 		}
+ccount++;
 		cmpval = pathcmp( trans[ canidate ]->targv[ 1 ],
 		    trans[ j ]->targv[ 1 ] );
 		if ( cmpval == 0 ) {
@@ -285,6 +287,8 @@ getnext:
 	    exit ( 1 );
 	}
     }
+
+printf( "ccount: %d\n", ccount );
 
     exit( 0 );
 } 
