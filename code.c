@@ -71,15 +71,20 @@ decode( char *line )
 {
     /* static */
     static char     buf[ MAXPATHLEN ];
-    char	    *temp;
+    char	    *temp, *end;
 
     if ( strlen( line ) > ( 2 * MAXPATHLEN )) {
 	return( NULL );
     }
 
+    end = buf + MAXPATHLEN;
     temp = buf;
 
     for ( ; *line != '\0'; line++, temp++ ) {
+	/* Check for buffer overflow - must have space for '\0' */
+	if ( temp >= end ) {
+	    return( NULL );
+	}
 	switch( *line ) {
 	case '\\':
 	    line++;
