@@ -273,9 +273,9 @@ filechecklist:
 		}
 	    } else {
 		if ( snprintf( pathdesc, MAXPATHLEN * 2, "FILE %s %s",
-			transcript, encode( path ))) {
-		    fprintf( stderr, "FILE %s %s: too long\n", transcript,
-			encode( path ));
+			transcript, encode( path )) > ( MAXPATHLEN * 2 ) -1 ) {
+		    fprintf( stderr, "FILE %s %s: command too long\n",
+			transcript, encode( path ));
 		    return( 1 );
 		}
 	    }
@@ -394,7 +394,7 @@ main( int argc, char **argv )
 	f = stdin; 
     } else if ( argc - optind == 1 ) {
 	if (( f = fopen( argv[ optind ], "r" )) == NULL ) { 
-	    perror( argv[ 1 ] );
+	    perror( optind );
 	    goto error0;
 	}
     } else {
