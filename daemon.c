@@ -17,6 +17,7 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <ctype.h>
 #include <signal.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -91,7 +92,7 @@ main( ac, av )
     int			dontrun = 0;
     int			pidfd;
     FILE		*pf;
-    char		*prog;
+    char		*prog, *p;
     unsigned short	port = 0;
     extern int		optind;
     extern char		*optarg;
@@ -295,6 +296,9 @@ main( ac, av )
 
 	    /* set global remote_host for retr command */
 	    remote_host = strdup( hp->h_name );
+	    for( p = remote_host; *p != '\0'; p++ ) {
+		*p = tolower( *p );
+	    }
 	    syslog( LOG_INFO, "child for %s %s",
 		    inet_ntoa( sin.sin_addr ), hp->h_name );
 
