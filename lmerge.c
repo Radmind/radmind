@@ -475,9 +475,8 @@ main( int argc, char **argv )
 
 		/* Try link again */
 		if ( link( opath, npath ) != 0 ) {
-		    fprintf( stderr, "linking %s -> %s: ",
-			opath, npath );
-		    perror( "" );
+		    fprintf( stderr, "linking %s -> %s: %s",
+			opath, npath, strerror( errno ));
 		    exit( 2 );
 		}
 	    }
