@@ -5,14 +5,16 @@
 #include <dirent.h>
 #include <stdio.h>
 #include <strings.h>
+#include <snet.h>
 
 #include "transcript.h"
 #include "llist.h"
-#include "afile.h"
+#include "appplefile.h"
 
 extern char	*version, *checksumlist;
 
 void	fs_walk( struct llist * );
+int	verbose = 0;
 
     void
 fs_walk( struct llist *path  ) 
