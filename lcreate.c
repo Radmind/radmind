@@ -248,6 +248,10 @@ main( int argc, char **argv )
 	    struct timeval	tv;
 	    char		*line;
 
+	    if ( authlevel < 1 ) {
+		fprintf( stderr, "login requires TLS\n" );
+		exit( 2 );
+	    }
             if ( user == NULL ) {
                 if (( user = getlogin()) == NULL ) {
 		    perror( "getlogin" );
