@@ -278,12 +278,21 @@ main( int argc, char **argv )
 
 	if ( updatetran ) {
 	    if ( updateline ) {
-		/* use local mtime */
-		fprintf( ufs, "%s %-37s %4s %5s %5s %9d %7d %s\n",
-		    targv[ 0 ], targv[ 1 ], targv[ 2 ], targv[ 3 ], targv[ 4 ],
-		    (int)st.st_mtime, (int)st.st_size, lcksum );
+		/* Line incorrect */
+		/* Check to see if checksum is listed in transcript */
+		if ( strcmp( targv[ 7 ], "-" ) != 0) {
+		    /* use mtime from server */
+		    fprintf( ufs, "%s %-37s %4s %5s %5s %9d %7d %s\n",
+			targv[ 0 ], targv[ 1 ], targv[ 2 ], targv[ 3 ],
+			targv[ 4 ], (int)st.st_mtime, (int)st.st_size, lcksum );
+		} else {
+		    /* use mtime from transcript */
+		    fprintf( ufs, "%s %-37s %4s %5s %5s %9s %7d %s\n",
+			targv[ 0 ], targv[ 1 ], targv[ 2 ], targv[ 3 ],
+			targv[ 4 ], targv[ 5 ], (int)st.st_size, lcksum );
+		    }
 	    } else {
-		/* use transcript mtime */
+		/* Line correct */
 		fprintf( ufs, "%s", line );
 	    }
 	}
