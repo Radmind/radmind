@@ -142,22 +142,23 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
 	perror( path );
 	return( -1 );
     }
-    if ( fstat( fd, &st) < 0 ) {
+    if ( fstat( fd, &st ) < 0 ) {
 	perror( path );
 	close( fd );
 	return( -1 );
     }
 
     /* Check size listed in transcript */
-    if ( transize != 0 ) {
-	if ( st.st_size != transize ) {
-	    fprintf( stderr,
-		"line %d: size in transcript does not match size of file\n",
-		linenum );
-	    if ( ! force ) {
-		close( fd );
-		return( -1 );
-	    }
+    if ( st.st_size != transize ) {
+	if ( force ) {
+	    fprintf( stderr, "warning: " );
+	}
+	fprintf( stderr,
+	    "line %d: size in transcript does not match size of file\n",
+	    linenum );
+	if ( ! force ) {
+	    close( fd );
+	    return( -1 );
 	}
     }
     size = st.st_size;
@@ -300,13 +301,14 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     }
 
     /* Check size listed in transcript */
-    if ( transize != 0 ) {
-	if ( afinfo->as_size != transize ) {
-	    fprintf( stderr,
-		"%s: size in transcript does not match size of file\n",
-		decode( path ));
-	    if ( ! force ) return( -1 );
+    if ( afinfo->as_size != transize ) {
+	if ( force ) {
+	    fprintf( stderr, "warning: " );
 	}
+	fprintf( stderr,
+	    "%s: size in transcript does not match size of file\n",
+	    decode( path ));
+	if ( ! force ) return( -1 );
     }
     size = afinfo->as_size;
 

@@ -311,8 +311,15 @@ main( int argc, char **argv )
 		tname );
 	}
 
-	if (( rc = stor_file( sn, pathdesc, argv[ optind ], 0, cksumval ))
-		<  0 ) {
+	/* Get transcript size */
+	if ( stat( argv[ optind ], &st ) != 0 ) {
+	    perror( argv[ optind ] );
+	    exitcode = 2;
+	    goto done;
+	}
+
+	if (( rc = stor_file( sn, pathdesc, argv[ optind ], st.st_size,
+		cksumval )) <  0 ) {
 	    exitcode = 2;
 	    goto done;
 	}
