@@ -174,9 +174,7 @@ dist   : distclean
 	echo ${VERSION} > ${DISTDIR}/VERSION
 
 man : FRC
-	-mkdir tmp
-	-mkdir tmp/man
-	pwd
+	-mkdir -p tmp/man
 	for i in ${MANTARGETS}; do \
 	    sed -e 's@_RADMIND_PATH@${RADMINDDIR}@g'  \
 		-e 's@_RADMIND_COMMANDFILE@${COMMANDFILE}@g' \
@@ -198,15 +196,15 @@ install	: all man
 	done
 	-mkdir -p ${prefix}
 	-mkdir -p ${MANDIR}
-	-mkdir ${MANDIR}/man1
+	-mkdir -p ${MANDIR}/man1
 	for i in ${MAN1TARGETS}; do \
 	    ${INSTALL} -m 0644 -c tmp/man/$$i ${MANDIR}/man1/; \
 	done
-	-mkdir ${MANDIR}/man5
+	-mkdir -p ${MANDIR}/man5
 	for i in ${MAN5TARGETS}; do \
 	    ${INSTALL} -m 0644 -c tmp/man/$$i ${MANDIR}/man5/; \
 	done
-	-mkdir ${MANDIR}/man8
+	-mkdir -p ${MANDIR}/man8
 	 for i in ${MAN8TARGETS}; do \
 	    ${INSTALL} -m 0644 -c tmp/man/$$i ${MANDIR}/man8/; \
 	done
