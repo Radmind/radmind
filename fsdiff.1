@@ -1,4 +1,4 @@
-.TH fsdiff "1" "27 March 2001" "RSUG" "User Commands"
+.TH fsdiff "1" "August 2002" "RSUG" "User Commands"
 .SH NAME
 .B fsdiff
 \- compare filesystem to transcripts
@@ -86,7 +86,7 @@ Type 'l' is a symbolic link and 'h' is a hard link.  Target is encoded like
 path.
 .sp
 .br
-d	path	mode	uid	gid
+d	path	mode	uid	gid	finder-information
 .br
 D	path	mode	uid	gid
 .br
@@ -99,10 +99,13 @@ Type 'd' is a directory, 'D' is a door, 's' is a socket and 'p' is a named
 pipe. Mode is a 4 digit octal representation of the permissions. 
 ( see
 .BR chmod(1).
-) uid and gid are the user and group ids in decimal format. If a
-directory is listed in a 
+) uid and gid are the user and group ids in decimal format.   finder-information
+is used only on Mac OS X machines running on an HFS formatted drive to store
+directory finder information.
+If a directory is listed in a 
 .B negative
-transcript, mode, uid and gid will be checked, but the directory itself
+transcript, mode, uid, gid and, if listed, finder-information will be checked,
+but the directory itself
 will not be read.
 .sp
 .br
@@ -124,18 +127,20 @@ f       path    mode    uid     gid     mtime   size    checksum
 a       path    mode    uid     gid     mtime   size    checksum
 .br
 .sp
-Type 'f' is a file. Mtime is a decimal number of seconds since 1970 GMT.
+Type 'f' is a reuglar file. Mtime is a decimal number of seconds since 1970 GMT.
 Size is the size of the file in bytes. Checksum is the base64 encoded
 checksum if enabled, otherwise it is "-". If a file is listed in a 
 .B negative
-transcript, only mode, uid and gid will be checked. Everything that applies to
-a type 'f' file applies to type 'a', as well. Type 'a' is an
+transcript, only mode, uid and gid will be checked.
+.sp
+Type 'a' is an
 .B applefile,
-relevant only on Mac OS X machines running on an HFS+-formatted drive. A file
-labeled as an applefile by
-.B fsdiff
+relevant only on Mac OS X machines running on an HFS+ formatted drive.
+An applefile 
 has Mac OS metadata, and is stored on the server as an AppleSingle file 
 (see applefile(5)).
+Everything that applies to
+a regular file applies to an applefile, as well.
 .sp
 Transcripts are sorted in depth first order, which means subdirectories have
 precedence over files in the same directory. This means that "/" has
