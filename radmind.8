@@ -45,6 +45,9 @@ Lines that are blank or begin with '#' are ignored.
 by "<MIN-MAX>" where MIN is the lower bound and MAX is the upper bound.  '\\'
 can be used to escape any character.
 
+A client is only given access to transcripts that are listed in their config
+file.
+
 Radmind currently supports the following radmind access protocol
 requests:
 .sp
@@ -59,8 +62,11 @@ RETR     retrieve a file
 .br
 STOR     store a file
 
-A client is only given access to transcripts that are listed in their config
-file.
+A Client's special files are stored in _PATH_RADMIND/special/<HOST>/<PATH> where
+<HOST> is the host name of the client and <PATH> is the full path of the
+special file.  The IP address of the client will be used for <HOST> if there
+is no domain name returned by
+.BR gethostbyname() .
 .sp
 .SH OPTIONS
 .TP 19
