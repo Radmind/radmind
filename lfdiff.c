@@ -73,7 +73,7 @@ main( int argc, char **argv, char **envp )
     char		opt[ 3 ];
     struct servent	*se;
     SNET		*sn;
-    int                 authlevel = 0;
+    int                 authlevel = _RADMIND_AUTHLEVEL;
     int                 use_randfile = 0;
 
     /* create argv to pass to diff */

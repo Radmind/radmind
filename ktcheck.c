@@ -302,7 +302,7 @@ main( int argc, char **argv )
 {
     int			c, port = htons( 6662 ), err = 0;
     int			len, tac, change = 0, lnbf = 0;
-    int			authlevel = 0;
+    int			authlevel = _RADMIND_AUTHLEVEL;
     int			use_randfile = 0;
     extern int          optind;
     char		*host = _RADMIND_HOST, *p;

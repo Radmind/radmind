@@ -247,7 +247,7 @@ main( int argc, char **argv )
     struct node		*head= NULL, *new_node, *node;
     ACAV		*acav;
     SNET		*sn = NULL;
-    int			authlevel = 0;
+    int			authlevel = _RADMIND_AUTHLEVEL;
     int			force = 0;
     int			use_randfile = 0;
 

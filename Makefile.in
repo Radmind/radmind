@@ -20,6 +20,7 @@ TLS_CA=${CERTDIR}/ca.pem
 TLS_CERT=${CERTDIR}/cert.pem
 GNU_DIFF=@diffpath@
 RADMIND_HOST=@server@
+RADMIND_AUTHLEVEL=@authlevel@
 
 RADMINDSYSLOG=LOG_LOCAL7
 
@@ -78,6 +79,7 @@ version.o : version.c
 
 daemon.o : daemon.c
 	${CC} ${CFLAGS} \
+		-D_RADMIND_AUTHLEVEL=${RADMIND_AUTHLEVEL} \
 		-D_RADMIND_PATH=\"${RADMINDDIR}\" \
 		-D_RADMIND_LOG=${RADMINDSYSLOG} \
 		-c daemon.c
@@ -95,22 +97,26 @@ lfdiff.o : lfdiff.c
 	${CC} ${CFLAGS} \
 		-D_PATH_GNU_DIFF=\"${GNU_DIFF}\" \
 		-D_RADMIND_HOST=\"${RADMIND_HOST}\" \
+		-D_RADMIND_AUTHLEVEL=${RADMIND_AUTHLEVEL} \
 		-c lfdiff.c
 
 ktcheck.o : ktcheck.c
 	${CC} ${CFLAGS} \
 		-D_RADMIND_HOST=\"${RADMIND_HOST}\" \
+		-D_RADMIND_AUTHLEVEL=${RADMIND_AUTHLEVEL} \
 		-D_RADMIND_COMMANDFILE=\"${COMMANDFILE}\" \
 		-c ktcheck.c
 
 lapply.o : lapply.c
 	${CC} ${CFLAGS} \
 		-D_RADMIND_HOST=\"${RADMIND_HOST}\" \
+		-D_RADMIND_AUTHLEVEL=${RADMIND_AUTHLEVEL} \
 		-c lapply.c
 
 lcreate.o : lcreate.c
 	${CC} ${CFLAGS} \
 		-D_RADMIND_HOST=\"${RADMIND_HOST}\" \
+		-D_RADMIND_AUTHLEVEL=${RADMIND_AUTHLEVEL} \
 		-c lcreate.c
 
 twhich.o : twhich.c
@@ -173,6 +179,7 @@ man : FRC
 	    sed -e 's@_RADMIND_PATH@${RADMINDDIR}@g'  \
 		-e 's@_RADMIND_COMMANDFILE@${COMMANDFILE}@g' \
 		-e 's@_RADMIND_HOST@${RADMIND_HOST}@g' \
+		-e 's@_RADMIND_AUTHLEVEL@${RADMIND_AUTHLEVEL}@g' \
 		-e 's@_RADMIND_TLS_CA@${TLS_CA}@g' \
 		-e 's@_RADMIND_TLS_CERT@${TLS_CERT}@g' \
 		man/$$i > tmp/man/$$i; \

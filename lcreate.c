@@ -82,7 +82,7 @@ main( int argc, char **argv )
     struct stat		st;
     struct applefileinfo	afinfo;
     ssize_t		size = 0;
-    int                 authlevel = 0;
+    int                 authlevel = _RADMIND_AUTHLEVEL;
     int                 use_randfile = 0;
     int                 login = 0;
     char                *user = NULL;
