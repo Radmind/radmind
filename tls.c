@@ -188,13 +188,13 @@ tls_client_setup( int use_randfile, int authlevel, char *ca, char *cert, char *p
     int
 tls_client_start( SNET *sn, char *host, int authlevel )
 {
-    X509            	*peer;
-    char             	buf[ 1024 ];
-    struct timeval  	tv;
-    char            	*line;
-    int             	ntype;
-    struct in_addr  	addr;
-    int 		alt_ext;
+    X509            *peer;
+    char             buf[ 1024 ];
+    struct timeval  tv;
+    char            *line;
+    int             ntype;
+    struct in_addr  addr;
+    int	       	    alt_ext;
 
     if ( inet_aton( host, &addr )) {
 	ntype = IS_IP4;
@@ -240,7 +240,7 @@ tls_client_start( SNET *sn, char *host, int authlevel )
     /* This code gratiously borrowed from openldap-2.2.17,
      * it allows the use of aliases in the certificate.
      */
-    alt_ext = X509_get_ext_by_NID( peer, NID_subject_alt_name, -1 );
+    alt_ext = X509_get_ext_by_NID( peer, NID_subject_alt_name, -1);
 
     if ( alt_ext >= 0 ) {
 	X509_EXTENSION			*ex;
