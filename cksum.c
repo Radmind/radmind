@@ -130,10 +130,9 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
 	    perror( "close rfd" );
 	    return( -1 );
 	}
-    }
-
-    if ( rc < 0 ) {
-	return( -1 );
+	if ( rc < 0 ) {
+	    return( -1 );
+	}
     }
 
     /* checksum data fork */

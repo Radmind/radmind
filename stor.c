@@ -192,6 +192,11 @@ stor_file( SNET *sn, char *pathdesc, char *path, size_t transize,
         }
     }
 
+    if ( close( fd ) < 0 ) {
+	perror( path );
+	exit( 1 );
+    }
+
     if ( !quiet && !verbose ) printf( "%s: stored\n", path );
     return( 0 );
 }
@@ -222,9 +227,11 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
 	perror( path );
 	goto error1;
     }
-    if (( rfd = open( afinfo->rsrc_path, O_RDONLY )) < 0 ) {
-	perror( afinfo->rsrc_path );
-	goto error1;
+    if ( afinfo->as_ents[ AS_RFE ].ae_length > 0 ) {
+	if (( rfd = open( afinfo->rsrc_path, O_RDONLY )) < 0 ) {
+	    perror( afinfo->rsrc_path );
+	    goto error1;
+	}
     }
 
     /* STOR "FILE" <transcript-name> <path> "\r\n" */
@@ -302,7 +309,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 
     /* snet_write rsrc fork data to server */
-    if ( rfd >= 0 ) {
+    if ( afinfo->as_ents[ AS_RFE ].ae_length > 0 ) {
 	while (( rc = read( rfd, buf, sizeof( buf ))) > 0 ) {
 	    tv = timeout;
 	    if ( snet_write( sn, buf, rc, &tv ) != rc ) {
@@ -315,7 +322,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
 	    if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 	}
 	if ( close( rfd ) < 0 ) {
-	    perror( "close rfd" );
+	    perror( afinfo->rsrc_path );
 	    exit( 1 );
 	}
     }
@@ -332,12 +339,16 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
 	}
     	if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
     }
-    /* dfd is closed in main() of lcreate.c */
     if ( snet_writef( sn, ".\r\n" ) == NULL ) {
         perror( "snet_writef" );
         return( -1 );
     }
     if ( verbose ) fputs( "\n>>> .\n", stdout );
+
+    if ( close( dfd ) < 0 ) {
+	perror( path );
+	exit( 1 );
+    }
 
     tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
@@ -360,9 +371,6 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
 
     if ( !quiet && !verbose ) printf( "%s: stored\n", decode( path ));
     return( 0 );
-
-
-    return( 0 ); 
 
 error1:
     return( -1 );
