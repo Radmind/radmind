@@ -1189,9 +1189,9 @@ fi;
 
 
 
-# Check whether --with-server or --without-server was given.
-if test "${with_server+set}" = set; then
-  withval="$with_server"
+# Check whether --with-authlevel or --without-authlevel was given.
+if test "${with_authlevel+set}" = set; then
+  withval="$with_authlevel"
   authlevel="$withval"
 else
   authlevel="0"
