@@ -245,7 +245,7 @@ main( int argc, char **argv )
     path = argv[ optind ];
     /* Clip trailing '/' */
     len = strlen( path );
-    if ( path[ len - 1 ] == '/' ) {
+    if (( len > 1 ) && ( path[ len - 1 ] == '/' )) {
 	path[ len - 1] = '\0';
     }
 
