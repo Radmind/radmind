@@ -225,13 +225,13 @@ f_retr( sn, ac, av )
     case K_FILE:
 	/* Check for access */
 	for ( node = tran_list; node != NULL; node = node->next ) {
-	    if ( strcmp( av[ 3 ], node->path ) == 0 ) {
+	    if ( strcmp( av[ 2 ], node->path ) == 0 ) {
 		break;
 	    }
 	}
 	if ( node == NULL ) {
-	    syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s", av[ 3 ] );
-	    snet_writef( sn, "%d No access for %s\r\n", 540, av[ 3 ] );
+	    syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s", av[ 2 ] );
+	    snet_writef( sn, "%d No access for %s:%s\r\n", 540, av[ 2 ], av[ 3 ] );
 	    return( 1 );
 	}
 
