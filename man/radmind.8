@@ -7,6 +7,8 @@
 [
 .B \-dRrUV
 ] [
+.BI \-a\  bind-address
+] [
 .BI \-b\  backlog
 ] [
 .BI \-D\  path
@@ -170,6 +172,11 @@ Login user.  This command is only valid after TLS has been
 started. 
 .sp
 .SH OPTIONS
+.TP 19
+.BI \-a\  bind-address
+specifies the address on which the server should listen, e.g.
+127.0.0.1.  By default the server listens on all available interfaces
+(wildcard address).
 .TP 19
 .BI \-b\  backlog
 Defines the maximum queue of pending connections to

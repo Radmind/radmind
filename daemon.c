@@ -137,6 +137,7 @@ main( int ac, char **av )
 {
     struct sigaction	sa, osahup, osachld;
     struct sockaddr_in	sin;
+    struct in_addr	b_addr = { INADDR_ANY };
     struct servent	*se;
     int			c, s, err = 0, fd, sinlen, trueint;
     int			dontrun = 0;
@@ -161,8 +162,15 @@ main( int ac, char **av )
 	prog++;
     }
 
-    while (( c = getopt( ac, av, "b:dD:L:m:p:Ru:UVw:x:y:z:" )) != EOF ) {
+    while (( c = getopt( ac, av, "a:b:dD:L:m:p:Ru:UVw:x:y:z:" )) != EOF ) {
 	switch ( c ) {
+	case 'a' :		/* bind address */ 
+	    if ( !inet_aton( optarg, &b_addr )) {
+		fprintf( stderr, "%s: bad address\n", optarg );
+		exit( 1 );
+	    }
+	    break;
+
 	case 'b' :		/* listen backlog */
 	    backlog = atoi( optarg );
 	    break;
@@ -239,9 +247,9 @@ main( int ac, char **av )
     }
 
     if ( err || optind != ac ) {
-	fprintf( stderr, "Usage: radmind [ -dRUV ] [ -b backlog ] " );
-	fprintf( stderr, "[ -D path ] [ -L syslog-facility ] " );
-	fprintf( stderr, "[ -m max-connections ] " );
+	fprintf( stderr, "Usage: radmind [ -dRUV ] [ -a bind-address ] " );
+	fprintf( stderr, "[ -b backlog ] [ -D path ] " );
+	fprintf( stderr, "[ -L syslog-facility ] [ -m max-connections ] " );
 	fprintf( stderr, "[ -p port ] [ -u umask ] " );
 	fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );
 	fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ]\n" );
@@ -370,7 +378,7 @@ main( int ac, char **av )
     }
     memset( &sin, 0, sizeof( struct sockaddr_in ));
     sin.sin_family = AF_INET;
-    sin.sin_addr.s_addr = INADDR_ANY;
+    sin.sin_addr.s_addr = b_addr.s_addr;
     sin.sin_port = port;
 
     trueint = 1;		/* default? */
