@@ -25,6 +25,7 @@
 #include "connect.h"
 #include "argcargv.h"
 #include "tls.h"
+#include "code.h"
 
 void output( char* string);
 
@@ -248,13 +249,13 @@ main( int argc, char **argv, char **envp )
     /* create path description */
     if ( special ) {
 	if ( snprintf( pathdesc, ( MAXPATHLEN * 2 ), "SPECIAL %s",
-		file ) >= ( MAXPATHLEN * 2 )) {
+		encode( file )) >= ( MAXPATHLEN * 2 )) {
 	    fprintf( stderr, "RETR SPECIAL %s: path description too long\n",
 		    file );
 	}
     } else {
 	if ( snprintf( pathdesc, ( MAXPATHLEN * 2 ), "FILE %s %s",
-		transcript, file ) >= ( MAXPATHLEN * 2 )) {
+		transcript, encode( file )) >= ( MAXPATHLEN * 2 )) {
 	    fprintf( stderr, "RETR FILE %s %s: path description too long\n",
 		    transcript, file );
 	}
