@@ -311,14 +311,20 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
 	t_print( cur, tran, PR_TRAN_ONLY ); 
 	return T_MOVE_TRAN;
     } 
-    if ( ret < 0 ) {
-	/* name is in the fs, but not in the tran */
-	if ( chksum && ( cur->pi_type == 'f' )) {
-	    if ( do_chksum( cur->pi_name, cur->pi_chksum_b64 ) < 0 ) {
-		perror( cur->pi_name );
-		exit( 1 );
-	    }
+
+    /*
+     * after this point, name is in the fs, so if it's 'f', and
+     * checksums are on, get the checksum
+     */
+    if ( chksum && ( cur->pi_type == 'f' )) {
+	if ( do_chksum( cur->pi_name, cur->pi_chksum_b64 ) < 0 ) {
+	    perror( cur->pi_name );
+	    exit( 1 );
 	}
+    }
+
+    if ( ret < 0 ) {
+	/* name is not in the tran */
 	t_print( cur, tran, PR_FS_ONLY );
 	return T_MOVE_FS;
     } 
@@ -343,10 +349,6 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
 	    }
 
 	    if ( chksum ) {
-		if ( do_chksum( cur->pi_name, cur->pi_chksum_b64 ) < 0 ) {
-		    perror( cur->pi_name );
-		    exit( 1 );
-		}
 		if ( strcmp( cur->pi_chksum_b64,
 			tran->t_pinfo.pi_chksum_b64 ) != 0 ) {
 		    t_print( cur, tran, PR_DOWNLOAD );
