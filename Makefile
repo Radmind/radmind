@@ -16,13 +16,13 @@ RADMIND_HOST=radmind
 RADMINDSYSLOG=LOG_LOCAL7
 
 # Compiler
-#CC=	cc
-CC=	gcc
-CWARN=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wconversion -Werror
-ADDLIBS=	-lnsl -lsocket
+CC=	cc
+#CC=	gcc
+CWARN=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wconversion
+OSNAME= -DDARWIN
 INSTALL=	/usr/ucb/install
 #INSTALL=	install
-OPENSSL=	/usr/local/openssl
+OPENSSL=	/usr/local
 
 # Should not need to edit anything after here.
 CFLAGS=		${CWARN} ${OSNAME} ${INCPATH}
@@ -38,15 +38,16 @@ RADMIND_OBJ=	version.o daemon.o command.o argcargv.o auth.o code.o \
 		chksum.o base64.o mkdirs.o
 
 FSDIFF_OBJ=	version.o fsdiff.o argcargv.o transcript.o llist.o code.o \
-		hardlink.o chksum.o base64.o pathcmp.o convert.o
+		hardlink.o chksum.o base64.o pathcmp.o convert.o afile.o
 
 KTCHECK_OBJ=	version.o ktcheck.o argcargv.o download.o base64.o code.o \
 		chksum.o list.o connect.o
 
 LAPPLY_OBJ=	version.o lapply.o argcargv.o code.o base64.o download.o \
-		convert.o update.o chksum.o connect.o pathcmp.o
+		convert.o update.o chksum.o connect.o pathcmp.o afile.o
 
-LCREATE_OBJ=	version.o lcreate.o argcargv.o code.o connect.o
+LCREATE_OBJ=	version.o lcreate.o argcargv.o code.o connect.o send_afile.o \
+		afile.o
 
 LCKSUM_OBJ=	version.o lcksum.o argcargv.o chksum.o base64.o code.o \
 		pathcmp.o
