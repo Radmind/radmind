@@ -1,4 +1,5 @@
 ./EXCLUDE
 ./CVS
 ./OS_X/CVS
+./configure.ac
 ./libsnet/CVS

@@ -1,3 +1,4 @@
+
 # Process this file with autoconf to produce a configure script.
 AC_INIT(radmind, VERSION, radmind@umich.edu)
 AC_PREREQ(2.52)
@@ -15,10 +16,6 @@ AC_PROG_INSTALL
 AC_PATH_PROG(diffpath, diff)
 
 # Checks for libraries.
-# FIXME: Replace `main' with a function in `-lcrypto':
-AC_CHECK_LIB([crypto], [main])
-# FIXME: Replace `main' with a function in `-ld':
-AC_CHECK_LIB([d], [main])
 AC_CHECK_LIB([nsl], [inet_ntoa])
 AC_CHECK_LIB([socket], [socket])
 
