@@ -158,6 +158,7 @@ main( int argc, char **argv )
     int 		c, len, edit_path_change = 0;
     int 		errflag = 0, use_outfile = 0;
     int			finish = 0;
+    struct stat		st;
 
     edit_path = CREATABLE;
     cksum = 0;
@@ -242,7 +243,7 @@ main( int argc, char **argv )
     }
 
     /* verify the path we've been given exists */
-    if ( access( argv[ optind ], F_OK | R_OK ) != 0 ) {
+    if ( stat( argv[ optind ], &st ) != 0 ) {
 	perror( argv[ optind ] );
 	exit( 2 );
     }
