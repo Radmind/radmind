@@ -5,7 +5,6 @@
 #include <sys/ddi.h>
 #include <unistd.h>
 
-
 #include "snet.h"
 #include "code.h"
 #include "base64.h"
@@ -21,15 +20,26 @@ extern int		verbose;
 extern int		chksum;
 
     int
-get( SNET *sn, char *pathdesc, char *path, char *chksumval )
+retr( SNET *sn, char *pathdesc, char *path, char *file, char *chksumval )
 {
     char 	*temppath;
+    char	fullpath[ MAXPATHLEN ];
 
-    if ( ( temppath = download( sn, pathdesc, path, chksumval ) ) == NULL ) {
-	fprintf( stderr, "%s: unable to download\n", path );
+    /* Check for overflow with "/" and trailing "\n" */
+    if ( ( strlen( path ) + strlen( file ) + 2 ) >
+	    MAXPATHLEN ) {
+	fprintf( stderr, "path too long: %s/%s\n", path, file );
 	return( 1 );
     }
-    if ( rename( temppath, path ) != 0 ) {
+    sprintf( fullpath, "%s/%s", path, file );
+
+    /* Download file - Must free temppath */
+    if ( ( temppath = download( sn, pathdesc, path, file, chksumval ) )
+	    == NULL ) {
+	fprintf( stderr, "%s: unable to download\n", fullpath );
+	return( 1 );
+    }
+    if ( rename( temppath, fullpath ) != 0 ) {
 	perror( temppath );
 	return( 1 );
     }
@@ -45,7 +55,7 @@ get( SNET *sn, char *pathdesc, char *path, char *chksumval )
  */
 
     char *
-download( SNET *sn, char *pathdesc, char* path, char *chksumval ) 
+download( SNET *sn, char *pathdesc, char* path, char *file, char *chksumval ) 
 {
     struct timeval      tv;
     char 		*line;
@@ -61,12 +71,10 @@ download( SNET *sn, char *pathdesc, char* path, char *chksumval )
 	return( NULL );
     }
 
-    /* Connect to server */ 
     if( snet_writef( sn, "RETR %s\n", pathdesc ) == NULL ) {
 	fprintf( stderr, "snet_writef" );
 	return( NULL );
     }
-
     if ( verbose ) printf( ">>> RETR %s\n", pathdesc );
 
     tv = timeout;
@@ -85,21 +93,26 @@ download( SNET *sn, char *pathdesc, char* path, char *chksumval )
     if ( temppath == NULL ) { perror( "malloc" );
 	return ( NULL );
     }
-    srand( (unsigned int)getpid() );
-    sprintf( temppath, "%s.radmind.%i", path, rand() );
+    if ( snprintf( temppath, sizeof( temppath ), "%s/%s.radmind.%i",
+	    path, file, getpid() ) > MAXPATHLEN ) {
+	fprintf( stderr, "%s/%s.radmind.%i: too long", path, file,
+		(int)getpid() );
+	goto error3;
+    }
 
     /* Open file */
     if ( ( fd = open( temppath, O_RDWR | O_CREAT | O_EXCL, 0666 ) ) < 0 ) {
 	perror( temppath );
 	goto error3;
     }
+
+    /* Get file size from server */
     tv = timeout;
     if ( ( line = snet_getline( sn, &tv ) ) == NULL ) {
 	fprintf( stderr, "snet_getline" );
 	goto error;
     }
     size = atoi( line );
-
     if ( verbose ) printf( "<<< " );
 
     /* Get file from server */
@@ -117,7 +130,6 @@ download( SNET *sn, char *pathdesc, char* path, char *chksumval )
 	if ( verbose ) printf( "." );
 	size -= rr;
     }
-
     if ( verbose ) printf( "\n" );
 
     if ( size != 0 ) {
@@ -133,6 +145,8 @@ download( SNET *sn, char *pathdesc, char* path, char *chksumval )
 	fprintf( stderr, "%s", line );
 	goto error;
     }
+
+    /* Chksum file */
     if ( chksum ) {
 	if ( verbose ) printf( "*** chksum " );
 
@@ -156,6 +170,8 @@ download( SNET *sn, char *pathdesc, char* path, char *chksumval )
 	perror( path );
 	goto error2;
     }
+
+    /* Caller must free temppath */
     return ( temppath );
 
 error:
@@ -165,5 +181,4 @@ error2:
 error3:
     free ( temppath );
     return ( NULL );
-
 }
