@@ -191,13 +191,11 @@ check( SNET *sn, char *type, char *path)
     }
     sprintf( fullpath, "%s/%s", commandpath, path );
 
-    switch( do_chksum( fullpath, cchksum ) ) {
-    case 0:
-	break;
-    case 1:
-	fprintf( stderr, "do_chksum" );
-	return( 2 );
-    case 2:
+    if ( do_chksum( fullpath, cchksum ) != 0 ) {
+	if ( errno != ENOENT ) {
+	    fprintf( stderr, "do_chksum" );
+	    return( 2 );
+	}
 	if ( update ) {
 	    if ( verbose ) printf( "*** Retrieving missing file: %s/%s\n",
 		    commandpath, path ); 
