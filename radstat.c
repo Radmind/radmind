@@ -1,9 +1,13 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/paths.h>
+#include <sys/attr.h>
+#include <sys/uio.h>
 #include <errno.h>
 #include <snet.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "radstat.h"
 #include "applefile.h"
@@ -25,12 +29,21 @@ radstat( char *path, struct stat *st, char *type, char *finfo )
         unsigned long   ssize;
         char            finfo_buf[ 32 ];
     } finfo_struct;
+    struct attrlist             alist = {
+        ATTR_BIT_MAP_COUNT,
+        0,
+        ATTR_CMN_FNDRINFO,
+        0,
+        0,      
+        0,
+        0,
+    };
 #endif __APPLE__
 
     if ( lstat( path, st ) != 0 ) {
 	return( -1 );
     }
-    switch( (int)type ) {
+    switch( st->st_mode & S_IFMT ) {
     case S_IFREG:
 	if ( finfo == NULL ) {
 	    goto regularfile;
@@ -67,9 +80,11 @@ regularfile:
     case S_IFBLK:
 	*type = 'b';
 	break;
+#ifdef sun
     case S_IFDOOR:
 	*type = 'D';
 	break;
+#endif sun
     case S_IFIFO:
 	*type = 'p';
 	break;
