@@ -8,6 +8,8 @@ AC_CONFIG_SRCDIR([applefile.c])
 # Set up variables
 AC_ARG_VAR(diffpath, [path to diff utility])
 AC_ARG_WITH(server, AC_HELP_STRING([--with-server=server], [default radmind server]), server="$withval", server="radmind" )
+AC_ARG_WITH(radminddir, AC_HELP_STRING([--radmind-var=DIR], [default radmind server storage]), radminddir="$withval", radminddir="/var/radmind" )
+AC_ARG_WITH(certdir, AC_HELP_STRING([--cert=DIR], [default certificate location]), certdir="$withval", certdir="/var/radmind/cert" )
 AC_SUBST(server) 
 
 # Checks for programs.

@@ -7,11 +7,13 @@ MANDIR=@mandir@
 BINDIR=@bindir@
 SBINDIR=@sbindir@
 
+CERTDIR=@certdir@
+
 # For server
-RADMINDDIR=/var/radmind
+RADMINDDIR=@radminddir@
 
 # For client
-COMMANDFILE=/var/radmind/client/command.K
+COMMANDFILE=${RADMINDDIR}/client/command.K
 GNU_DIFF=@diffpath@
 RADMIND_HOST=@server@
 
@@ -187,6 +189,7 @@ install	: all man
 	 for i in ${MAN8TARGETS}; do \
 	    ${INSTALL} -m 0644 -c tmp/man/$$i ${MANDIR}/man8/; \
 	done
+	-mkdir -p ${CERTDIR}
 
 MPKGDIR=${DISTDIR}-MPKG
 CLIENTBINPKGDIR=${MPKGDIR}/client-bin
@@ -237,6 +240,7 @@ package : all man info
 		${CLIENTMANPKGDIR}/man5/; \
 	done 
 	mkdir -p -m 0700 ${CLIENTVARPKGDIR}
+	mkdir -p -m 0700 ${CLIENTVARPKGDIR}/cert
 	${INSTALL} -o root -g staff -m 0700 -c OS_X/command.K \
 	    ${CLIENTVARPKGDIR}
 	${INSTALL} -o root -g staff -m 0700 -c OS_X/negative.T \
