@@ -706,14 +706,14 @@ f_stor( SNET *sn, int ac, char *av[] )
 	for (;;) {
 	    if (( line = snet_getline( sn, &tv )) == NULL ) {
 		syslog( LOG_ERR, "f_stor: snet_getline: %m" );
-		return( -1 );
+		break;
 	    }
 	    if ( strcmp( line, "." ) == 0 ) {
 		break;
 	    }
 	}
 
-	return( -1 );
+	exit( 1 );
     }
 
     snet_writef( sn, "%d File stored\r\n", 250 );
