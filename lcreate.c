@@ -92,7 +92,7 @@ store_file( int fd, SNET *sn, char *filename, char *transcript )
     unsigned char	buf[ 8192 ];
     unsigned int	rr;
     char		*line;
-    int			dodots = 1;
+    int			dodots = 0;
 
     if ( fstat( fd, &st) < 0 ) {
 	perror( filename );
