@@ -20,6 +20,5 @@ struct as_header {
     unsigned short	ah_num_entries;
 };
 
-int retr_applefile( SNET *sn, char *pathdesc, char *path, char *location, 
-	char *chksumval, char *temppath, int linenum );
-int chk_for_finfo( const char *path, char *finfo );
+int retr_applefile( SNET *sn, char *pathdesc, char *path, char *chksumval,
+    char *temppath, int linenum );

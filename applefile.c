@@ -48,8 +48,8 @@ struct as_header	as_header = {
 };
 
     int
-retr_applefile( SNET *sn, char *pathdesc, char *path, char *location,
-	char *chksumval, char *temppath, int linenum )
+retr_applefile( SNET *sn, char *pathdesc, char *path, char *chksumval,
+    char *temppath, int linenum )
 {
     int			rc;
     int			ofd, rsrcfd, rsize, as_cc;
@@ -312,33 +312,6 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *location,
  *	-data fork
  */
 
-    int
-chk_for_finfo( const char *path, char *finfo )
-{
-    int			err = 0;
-    struct {
-	unsigned long	ssize;
-	char		finfo_buf[ 32 ];
-    } finfo_struct;
-
-    memset( finfo_struct.finfo_buf, 0, sizeof( finfo_struct.finfo_buf ));
-    memset( null_buf, 0, sizeof( null_buf ));
-
-    if (( err = getattrlist( path, &alist, &finfo_struct,sizeof( finfo_struct ),
-		FSOPT_NOFOLLOW ))) {
-	return( err );
-    }
-
-    if ( memcmp( finfo_struct.finfo_buf, null_buf, sizeof( null_buf )) == 0 ) {
-	err++;
-    } else {
-    	memcpy( finfo, finfo_struct.finfo_buf,
-		sizeof( finfo_struct.finfo_buf ));
-    }
-
-    return( err );
-}
-
 #else !__APPLE__
 
 #include <sys/time.h>
@@ -348,14 +321,8 @@ chk_for_finfo( const char *path, char *finfo )
 #include "applefile.h"
 
     int
-retr_applefile( SNET *sn, char *pathdesc, char *path, char *location, 
-	char *chksumval, char *temppath, int linenum )
-{
-    return( -1 );
-}
-
-    int
-chk_for_finfo( const char *path, char *finfo )
+retr_applefile( SNET *sn, char *pathdesc, char *path, char *chksumval,
+    char *temppath, int linenum )
 {
     return( -1 );
 }
