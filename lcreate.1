@@ -1,0 +1,88 @@
+.TH lcreate "1" "30 August 2001" "RSUG" "User Commands"
+.SH NAME
+.B lcreate
+\-  upload transcripts and their corresponding files
+.SH SYNOPSIS
+.B lcreate
+[
+.B -n
+]
+[
+.B -N
+]
+[
+.B -T
+]
+[
+.B -v
+]
+[
+.B -V
+] 
+[
+.BI \-h\  host
+] [
+.BI \-p\  port
+] [
+.BI \-t\  stored-name
+]
+.I path
+.sp
+.SH DESCRIPTION
+.B lcreate
+reads a transcript and uploads all corresponding files to the radmind server.
+If the -n option is given, no files or transcripts are uploaded.  Instead,
+.B lcreate
+uses access(2) to verify all files in the transcript exist in the filesystem and are readable by the user.  If the -N option is
+given, indicating the transcript specified for upload is
+.B negative,
+.B lcreate
+will upload all corresponding files as zero length.  If the -T option is
+given,
+.B lcreate
+will upload the transcript only. No corresponding files will be
+uploaded. The transcript's stored name is, by default, the last part (
+after the slash ) of the given path, or as specified by the name given
+with the -t option.
+.B lcreate
+will print ( to standard out ) the entire protocol exchange with the
+radmind server when the -v option is given.
+.sp
+.SH OPTIONS
+.TP 19
+.B \-n
+Don't upload any files or transcripts. Uses access(2) to verify all
+files in the transcript exist in the filesystem and are readable.
+.TP 19
+.B \-N
+uploads a
+.B negative
+transcript then uploads all corresponding files as zero length.
+.TP 19
+.B \-T
+uploads the transcript only, and
+.B not
+the corresponding files.
+.TP 19
+.B \-v
+displays the protocol exchange with the radmind server.
+.TP 19
+.B \-V
+displays the version of lcreate and exits.
+.TP 19
+.BI \-p\  port
+specifies a port, by default 6662
+.TP 19
+.BI \-h\  hostname
+specifies the radmind server, by default "rsug".
+.TP 19
+.BI \-t\  stored-name
+specifies the name under which the transcript will be stored when saved
+on the server.
+.sp
+.sp
+.SH SEE ALSO
+.BR ktcheck (1),
+.BR fsdiff (1),
+.BR lapply (1),
+.BR radmind (8).
