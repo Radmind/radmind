@@ -27,7 +27,7 @@ RADMIND_MAXCONNECTIONS=@maxconnections@
 
 RADMINDSYSLOG=LOG_LOCAL7
 
-INCPATH=        @CPPFLAGS@ -I${srcdir}/libsnet
+INCPATH=        @CPPFLAGS@ -I${srcdir}/libsnet -I.
 OPTOPTS=	@OPTOPTS@
 CC=		@CC@
 DEFS=		@PAMDEFS@ @TLSDEFS@ @ZEROCONFDEFS@
@@ -274,6 +274,6 @@ clean :
 	rm -rf tmp
 
 distclean: clean
-	rm -f config.log config.status Makefile
+	rm -f config.log config.status Makefile config.h
 	rm -rf autom4te.cache
 	cd libsnet; make distclean
