@@ -228,23 +228,15 @@ fi
 cd /
 
 if [ ! -d ${TMPDIR} ]; then
-    mkdir -m 700 ${TMPDIR} || \
-        (echo "Cannot create temporary directory $TMPDIR" && exit 1)
+    mkdir -m 700 ${TMPDIR} 
+    if [ $? -ne 0 ]; then
+        echo "Cannot create temporary directory $TMPDIR" 
+	exit 1
+    fi
 fi
 
-# http://www.opengroup.org/onlinepubs/009695399/basedefs/signal.h.html
-# The following signals shall be supported on all implementations:
-# unknown: SIGPOLL 
-# 
-# Solaris and SunOS don't seem to like trapping SIGSEGV. Handle it.
-SEGV="SEGV"
-system=`uname`
-if [ x${system} = x"SunOS" -o x${system} = x"Solaris" ]; then
-    SEGV=
-fi
-trap cleanup ABRT ALRM BUS CHLD CONT FPE HUP HUP ILL INT KILL \
-                PIPE PROF QUIT ${SEGV} STOP SYS TERM TRAP TSTP \
-                TTIN TTOU URG USR1 USR2 VTALRM XCPU XFSZ
+# Trap meaningful signals
+trap cleanup HUP INT PIPE QUIT TERM TRAP XCPU XFSZ
 
 case "$1" in
 update)
