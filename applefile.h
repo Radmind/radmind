@@ -37,22 +37,22 @@
 
 /* applesingle entry */
 struct as_entry {
-    u_int32_t	ae_id;
-    u_int32_t	ae_offset;
-    u_int32_t	ae_length;
+    uint32_t	ae_id;
+    uint32_t	ae_offset;
+    uint32_t	ae_length;
 };
 
 /* applesingle header */
 struct as_header {
-    u_int32_t	ah_magic;
-    u_int32_t	ah_version;
-    u_int8_t	ah_filler[ 16 ];
-    u_int16_t	ah_num_entries;
+    uint32_t	ah_magic;
+    uint32_t	ah_version;
+    uint8_t	ah_filler[ 16 ];
+    uint16_t	ah_num_entries;
 };
 
 struct finderinfo {
-    u_int32_t   	fi_size;
-    u_int8_t		fi_data[ FINFOLEN ];
+    uint32_t   	fi_size;
+    uint8_t	fi_data[ FINFOLEN ];
 };
 
 struct applefileinfo {
