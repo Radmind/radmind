@@ -1,0 +1,13 @@
+ktcheck must check that command file isn't a dir so when rename is called we
+don't blow away a directory.
+
+Do we need to check that <serverpath>/<filepath> is longer then MAXPATHLEN
+
+Should we use "snet.h" or <snet.h>
+
+per sweda: lcksum should rewrite file location to remove file system info using
+the radmind server when run the -N option.
+
+Have Makefile update man pages with correct DEFAULTHOST info.
+
+Should ktcheck -v or lcksum -v print success/fail message after running?
