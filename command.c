@@ -772,12 +772,6 @@ exchange( int num_msg, const struct pam_message **msg,
 	switch( msg[ count ]->msg_style ) {
 
 	case PAM_PROMPT_ECHO_OFF:
-	    string = strdup( user );
-	    if ( string == NULL ) {
-		goto exchange_failed;
-	    }
-	    break;
-
 	case PAM_PROMPT_ECHO_ON:
 	    string = strdup( password );
 	    if ( string == NULL ) {
@@ -836,14 +830,17 @@ f_login( snet, ac, av )
     };
 
     if ( !checkuser ) {
+        syslog( LOG_DEBUG, "f_login: Users not enabled\n" );
 	snet_writef( snet, "%d Users not enabled\r\n", 502 );
 	return( -1 );
     }
     if ( authlevel < 1 ) {
+        syslog( LOG_DEBUG, "f_login: Command requires TLS\n" );
 	snet_writef( snet, "%d Command requires TLS\r\n", 503 );
 	return( -1 );
     }
     if ( ac != 3 ) {  
+        syslog( LOG_DEBUG, "f_login: Syntax error\n" );
         snet_writef( snet, "%d Syntax error\r\n", 501 );
         return( -1 );
     }
@@ -856,28 +853,52 @@ f_login( snet, ac, av )
 	password = NULL;
     }
     user = strdup( av[ 1 ] );
+    if ( user == NULL ) {
+	syslog( LOG_ERR, "f_login: strdup: %m" );
+	/* What should this message be? */
+        snet_writef( snet, "%d System error\r\n", 501 );
+    }
+
     password = strdup( av[ 2 ] );
+    if ( password == NULL ) {
+	syslog( LOG_ERR, "f_login: strdup: %m" );
+	/* What should this message be? */
+        snet_writef( snet, "%d System error\r\n", 501 );
+    }
 
     if (( retval =  pam_start( "radmind", user, &pam_conv,
 	    &pamh )) != PAM_SUCCESS ) {
+        syslog( LOG_ERR, "f_login: pam_start: %s\n",
+	    pam_strerror( pamh, retval ));
 	snet_writef( snet, "%d %s\r\n", 501, pam_strerror( pamh, retval ));
 	return( -1 );
     }
-    if (( retval =  pam_authenticate( pamh, 0 )) != PAM_SUCCESS ) {
+    if (( retval =  pam_authenticate( pamh, PAM_SILENT )) != PAM_SUCCESS ) {
+        syslog( LOG_ERR, "f_login: pam_authenticate: %s\n",
+	    pam_strerror( pamh, retval ));
 	snet_writef( snet, "%d %s\r\n", 502, pam_strerror( pamh, retval ));
 	return( -1 );
     }
+    free( password );
 
+    /*
+     * I don't think we have to do this, so I'm not! *
+     *
     if (( retval = pam_acct_mgmt( pamh, 0 )) != PAM_SUCCESS ) {
+        syslog( LOG_ERR, "f_login: pam_acct_mgmt: %s\n",
+	    pam_strerror( pamh, retval ));
 	snet_writef( snet, "%d %s\r\n", 503, pam_strerror( pamh, retval ));
 	return( -1 );
     }
+    */
 
     if (( retval = pam_end( pamh, retval )) != PAM_SUCCESS ) {
+        syslog( LOG_ERR, "f_login: pam_end: %s\n",
+	    pam_strerror( pamh, retval ));
 	snet_writef( snet, "%d %s\r\n", 504, pam_strerror( pamh, retval ));
 	return( -1 );
     }
-    free( password );
+    syslog( LOG_INFO, "%s: successfully logged in\n", user );
     snet_writef( snet, "%d %s successfully logged in\r\n", 205, user );
     authorized = 1;
 
