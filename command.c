@@ -66,6 +66,7 @@ int		f_stat ___P(( SNET *, int, char *[] ));
 int		f_retr ___P(( SNET *, int, char *[] ));
 int		f_stor ___P(( SNET *, int, char *[] ));
 int		f_noauth ___P(( SNET *, int, char *[] ));
+int		f_notls ___P(( SNET *, int, char *[] ));
 int		f_starttls ___P(( SNET *, int, char *[] ));
 #ifdef PAM
 int		f_login ___P(( SNET *, int, char *[] ));
@@ -91,6 +92,19 @@ char		hostname[ MAXHOSTNAMELEN ];
 extern int 	authlevel;
 extern int 	checkuser;
 
+struct command	notls[] = {
+    { "QUIT",		f_quit },
+    { "NOOP",		f_noop },
+    { "HELP",		f_help },
+    { "STATus",		f_notls },
+    { "RETRieve",	f_notls },
+    { "STORe",		f_notls },
+    { "STARttls",       f_starttls },
+#ifdef PAM
+    { "LOGIn",       	f_notls },
+#endif /* PAM */
+};
+
 struct command	noauth[] = {
     { "QUIT",		f_quit },
     { "NOOP",		f_noop },
@@ -98,7 +112,6 @@ struct command	noauth[] = {
     { "STATus",		f_noauth },
     { "RETRieve",	f_noauth },
     { "STORe",		f_noauth },
-    { "STARttls",       f_starttls },
 #ifdef PAM
     { "LOGIn",       	f_noauth },
 #endif /* PAM */
@@ -117,7 +130,7 @@ struct command	auth[] = {
 #endif /* PAM */
 };
 
-struct command *commands  = noauth;
+struct command *commands  = NULL;
 
     int
 f_quit( sn, ac, av )
@@ -155,11 +168,18 @@ f_noauth( sn, ac, av )
     int		ac;
     char	*av[];
 {
-    if ( authlevel == 0 ) {
-	snet_writef( sn, "%d No access for %s\r\n", 500, remote_host );
-    } else {
-	snet_writef( sn, "%d TLS required.\r\n", 501 );
-    }
+    snet_writef( sn, "%d No access for %s\r\n", 500, remote_host );
+
+    return( 0 );
+}
+
+    int
+f_notls( sn, ac, av )
+    SNET	*sn;
+    int		ac;
+    char	*av[];
+{
+    snet_writef( sn, "%d Must issue a STARTTLS command first\r\n", 530 );
 
     return( 0 );
 }
@@ -691,23 +711,20 @@ f_starttls( snet, ac, av )
     X509                        *peer;
     char                        buf[ 1024 ];
 
-    if ( authlevel == 0 ) {
-        syslog( LOG_ERR, "f_starttls: STAR given but TLS not offered" );
-	snet_writef( snet, "%d TLS not supported\n", 502 );
-	return( 1 );
-    };
-    ncommands = sizeof( noauth ) / sizeof( noauth [ 0 ] );
+    if ( ac != 1 ) {  
+        snet_writef( snet, "%d Syntax error (no parameters allowed)\r\n", 501 );
+        return( 1 );
+    } else {
+	snet_writef( snet, "%d Ready to start TLS\r\n", 220 );
+    }
 
     /* We get here when the client asks for TLS with the STARTTLS verb */
     /*
      * Client MUST NOT attempt to start a TLS session if a TLS     
      * session is already active.  No mention of what to do if it does...
+     *
+     * Once STARTTLS has succeeded, the STARTTLS verb is no longer valid
      */
-
-    if ( ac != 1 ) {  
-        snet_writef( snet, "%d Syntax error\r\n", 501 );
-        return( 1 );
-    }
 
     /*
      * Begin TLS
@@ -745,18 +762,20 @@ f_starttls( snet, ac, av )
 
     /* get command file */
     if ( command_k( "config" ) < 0 ) {
-	snet_writef( snet, "%d No access for %s\r\n", 500, remote_host );
-	exit( 1 );
+	/* Client not in config */
+	commands  = noauth;
+	ncommands = sizeof( noauth ) / sizeof( noauth[ 0 ] );
     } else {
+	/* Client in config */
 	commands  = auth;
 	ncommands = sizeof( auth ) / sizeof( auth[ 0 ] );
+
 	if ( list_transcripts( snet ) != 0 ) {
 	    /* error message given in list_transcripts */
 	    exit( 1 );
 	}
     }
 
-    snet_writef( snet, "%d TLS started\n", 220 );
     return( 0 );
 }
 
@@ -1017,7 +1036,14 @@ cmdloop( int fd, struct sockaddr_in *sin )
     extern int		connections;
     extern int		maxconnections;
 
-    ncommands = sizeof( noauth ) / sizeof( noauth[ 0 ] );
+
+    if ( authlevel == 0 ) {
+	commands = noauth;
+	ncommands = sizeof( noauth ) / sizeof( noauth[ 0 ] );
+    } else {
+	commands = notls;
+	ncommands = sizeof( notls ) / sizeof( notls[ 0 ] );
+    }
 
     if (( sn = snet_attach( fd, 1024 * 1024 )) == NULL ) {
 	syslog( LOG_ERR, "snet_attach: %m" );

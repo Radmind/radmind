@@ -115,6 +115,17 @@ tls_client_start( SNET *sn, char *host, int authlevel )
     }
     if ( verbose ) printf( ">>> STARTTLS\n" );
 
+    /* Check to see if command succeeded */
+    tv = timeout;      
+    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
+	perror( "snet_getline_multi" );
+	return( -1 );
+    }
+    if ( *line != '2' ) {
+	fprintf( stderr, "%s\n",  line );
+	return( -1 );
+    }
+
     /*
      * Begin TLS
      */
@@ -137,17 +148,6 @@ tls_client_start( SNET *sn, char *host, int authlevel )
     if ( strcmp( buf, host )) {
 	fprintf( stderr, "Server's name doesn't match supplied hostname\n"
 		"%s != %s\n", buf, host );
-	return( -1 );
-    }
-
-    /* Check to see if command succeeded */
-    tv = timeout;      
-    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-	perror( "snet_getline_multi" );
-	return( -1 );
-    }
-    if ( *line != '2' ) {
-	fprintf( stderr, "%s\n",  line );
 	return( -1 );
     }
 
