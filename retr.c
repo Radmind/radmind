@@ -10,6 +10,7 @@
 #include <sys/attr.h>
 #include <sys/paths.h>
 #endif __APPLE__
+#include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -263,6 +264,9 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	    strerror( errno ));
 	exit( 1 );
     }
+
+    /* Should we check for valid ae_ents here? */
+
     if ( cksum ) {
 	EVP_DigestUpdate( &mdctx, (char *)&ae_ents, (unsigned int)rc );
     }
@@ -291,50 +295,51 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	return( -1 );
     }
 
-    /* make rsrc fork name */
-    if ( snprintf( rsrc_path, MAXPATHLEN, "%s%s", temppath,
-	    _PATH_RSRCFORKSPEC ) >= MAXPATHLEN ) {
-	fprintf( stderr, "%s%s: path too long\n", temppath,
-	    _PATH_RSRCFORKSPEC );
-	return ( -1 );
-    }
-
     /* data fork must exist to write to rsrc fork */        
     if (( dfd = open( temppath, O_CREAT | O_EXCL | O_WRONLY, 0600 )) < 0 ) {
 	perror( temppath );
 	goto error1;
     }
 
-    if (( rfd = open( rsrc_path, O_WRONLY, 0 )) < 0 ) {
-	perror( rsrc_path );
-	goto error2;
-    };  
-
-    for ( rc = 0, rsize = ae_ents[ AS_RFE ].ae_length; rsize > 0;
-	    rsize -= rc ) {
-	tv = timeout;
-	if (( rc = snet_read( sn, buf, ( int )MIN( sizeof( buf ), rsize ),
-		&tv )) <= 0 ) {
-	    fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
-		strerror( errno ));
-	    goto error2;
+    if ( ae_ents[ AS_RFE ].ae_length > 0 ) {
+	/* make rsrc fork name */
+	if ( snprintf( rsrc_path, MAXPATHLEN, "%s%s", temppath,
+		_PATH_RSRCFORKSPEC ) >= MAXPATHLEN ) {
+	    fprintf( stderr, "%s%s: path too long\n", temppath,
+		_PATH_RSRCFORKSPEC );
+	    return ( -1 );
 	}
 
-	if (( write( rfd, buf, ( unsigned int )rc )) != rc ) {
+	if (( rfd = open( rsrc_path, O_WRONLY, 0 )) < 0 ) {
 	    perror( rsrc_path );
 	    goto error2;
-	}
-	if ( cksum ) {
-	    EVP_DigestUpdate( &mdctx, buf, (unsigned int)rc );
-	}
-	if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
-    }
+	};  
 
-    size -= ae_ents[ AS_RFE ].ae_length;
+	for ( rc = 0, rsize = ae_ents[ AS_RFE ].ae_length; rsize > 0;
+		rsize -= rc ) {
+	    tv = timeout;
+	    if (( rc = snet_read( sn, buf, ( int )MIN( sizeof( buf ), rsize ),
+		    &tv )) <= 0 ) {
+		fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+		    strerror( errno ));
+		goto error2;
+	    }
+	    if (( write( rfd, buf, ( unsigned int )rc )) != rc ) {
+		perror( rsrc_path );
+		goto error2;
+	    }
+	    if ( cksum ) {
+		EVP_DigestUpdate( &mdctx, buf, (unsigned int)rc );
+	    }
+	    if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
+	}
+
+	size -= ae_ents[ AS_RFE ].ae_length;
     
-    if ( close( rfd ) < 0 ) {
-	perror( rsrc_path );
-	exit( 1 );
+	if ( close( rfd ) < 0 ) {
+	    perror( rsrc_path );
+	    exit( 1 );
+	}
     }
 
     /* write data fork to file */
