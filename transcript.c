@@ -13,6 +13,7 @@
 #include "transcript.h"
 #include "llist.h"
 #include "code.h"
+#include "chksum.h"
 #include "argcargv.h"
 
 static struct transcript	*tran_head = NULL;
@@ -313,7 +314,7 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
     if ( ret < 0 ) {
 	/* name is in the fs, but not in the tran */
 	if ( chksum && ( cur->pi_type == 'f' )) {
-	    do_chksum( cur );
+	    do_chksum( cur->pi_name, cur->pi_chksum_b64 );
 	}
 	t_print( cur, tran, PR_FS_ONLY );
 	return T_MOVE_FS;
@@ -339,7 +340,7 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
 	    }
 
 	    if ( chksum ) {
-		do_chksum( cur );
+		do_chksum( cur->pi_name, cur->pi_chksum_b64 );
 		if ( strcmp( cur->pi_chksum_b64,
 			tran->t_pinfo.pi_chksum_b64 ) != 0 ) {
 		    t_print( cur, tran, PR_DOWNLOAD );
