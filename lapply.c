@@ -15,9 +15,10 @@
 
 #ifdef TLS
 #include <openssl/ssl.h>
+#include <openssl/rand.h>
 #include <openssl/err.h>
 
-extern SSL_CTX  *ctx;
+SSL_CTX  *ctx;
 #endif TLS
 
 #include <openssl/evp.h>
@@ -32,6 +33,10 @@ extern SSL_CTX  *ctx;
 #include "code.h"
 #include "pathcmp.h"
 #include "update.h"
+
+#ifdef TLS
+#include "tls.h"
+#endif /* TLS */
 
 void		(*logger)( char * ) = NULL;
 int		linenum = 0;
@@ -246,8 +251,13 @@ main( int argc, char **argv )
     struct node		*head= NULL, *new_node, *node;
     ACAV		*acav;
     SNET		*sn = NULL;
+    int			authlevel = 0;
+    int			use_randfile = 0;
+    char                *ca = "ca.pem";
+    char                *cert = "cert.pem";
+    char                *privatekey = "cert.pem";
 
-    while (( c = getopt ( argc, argv, "c:h:np:qVv" )) != EOF ) {
+    while (( c = getopt ( argc, argv, "c:h:np:qVvw:x:y:z:" )) != EOF ) {
 	switch( c ) {
 	case 'c':
             OpenSSL_add_all_digests();
@@ -258,12 +268,15 @@ main( int argc, char **argv )
             }
             cksum = 1;
             break;
+
 	case 'h':
 	    host = optarg;
 	    break;
+	
 	case 'n':
 	    network = 0;
 	    break;
+
 	case 'p':
 	    if (( port = htons ( atoi( optarg ))) == 0 ) {
 		if (( se = getservbyname( optarg, "tcp" )) == NULL ) {
@@ -273,13 +286,16 @@ main( int argc, char **argv )
 		port = se->s_port;
 	    }
 	    break;
+
 	case 'q':
 	    quiet = 1;
 	    break;
+
 	case 'V':
 	    printf( "%s\n", version );
 	    printf( "%s\n", checksumlist );
 	    exit( 0 );
+
 	case 'v':
 	    verbose = 1;
 	    logger = output;
@@ -287,9 +303,32 @@ main( int argc, char **argv )
 		dodots = 1;
 	    }
 	    break;
+
+        case 'w' :              /* authlevel 0:none, 1:serv, 2:client & serv */
+            authlevel = atoi( optarg );
+            if (( authlevel < 0 ) || ( authlevel > 2 )) {
+                fprintf( stderr, "%s: invalid authorization level\n",
+                        optarg );
+                exit( 1 );
+            }
+            break;
+
+        case 'x' :              /* ca file */
+            ca = optarg;
+            break;
+
+        case 'y' :              /* cert file */
+            cert = optarg;
+            break;
+
+        case 'z' :              /* private key */
+            privatekey = optarg;
+            break;
+
 	case '?':
 	    err++;
 	    break;
+
 	default:
 	    err++;
 	    break;
@@ -317,14 +356,30 @@ main( int argc, char **argv )
     if ( err ) {
 	fprintf( stderr, "usage: %s [ -nsV ] [ -q | -v ] ", argv[ 0 ] );
 	fprintf( stderr, "[ -c checksum ] [ -h host ] [ -p port ] " );
+	fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );
+	fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ] " );
 	fprintf( stderr, "[ appliable-transcript ]\n" );
 	exit( 2 );
+    }
+
+    if ( authlevel != 0 ) {
+        if ( tls_client_setup( use_randfile, authlevel, ca, cert, 
+                privatekey ) != 0 ) {
+            /* error message printed in tls_setup */
+            exit( 2 );
+        }
     }
 
     if ( network ) {
 	if (( sn = connectsn( host, port )) == NULL ) {
 	    exit( 2 );
 	}
+	if ( authlevel != 0 ) {
+	    if ( tls_client_start( sn, authlevel ) != 0 ) {
+		/* error message printed in tls_cleint_starttls */
+		exit( 2 );
+	    }
+        }
     } else {
 	if ( !quiet ) printf( "No network connection\n" );
     }

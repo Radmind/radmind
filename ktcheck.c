@@ -33,6 +33,9 @@ SSL_CTX  *ctx;
 #include "connect.h"
 #include "argcargv.h"
 #include "list.h"
+#ifdef TLS
+#include "tls.h"
+#endif /* TLS */
 
 void output( char* string);
 int check( SNET *sn, char *type, char *path); 
@@ -304,7 +307,6 @@ main( int argc, char **argv )
     int			len, tac, change = 0;
     int			authlevel = 0;
     int			use_randfile = 0;
-    int			ssl_mode = 0;
     extern int          optind;
     char		*host = _RADMIND_HOST, *p;
     char                **targv;
@@ -410,71 +412,18 @@ main( int argc, char **argv )
     if ( err || ( argc - optind != 0 )) {
 	fprintf( stderr, "usage: ktcheck -c checksum [ -nV ] [ -q | -v ] " );
 	fprintf( stderr, "[ -K command file ] " );
-	fprintf( stderr, "[ -h host ] [ -p port ]\n" );
+	fprintf( stderr, "[ -h host ] [ -p port ] " );
+	fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );
+	fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ]\n" );
 	exit( 2 );
     }
 
     if ( authlevel != 0 ) {
-        /* Setup SSL */
-
-        SSL_load_error_strings();
-        SSL_library_init();
-
-        if ( use_randfile ) {
-            char        randfile[ MAXPATHLEN ];
-
-            if ( RAND_file_name( randfile, sizeof( randfile )) == NULL ) {
-                fprintf( stderr, "RAND_file_name: %s\n",
-                        ERR_error_string( ERR_get_error(), NULL ));
-                exit( 1 );
-            }     
-            if ( RAND_load_file( randfile, -1 ) <= 0 ) {
-                fprintf( stderr, "RAND_load_file: %s: %s\n", randfile,
-                        ERR_error_string( ERR_get_error(), NULL ));
-                exit( 1 );
-            }
-            if ( RAND_write_file( randfile ) < 0 ) {
-                fprintf( stderr, "RAND_write_file: %s: %s\n", randfile,
-                        ERR_error_string( ERR_get_error(), NULL ));
-                exit( 1 );
-            }
-        }
-
-        if (( ctx = SSL_CTX_new( SSLv23_client_method())) == NULL ) {
-            fprintf( stderr, "SSL_CTX_new: %s\n",
-                    ERR_error_string( ERR_get_error(), NULL ));
-            exit( 1 );
-        }
-
-	if ( authlevel == 2 ) {
-	    if ( SSL_CTX_use_PrivateKey_file( ctx, privatekey,
-		    SSL_FILETYPE_PEM ) != 1 ) {
-		fprintf( stderr, "SSL_CTX_use_PrivateKey_file: %s: %s\n",
-			privatekey, ERR_error_string( ERR_get_error(), NULL ));
-		exit( 1 );
-	    }
-	    if ( SSL_CTX_use_certificate_chain_file( ctx, cert ) != 1 ) {
-		fprintf( stderr, "SSL_CTX_use_certificate_chain_file: %s: %s\n",
-			cert, ERR_error_string( ERR_get_error(), NULL ));
-		exit( 1 );
-	    }
-	    /* Verify that private key matches cert */
-	    if ( SSL_CTX_check_private_key( ctx ) != 1 ) {
-		fprintf( stderr, "SSL_CTX_check_private_key: %s\n",
-			ERR_error_string( ERR_get_error(), NULL ));
-		exit( 1 );
-	    }
+	if ( tls_client_setup( use_randfile, authlevel, ca, cert,
+		privatekey ) != 0 ) {
+	    /* error message printed in tls_setup */
+	    exit( 2 );
 	}
-
-        /* Load CA */
-        if ( SSL_CTX_load_verify_locations( ctx, ca, NULL ) != 1 ) {
-            fprintf( stderr, "SSL_CTX_load_verify_locations: %s: %s\n",
-                    ca, ERR_error_string( ERR_get_error(), NULL ));
-            exit( 1 );
-        }
-        /* Set level of security expecations */
-	ssl_mode = SSL_VERIFY_PEER;
-        SSL_CTX_set_verify( ctx, ssl_mode, NULL );
     }
 
     if (( kdir = strdup( kfile )) == NULL ) {
@@ -498,48 +447,9 @@ main( int argc, char **argv )
     }
 
     if ( authlevel != 0 ) {
-	X509        	*peer;
-	char       	 buf[ 1024 ];
-	struct timeval	tv;
-	char		*line;
-
-	if( snet_writef( sn, "STARTTLS\n" ) < 0 ) {
-	    perror( "snet_writef" );
-	    return( -1 );
-	}
-	if ( verbose ) printf( ">>> STARTTLS\n" );
-
-	tv = timeout;
-	if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-	    perror( "snet_getline_multi" );
-	    return( -1 );
-	}
-	if ( *line != '2' ) {
-	    fprintf( stderr, "%s\n",  line );
-	    return( -1 );
-	}
-
-	/*
-	 * Begin TLS
-	 */
-	/* This is where the TLS start */
-	/* At this point the server is also staring TLS */
-
-	if ( snet_starttls( sn, ctx, 0 ) != 1 ) {
-	    fprintf( stderr, "snet_starttls: %s\n",
-		    ERR_error_string( ERR_get_error(), NULL ) );
-	    return( -1 );
-	}
-	if (( peer = SSL_get_peer_certificate( sn->sn_ssl ))
-		== NULL ) {
-	    fprintf( stderr, "no certificate\n" );
-	    return( -1 );
-	}
-	if ( verbose ) {
-	    X509_NAME_get_text_by_NID( X509_get_subject_name( peer ),
-		NID_commonName, buf, sizeof( buf ));
-	    fprintf( stderr, "Server cert subject name: %s\n", buf );
-	    X509_free( peer );
+	if ( tls_client_start( sn, authlevel ) != 0 ) {
+	    /* error message printed in tls_cleint_starttls */
+	    exit( 2 );
 	}
     }
 

@@ -18,7 +18,7 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-extern SSL_CTX  *ctx;
+SSL_CTX  *ctx;
 #endif TLS
 
 #include <openssl/evp.h>
@@ -27,6 +27,9 @@ extern SSL_CTX  *ctx;
 #include "applefile.h"
 #include "connect.h"
 #include "argcargv.h"
+#ifdef TLS
+#include "tls.h"
+#endif /* TLS */ 
 
 void output( char* string);
 
@@ -72,6 +75,11 @@ main( int argc, char **argv, char **envp )
     char		opt[ 3 ];
     struct servent	*se;
     SNET		*sn;
+    int                 authlevel = 0;
+    int                 use_randfile = 0;
+    char                *ca = "ca.pem";
+    char                *cert = "cert.pem";
+    char                *privatekey = "cert.pem";
 
     /* create argv to pass to diff */
     if (( diffargv = (char **)malloc( 1  * sizeof( char * ))) == NULL ) {
@@ -81,12 +89,13 @@ main( int argc, char **argv, char **envp )
     diffargc = 0;
     diffargv[ diffargc++ ] = diff;
 
-    while (( c = getopt ( argc, argv, "h:p:ST:VvbitwcefnC:D:sX:" ))
+    while (( c = getopt ( argc, argv, "h:p:ST:Vvw:x:y:z:bitcefnC:D:sX:" ))
 	    != EOF ) {
 	switch( c ) {
 	case 'h':
 	    host = optarg;
 	    break;
+
 	case 'p':
 	    if (( port = htons ( atoi( optarg ))) == 0 ) {
 		if (( se = getservbyname( optarg, "tcp" )) == NULL ) {
@@ -96,15 +105,19 @@ main( int argc, char **argv, char **envp )
 		port = se->s_port;
 	    }
 	    break;
+
 	case 'S':
 	    special = 1;
 	    break;
+
 	case 'T':
 	    transcript = optarg;
 	    break;
+
 	case 'V':
 	    printf( "%s\n", version );
 	    exit( 0 );
+
 	case 'v':
 	    verbose = 1;
 	    logger = output;
@@ -112,8 +125,30 @@ main( int argc, char **argv, char **envp )
 		dodots = 1;
 	    }
 	    break;
+
+       case 'w' :              /* authlevel 0:none, 1:serv, 2:client & serv */
+            authlevel = atoi( optarg );
+            if (( authlevel < 0 ) || ( authlevel > 2 )) {
+                fprintf( stderr, "%s: invalid authorization level\n",
+                        optarg );
+                exit( 1 );
+            }
+            break;
+
+        case 'x' :              /* ca file */
+            ca = optarg;
+            break;
+
+        case 'y' :              /* cert file */
+            cert = optarg;
+            break;
+
+        case 'z' :              /* private key */
+            privatekey = optarg;
+            break;
+
 	/* diff options */
-	case 'b': case 'i': case 't': case 'w':
+	case 'b': case 'i': case 't':
 	case 'c': case 'e': case 'f': case 'n':
 	case 's':
 	    if (( diffargv = (char **)realloc( diffargv, ( sizeof( *diffargv )
@@ -130,7 +165,9 @@ main( int argc, char **argv, char **envp )
 		exit( 2 );
 	    };
 	    break;
+
 	case 'C':
+
 	case 'D': 
 	    if (( diffargv = (char **)realloc( diffargv, ( sizeof( *diffargv )
 		    + ( 3 * sizeof( char * ))))) == NULL ) {
@@ -147,6 +184,7 @@ main( int argc, char **argv, char **envp )
 	    };
 	    diffargv[ diffargc++ ] = optarg;
 	    break;
+
 	case 'X':
 	    if (( tac = argcargv( opt, &argcargv )) < 0 ) {
 		err++;
@@ -160,6 +198,7 @@ main( int argc, char **argv, char **envp )
 		diffargv[ diffargc++ ] = argcargv[ i ];
 	    }
 	    break;
+
 	case '?':
 	    err++;
 	    break;
@@ -178,15 +217,32 @@ main( int argc, char **argv, char **envp )
     if ( err || ( argc - optind != 1 )) {
 	fprintf( stderr, "usage: %s ", argv[ 0 ] );
 	fprintf( stderr, "[ -T transcript | -S ] " );
-	fprintf( stderr, "[ -h host ] [ -p port ] [ -vV ] [ diff options ] " );
+	fprintf( stderr, "[ -h host ] [ -p port ] [ -vV ] " );
+        fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );
+        fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ] " );
+	fprintf( stderr, "[ diff options ] " );
 	fprintf( stderr, "[ -X \"unsupported diff options\" ] " );
 	fprintf( stderr, "file\n" );
 	exit( 2 );
     }
     file = argv[ optind ];
 
+    if ( authlevel != 0 ) {
+        if ( tls_client_setup( use_randfile, authlevel, ca, cert, 
+                privatekey ) != 0 ) {
+            /* error message printed in tls_setup */
+            exit( 2 );
+        }
+    }
+
     if (( sn = connectsn( host, port )) == NULL ) {
 	exit( 2 );
+    }
+    if ( authlevel != 0 ) {
+	if ( tls_client_start( sn, authlevel ) != 0 ) {
+	    /* error message printed in tls_cleint_starttls */
+	    exit( 2 );
+	}
     }
 
     /* create path description */
