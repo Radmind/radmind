@@ -203,7 +203,7 @@ check( SNET *sn, char *type, char *path)
 	if ( update ) {
 	    if ( verbose ) printf( "*** Retrieving missing file: %s\n",
 		    fullpath ); 
-	    if ( ( temppath = retr( sn, pathdesc, fullpath, schksum ) )
+	    if ( ( temppath = retr( sn, pathdesc, fullpath, NULL, schksum ) )
 		    == NULL ) {
 		fprintf( stderr, "retr failed\n" );
 		return( 2 );
@@ -227,7 +227,7 @@ check( SNET *sn, char *type, char *path)
 	    }
 	    if ( verbose ) printf( "*** %s deleted\n", fullpath );
 	    if ( verbose ) printf( "*** Retrieving %s\n", fullpath ); 
-	    if ( ( temppath = retr( sn, pathdesc, fullpath, schksum ) )
+	    if ( ( temppath = retr( sn, pathdesc, fullpath, NULL, schksum ) )
 		    == NULL ) {
 		fprintf( stderr, "retr failed\n" );
 		return( 2 );
