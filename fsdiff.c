@@ -23,14 +23,13 @@ void            (*logger)( char * ) = NULL;
 
 extern char	*version, *checksumlist;
 
-void		fs_walk( struct llist *, float, float );
-int		verbose = 0;
+void		fs_walk( struct llist *, int, int );
+int		verbose = 0, prog = 0;
 int		dodots = 0;
-float		curpos = 0;
 const EVP_MD    *md;
 
     void
-fs_walk( struct llist *path, float start, float finish ) 
+fs_walk( struct llist *path, int start, int finish ) 
 {
     DIR			*dir;
     struct dirent	*de;
@@ -39,14 +38,15 @@ fs_walk( struct llist *path, float start, float finish )
     struct llist	*cur;
     int			len;
     int			count = 0;
-    float		chunk;
+    float		chunk, f = start;
     char		temp[ MAXPATHLEN ];
 
-    if (( int )finish > ( int )start ) {
-	if (( int )start > ( int )curpos ) {
-	    curpos = start;
-	    printf( "%%%.3d %s\n", ( int )start, path->ll_pinfo.pi_name );
+    if ( finish > start ) {
+	/* try to make the progress monotonic */
+	if ( start > prog || start == 0 ) {
+	    printf( "%%%.3d %s\n", start, path->ll_pinfo.pi_name );
 	    fflush( stdout );
+	    prog = start;
 	}
     }
 
@@ -102,7 +102,7 @@ fs_walk( struct llist *path, float start, float finish )
 	ll_insert( &head, new ); 
     }
 
-    chunk = ( float )(( finish - start ) / count );
+    chunk = (( finish - start ) / ( float )count );
 
     if ( closedir( dir ) != 0 ) {
 	perror( "closedir" );
@@ -111,9 +111,9 @@ fs_walk( struct llist *path, float start, float finish )
 
     /* call fswalk on each element in the sorted list */
     for ( cur = head; cur != NULL; cur = cur->ll_next ) {
-	fs_walk( cur, start, start + chunk );
-	curpos = start;
-	start += chunk;
+	fs_walk( cur, start, ( int )( f + chunk ));
+	f += chunk;
+	start = f;
     }
 
     ll_free( head );
@@ -131,7 +131,7 @@ main( int argc, char **argv )
     int			gotkfile = 0;
     int 		c, len, edit_path_change = 0;
     int 		errflag = 0, use_outfile = 0;
-    float		finish = 0;
+    int			finish = 0;
 
     edit_path = CREATABLE;
     cksum = 0;
