@@ -211,7 +211,6 @@ main( int argc, char **argv )
 	    exit( 0 );
 
 	case '?':
-	    printf( "bad %c\n", c );
 	    errflag++;
 	    break;
 
