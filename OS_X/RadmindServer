@@ -1,18 +1,31 @@
 #!/bin/sh
 
+##
+# radmind server
+##
+
 . /etc/rc.common
 
-##
-# Start up radmind server
-##
+StartService()
+{
+    if [ -f /var/radmind/config ]; then
+	ConsoleMessage "Starting Radmind Server"
 
-if [ -f /var/radmind/config ]; then
-    CheckForNetwork
+	/usr/local/sbin/radmind -u 077
 
-    if [ "${NETWORKUP}" = "-NO-" ]; then exit; fi
+    fi
+}
 
-    ConsoleMessage "Starting Radmind Server"
+StopService()
+{
+    ConsoleMessage "Stopping Radmind Server"
+    killall radmind
+}
 
-    /usr/local/sbin/radmind -u 077
+RestartService()
+{
+    StopService
+    StartService
+}
 
-fi
+RunService "$1"
