@@ -16,10 +16,11 @@ RADMIND_HOST=radmind
 RADMINDSYSLOG=LOG_LOCAL7
 
 # Compiler
-CC=	cc
-#CC=	gcc
-CWARN=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wconversion
-OSNAME= -DDARWIN
+#CC=	cc
+CC=	gcc
+CWARN=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wconversion -Werror
+ADDLIBS=	-lnsl -lsocket
+OSNAME=		-DSOLARIS
 INSTALL=	/usr/ucb/install
 #INSTALL=	install
 OPENSSL=	/usr/local
