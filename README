@@ -1,0 +1,54 @@
+Copyright (c) 2002 Regents of The University of Michigan.
+All Rights Reserved.  See COPYRIGHT.
+
+------------------------------------------------
+Quick instructions for install the radmind tools
+------------------------------------------------
+
+% ./configure
+% make
+% make install
+
+--------------------------
+More detailed instructions
+--------------------------
+
+1: Getting the source
+
+Download the source from http://rsug.itd.umich.edu/software/radmind and
+uncompress it into a directory of your liking.  The current development
+source is also available through an anonymous CVS server.  See the radmind
+web site for more details.
+
+2: Configure the software
+
+Using configure in the top level directory, configure the software for
+your system:
+
+  % ./configure
+
+The configure scripts take several options:
+  --with-server=SERVER specifies the default radmind serve
+  --with-ssl=DIR specifies the non-standard ssl path
+  --with-snet=DIR specifies the non-standard snet path
+
+3: Build and install the software
+
+Now you are ready to build the software
+
+  % make
+
+Once that is done, you can install the tools.
+
+  % make install
+
+----------------
+More Information
+----------------
+If you have any problems with this source, you may want
+to check http://rsug.itd.umich.edu/software/radmind to see if any problems
+have reports.  You can also contact the radmind development team by
+e-mailing radmind@umich.edu.
+
+An archived e-mail discussion list has also been set up.  See the website
+for details on how to join.
