@@ -153,6 +153,7 @@ main( int argc, char **argv )
     extern char 	*optarg;
     extern int		optind;
     char		*kfile = _RADMIND_COMMANDFILE;
+    char		*path;
     int 		c, len, edit_path_change = 0;
     int 		errflag = 0, use_outfile = 0;
     int			finish = 0;
@@ -241,16 +242,23 @@ main( int argc, char **argv )
 	exit ( 2 );
     }
 
+    path = argv[ optind
+    /* Clip trailing '/' */
+    len = strlen( path );
+    if ( path[ len - 1 ] == '/' ) {
+	path[ len - 1] = '\0';
+    }
+
     /* verify the path we've been given exists */
-    if ( stat( argv[ optind ], &st ) != 0 ) {
-	perror( argv[ optind ] );
+    if ( stat( path, &st ) != 0 ) {
+	perror( path );
 	exit( 2 );
     }
 
     /* initialize the transcripts */
     transcript_init( kfile, K_CLIENT );
 
-    fs_walk( argv[ optind ], 0, finish );
+    fs_walk( path, 0, finish );
 
     if ( finish > 0 ) {
 	printf( "%%%d\n", ( int )finish );

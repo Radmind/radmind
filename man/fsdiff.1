@@ -36,10 +36,13 @@ If any special files are
 listed, the
 .B special.T
 transcript will have the absolute highest precedence.
+.sp
 .B fsdiff
 walks the filesystem starting at
 .I path
-and compares the filesystem to the transcripts.
+and compares the filesystem to the transcripts.  Trailing '/'s on
+.I path
+are clipped.
 .sp
 If a transcript is
 .B positive,
