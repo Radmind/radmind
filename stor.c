@@ -43,7 +43,7 @@ n_stor_file( SNET *sn, char *pathdesc, char *path )
     struct timeval      tv;
     char                *line;
 
-    if ( snet_writef( sn, "%s", pathdesc ) == NULL ) {
+    if ( snet_writef( sn, "%s", pathdesc ) < 0 ) {
             perror( "snet_writef" );
             return( -1 );
     }
@@ -63,7 +63,7 @@ n_stor_file( SNET *sn, char *pathdesc, char *path )
         return( -1 );
     }
 
-    if ( snet_writef( sn, "0\r\n.\r\n" ) == NULL ) {
+    if ( snet_writef( sn, "0\r\n.\r\n" ) < 0 ) {
         perror( "snet_writef" );
         return( -1 );
     }
@@ -118,7 +118,7 @@ stor_file( SNET *sn, char *pathdesc, char *path, size_t transize,
 	return( -1 );
     }
 
-    if ( snet_writef( sn, "%s", pathdesc ) == NULL ) {
+    if ( snet_writef( sn, "%s", pathdesc ) < 0 ) {
 	perror( "snet_writef" );
 	return( -1 );
     }
@@ -145,7 +145,7 @@ stor_file( SNET *sn, char *pathdesc, char *path, size_t transize,
     }
 
      /* tell server how much data to expect */
-    if ( snet_writef( sn, "%d\r\n", (int)st.st_size ) == NULL ) {
+    if ( snet_writef( sn, "%d\r\n", (int)st.st_size ) < 0 ) {
 	perror( "snet_writef" );
 	return( -1 );
     }
@@ -167,7 +167,7 @@ stor_file( SNET *sn, char *pathdesc, char *path, size_t transize,
 	return( -1 );
     }
 
-    if ( snet_writef( sn, ".\r\n" ) == NULL ) {
+    if ( snet_writef( sn, ".\r\n" ) < 0 ) {
         perror( "snet_writef" );
         return( -1 );
     }
@@ -206,7 +206,7 @@ stor_file( SNET *sn, char *pathdesc, char *path, size_t transize,
 stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize, 
     char *trancksum, struct applefileinfo *afinfo )
 {
-    int			rc, dfd, rfd;
+    int			rc = 0, dfd = 0, rfd = 0;
     char		buf[ 8192 ];
     char	        *line;
     struct timeval   	tv;
@@ -235,7 +235,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
     }
 
     /* STOR "FILE" <transcript-name> <path> "\r\n" */
-    if ( snet_writef( sn, "%s",	pathdesc ) == NULL ) {
+    if ( snet_writef( sn, "%s",	pathdesc ) < 0 ) {
 	perror( "snet_writef" );
 	return( -1 );
     }
@@ -265,7 +265,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
 
     /* tell server how much data to expect */
     tv = timeout;
-    if ( snet_writef( sn, "%d\r\n", (int)afinfo->as_size ) == NULL ) {
+    if ( snet_writef( sn, "%d\r\n", (int)afinfo->as_size ) < 0 ) {
         perror( "snet_writef" );
         goto error2;
     }
@@ -339,7 +339,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
 	}
     	if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
     }
-    if ( snet_writef( sn, ".\r\n" ) == NULL ) {
+    if ( snet_writef( sn, ".\r\n" ) < 0 ) {
         perror( "snet_writef" );
         return( -1 );
     }

@@ -95,7 +95,7 @@ closesn( SNET *sn )
     struct timeval      tv;
 
     /* Close network connection */
-    if ( snet_writef( sn, "QUIT\r\n" ) == NULL ) {
+    if ( snet_writef( sn, "QUIT\r\n" ) < 0 ) {
 	fprintf( stderr, "close failed: %s\n", strerror( errno ));
 	exit( 1 );
     }

@@ -66,7 +66,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, size_t transize,
     }
 
     if ( verbose ) printf( ">>> RETR %s\n", pathdesc );
-    if ( snet_writef( sn, "RETR %s\n", pathdesc ) <= 0 ) {
+    if ( snet_writef( sn, "RETR %s\n", pathdesc ) < 0 ) {
 	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 	    strerror( errno ));
 	exit( 1 );
@@ -202,7 +202,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     }
 
     if ( verbose ) printf( ">>> RETR %s\n", pathdesc );
-    if ( snet_writef( sn, "RETR %s\n", pathdesc ) <= 0 ) {
+    if ( snet_writef( sn, "RETR %s\n", pathdesc ) < 0 ) {
 	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 	    strerror( errno ));
 	exit( 1 );

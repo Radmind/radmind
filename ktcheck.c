@@ -51,7 +51,7 @@ getstat( SNET *sn, char *description, char *stats )
     struct timeval      tv;
     char		*line;
 
-    if( snet_writef( sn, "STAT %s\n", description ) == NULL ) {
+    if( snet_writef( sn, "STAT %s\n", description ) < 0 ) {
 	perror( "snet_writef" );
 	return( -1 );
     }
@@ -388,7 +388,7 @@ main( int argc, char **argv )
     }
 
     if(( sn = connectsn( host, port )  ) == NULL ) {
-	fprintf( stderr, "%s:%d connection failed.\n", host, port );
+	fprintf( stderr, "%s:%d: %s \n", host, port, strerror( errno ));
 	exit( 2 );
     }
 
