@@ -1,3 +1,5 @@
+Copyright (c) 2003 Regents of The University of Michigan.
+All Rights Reserved.  See COPYRIGHT.
 
 Response codes of x0x are for general commands, e.g. QUIT, NOOP.  x3x
 are for STAT, x4x are for RETR, x5x for STOR.
