@@ -478,7 +478,11 @@ f_stor( SNET *sn, int ac, char *av[] )
 	    snet_writef( sn, "%d Can't allocate memory: %s\r\n", 555, av [ 3]);
 	    return( -1 );
 	}
-	sprintf( upload, "tmp/file/%s/%s", decode( av[ 2 ] ), d_path );
+	if ( d_path[ 0 ] == '/' ) {
+	    sprintf( upload, "tmp/file/%s%s", decode( av[ 2 ] ), d_path );
+	} else {
+	    sprintf( upload, "tmp/file/%s/%s", decode( av[ 2 ] ), d_path );
+	}
 	free( d_path );
 	break;
 
@@ -490,10 +494,12 @@ f_stor( SNET *sn, int ac, char *av[] )
 
     if (( fd = open( upload, O_CREAT|O_EXCL|O_WRONLY, 0666 )) < 0 ) {
 	if ( mkdirs( upload ) < 0 ) {
+	    syslog( LOG_ERR, "f_stor: mkdir: %s: %m", upload );
 	    snet_writef( sn, "%d %s: %s\r\n", 555, upload, strerror( errno ));
 	    return( 1 );
 	}
 	if (( fd = open( upload, O_CREAT|O_EXCL|O_WRONLY, 0666 )) < 0 ) {
+	    syslog( LOG_ERR, "f_stor: open: %s: %m", upload );
 	    snet_writef( sn, "%d %s: %s\r\n", 555, upload, strerror( errno ));
 	    return( 1 );
 	}
