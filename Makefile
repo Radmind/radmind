@@ -56,7 +56,9 @@ LFDIFF_OBJ=	version.o lfdiff.o argcargv.o connect.o download.o chksum.o \
 all : ${TARGETS}
 
 version.o : version.c
-	${CC} ${CFLAGS} -DVERSION=\"`cat VERSION`\" -c version.c
+	${CC} ${CFLAGS} \
+		-DVERSION=\"`cat VERSION`\" \
+		-c version.c
 
 daemon.o : daemon.c
 	${CC} ${CFLAGS} \
@@ -74,6 +76,21 @@ lfdiff.o : lfdiff.c
 		-D_PATH_GNU_DIFF=\"${GNU_DIFF}\" \
 		-D_RADMIND_HOST=\"${RADMIND_HOST}\" \
 		-c lfdiff.c
+
+ktcheck.o : ktcheck.c
+	${CC} ${CFLAGS} \
+		-D_RADMIND_HOST=\"${RADMIND_HOST}\" \
+		-c ktcheck.c
+
+lapply.o : lapply.c
+	${CC} ${CFLAGS} \
+		-D_RADMIND_HOST=\"${RADMIND_HOST}\" \
+		-c lapply.c
+
+lcreate.o : lcreate.c
+	${CC} ${CFLAGS} \
+		-D_RADMIND_HOST=\"${RADMIND_HOST}\" \
+		-c lcreate.c
 
 radmind : libsnet/libsnet.a ${RADMIND_OBJ} Makefile
 	${CC} ${CFLAGS} -o radmind ${RADMIND_OBJ} ${LDFLAGS}
