@@ -65,6 +65,7 @@ main( int argc, char **argv )
 
     int		c, err = 0, len, linenum = 0, ac, defaultkfile = 1, cmp = 0;
     int		server = 0, specialfile = 0, displayall = 0, match = 0;
+    int		remove = 0;
     extern char	*version;
     char	*kfile = _RADMIND_COMMANDFILE;
     char	*kdir = "";
@@ -224,6 +225,7 @@ main( int argc, char **argv )
 	sprintf( prepath, "%s", "" );
 
 	while( fgets( line, sizeof( line ), f ) != NULL ) {
+	    remove = 0;
 	    linenum++;
 
 	    /* Check line length */
@@ -251,6 +253,7 @@ main( int argc, char **argv )
 
 	    /* Move past leading '-' */
 	    if ( *av[ 0 ] == '-' ) {
+		remove = 1;
 		av++;
 	    }
 
@@ -273,8 +276,14 @@ main( int argc, char **argv )
 	    cmp = strcmp( decode( av[ 1 ] ), pattern );
 	    if ( cmp == 0 ) {
 		match++;
-		if (( *av[ 0 ] == 'f' ) || ( *av[ 0 ] == 'a' )) {
+		if ( remove ) {
+		    printf( "- " );
+		}
+		if (( !remove ) &&
+			(( *av[ 0 ] == 'f' ) || ( *av[ 0 ] == 'a' ))) {
 		    printf( "%s:\n+ %s", tran, tline );
+		} else if ( remove ) {
+		    printf( "%s:\n- %s", tran, tline );
 		} else {
 		    printf( "%s:\n%s", tran, tline );
 		}
