@@ -74,6 +74,7 @@ main( int argc, char **argv, char **envp )
     char 		*path = "/tmp/lfdiff";
     char 		temppath[ MAXPATHLEN ];
     char		opt[ 3 ];
+    char		*epath;		/* encoded path */
     struct servent	*se;
     SNET		*sn;
     int                 authlevel = _RADMIND_AUTHLEVEL;
@@ -248,18 +249,26 @@ main( int argc, char **argv, char **envp )
 	}
     }
 
+    /* encode path */
+    if (( epath = encode( file )) == NULL ) {
+	fprintf( stderr, "filename too long: %s\n", file );
+	exit( 2 );
+    }
+
     /* create path description */
     if ( special ) {
 	if ( snprintf( pathdesc, ( MAXPATHLEN * 2 ), "SPECIAL %s",
-		encode( file )) >= ( MAXPATHLEN * 2 )) {
+		epath ) >= ( MAXPATHLEN * 2 )) {
 	    fprintf( stderr, "RETR SPECIAL %s: path description too long\n",
 		    file );
+	    exit( 2 );
 	}
     } else {
 	if ( snprintf( pathdesc, ( MAXPATHLEN * 2 ), "FILE %s %s",
-		transcript, encode( file )) >= ( MAXPATHLEN * 2 )) {
+		transcript, epath ) >= ( MAXPATHLEN * 2 )) {
 	    fprintf( stderr, "RETR FILE %s %s: path description too long\n",
-		    transcript, file );
+		    transcript, epath );
+	    exit( 2 );
 	}
     }
 
