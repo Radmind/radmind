@@ -320,7 +320,7 @@ main( int argc, char **argv )
     }
 
     if ( err || ( argc - optind != 0 )) {
-	fprintf( stderr, "usage: ktcheck [ -nvV ] " );
+	fprintf( stderr, "usage: ktcheck [ -nV ] [ -q | -v ]" );
 	fprintf( stderr, "[ -c checksum ] [ -K command file ] " );
 	fprintf( stderr, "[ -h host ] [ -p port ]\n" );
 	exit( 2 );
