@@ -187,8 +187,7 @@ f_notls( sn, ac, av )
     char	*av[];
 {
     snet_writef( sn, "%d Must issue a STARTTLS command first\r\n", 530 );
-
-    return( 0 );
+    exit( 1 );
 }
 
     int
