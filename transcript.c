@@ -360,8 +360,7 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 	    }
 	} else if ( fs->pi_type == 'a' ) {
 	    if ( do_acksum( fs->pi_name, fs->pi_cksum_b64,
-	    	    &fs->pi_afinfo )
-		    < 0 ) {
+	    	    &fs->pi_afinfo ) < 0 ) {
 		perror( fs->pi_name );
 		exit( 2 );
 	    }

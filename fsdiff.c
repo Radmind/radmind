@@ -26,6 +26,7 @@ extern char	*version, *checksumlist;
 void		fs_walk( struct llist *, int, int );
 int		verbose = 0;
 int		dodots = 0;
+int		lastpercent = -1;
 const EVP_MD    *md;
 
     void
@@ -41,8 +42,9 @@ fs_walk( struct llist *path, int start, int finish )
     float		chunk, f = start;
     char		temp[ MAXPATHLEN ];
 
-    if ( finish > start ) {
-	printf( "%%%.3d %s\n", start, path->ll_pinfo.pi_name );
+    if ( start != lastpercent ) {
+	lastpercent = start;
+	printf( "%%%.2d %s\n", start, path->ll_pinfo.pi_name );
 	fflush( stdout );
     }
 

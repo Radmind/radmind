@@ -238,7 +238,6 @@ main( int argc, char **argv )
     FILE		*f = NULL; 
     char		*host = _RADMIND_HOST;
     struct servent	*se;
-
     char		tline[ 2 * MAXPATHLEN ];
     char		targvline[ 2 * MAXPATHLEN ];
     char		path[ 2 * MAXPATHLEN ];
@@ -248,7 +247,7 @@ main( int argc, char **argv )
     char		*command = "";
     char		fstype;
     struct stat		st;
-    struct node		*head= NULL, *new_node, *node;
+    struct node		*head = NULL, *new_node, *node;
     ACAV		*acav;
     SNET		*sn = NULL;
     int			authlevel = _RADMIND_AUTHLEVEL;
