@@ -30,17 +30,19 @@ struct timeval 	timeout = { 10 * 60, 0 };
 int		linenum = 0;
 int		chksum = 1;
 int		verbose = 0;
-int		network = 1;
+int		update = 1;
 char		*command = "command.K";
 
     void
-output( char *string ) {
+output( char *string )
+{
     printf( "<<< %s\n", string );
     return;
 }
 
     int
-createspecial( SNET *sn, struct node *head ) {
+createspecial( SNET *sn, struct node *head )
+{
     int			fd;
     FILE		*fs;
     struct node 	*prev;
@@ -50,9 +52,10 @@ createspecial( SNET *sn, struct node *head ) {
     if ( verbose ) printf( "\n*** Creating special.T\n" );
 
     /* Open file */
-    if ( ( fd = open( "special.T", O_WRONLY | O_CREAT, 0666 ) ) < 0 ) {
+    if ( ( fd = open( "special.T", O_WRONLY | O_CREAT | O_TRUNC, 0666 ) )
+	    < 0 ) {
 	perror( "special.T" );
-	return( -1 );
+	return( 1 );
     }
     if ( ( fs = fdopen( fd, "w" ) ) == NULL ) {
 	fprintf( stderr, "fdopen" );
@@ -65,7 +68,6 @@ createspecial( SNET *sn, struct node *head ) {
 	if ( verbose ) printf( "\n*** Statting %s\n", head->path );
 
 	if ( ( stats = getstat( sn, (char *)&pathdesc) ) == NULL ) {
-	    fprintf( stderr, "getstat\n" );
 	    return( 1 );
 	}
 
@@ -93,14 +95,21 @@ createspecial( SNET *sn, struct node *head ) {
     return( 0 );
 }
 
+/*
+ * return codes:
+ *	0	okay
+ *	1	update made
+ *	2	system error
+ */
+
     int
-check( SNET *sn, char* type, char *path)
+check( SNET *sn, char *type, char *path)
 {
     char	*schksum, *stats;
     char	**targv;
     char 	pathdesc[ 2 * MAXPATHLEN ];
     char        cchksum[ 29 ];
-    int		error, tac;
+    int		tac;
 
     if ( verbose ) printf( "\n" );
 
@@ -113,62 +122,76 @@ check( SNET *sn, char* type, char *path)
 
     if ( verbose ) printf( "*** Statting %s\n", path );
 
-    stats = getstat( sn, (char *)&pathdesc);
+    if ( ( stats = getstat( sn, (char *)&pathdesc) ) == NULL ) {
+	return( 2 );
+    }
 
     tac = acav_parse( NULL, stats, &targv );
 
     if ( tac != 8 ) {
 	perror( "Incorrect number of arguments\n" );
-	return( 1 );
+	return( 2 );
     }
 
     if ( ( schksum = strdup( targv[ 7 ] ) ) == NULL ) {
 	perror( "strdup" );
-	return( 1 );
+	return( 2 );
     }
 
-    error = do_chksum( path, cchksum );
-
-    if ( error == 2 ) {
-	if ( verbose ) printf( "*** Downloading missing file: %s\n", path ); 
-	if ( download( sn, pathdesc, path, schksum ) != 0 ) {
-	    perror( "download" );
-	    return( 1 );
+    switch( do_chksum( path, cchksum ) ) {
+    case 0:
+	break;
+    case 1:
+	fprintf( stderr, "do_chksum" );
+	return( 2 );
+    case 2:
+	if ( update ) {
+	    if ( verbose ) printf( "*** Downloading missing file: %s\n",
+		    path ); 
+	    if ( download( sn, pathdesc, path, schksum ) != 0 ) {
+		perror( "download" );
+		return( 2 );
+	    }
 	}
-	return( 0 );
-    } else if ( error == 1 ) {
-	perror( "do_chksum" );
 	return( 1 );
     }
 
     if ( verbose ) printf( "*** chskum " );
 
     if ( strcmp( schksum, cchksum) != 0 ) {
-	if ( verbose ) printf( "mismatch on %s\n", path );
-	if ( network ) {
+	if ( verbose ) printf( "wrong on %s\n", path );
+	if ( update ) {
 	    if ( unlink( path ) != 0 ) {
 		perror( "unlink" );
-		return( 1 );
+		return( 2 );
 	    }
 	    if ( verbose ) printf( "*** %s deleted\n", path );
 	    if ( verbose ) printf( "*** Downloading %s\n", path ); 
 	    if ( download( sn, pathdesc, path, schksum ) != 0 ) {
 		perror( "download" );
-		return( 1 );
+		return( 2 );
 	    }
 	}
+	return( 1 );
     } else {
 	if ( verbose ) printf( "match\n" );
+	return( 0 );
     }
 
-    return( 0 );
 }
+
+/*
+ * exit codes:
+ *      0       No changes found, everything okay
+ *      1       Changes necessary / changes made
+ *      2       System error
+ */
 
     int
 main( int argc, char **argv )
 {
     int			i, c, s, port = htons( 6662 ), err = 0;
-    int			len, tac;
+    int			len, tac, change = 0;
     extern int          optind;
     char		*host = NULL, *line = NULL, *version = "1.0";
     char		*transcript = NULL;
@@ -195,7 +218,7 @@ main( int argc, char **argv )
 	    if ( ( port = htons ( atoi( optarg ) ) ) == 0 ) {
 		if ( ( se = getservbyname( optarg, "tcp" ) ) == NULL ) {
 		    fprintf( stderr, "%s: service unkown\n", optarg );
-		    exit( 1 );
+		    exit( 2 );
 		}
 		port = se->s_port;
 	    }
@@ -204,8 +227,7 @@ main( int argc, char **argv )
 	    command = optarg;
 	    break;
 	case 'n':
-	    printf( "No download\n" );
-	    network = 0;
+	    update = 0;
 	    break;
 	case 'T':
 	    transcript = optarg;
@@ -231,20 +253,20 @@ main( int argc, char **argv )
 	fprintf( stderr, "[ -c checksum ] [ -K command file ] " );
 	fprintf( stderr, "[ -p port ] " );
 	fprintf( stderr, "[-T transcript ] host\n" );
-	exit( 1 );
+	exit( 2 );
     }
     host = argv[ optind ];
 
     /* Network connection */
     if ( ( he = gethostbyname( host ) ) == NULL ) {
 	perror( host );
-	exit( 1 );
+	exit( 2 );
     }
 
     for ( i = 0; he->h_addr_list[ i ] != NULL; i++ ) {
 	if ( ( s = socket( PF_INET, SOCK_STREAM, NULL ) ) < 0 ) {
 	    perror ( host );
-	    exit( 1 );
+	    exit( 2 );
 	}
 	memset( &sin, 0, sizeof( struct sockaddr_in ) );
 	sin.sin_family = AF_INET;
@@ -288,17 +310,25 @@ main( int argc, char **argv )
 
     if ( he->h_addr_list[ i ] == NULL ) {
 	perror( "connection failed" );
-	exit( 1 );
+	exit( 2 );
     }
 
-    if ( check( sn, "COMMAND", NULL ) != 0 ) { 
-	perror( "check" );
-	exit( 1 );
+    switch( check( sn, "COMMAND", NULL ) ) { 
+    case 0:
+	break;
+    case 1:
+	change++;
+	if ( !update ) {
+	    goto done;
+	}
+	break;
+    case 2:
+	exit( 2 );
     }
 
     if ( ( f = fopen( command, "r" ) ) == NULL ) {
 	perror( argv[ 1 ] );
-	exit( 1 );
+	exit( 2 );
     }
 
     while ( fgets( cline, MAXPATHLEN, f ) != NULL ) {
@@ -307,7 +337,7 @@ main( int argc, char **argv )
 	len = strlen( cline );
 	if (( cline[ len - 1 ] ) != '\n' ) {
 	    fprintf( stderr, "%s: line too long\n", cline );
-	    exit( 1 );
+	    exit( 2 );
 	}
 
 	tac = acav_parse( NULL, cline, &targv );
@@ -318,7 +348,7 @@ main( int argc, char **argv )
 
 	if ( tac != 2 ) {
 	    fprintf( stderr, "invalid command line %d\n", linenum );
-	    exit( 1 );
+	    exit( 2 );
 	}
 
 	if ( *targv[ 0 ] == 's' ) {
@@ -326,26 +356,37 @@ main( int argc, char **argv )
 	    continue;
 	}
 	    
-	if ( check( sn, "TRANSCRIPT", targv[ tac - 1] ) != 0 ) {
+	switch( check( sn, "TRANSCRIPT", targv[ tac - 1] ) ) {
+	case 0:
+	    break;
+	case 1:
+	    change++;
+	    if ( !update ) {
+		goto done;
+	    }
+	    break;
+	case 2:
 	    perror( "check" );
-	    exit( 1 );
+	    exit( 2 );
 	}
     }
 
     if ( head != NULL ) {
-	createspecial( sn, head );
+	if ( createspecial( sn, head ) != 0 ) {
+	    exit( 2 );
+	}
     }
 
 
     /* Close network connection */
     if ( snet_writef( sn, "QUIT\r\n" ) == NULL ) {
 	perror( "snet_writef" );
-	exit( 1 );
+	exit( 2 );
     }
 
     if ( ( line = snet_getline_multi( sn, logger, &tv ) ) == NULL ) {
 	perror( "snet_getline_multi" );
-	exit( 1 );
+	exit( 2 );
     }
 
     if ( *line != '2' ) {
@@ -354,8 +395,20 @@ main( int argc, char **argv )
 
     if ( snet_close( sn ) != 0 ) {
 	perror( "snet_close" );
-	exit( 1 );
+	exit( 2 );
     }
-
-    exit( 0 );
+done:
+    if ( change ) {
+	if ( verbose ) {
+	    if ( !update ) {
+		printf( "*** update needed\n" );
+	    } else {
+		printf( "*** update made\n" );
+	    }
+	}
+	exit( 1 );
+    } else {
+	if ( verbose ) printf( "*** no changes needs\n" ); 
+	exit( 0 );
+    }
 }
