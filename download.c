@@ -88,7 +88,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *location, char *chksumval,
 	goto error;
     }
     size = atoi( line );
-    if ( verbose ) printf( "<<< %d\n", size );
+    if ( verbose ) printf( "<<< %d\n<<< ", size );
 
     /*
      * If output is not a tty, don't bother with the dots.

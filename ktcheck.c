@@ -21,7 +21,6 @@ int createspecial( SNET *sn, struct node *head );
 char * getstat( SNET *sn, char *description );
 
 void			(*logger)( char * ) = NULL;
-extern struct timeval	timeout;
 int			linenum = 0;
 int			chksum = 1;
 int			verbose = 0;
@@ -29,8 +28,8 @@ int			quiet = 0;
 int			update = 1;
 char			*kfile= _RADMIND_COMMANDFILE;
 char			*kdir= "";
-char			path[ MAXPATHLEN ];
 
+extern struct timeval	timeout;
 extern char		*version, *checksumlist;
 
     char * 
@@ -80,7 +79,8 @@ createspecial( SNET *sn, struct node *head )
     int			fd;
     FILE		*fs;
     struct node 	*prev;
-    char		pathdesc[ MAXPATHLEN * 2 ];
+    char		filedesc[ MAXPATHLEN * 2 ];
+    char		path[ MAXPATHLEN ];
     char		*stats;
 
     /* Open file */
@@ -102,9 +102,9 @@ createspecial( SNET *sn, struct node *head )
     }
 
     do {
-	sprintf( pathdesc, "SPECIAL %s", head->path);
+	sprintf( filedesc, "SPECIAL %s", head->path);
 
-	if (( stats = getstat( sn, (char *)&pathdesc)) == NULL ) {
+	if (( stats = getstat( sn, (char *)&filedesc)) == NULL ) {
 	    return( 1 );
 	}
 
@@ -147,6 +147,7 @@ check( SNET *sn, char *type, char *file )
     char 	filedesc[ 2 * MAXPATHLEN ];
     char 	tempfile[ 2 * MAXPATHLEN ];
     char        cchksum[ 29 ];
+    char	path[ MAXPATHLEN ];
     int		tac;
     struct stat	st;
 
@@ -253,6 +254,7 @@ main( int argc, char **argv )
     char                **targv;
     char                cline[ 2 * MAXPATHLEN ];
     char		tempfile[ MAXPATHLEN ];
+    char		path[ MAXPATHLEN ];
     char		lchksum[ 29 ], tchksum[ 29 ];
     struct servent	*se;
     SNET		*sn;
@@ -307,7 +309,7 @@ main( int argc, char **argv )
 	}
     }
 
-    /* Check that kfile isn't an abvious directory */
+    /* Check that kfile isn't an obvious directory */
     len = strlen( kfile );
     if ( kfile[ len - 1 ] == '/' ) {
 	err++;
@@ -405,13 +407,13 @@ main( int argc, char **argv )
 	    exit( 2 );
 	}
 
-	if ( snprintf( path, MAXPATHLEN, "%s/special.T", kdir ) >
+	if ( snprintf( path, MAXPATHLEN, "%sspecial.T", kdir ) >
 		MAXPATHLEN - 1 ) {
-	    fprintf( stderr, "path too long: %s/special.T\n", kdir );
+	    fprintf( stderr, "path too long: %sspecial.T\n", kdir );
 	}
-	if ( snprintf( tempfile, MAXPATHLEN, "%s/special.T.%i", kdir,
+	if ( snprintf( tempfile, MAXPATHLEN, "%sspecial.T.%i", kdir,
 		getpid()) > MAXPATHLEN - 1 ) {
-	    fprintf( stderr, "path too long: %s/special.T.%i\n", kdir,
+	    fprintf( stderr, "path too long: %sspecial.T.%i\n", kdir,
 		    (int)getpid());
 	}
 	if ( do_chksum( tempfile, tchksum ) != 0 ) {
