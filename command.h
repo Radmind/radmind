@@ -24,3 +24,5 @@ struct command {
     char	*c_name;
     int		(*c_func) ___P(( SNET *, int, char *[] ));
 };
+
+int wildcard( char *key, char *string );
