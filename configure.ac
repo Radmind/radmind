@@ -45,7 +45,7 @@ AC_FUNC_MALLOC
 AC_FUNC_MEMCMP
 AC_FUNC_STAT
 AC_FUNC_UTIME_NULL
-AC_CHECK_FUNCS([dup2 gethostbyaddr gethostbyname gethostname gettimeofday inet_ntoa memset mkdir rmdir select socket strcasecmp strchr strdup strerror strncasecmp strrchr strstr strtol utime])
+AC_CHECK_FUNCS([dup2 gethostbyaddr gethostbyname gethostname gettimeofday inet_ntoa memset mkdir rmdir select socket strcasecmp strchr strdup strerror strncasecmp strrchr strstr strtol utime herror])
 
 AC_CONFIG_FILES([Makefile
                  libsnet/Makefile])
