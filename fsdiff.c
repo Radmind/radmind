@@ -248,7 +248,7 @@ main( int argc, char **argv )
     }
 
     /* initialize the transcripts */
-    transcript_init( kfile );
+    transcript_init( kfile, K_CLIENT );
 
     fs_walk( argv[ optind ], 0, finish );
 

@@ -27,7 +27,7 @@
 #include "largefile.h"
 #include "list.h"
 
-int read_kfile( char * );
+int read_kfile( char *kfile, int location );
 
 struct transcript		*tran_head = NULL;
 static struct transcript	*prev_tran = NULL;
@@ -35,6 +35,7 @@ extern int			edit_path;
 static int			foundspecial = 0;
 static char			*kdir;
 static struct list		*kfile_list;
+struct list			*special_list;
 
     void 
 transcript_parse( struct transcript *tran ) 
@@ -674,7 +675,7 @@ t_new( int type, char *fullname, char *shortname )
 }
 
     void
-transcript_init( char *kfile )
+transcript_init( char *kfile, int location )
 {
     char	*special = "special.T";
     char	*p;
@@ -709,12 +710,16 @@ transcript_init( char *kfile )
 	perror( "list_insert" );
 	exit( 2 );
     }
-    if ( read_kfile( kfile ) != 0 ) {
+    if (( special_list = list_new( )) == NULL ) {
+	perror( "list_new" );
+	exit( 2 );
+    }
+    if ( read_kfile( kfile, location ) != 0 ) {
 	exit( 2 );
     }
 
-    /* open the special transcript if there were any special files */
-    if ( foundspecial ) {
+    if ( foundspecial && ( location == K_CLIENT )) {
+	/* open the special transcript if there were any special files */
 	if ( strlen( kdir ) + strlen( special ) + 2 > MAXPATHLEN ) {
 	    fprintf( stderr, 
 		    "special path too long: %s%s\n", kdir, special );
@@ -723,15 +728,17 @@ transcript_init( char *kfile )
 	sprintf( fullpath, "%s%s", kdir, special );
 	t_new( T_SPECIAL, fullpath, special );
     }
+
     if ( tran_head->t_type == T_NULL  && edit_path == APPLICABLE ) {
 	fprintf( stderr, "-A option requires a non-NULL transcript\n" );
 	exit( 2 );
     }
+
     return;
 }
 
     int
-read_kfile( char *kfile )
+read_kfile( char *kfile, int location )
 {
     int		length, ac, linenum = 0;
     char	line[ MAXPATHLEN ];
@@ -763,12 +770,32 @@ read_kfile( char *kfile )
 	    return( -1 );
 	} 
 
-	if ( snprintf( fullpath, MAXPATHLEN, "%s%s", kdir,
-		av[ 1 ] ) >= MAXPATHLEN ) {
-	    fprintf( stderr, "command: line %d: path too long\n",
-		    linenum );
-	    fprintf( stderr, "command: line %d: %s%s\n",
-		    linenum, kdir, av[ 1 ] );
+	switch( location ) {
+	case K_CLIENT:
+	    if ( snprintf( fullpath, MAXPATHLEN, "%s%s", kdir,
+		    av[ 1 ] ) >= MAXPATHLEN ) {
+		fprintf( stderr, "command: line %d: path too long\n",
+			linenum );
+		fprintf( stderr, "command: line %d: %s%s\n",
+			linenum, kdir, av[ 1 ] );
+		return( -1 );
+	    }
+	    break;
+
+	case K_SERVER:
+	    if ( snprintf( fullpath, MAXPATHLEN,
+		    "%s/transcript/%s", _RADMIND_PATH,
+		    av[ 1 ] ) >= MAXPATHLEN ) {
+		fprintf( stderr, "command: line %d: path too long\n",
+			linenum );
+		fprintf( stderr, "command: line %d: %s%s\n",
+			linenum, kdir, av[ 1 ] );
+		return( -1 );
+	    }
+	    break;
+
+	default:
+	    fprintf( stderr, "unknown location\n" );
 	    return( -1 );
 	}
 
@@ -785,13 +812,12 @@ read_kfile( char *kfile )
 		return( -1 );
 	    }
 
-	    if ( read_kfile( fullpath ) != 0 ) {
+	    if ( read_kfile( fullpath, location ) != 0 ) {
 		return( -1 );
 	    }
 	    break;
 
 	case 'n':				/* negative */
-	
 	    t_new( T_NEGATIVE, fullpath, av[ 1 ] );
 	    break;
 
@@ -801,6 +827,12 @@ read_kfile( char *kfile )
 
 	case 's':				/* special */
 	    foundspecial++;
+	    if ( location == K_SERVER ) {
+		if ( list_insert( special_list, av[ 1 ] ) != 0 ) {
+		    perror( "list_insert" );
+		    return( -1 );
+		}
+	    }
 	    continue;
 
 	default:

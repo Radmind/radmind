@@ -86,6 +86,11 @@ version.o : version.c
 		-DVERSION=\"`cat ${srcdir}/VERSION`\" \
 		-c ${srcdir}/version.c
 
+transcript.o : transcript.c
+	${CC} ${CFLAGS} \
+		-D_RADMIND_PATH=\"${RADMINDDIR}\" \
+		-c ${srcdir}/transcript.c
+
 daemon.o : daemon.c
 	${CC} ${CFLAGS} \
 		-D_RADMIND_AUTHLEVEL=${RADMIND_AUTHLEVEL} \

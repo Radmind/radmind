@@ -25,6 +25,9 @@
 #define PR_STATUS	4 
 #define PR_STATUS_NEG	5
 
+#define K_CLIENT	0
+#define K_SERVER	1
+
 int			edit_path;
 int			skip;
 int			cksum;
@@ -52,7 +55,7 @@ struct transcript {
 };
 
 int			transcript( char * );
-void			transcript_init( char * );
+void			transcript_init( char *kfile, int location );
 struct transcript	*transcript_select( void );
 void			transcript_parse( struct transcript * );
 void			transcript_free( void );

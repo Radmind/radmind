@@ -17,49 +17,9 @@
 #include "transcript.h"
 #include "code.h"
 #include "pathcmp.h"
-
-struct node {
-    char                *path;
-    int			negative;
-    struct node         *next;
-};
-
-struct node* create_node( char *path );
-void free_node( struct node *node );
-void free_list( struct node *head );
+#include "list.h"
 
 const EVP_MD    *md;
-
-   struct node *
-create_node( char *path )
-{
-    struct node         *new_node;
-
-    new_node = (struct node *) malloc( sizeof( struct node ) );
-    new_node->path = strdup( path );
-    new_node->negative = 0;
-
-    return( new_node );
-}
-
-    void
-free_node( struct node *node )
-{
-    free( node->path );
-    free( node );
-}
-
-    void
-free_list( struct node *head )
-{
-    struct node *node;
-
-    while ( head != NULL ) {
-        node = head;
-        head = head->next;
-        free_node( node );
-    }
-}
 
 /*
  * exit codes:
@@ -77,27 +37,30 @@ main( int argc, char **argv )
     extern char		*version;
     char		*kfile = _RADMIND_COMMANDFILE;
     char		*pattern;
+    struct node		*node;
     struct transcript	*tran;
     extern struct transcript	*tran_head;
+    extern struct list	*special_list;
 
     while (( c = getopt( argc, argv, "aK:sV" )) != EOF ) {
 	switch( c ) {
 	case 'a':
 	    displayall = 1;
 	    break;
+
 	case 'K':
 	    defaultkfile = 0;
 	    kfile = optarg;
 	    break;
+
 	case 's':
 	    server = 1;
 	    break;
+	
 	case 'V':
 	    printf( "%s\n", version );
 	    exit( 0 );
-	case '?':
-	    err++;
-	    break;
+
 	default:
 	    err++;
 	    break;
@@ -123,9 +86,29 @@ main( int argc, char **argv )
     }
 
     /* initialize the transcripts */
-    transcript_init( kfile );
     edit_path = APPLICABLE;
+    if ( server ) {
+	transcript_init( kfile, K_SERVER );
+    } else {
+	transcript_init( kfile, K_CLIENT );
+    }
     outtran = stdout;
+
+    /* check special list */
+    if ( special_list->l_count > 0 ) {
+	for ( node = list_pop_head( special_list ); node != NULL;
+		node = list_pop_head( special_list )) {
+	    if ( pathcmp ( node->n_path, pattern ) == 0 ) {
+		printf( "# Special\n" );
+		printf( "special.T:\n" );
+		printf( "%s\n", node->n_path );
+		free( node );
+		if ( !displayall ) {
+		    goto done;
+		}
+	    }
+	}
+    }
 
     for ( tran = tran_head; !tran->t_eof; tran = tran->t_next ) {
 
@@ -164,6 +147,7 @@ main( int argc, char **argv )
 	    }
 
 	    if ( !tran->t_pinfo.pi_minus ) {
+		printf( "%s:\n", tran->t_shortname );
 		t_print( NULL, tran, PR_TRAN_ONLY );
 	    }
 
