@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <strings.h>
 #include <utime.h>
+#include <errno.h>
 
 #include "snet.h"
 #include "argcargv.h"
@@ -42,17 +43,23 @@ t_convert( int type )
 }
 
     static int
-pathcmp( const char *dir, const char *file )
+ischild( const char *parent, const char *child)
 {
-    return strncmp(dir, file, strlen( dir ) );
+    if ( parent == NULL ) {
+	printf( "  in root?" );
+	return 1;
+    } else {
+	printf( "  %s a child of %s?", child, parent );
+	return !strncmp(parent, child, strlen( parent ) );
+    }
 }
 
     void
 apply( FILE *f, char *parent )
 {
     char		tline[ 2 * MAXPATHLEN ];
-    int			tac, targvind;
-    char		**targv;
+    int			tac, targvind, present;
+    char		**targv, dir[ MAXPATHLEN ];
     char		type;
     extern char		*optarg;
     struct stat		st;
@@ -62,12 +69,15 @@ apply( FILE *f, char *parent )
     gid_t		gid;
 
     if ( parent != NULL ) {
-	printf( "Working in %s\n", parent );
+	printf( "\nWorking in %s\n", parent );
     } else {
-	printf( "Working in root\n" );
+	printf( "\nWorking in root\n" );
     }
 
     while ( fgets( tline, MAXPATHLEN, f ) != NULL ) {
+
+	printf( "%s", tline );
+
 	tac = argcargv( tline, &targv );
 
 	/* check buffer overflow */
@@ -78,7 +88,7 @@ apply( FILE *f, char *parent )
 
 	    /* Get argument offset */
 
-	    if ( *targv[ 0 ] == ( '+' || '-' ) ) {
+	    if ( ( *targv[ 0 ] == '+' ) || ( *targv[ 0 ] == '-' ) ) {
 		targvind = 1;
 	    } else {
 		targvind = 0;
@@ -88,12 +98,15 @@ apply( FILE *f, char *parent )
 
 	    if ( lstat( targv[ 1 + targvind ], &st ) ==  0 ) {
 	        type = t_convert ( S_IFMT & st.st_mode );
-	    } else { 
+		present = 1;
+	    } else if ( errno != ENOENT ) { 
 		perror( targv[ 1 + targvind ] );
 		goto done;
+	    } else {
+		present = 0;
 	    }
 
-	    if ( type != *targv[ 0 + targvind ] ) {
+	    if ( type != *targv[ 0 + targvind ] && present ) {
 		printf( "Must remove %c %s\n", type, targv[ 1 + targvind ] );
 
 		if ( type == 'd' ) {
@@ -101,14 +114,18 @@ apply( FILE *f, char *parent )
 
 		    /* Recurse */
 
+		    strcpy( &dir, targv[ 1 + targvind ] );
+
 		    apply( f, targv[ 1 + targvind ] );
 
 		    /* Directory is empty */
 
-		    if ( rmdir( targv[ 1 + targvind ] ) != 0 ) {
-			perror( targv[ 2 ] );
+		    if ( rmdir( dir ) != 0 ) {
+			perror( dir );
 			goto done;
 		    }
+
+		    present = 0;
 
 		} else {
 		    printf( "Unlinking %s for update\n", targv[ 1 + targvind ] );
@@ -116,6 +133,8 @@ apply( FILE *f, char *parent )
 			perror( targv[ 1 + targvind ] );
 			goto done;
 		    }
+
+		    prsent = 0;
 		}
 	    }
 
@@ -138,16 +157,19 @@ apply( FILE *f, char *parent )
 		    printf( "Calling apply to handle dir\n" );
 
 		    /* Recurse */
+		    
+		    strcpy( &dir, targv[ 2 ] );
 
 		    apply( f, targv[ 2 ] );
 
 		    /* Directory is empty */
 
-		    if ( rmdir( targv[ 2 ] ) != 0 ) {
-			perror( targv[ 2 ] );
+		    if ( rmdir( dir ) != 0 ) {
+			perror( dir );
 			goto done;
 		    }
 		} else {
+		    printf( "Unlinking %s\n", targv[ 2 ] ); 
 		    if ( unlink( targv[ 2 ] ) != 0 ) {
 			perror( targv[ 2 ] );
 			goto done;
@@ -205,34 +227,49 @@ apply( FILE *f, char *parent )
 		    uid = atoi( targv[ 3 ] );
 		    gid = atoi( targv[ 4 ] );
 
-		    if ( type != 'd' ) {
-		    }
-
-		    /* check mode */
-		    if( mode != st.st_mode ) {
-			printf( "  mode -> %o\n", mode );
-			if ( chmod( targv[ 1 ], mode ) != 0 ) {
-			    perror( "chmod" );
+		    if ( !present ) {
+			if ( mkdir( targv[ 1 ], mode ) != 0 ) {
+			    perror( targv[ 1 ] );
 			    goto done;
 			}
-		    }
 
-		    /* check uid & gid */
-		    if( uid != st.st_uid  || gid != st.st_gid ) {
-			if ( uid != st.st_uid ) printf( "  uid -> %i\n", (int)uid );
-			if ( gid != st.st_gid ) printf( "  gid -> %i\n", (int)gid );
 			if ( lchown( targv[ 1 ], uid, gid ) != 0 ) {
 			    perror( "lchown" );
 			    goto done;
+			}
+		    } else {
+
+			/* check mode */
+			if( mode != st.st_mode ) {
+			    printf( "  mode -> %o\n", mode );
+			    if ( chmod( targv[ 1 ], mode ) != 0 ) {
+				perror( "chmod" );
+				goto done;
+			    }
+			}
+
+			/* check uid & gid */
+			if( uid != st.st_uid  || gid != st.st_gid ) {
+			    if ( uid != st.st_uid ) printf( "  uid -> %i\n", (int)uid );
+			    if ( gid != st.st_gid ) printf( "  gid -> %i\n", (int)gid );
+			    if ( lchown( targv[ 1 ], uid, gid ) != 0 ) {
+				perror( "lchown" );
+				goto done;
+			    }
 			}
 		    }
 		    printf( "  DONE\n" );
 		    break;
 
 		case 'h':
-		    if ( unlink( targv[ 1 ] ) != 0 ) {
-			perror( "unlink" );
-			goto done;
+
+		    /* would we ever get into this if?*/
+
+		    if ( present ) {
+			if ( unlink( targv[ 1 ] ) != 0 ) {
+			    perror( "unlink" );
+			    goto done;
+			}
 		    }
 
 		    if ( link( targv[ 2 ], targv[ 1 ] ) != 0 ) {
@@ -240,7 +277,11 @@ apply( FILE *f, char *parent )
 			goto done;
 		    }
 		    break;
+
 		case 'l':
+
+		    /* would we ever get into this if?*/
+
 		    if ( unlink( targv[ 1 ] ) != 0 ) {
 			perror( "unlink" );
 			goto done;
@@ -251,6 +292,7 @@ apply( FILE *f, char *parent )
 			goto done;
 		    }
 		    break;
+
 		case 'D':
 		    if ( type != 'D' ) {
 			printf( "Door update to non-door\n" ); 
@@ -282,9 +324,22 @@ apply( FILE *f, char *parent )
 		}
 		break;  // End of defualt switch
 	    }
-	    printf( "Getting next line\n" );
+
+	    /* check for child */
+
+	    printf( "Checking child\n" );
+
+	    if ( ! ischild( parent, targv[ 1 + targvind ] ) ) {
+		printf( "  NO!\n" );
+		return;
+	    }
+	    printf( "  YES!\n" );
 	}
+
     }
+
+    return;
+
 done:
 
     fclose( f );
@@ -297,7 +352,7 @@ main( int argc, char **argv )
 {
     FILE		*f; 
 
-    if (( f = fopen( argv[ 1 ], "r" )) == NULL ) {
+    if (( f = fopen( argv[ 1 ], "r" )) == NULL ) { 
 	perror( argv[ 1 ] );
 	exit( 1 );
     }
