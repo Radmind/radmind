@@ -64,7 +64,8 @@ is the lower bound and
 is the upper bound.  '\\'
 can be used to escape any character.
 .sp
-A client is only given access to transcripts that are listed in their config
+A client is only given access to command files and transcripts
+listed in their base command file as determined by the config
 file.
 .sp
 .SH DIRECTORY STRUCTURE
@@ -138,11 +139,14 @@ NOOP
 do nothing
 .TP 10
 HELP
-Display helpful message
+display helpful message
 .TP 10
 STAT
 stat a transcript, command or special file.  When statting a command file or
-transcript, the mode, UID and GID default to 0444, 0, and 0 respectively.
+transcript, the mode, UID and GID default to 0444, 0, and 0 respectively.  If
+no command file is specified, the server returns information on the base
+command file as indicated in the config file.
+.sp
 Status of a special file is determined by a single transcript line listed
 in a file named 
 .BI  special/< special-file-path\c
@@ -156,7 +160,9 @@ transcript in the transcript directory will be used.
 If neither of those exist, the defaults are returned.
 .TP 10
 RETR
-retrieve a file, transcript command or special file
+retrieve a file, transcript command or special file.  If 
+no command file is specified, the server returns the base
+command file as indicated in the config file.
 .TP 10
 STOR
 store a file or transcript.  If user authentication been

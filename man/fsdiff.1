@@ -27,10 +27,12 @@
 .B fsdiff
 reads a command file (the default name is
 .B command.K)
-to get a list of transcripts. If no command file is given, the
-transcript list is considered to be the null transcript. The first
-transcript listed in the command file has the lowest precedence, the
-next higher, and the last has the highest.  If any special files are
+to get a list of transcripts. If the command file is empty, the
+transcript list is considered to be the null transcript.  Included command files
+are read depth first.  The first
+transcript listed has the lowest precedence, the
+next higher, and the last has the highest.
+If any special files are
 listed, the
 .B special.T
 transcript will have the absolute highest precedence.
@@ -171,26 +173,27 @@ before:
 Command files have the following format:
 .br
 .sp
-	type	transcriptname/pathname
+	type	path
 .sp
 .br
-Type is any part of the words "positive", "negative" and "special". The
-second argument is either a transcript name, or in the case of type
-special, a full pathname.
+Type is 'k' for command file, 'p' for positive, 'n' for negative and 's'
+for special. The
+argument path is either a command file name, transcript name,
+or in the case of type special, a full pathname.
 .br
 .br
 .sp
 # example command file
 .br
-	p	solaris8base.T
+	k	linux-base.K
 .br
-	n	solarisneg.T
+	p	test/denser-10.T
 .br
-	s	/etc/printcap
+	p	simta-032.T
 .br
-	s	/etc/hostname.hme0
+	n	simta-neg.T
 .br
-.br
+	s	/etc/fstab
 .sp
 Lines beginning with "#" are comments, and are skipped. A comment must
 be on a line by itself. Blank lines are also skipped.
