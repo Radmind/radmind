@@ -325,7 +325,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
     if ( snet_writef( sn, "%d\r\n", (int)afinfo->as_size ) < 0 ) {
 	fprintf( stderr, "store %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-        goto error;
+        goto sn_error;
     }
     if ( verbose ) printf( ">>> %d\n", (int)afinfo->as_size );
 
@@ -473,7 +473,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
     return( 0 );
 
 sn_error:
-    close_sn( sn );
+    snet_close( sn );
     exit( 2 );
 }
 #else !__APPLE__
