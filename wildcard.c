@@ -1,7 +1,5 @@
 #include <strings.h>
 
-#include "command.h"
-
     int
 wildcard( char *key, char *string )
 {
