@@ -1,7 +1,7 @@
 #include <sys/types.h>
-#ifdef SOLARIS
+#ifdef sun
 #include <sys/mkdev.h>
-#endif SOLARIS
+#endif sun
 #include <sys/param.h>
 #include <stdlib.h>
 #include <stdio.h>

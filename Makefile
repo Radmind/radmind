@@ -21,7 +21,6 @@ RADMINDSYSLOG=LOG_LOCAL7
 # For gcc
 CC=	gcc
 CWARN=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wconversion -Werror
-OSNAME= -DSOLARIS
 CFLAGS= ${CWARN} ${OSNAME} ${INCPATH}
 
 OPENSSL=	/usr/local/openssl

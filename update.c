@@ -1,8 +1,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef SOLARIS
+#ifdef sun
 #include <sys/mkdev.h>
-#endif SOLARIS
+#endif sun
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -224,15 +224,15 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 	uid = atoi( targv[ 3 ] );
 	gid = atoi( targv[ 4 ] );
 	if ( !present ) {
-#ifdef SOLARIS
+#ifdef sun
 	    if ( ( dev = makedev( (major_t)atoi( targv[ 5 ] ),
 		   (minor_t)atoi( targv[ 6 ] ) ) ) == NODEV ) {
 	       perror( path );
 	       return( 1 );
 	    }
-#else !SOLARIS
+#else !sun
 	    dev = makedev( atoi( targv[ 5 ] ), atoi( targv[ 6 ] ));
-#endif SOLARIS
+#endif sun
 	    if ( mknod( path, mode, dev ) != 0 ) {
 		perror( path );
 		return( 1 );

@@ -23,7 +23,7 @@
 #include "code.h"
 #include "mkdirs.h"
 
-#ifdef SOLARIS
+#ifdef sun
 #define MIN(a,b)	((a)<(b)?(a):(b))
 #define MAX(a,b)	((a)>(b)?(a):(b))
 #endif

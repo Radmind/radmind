@@ -16,10 +16,10 @@ t_convert( int type )
 	return ( 'c' );
     case S_IFBLK:
 	return ( 'b' );
-#ifdef SOLARIS
+#ifdef sun
     case S_IFDOOR:
 	return ( 'D' );
-#endif SOLARIS
+#endif sun
     case S_IFIFO:
 	return ( 'p' );
     case S_IFSOCK:

@@ -10,7 +10,7 @@
 #include "download.h"
 #include "chksum.h"
 
-#ifdef SOLARIS
+#ifdef sun
 #define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
 #endif
 
