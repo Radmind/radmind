@@ -227,7 +227,7 @@ install	: all man
 	done
 	-mkdir -p ${CERTDIR}
 
-PKGNAME=RadmindTools
+PKGNAME=RadmindTools-${VERSION}
 PKGDIR=tmp/RadmindToolsInstaller
 PKGRSRCDIR=tmp/Resources
 PKGSRCDIR=`pwd`
