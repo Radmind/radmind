@@ -474,7 +474,6 @@ main( int argc, char **argv )
 		    }
 		    respcount += 2;
 		    if ( rc < 0 ) {
-			if ( dodots ) { putchar( (char)'\n' ); }
 			goto stor_failed;
 		    }
 		}
@@ -498,6 +497,7 @@ done:
     exit( 0 );
 
 stor_failed:
+    if ( dodots ) { putchar( (char)'\n' ); }
     while ( respcount > 0 ) {
 	tv.tv_sec = 30;
 	tv.tv_usec = 0;
