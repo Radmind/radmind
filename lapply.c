@@ -222,7 +222,7 @@ main( int argc, char **argv )
     int			c, port = htons( 6662 ), err = 0;
     extern int          optind;
     FILE		*f; 
-    char		*host = NULL;
+    char		*host = _RADMIND_HOST;
     struct servent	*se;
     SNET		*sn;
 
@@ -255,6 +255,7 @@ main( int argc, char **argv )
 	    break;
 	case 'V':
 	    printf( "%s\n", version );
+	    printf( "%s\n", checksumlist );
 	    exit( 0 );
 	case 'v':
 	    verbose = 1;
