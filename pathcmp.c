@@ -54,8 +54,7 @@ pathcmp( const unsigned char *p1, const unsigned char *p2 )
 	    }
 	}
 	p2++;
-	p1++;
-    } while ( *p1 != '\0' );
+    } while ( *p1++ != '\0' );
 
     return( 0 );
 }
