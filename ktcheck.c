@@ -62,16 +62,18 @@ createspecial( SNET *sn, struct node *head ) {
     do {
 	sprintf( pathdesc, "SPECIAL %s", head->path);
 
-	if ( verbose ) printf( "*** Statting %s\n", head->path );
+	if ( verbose ) printf( "\n*** Statting %s\n", head->path );
 
 	if ( ( stats = getstat( sn, (char *)&pathdesc) ) == NULL ) {
 	    fprintf( stderr, "getstat\n" );
 	    return( 1 );
 	}
 
-	printf( "%s\n", stats );
-
-	if ( fputs( head->path, fs) == EOF ) {
+	if ( fputs( stats, fs) == EOF ) {
+	    fprintf( stderr, "fputs" );
+	    return( 1 );
+	}
+	if ( fputs( "\n", fs) == EOF ) {
 	    fprintf( stderr, "fputs" );
 	    return( 1 );
 	}
