@@ -142,13 +142,18 @@ has Mac OS metadata, and is stored on the server as an AppleSingle file
 Everything that applies to
 a regular file applies to an applefile, as well.
 .sp
-Transcripts are sorted in depth first order, which means subdirectories have
-precedence over files in the same directory. This means that "/" has
-special precedence. So the file:
+Transcripts are sorted alphabetically, depth first, and case
+sensitively.  This means subdirectories have precedence over files
+in the same directory: lexically, "/" has highest precedence.  So
+the file:
 .sp
-/etc/passwd  comes before /etc.old
+/etc/passwd
 .sp
-even though "." comes lexically before "/"
+comes before:
+.sp
+/etc.old
+.sp
+even though "." normally comes before "/"
 .SH COMMAND FILES
 Command files have the following format:
 .br
