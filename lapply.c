@@ -236,7 +236,7 @@ main( int argc, char **argv )
     int			c, port = htons( 6662 ), err = 0;
     extern int          optind;
     FILE		*f; 
-    char		*host = "rearwindow.rsug.itd.umich.edu";
+    char		*host = NULL;
     struct servent	*se;
     SNET		*sn;
 
@@ -253,7 +253,6 @@ main( int argc, char **argv )
 	    host = optarg;
 	    break;
 	case 'n':
-	    printf( "No network connection\n" );
 	    network = 0;
 	    break;
 	case 'p':
@@ -284,6 +283,11 @@ main( int argc, char **argv )
 	}
     }
 
+    if ( ( ( host == NULL ) && ( network ) )
+	    || ( ( host != NULL ) && ( !network ) ) ) {
+	err++;
+    }
+
     if ( err || ( argc - optind != 1 ) ) {
 	fprintf( stderr, "usage: lapply [ -nsvV ] " );
 	fprintf( stderr, "[ -c checksum ] [ -h host ] [ -p port ] " );
@@ -296,6 +300,8 @@ main( int argc, char **argv )
 	    fprintf( stderr, "%s:%d connection failed.\n", host, port );
 	    goto error0;
 	}
+    } else {
+	if ( verbose ) printf( "No network connection\n" );
     }
 
     if ( ( f = fopen( argv[ optind ], "r" ) ) == NULL ) { 
