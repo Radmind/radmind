@@ -1,22 +1,18 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include <sys/types.h>
-
 #ifdef SOLARIS
 #include <sys/mkdev.h>
-#endif
-
-#include <sys/stat.h>
+#endif SOLARIS
 #include <sys/param.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
 
 #include "transcript.h"
-#include "llist.h"
-#include "code.h"
-#include "chksum.h"
 #include "argcargv.h"
-#include "pathcmp.h"
+#include "code.h"
 #include "convert.h"
+#include "chksum.h"
+#include "pathcmp.h"
 
 static struct transcript	*tran_head = NULL;
 static struct transcript	*prev_tran = NULL;

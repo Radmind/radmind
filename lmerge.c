@@ -1,25 +1,18 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/param.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <netdb.h>
-#include <sha.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/mkdev.h>
-#include <sys/ddi.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <errno.h>
 #include <strings.h>
+#include <unistd.h>
 
 #include "argcargv.h"
-#include "lmerge.h"
-#include "pathcmp.h"
-#include "mkdirs.h"
-#include "copy.h"
 #include "list.h"
+#include "lmerge.h"
+#include "mkdirs.h"
+#include "pathcmp.h"
 
 int		chksum = 1;
 int		verbose = 0;

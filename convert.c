@@ -1,4 +1,3 @@
-#include <sys/types.h>
 #include <sys/stat.h>
 
 #include "convert.h"
@@ -20,7 +19,7 @@ t_convert( int type )
 #ifdef SOLARIS
     case S_IFDOOR:
 	return ( 'D' );
-#endif
+#endif SOLARIS
     case S_IFIFO:
 	return ( 'p' );
     case S_IFSOCK:

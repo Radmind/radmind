@@ -1,6 +1,3 @@
-#include <sys/stat.h>
-#include <sys/param.h>
-
 struct llist {
     struct pathinfo	ll_pinfo;
     struct llist	*ll_next;

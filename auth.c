@@ -3,13 +3,10 @@
  * All Rights Reserved.  See COPYRIGHT.
  */
 
-#include <stdio.h> /* replace this at some point */
-#include <strings.h>
 #include <syslog.h>
+#include <strings.h>
 
-#include <snet.h>
-
-#include "command.h"
+#include "snet.h"
 #include "auth.h"
 
 /*

@@ -1,21 +1,12 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include <sys/types.h>
-#include <dirent.h>
-
-#ifdef SOLARIS
-#include <sys/mkdev.h>
-#endif
-
-#include <sys/stat.h>
 #include <sys/param.h>
-#include <unistd.h>
-#include <strings.h>
 #include <errno.h>
+#include <dirent.h>
+#include <stdio.h>
+#include <strings.h>
 
 #include "transcript.h"
 #include "llist.h"
-#include "code.h"
 
 extern char	*version, *checksumlist;
 

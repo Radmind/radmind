@@ -1,25 +1,19 @@
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <netdb.h>
-#include <sha.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/mkdev.h>
-#include <sys/ddi.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
+#include <fcntl.h>
 #include <errno.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <strings.h>
+#include <unistd.h>
 
 #include "snet.h"
-#include "argcargv.h"
+#include "connect.h"
 #include "download.h"
+#include "argcargv.h"
 #include "chksum.h"
 #include "list.h"
-#include "connect.h"
 
 #define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
 

@@ -1,3 +1,18 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <netinet/in.h>
+#include <fcntl.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <strings.h>
+#include <unistd.h>
+
+#include "snet.h"
+#include "connect.h"
+#include "argcargv.h"
+#include "code.h"
+
 /*
  * STOR
  * C: STOR <path-decription> "\r\n"
@@ -7,23 +22,6 @@
  * C: ".\r\n"
  * S: 250 File stored "\r\n"
  */
-
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <netdb.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <strings.h>
-
-#include "snet.h"
-#include "code.h"
-#include "connect.h"
-#include "argcargv.h"
 
 void		(*logger)( char * ) = NULL;
 int		verbose = 0;

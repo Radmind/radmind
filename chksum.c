@@ -1,13 +1,12 @@
-#include <fcntl.h>
-#include <stdio.h>
-#include <strings.h>
-#include <sys/param.h>
 #include <sys/types.h>
-#include <sha.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <unistd.h>
 
-#include "base64.h"
+#include <sha.h>
+
 #include "chksum.h"
+#include "base64.h"
 
     int 
 do_chksum( char *path, char *chksum_b64 )

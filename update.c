@@ -1,11 +1,13 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#ifdef SOLARIS
+#include <sys/mkdev.h>
+#endif SOLARIS
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/stat.h>
-#include <sys/mkdev.h>
 #include <unistd.h>
 #include <utime.h>
 
-#include "snet.h"
 #include "update.h"
 
 extern int verbose;

@@ -1,15 +1,16 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <netdb.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <netinet/in.h>
 #include <fcntl.h>
-#include <unistd.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <strings.h>
+#include <unistd.h>
 
 #include "snet.h"
-#include "download.h"
 #include "connect.h"
+#include "download.h"
 #include "argcargv.h"
 
 #define MIN(X, Y) ((X) < (Y) ? (X) : (Y))

@@ -7,8 +7,6 @@
  * Return parsed argc/argv from the net.
  */
 
-#include <stdio.h>
-#include <sys/param.h>
 #include <stdlib.h>
 
 #include "argcargv.h"

@@ -1,11 +1,7 @@
+#include <sys/param.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
-
-#ifdef SOLARIS
-#include <sys/mkdev.h>
-#endif
-
-#include <sys/param.h>
 
 #include "transcript.h"
 

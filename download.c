@@ -1,15 +1,14 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/param.h>
 #include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <sha.h>
-#include <sys/ddi.h>
+#include <stdio.h>
 #include <unistd.h>
 
 #include "snet.h"
-#include "code.h"
-#include "base64.h"
-#include "chksum.h"
 #include "download.h"
+#include "chksum.h"
 
 #define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
 
