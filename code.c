@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <sys/param.h>
 
+#include "code.h"
+
     char *
 encode( char *line )
 {
