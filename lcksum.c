@@ -112,6 +112,20 @@ invalid_applefile:
     fprintf( stderr, "%s: invalid applesingle header\n", applefile );
     return( -1 );
 }
+
+    static void
+cleanup( int clean, char *path )
+{
+    if ( ! clean || *path == NULL ) {
+	return;
+    }
+
+    if ( unlink( path ) != 0 ) {
+	fprintf( stderr, "unlink %s: %s\n", path, strerror( errno ));
+	exit( 2 );
+    }
+}
+
     int
 main( int argc, char **argv )
 {
@@ -134,7 +148,7 @@ main( int argc, char **argv )
     char		tran_name[ MAXPATHLEN ];
     char                tline[ 2 * MAXPATHLEN ];
     char		path[ 2 * MAXPATHLEN ];
-    char		upath[ 2 * MAXPATHLEN ];
+    char		upath[ 2 * MAXPATHLEN ] = { 0 };
     char		lcksum[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
     FILE		*f, *ufs = NULL;
     struct stat		st;
@@ -262,7 +276,7 @@ main( int argc, char **argv )
     if ( updatetran ) {
 	memset( upath, 0, MAXPATHLEN );
 	if ( snprintf( upath, MAXPATHLEN, "%s.%i", tpath, (int)getpid() )
-		> MAXPATHLEN - 1) {
+		>= MAXPATHLEN ) {
 	    fprintf( stderr, "%s.%i: path too long\n", tpath, (int)getpid() );
 	}
 
@@ -279,6 +293,7 @@ main( int argc, char **argv )
 	}
 	if ( ( ufs = fdopen( ufd, "w" ) ) == NULL ) {
 	    perror( upath );
+	    cleanup( updatetran, upath );
 	    exit( 2 );
 	}
     }
@@ -302,6 +317,7 @@ main( int argc, char **argv )
 	/* save transcript line -- must free */
 	if ( ( line = strdup( tline ) ) == NULL ) {
 	    perror( "strdup" );
+	    cleanup( updatetran, upath );
 	    exit( 2 );
 	}
 
@@ -387,6 +403,7 @@ main( int argc, char **argv )
 		    fprintf( stderr,
 		    "line %d: bad sort order.  Not continuing.\n", linenum );
 		}
+		cleanup( updatetran, upath );
 		exit( 2 );
 	    }
 	}
@@ -403,7 +420,7 @@ main( int argc, char **argv )
 	 *
 	 * HFS+ files saved onto the server are converted to applesingle files.
 	 *
-	 * fsdiff uses do_achskum( ) to calculate the cksum of HFS+ files.
+	 * fsdiff uses do_acksum( ) to calculate the cksum of HFS+ files.
 	 *
 	 * do_acksum( ) creates a cksum for the associated applesingle file.
 	 */
@@ -411,17 +428,20 @@ main( int argc, char **argv )
 	/* open file here to save us some other open calls */
 	if (( fd = open( path, O_RDONLY, 0 )) < 0 ) {
 	    fprintf( stderr, "open %s: %s\n", d_path, strerror( errno ));
+	    cleanup( updatetran, upath );
 	    exit( 2 );
 	}
 
 	/* check size */
 	if ( fstat( fd, &st) != 0 ) {
 	    perror( path );
+	    cleanup( updatetran, upath );
 	    exit( 2 );
 	}
 
 	if (( cksumsize = do_fcksum( fd, lcksum )) < 0 ) {
 	    perror( path );
+	    cleanup( updatetran, upath );
 	    exit( 2 );
 	}
 
@@ -457,17 +477,20 @@ main( int argc, char **argv )
 	    /* rewind the descriptor */
 	    if ( lseek( fd, 0, SEEK_SET ) < 0 ) {
 		perror( "lseek" );
-		exit( 2 );
+		exitval = 1;
+		goto done;
 	    }
 	    if ( ckapplefile( path, fd ) != st.st_size ) {
 		fprintf( stderr, "%s: corrupted applefile\n", path );
-		exit( 2 );
+		exitval = 1;
+		goto done;
 	    }
 	}
 
 	if ( close( fd ) != 0 ) {
 	    perror( "close" );
-	    exit( 2 );
+	    exitval = 1;
+	    goto done;
 	}
 
 	if ( updatetran ) {
@@ -494,6 +517,7 @@ main( int argc, char **argv )
 	}
 done:
 	if ( updatetran && ( exitval != 0 )) {
+	    cleanup( updatetran, upath );
 	    exit( 2 );
 	}
 	free( line );
