@@ -2,7 +2,7 @@ Title                	Server man pages
 Version              	_RADMIND_VERSION
 Description          	This package installs radmind server man pages
 
-DefaultLocation         /usr/local/share/man
+DefaultLocation         /usr/local/man
 Relocatable          	NO
 
 NeedsAuthorization   	YES
