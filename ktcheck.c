@@ -89,22 +89,24 @@ createspecial( SNET *sn, struct node *head )
     char		*stats;
 
     /* Open file */
-    if ( ( strlen( "special.T" ) + strlen( commandpath ) + 2 ) >
-	    MAXPATHLEN ) {
-	fprintf( stderr, "path too long: %s/special.T\n", commandpath );
+    memset( fullpath, 0, MAXPATHLEN );
+
+    if ( snprintf( fullpath, MAXPATHLEN, "%s/special.T.%i", commandpath,
+	    getpid() ) > MAXPATHLEN - 1 ) {
+	fprintf( stderr, "path too long: %s/special.T.%i\n", commandpath,
+		(int)getpid() );
 	exit( 2 );
     }
-    sprintf( fullpath, "%s/special.T", commandpath );
 
-    if ( verbose ) printf( "\n*** Creating %s\n", fullpath );
+    if ( verbose ) printf( "\n*** Creating %s/special.T\n", commandpath );
 
     if ( ( fd = open( fullpath, O_WRONLY | O_CREAT | O_TRUNC, 0666 ) )
 	    < 0 ) {
-	perror( "special.T" );
+	perror( fullpath );
 	return( 1 );
     }
     if ( ( fs = fdopen( fd, "w" ) ) == NULL ) {
-	fprintf( stderr, "fdopen" );
+	perror( fullpath );
 	return( 1 );
     }
 
@@ -214,7 +216,7 @@ check( SNET *sn, char *type, char *path)
 	return( 1 );
     }
 
-    if ( verbose ) printf( "*** chskum " );
+    if ( verbose ) printf( "*** chksum " );
 
     if ( strcmp( schksum, cchksum) != 0 ) {
 	if ( verbose ) printf( "wrong on %s\n", fullpath );
@@ -261,10 +263,13 @@ main( int argc, char **argv )
     char		*transcript = NULL;
     char                **targv;
     char                cline[ 2 * MAXPATHLEN ];
+    char		path[ MAXPATHLEN ], temppath[ MAXPATHLEN ];
+    char		lchksum[ 29 ], tchksum[ 29 ];
     struct servent	*se;
     SNET		*sn;
     FILE		*f;
     struct node		*head = NULL;
+    struct stat		tst, lst;
 
     while ( ( c = getopt ( argc, argv, "c:K:np:T:Vv" ) ) != EOF ) {
 	switch( c ) {
@@ -406,8 +411,69 @@ main( int argc, char **argv )
 	if ( createspecial( sn, head ) != 0 ) {
 	    exit( 2 );
 	}
+	memset( path, 0, MAXPATHLEN );
+	memset( temppath, 0, MAXPATHLEN );
+
+	if ( snprintf( path, MAXPATHLEN, "%s/special.T", commandpath ) >
+		MAXPATHLEN - 1 ) {
+	    fprintf( stderr, "path too long: %s/special.T\n", commandpath );
+	}
+	if ( snprintf( temppath, MAXPATHLEN, "%s/special.T.%i", commandpath,
+		getpid() ) > MAXPATHLEN - 1 ) {
+	    fprintf( stderr, "path too long: %s/special.T.%i\n", commandpath,
+		    (int)getpid() );
+	}
+	if ( do_chksum( temppath, tchksum ) != 0 ) {
+	    fprintf( stderr, "do_chksum failed: %s", temppath );
+	    exit( 2 );
+	}
+	if ( do_chksum( path, lchksum ) != 0 ) {
+	    if ( errno != ENOENT ) {
+		fprintf( stderr, "do_chksum failed: %s\n", path );
+		exit( 2 );
+	    }
+
+	    /* special.T did not exist */
+	    if ( rename( temppath, path ) != 0 ) {
+		fprintf( stderr, "rename failed: %s %s\n", temppath, path );
+		exit( 2 );
+	    }
+	    if ( verbose ) printf( "*** %s/special.T created\n", commandpath );
+	    change++;
+	} else {
+	    /* get file sizes */
+	    if ( stat( temppath, &tst ) != 0 ) {
+		perror( temppath );
+		exit( 2 );
+	    }
+	    if ( stat( path, &lst ) != 0 ) {
+		perror( path );
+		exit( 2 );
+	    }
+
+	    /* specal.T exists */
+	    if ( ( tst.st_size != lst.st_size ) ||
+		    ( strcmp( tchksum, lchksum) != 0 ) ) {
+		/* special.T updated */
+		if ( rename( temppath, path ) != 0 ) {
+		    fprintf( stderr, "rename failed: %s %s\n", temppath, path );
+		    exit( 2 );
+		}
+		if ( verbose ) printf( "*** %s updated\n", path );
+		change++;
+	    } else {
+
+		/* specaial.T not updated */
+		if ( unlink( temppath ) !=0 ) {
+		    perror( temppath );
+		    exit( 2 );
+		}
+		if ( verbose ) printf( "*** %s not modified\n", path );
+	    }
+	}
     }
 
+    if ( verbose ) printf( "\n" );
     if ( ( closesn( sn ) ) !=0 ) {
 	fprintf( stderr, "can not close sn\n" );
 	exit( 2 );
@@ -424,7 +490,7 @@ done:
 	}
 	exit( 1 );
     } else {
-	if ( verbose ) printf( "*** no changes needs\n" ); 
+	if ( verbose ) printf( "*** no changes needed\n" ); 
 	exit( 0 );
     }
 }
