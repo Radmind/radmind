@@ -78,28 +78,33 @@ main( int argc, char **argv )
 	    }
 	    cksum = 1;  
 	    break; 
+
 	case 'P':
 	    prefix = optarg;
 	    break;
+
 	case 'n':
 	    amode = R_OK;
 	    updatetran = 0;
 	    break;
+
+	case 'q':
+	    verbose = 0;
+	    break;
+
 	case 'V':
 	    printf( "%s\n", version );
 	    printf( "%s\n", checksumlist );
 	    exit( 0 );
 
 	case 'v':
-	    verbose++;
+	    verbose = 2;
 	    break;
 
-	case 'q':
-	    verbose = 0;
-	    break;
 	case '?':
 	    err++;
 	    break;
+	    
 	default:
 	    err++;
 	    break;
