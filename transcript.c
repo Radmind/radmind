@@ -1,11 +1,12 @@
 #include <sys/types.h>
-#ifdef sun
-#include <sys/mkdev.h>
-#endif sun
 #include <sys/param.h>
+#ifdef SOLARIS
+#include <sys/mkdev.h>
+#endif SOLARIS
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <snet.h>
 
 #include "transcript.h"
 #include "argcargv.h"
@@ -13,6 +14,7 @@
 #include "convert.h"
 #include "chksum.h"
 #include "pathcmp.h"
+#include "afile.h"
 
 static struct transcript	*tran_head = NULL;
 static struct transcript	*prev_tran = NULL;
@@ -104,6 +106,9 @@ t_parse( struct transcript *tran )
 	strcpy( tran->t_pinfo.pi_link, epath );
 	break;
 
+#ifdef DARWIN
+    case 'a':				    /* hfs applefile */
+#endif DARWIN
     case 'f':				    /* file */
 	if ( ac != 8 ) {
 	    fprintf( stderr, "%s: line %d: expected 8 arguments, got %d\n",
@@ -186,6 +191,9 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 	fprintf( outtran, "%s\n", epath );
 	break;
 
+#ifdef DARWIN
+    case 'a':		/* hfs applesingle file */
+#endif DARWIN
     case 'f':
 	if (( edit_path == FS2TRAN ) && (( flag == PR_TRAN_ONLY ) || 
 		( flag == PR_DOWNLOAD ))) {
@@ -201,7 +209,8 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 	 * but the corresponding transcript is negative, hence, retain
 	 * the file system's mtime.  Woof!
 	 */
-	fprintf( outtran, "f %-37s\t%.4lo %5d %5d %9d %7d %s\n", epath,
+	fprintf( outtran, "%c %-37s\t%.4lo %5d %5d %9d %7d %s\n",
+		cur->pi_type, epath,
 		(unsigned long)( T_MODE & cur->pi_stat.st_mode ), 
 		(int)cur->pi_stat.st_uid, (int)cur->pi_stat.st_gid,
 		( flag == PR_STATUS_NEG ) ?
@@ -264,7 +273,11 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
      * after this point, name is in the fs, so if it's 'f', and
      * checksums are on, get the checksum
      */
-    if ( chksum && ( fs->pi_type == 'f' )) {
+#ifdef DARWIN
+    if ( chksum && ( fs->pi_type == 'f' || fs->pi_type == 'a' )) {
+#else !DARWIN
+    if ( chksum && fs->pi_type == 'f' ) {
+#endif DARWIN
 	if ( do_chksum( fs->pi_name, fs->pi_chksum_b64 ) < 0 ) {
 	    perror( fs->pi_name );
 	    exit( 1 );
@@ -289,6 +302,9 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 
     /* compare the other components for each file type */
     switch( fs->pi_type ) {
+#ifdef DARWIN
+    case 'a':			    /* hfs applefile */
+#endif DARWIN
     case 'f':			    /* file */
 	if ( tran->t_type != T_NEGATIVE ) {
 	    if (( fs->pi_stat.st_size != tran->t_pinfo.pi_stat.st_size ) ||
@@ -403,8 +419,9 @@ transcript( struct pathinfo *new )
 	}
 
 	type = ( S_IFMT & new->pi_stat.st_mode );
-	if (( new->pi_type = t_convert( type )) == 0 ) {
-	    fprintf( stderr, "%s is of an uknown type\n", new->pi_name );
+	if (( new->pi_type =  t_convert( new->pi_name, new->pi_hfs_finfo,
+		type )) == 0 ) {
+	    fprintf( stderr, "%s is of an unknown type\n", new->pi_name );
 	    exit ( 1 );
 	}
 

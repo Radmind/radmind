@@ -31,6 +31,7 @@ struct pathinfo {
     char		pi_link[ MAXPATHLEN ];
     struct stat		pi_stat;
     char		pi_chksum_b64[ 29 ];
+    char		pi_hfs_finfo[ 32 ];
 };
 
 struct transcript {
@@ -43,7 +44,7 @@ struct transcript {
     int			t_eof;
     FILE		*t_in;
 };
- 
+
 int	transcript( struct pathinfo * );
 void	transcript_init( char *, char * );
 void	transcript_free( void );
