@@ -280,7 +280,7 @@ main( ac, av )
 
 	    /* set global remote_host for retr command */
 	    remote_host = strdup( hp->h_name );
-	    for( p = remote_host; *p != '\0'; p++ ) {
+	    for ( p = remote_host; *p != '\0'; p++ ) {
 		*p = tolower( *p );
 	    }
 	    syslog( LOG_INFO, "child for %s %s",

@@ -612,7 +612,7 @@ cmdloop( fd )
     /* lookup proper command file based on the hostname */
 
     if ( command_k( _PATH_CONFIG ) < 0 ) {
-        snet_writef( sn, "%d Access Denied\r\n", 500 );
+        snet_writef( sn, "%d No access for %s\r\n", 500, remote_host );
 	exit( 1 );
     }
 
