@@ -170,7 +170,9 @@ main( int argc, char **argv )
 	    exit( 1 );
 	}
 
-	if (( tac != 8 ) || ( *targv[ 0 ] != 'f' ) || ( remove )) {
+	if (( tac != 8 )
+		|| (( *targv[ 0 ] != 'f' )  && ( *targv[ 0 ] != 'a' ))
+		|| ( remove )) {
 	    if ( updatetran ) {
 		fprintf( ufs, "%s", line );
 	    }
@@ -202,11 +204,11 @@ main( int argc, char **argv )
 	/* check chksum */
 	if ( strcmp( lchksum, targv[ 7 ] ) != 0 ) {
 	    if ( verbose && !updatetran ) printf( "%s: chksum wrong\n",
-		    targv[ 1 ] );
+		    decode( targv[ 1 ] ));
 	    ucount++;
 	    if ( updatetran ) {
 		if ( verbose && updatetran ) printf( "%s: chksum updated\n",
-		    targv[ 1 ] ); 
+		    decode( targv[ 1 ] )); 
 	    }
 	    updateline = 1;
 	}
@@ -218,11 +220,11 @@ main( int argc, char **argv )
 	}
 	if ( st.st_size != atoi( targv[ 6 ] ) ) {
 	    if ( verbose && !updatetran ) printf( "%s: size wrong\n",
-		    targv[ 1 ] );
+		    decode( targv[ 1 ] ));
 	    ucount++;
 	    if ( updatetran ) {
 		if ( verbose && updatetran ) printf( "%s: size updated\n",
-			targv[ 1 ] );
+			decode( targv[ 1 ] ));
 	    }
 	    updateline = 1;
 	}
