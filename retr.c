@@ -382,22 +382,18 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 error1:
     if ( close( dfd ) < 0 ) {
 	perror( temppath );
-	exit( 1 );
     }
-
     return( -1 );
+
 error2:
     if ( close ( dfd ) < 0 ) {
 	perror( temppath );
-	exit( 1 );
     }
-
     if ( close( rfd ) < 0 ) {
 	perror( rsrc_path );
-	exit( 1 );
     }
-
     return( -1 );
+
 error3:
     fprintf( stderr, "Couldn't set finder info for %s.\n", temppath );
     return( -1 );
