@@ -115,7 +115,7 @@ main( ac, av )
 	prog++;
     }
 
-    while (( c = getopt( ac, av, "b:dD:Lp:u:UVw:x:y:z:" )) != EOF ) {
+    while (( c = getopt( ac, av, "b:dD:L:p:u:UVw:x:y:z:" )) != EOF ) {
 	switch ( c ) {
 	case 'b' :		/* listen backlog */
 	    backlog = atoi( optarg );
