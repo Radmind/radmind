@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <sys/mkdev.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -14,7 +15,7 @@
 
 #include "snet.h"
 #include "argcargv.h"
-
+#include "code.h"
     static char
 t_convert( int type )
 {
@@ -45,12 +46,23 @@ t_convert( int type )
     static int
 ischild( const char *parent, const char *child)
 {
+    int parentlen;
+
     if ( parent == NULL ) {
 	printf( "  in root?" );
 	return 1;
     } else {
+	parentlen = strlen( parent );
 	printf( "  %s a child of %s?", child, parent );
-	return !strncmp(parent, child, strlen( parent ) );
+	if( parentlen > strlen( child ) ) {
+	    return 0;
+	}
+	if( ( strncmp( parent, child, parentlen ) == 0 ) &&
+		child[ parentlen + 1 ] == '/' ) {
+	    return 1;
+	} else {
+	    return 0;
+	}
     }
 }
 
@@ -58,20 +70,19 @@ ischild( const char *parent, const char *child)
 apply( FILE *f, char *parent )
 {
     char		tline[ 2 * MAXPATHLEN ];
-    int			tac, present;
-    char		**targv, *dir, *command;
+    int			tac, present, len;
+    char		**targv, *path, *command;
     char		fstype;
-    extern char		*optarg;
     struct stat		st;
     mode_t	   	mode;
     struct utimbuf	times;
     uid_t		uid;
     gid_t		gid;
 
-    if ( parent != NULL ) {
-	printf( "\nWorking in %s\n", parent );
-    } else {
+    if ( parent == NULL ) {
 	printf( "\nWorking in root\n" );
+    } else {
+	printf( "\nWorking in %s\n", parent );
     }
 
     while ( fgets( tline, MAXPATHLEN, f ) != NULL ) {
@@ -80,7 +91,11 @@ apply( FILE *f, char *parent )
 
 	tac = argcargv( tline, &targv );
 
-	/* DO CHECK OF BUFFER OVERFLOW */
+	len = strlen( tline );
+        if (( tline[ len - 1 ] ) != '\n' ) {
+	    fprintf( stderr, "%s: line too long\n", tline );
+	    return( 1 );
+	}
 
 	if ( tac == 1 ) {
 	    printf( "Command file: %s\n", targv[ 0 ] );
@@ -90,44 +105,43 @@ apply( FILE *f, char *parent )
 	    if ( ( *targv[ 0 ] == '+' ) || ( *targv[ 0 ] == '-' ) ) {
 		command = targv[ 0 ];
 		targv++;
+		tac--;
 	    }
 
+	    path = decode( targv[ 1 ] );
+
 	    /* Do type check on local file */
-	    if ( lstat( targv[ 1  ], &st ) ==  0 ) {
+	    if ( lstat( path, &st ) ==  0 ) {
 	        fstype = t_convert ( S_IFMT & st.st_mode );
 		present = 1;
 	    } else if ( errno != ENOENT ) { 
-		perror( targv[ 1 ] );
+		perror( path );
 		return( 1 );
 	    } else {
 		present = 0;
 	    }
 
-	    printf( " TAC = %d\n", tac );
-
-	    if ( ( fstype != *targv[ 0 ] && present ) 
-		|| 
-		 ( ( tac == 9  || tac == 6 ) && *command == '-' && present ) ) {
+	    if ( ( fstype != *targv[ 0 ] && present ) || 
+		    ( *command == '-' && present ) ) {
 
 		if ( fstype == 'd' ) {
 		    printf( "Calling apply to handle dir\n" );
 
 		    /* Recurse */
-		    dir = targv[ 1 ];
-		    apply( f, dir );
+		    apply( f, path );
 
 		    /* Directory is now empty */
-		    if ( rmdir( dir ) != 0 ) {
-			perror( dir );
+		    if ( rmdir( path ) != 0 ) {
+			perror( path );
 			return( 1 );	
 		    }
 
 		    present = 0;
 
 		} else {
-		    printf( "Unlinking %s for update\n", targv[ 1 ] );
-		    if ( unlink( targv[ 1 ] ) != 0 ) {
-			perror( targv[ 1 ] );
+		    printf( "Unlinking %s for update\n", path );
+		    if ( unlink( path ) != 0 ) {
+			perror( path );
 			return( 1 );
 		    }
 
@@ -141,47 +155,49 @@ apply( FILE *f, char *parent )
 		/* DOWNLOAD */
 		printf( "Have to download something\n" );
 
+		/* DO LSTAT ON NEW FILE */
+
 		present = 1;
 	    }
 
 	    if ( present ) {
 
 		/* UPDATE */
-		printf( "Updating %s...", targv[ 1 ] );
+		printf( "Updating %s...", path );
 
 		switch ( *targv[ 0 ] ) {
 		case 'f':
+
+		    if ( tac != 8 ) {
+			fprintf( stderr, "%s: incorrect number of arguments\n", tline );
+			return( 1 );
+		    }
 
 		    mode = strtol( targv[ 2 ], (char **)NULL, 8 );
 		    uid = atoi( targv[ 3 ] );
 		    gid = atoi( targv[ 4 ] );
 		    times.modtime = atoi( targv[ 5 ] );
 
-		    /* check mode */
 		    if( mode != st.st_mode ) {
-			printf( "  mode -> %o\n", (unsigned int)mode );
-			if ( chmod( targv[ 1 ], mode ) != 0 ) {
-			    perror( "targv[ 1 ]" );
+			if ( chmod( path, mode ) != 0 ) {
+			    perror( path );
 			    return( 1 );
 			}
 		    }
 
-		    /* check uid & gid */
 		    if( uid != st.st_uid  || gid != st.st_gid ) {
-			if ( uid != st.st_uid ) printf( "  uid -> %i\n", (int)uid );
-			if ( gid != st.st_gid ) printf( "  gid -> %i\n", (int)gid );
-			if ( lchown( targv[ 1 ], uid, gid ) != 0 ) {
-			    perror( targv[ 1 ] );
+			if ( lchown( path, uid, gid ) != 0 ) {
+			    perror( path );
 			    return( 1 );
 			}
 		    }
 
-		    /* check modification time */
 		    if( times.modtime != st.st_mtime ) {
-			printf( "%s time -> %i\n", targv[ 1 ], (int)times.modtime );
+			
+			/*Is this what I should to for access time? */
 			times.actime = st.st_atime;
-			if ( utime( targv[ 1 ], &times ) != 0 ) {
-			    perror( targv[ 1 ] );
+			if ( utime( path, &times ) != 0 ) {
+			    perror( path );
 			    return( 1 );
 			}
 		    }
@@ -189,93 +205,140 @@ apply( FILE *f, char *parent )
 
 		case 'd':
 
+		    if ( tac != 5 ) {
+			fprintf( stderr, "%s: incorrect number of arguments\n", tline );
+			return( 1 );
+		    }
+
 		    mode = strtol( targv[ 2 ], (char **)NULL, 8 );
 		    uid = atoi( targv[ 3 ] );
 		    gid = atoi( targv[ 4 ] );
 
 		    if ( !present ) {
-			if ( mkdir( targv[ 1 ], mode ) != 0 ) {
-			    perror( targv[ 1 ] );
+			if ( mkdir( path, mode ) != 0 ) {
+			    perror( path );
 			    return( 1 );
 			}
 
-			if ( lchown( targv[ 1 ], uid, gid ) != 0 ) {
-			    perror( targv[ 1 ] );
+			if ( lstat( path, &st ) !=  0 ) {
+			    perror( path );
 			    return( 1 );
 			}
-		    } else {
+			present = 1;
+		    }
 
-			/* check mode */
-			if( mode != st.st_mode ) {
-			    printf( "  mode -> %o\n", (unsigned int)mode );
-			    if ( chmod( targv[ 1 ], mode ) != 0 ) {
-				perror( targv[ 1 ] );
-				return( 1 );
-			    }
-			}
-
-			/* check uid & gid */
-			if( uid != st.st_uid  || gid != st.st_gid ) {
-			    if ( uid != st.st_uid ) printf( "  uid -> %i\n", (int)uid );
-			    if ( gid != st.st_gid ) printf( "  gid -> %i\n", (int)gid );
-			    if ( lchown( targv[ 1 ], uid, gid ) != 0 ) {
-				perror( targv[ 1 ] );
-				return( 1 );
-			    }
+		    /* check mode */
+		    if( mode != st.st_mode ) {
+			if ( chmod( path, mode ) != 0 ) {
+			    perror( path );
+			    return( 1 );
 			}
 		    }
-		    printf( "  DONE\n" );
+
+		    /* check uid & gid */
+		    if( uid != st.st_uid  || gid != st.st_gid ) {
+			if ( lchown( path, uid, gid ) != 0 ) {
+			    perror( path );
+			    return( 1 );
+			}
+		    }
 		    break;
 
 		case 'h':
 
-		    /* would we ever get into this if?*/
-
-		    if ( present ) {
-			if ( unlink( targv[ 1 ] ) != 0 ) {
-			    perror( targv[ 1 ] );
-			    return( 1 );
-			}
+		    if ( tac != 3 ) {
+			fprintf( stderr, "%s: incorrect number of arguments\n", tline );
+			return( 1 );
 		    }
-
-		    if ( link( targv[ 2 ], targv[ 1 ] ) != 0 ) {
-			perror( targv[ 1 ] );
+		    if ( link( decode( targv[ 2 ] ), path ) != 0 ) {
+			perror( path );
 			return( 1 );
 		    }
 		    break;
 
 		case 'l':
 
-		    /* would we ever get into this if?*/
-
-		    if ( unlink( targv[ 1 ] ) != 0 ) {
-			perror( targv[ 1 ] );
+		    if ( tac != 3 ) {
+			fprintf( stderr, "%s: incorrect number of arguments\n", tline );
 			return( 1 );
 		    }
-		    
-		    if ( symlink( targv[ 2 ], targv[ 1 ] ) != 0 ) {
-			perror( targv[ 1 ] );
+		    if ( symlink( decode( targv[ 2 ] ), path ) != 0 ) {
+			perror( path );
 			return( 1 );
 		    }
 		    break;
 
 		case 'p':
-		    if ( fstype != 'p' ) {
-			printf( "Named pipe update to non-named pipe\n" ); 
+		    if ( tac != 5 ) { 
+			fprintf( stderr, "%s: incorrect number of arguments\n", tline );
+			return( 1 );
+		    }
+		    mode = strtol( targv[ 2 ], (char **)NULL, 8 );
+		    uid = atoi( targv[ 3 ] );
+		    gid = atoi( targv[ 4 ] );
+		    if ( !present ) {
+			fprintf( stderr, "%s: Named pipe not present\n", path );
+			return( 1 );
+		    }
+		    /* check mode */
+		    if( mode != st.st_mode ) {
+			if ( chmod( path, mode ) != 0 ) {
+			    perror( path );
+			    return( 1 );
+			}
+		    }
+		    /* check uid & gid */
+		    if( uid != st.st_uid  || gid != st.st_gid ) {
+			if ( lchown( path, uid, gid ) != 0 ) {
+			    perror( path );
+			    return( 1 );
+			}
 		    }
 		    break;
+
 		case 'b':
-		    if ( fstype != 'b' ) {
-			printf( "Blk special update to non-blk special\n" ); 
-		    }
-		    break;
 		case 'c':
-		    if ( fstype != 'c' ) {
-			printf( "Char special update to non-char special\n" ); 
+		    if ( tac != 7 ) {
+			fprintf( stderr, "%s: incorrect number of arguments\n", tline );
+			return( 1 );
+		    }
+
+		    mode = strtol( targv[ 2 ], (char **)NULL, 8 );
+		    if( *targv[ 0 ] == 'b' ) {
+			mode = mode | S_IFBLK;
+		    } else {
+			mode = mode | S_IFCHR;
+		    }
+		    uid = atoi( targv[ 3 ] );
+		    gid = atoi( targv[ 4 ] );
+		    if ( !present ) {
+			if ( mknod( path, mode, makedev( atoi( targv[ 6 ] ), atoi( targv[ 7 ] ) ) != 0 ) ) {
+			    perror( path );
+			    return( 1 );
+			}
+			if ( lstat( path, &st ) !=  0 ) {
+			    perror( path );
+			    return( 1 );
+			}
+			present = 1;
+		    }
+		    /* check mode */
+		    if( mode != st.st_mode ) {
+			if ( chmod( path, mode ) != 0 ) {
+			    perror( path );
+			    return( 1 );
+			}
+		    }
+		    /* check uid & gid */
+		    if( uid != st.st_uid  || gid != st.st_gid ) {
+			if ( lchown( path, uid, gid ) != 0 ) {
+			    perror( path );
+			    return( 1 );
+			}
 		    }
 		    break;
 		default :
-		    printf( "Unkown type %s to update\n", targv[ 1 ] );
+		    printf( "Unkown type %s to update\n", path );
 		    return( 1 );
 		} // End of defualt switch
 	    }
@@ -284,7 +347,7 @@ apply( FILE *f, char *parent )
 
 	    printf( "Checking child..." );
 
-	    if ( ! ischild( parent, targv[ 1 ] ) ) {
+	    if ( ! ischild( parent, path ) ) {
 		printf( "  NO!\n" );
 		return( 0 );
 	    }
