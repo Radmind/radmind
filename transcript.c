@@ -63,7 +63,7 @@ t_parse( struct transcript *tran )
 	length = strlen( line );
 	if ( line[ length - 1 ] != '\n' ) {
 	    fprintf( stderr, "%s: line %d: line too long\n",
-		    tran->t_name, tran->t_linenum );
+		    tran->t_fullname, tran->t_linenum );
 	    exit( 1 );
 	} 
     } while ((( ac = argcargv( line, &argv )) == 0 ) || ( *argv[ 0 ] == '#' ));
@@ -71,7 +71,7 @@ t_parse( struct transcript *tran )
     if ( strlen( argv[ 0 ] ) != 1 ) {
 	fprintf( stderr,
 		"%s: line %d: %s is too long to be a type\n",
-		tran->t_name, tran->t_linenum, argv[ 0 ] );
+		tran->t_fullname, tran->t_linenum, argv[ 0 ] );
 	exit( 1 );
     }
 
@@ -80,7 +80,7 @@ t_parse( struct transcript *tran )
     epath = decode( argv[ 1 ] );
     if ( pathcmp( epath, tran->t_pinfo.pi_name ) < 0 ) {
 	printf( "%s: line %d: bad sort order\n",
-		tran->t_name, tran->t_linenum );
+		tran->t_fullname, tran->t_linenum );
 	exit( 1 );
     }
 
@@ -94,7 +94,7 @@ t_parse( struct transcript *tran )
     case 's':
 	if ( ac != 5 ) {
 	    fprintf( stderr, "%s: line %d: expected 5 arguments, got %d\n",
-		    tran->t_name, tran->t_linenum, ac );
+		    tran->t_fullname, tran->t_linenum, ac );
 	    exit( 1 );
 	}
 	tran->t_pinfo.pi_stat.st_mode = strtol( argv[ 2 ], NULL, 8 );
@@ -106,7 +106,7 @@ t_parse( struct transcript *tran )
     case 'c':
 	if ( ac != 7 ) {
 	    fprintf( stderr, "%s: line %d: expected 7 arguments, got %d\n",
-		    tran->t_name, tran->t_linenum, ac );
+		    tran->t_fullname, tran->t_linenum, ac );
 	    exit( 1 );
 	}
 	tran->t_pinfo.pi_stat.st_mode = strtol( argv[ 2 ], NULL, 8 );
@@ -121,7 +121,7 @@ t_parse( struct transcript *tran )
     case 'h':				    /* hard */
 	if ( ac != 3 ) {
 	    fprintf( stderr, "%s: line %d: expected 3 arguments, got %d\n",
-		    tran->t_name, tran->t_linenum, ac );
+		    tran->t_fullname, tran->t_linenum, ac );
 	    exit( 1 );
 	}
 	epath = decode( argv[ 2 ] );
@@ -131,7 +131,7 @@ t_parse( struct transcript *tran )
     case 'f':				    /* file */
 	if ( ac != 8 ) {
 	    fprintf( stderr, "%s: line %d: expected 8 arguments, got %d\n",
-		    tran->t_name, tran->t_linenum, ac );
+		    tran->t_fullname, tran->t_linenum, ac );
 	    exit( 1 );
 	}
 	tran->t_pinfo.pi_stat.st_mode = strtol( argv[ 2 ], NULL, 8 );
@@ -142,7 +142,7 @@ t_parse( struct transcript *tran )
 	if ( tran->t_type != T_NEGATIVE ) {
 	    if (( chksum ) && ( strcmp( "-", argv [ 7 ] ) == 0  )) {
 		fprintf( stderr, "%s: line %d: no chksums in transcript\n",
-			tran->t_name, tran->t_linenum );
+			tran->t_fullname, tran->t_linenum );
 		exit( 1 );
 	    }
 	}
@@ -152,13 +152,13 @@ t_parse( struct transcript *tran )
     case '-':
     case '+':
 	fprintf( stderr, "%s: line %d: leading '%c' not allowed\n",
-		tran->t_name, tran->t_linenum, *argv[ 0 ] );
+		tran->t_fullname, tran->t_linenum, *argv[ 0 ] );
 	exit( 1 );		
 
     default:
 	fprintf( stderr,
 	    "%s: line %d: unknown file type '%c'\n",
-	    tran->t_name, tran->t_linenum, *argv[ 0 ] );
+	    tran->t_fullname, tran->t_linenum, *argv[ 0 ] );
 	exit( 1 );
     }
 
@@ -249,7 +249,7 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 	if (( edit_path == FS2TRAN ) && (( flag == PR_TRAN_ONLY ) || 
 		( flag == PR_DOWNLOAD ))) {
 	    if ( prev_tran != tran ) {
-		fprintf( outtran, "%s:\n", tran->t_name );
+		fprintf( outtran, "%s:\n", tran->t_shortname );
 		prev_tran = tran;
 	    }
 	    fprintf( outtran, "+ " );
@@ -533,7 +533,7 @@ transcript( struct pathinfo *new )
 }
 
     static void
-t_new( int type, char *name ) 
+t_new( int type, char *fullname, char *shortname ) 
 {
     struct transcript	 *new;
 
@@ -551,9 +551,10 @@ t_new( int type, char *name )
     } else {
 	new->t_eof = 0; 
 	new->t_linenum = 0;
-	strcpy( new->t_name, name );
-	if (( new->t_in = fopen( name, "r" )) == NULL ) {
-	    perror( name );
+	strcpy( new->t_shortname, shortname );
+	strcpy( new->t_fullname, fullname );
+	if (( new->t_in = fopen( fullname, "r" )) == NULL ) {
+	    perror( fullname );
 	    exit( 1 );
 	}
 	t_parse( new );
@@ -581,7 +582,7 @@ transcript_init( char *prepath, char *cmd )
      * Make sure that there's always a transcript to read, so other code
      * doesn't have to check it.
      */
-    t_new( T_NULL, NULL );
+    t_new( T_NULL, NULL, NULL );
 
     if ( skip ) {
 	return;
@@ -631,10 +632,10 @@ transcript_init( char *prepath, char *cmd )
 
 	switch( *av[ 0 ] ) {
 	case 'p':				/* positive */
-	    t_new( T_POSITIVE, fullpath );
+	    t_new( T_POSITIVE, fullpath, av[ 1 ] );
 	    break;
 	case 'n':				/* negative */
-	    t_new( T_NEGATIVE, fullpath );
+	    t_new( T_NEGATIVE, fullpath, av[ 1 ] );
 	    break;
 	case 's':				/* special */
 	    foundspecial++;
@@ -656,7 +657,7 @@ transcript_init( char *prepath, char *cmd )
 	    exit( 1 );
 	}
 	sprintf( fullpath, "%s/%s", prepath, special );
-	t_new( T_SPECIAL, fullpath  );
+	t_new( T_SPECIAL, fullpath, av[ 1 ]);
     }
 
     if ( tran_head->t_type == T_NULL  && edit_path == FS2TRAN ) {

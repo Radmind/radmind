@@ -36,7 +36,8 @@ struct transcript {
     struct transcript	*t_next;
     struct pathinfo	t_pinfo;
     int 		t_type;
-    char		t_name[ MAXPATHLEN ];
+    char		t_fullname[ MAXPATHLEN ];
+    char		t_shortname[ MAXPATHLEN ];
     int			t_linenum;
     int			t_eof;
     FILE		*t_in;
