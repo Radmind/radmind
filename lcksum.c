@@ -127,10 +127,18 @@ main( int argc, char **argv )
 	perror( "getcwd" );
 	exit( 2 );
     }
-    if ( snprintf( cwd, MAXPATHLEN, "%s/%s", cwd, tpath )
-	    > MAXPATHLEN - 1 ) {
-	fprintf( stderr, "%s/%s: path too long\n", cwd, tpath );
-	exit( 2 );
+    if ( *tpath == '/' ) {
+	if ( snprintf( cwd, MAXPATHLEN, "%s", tpath )
+		> MAXPATHLEN - 1 ) {
+	    fprintf( stderr, "%s: path too long\n", tpath );
+	    exit( 2 );
+	}
+    } else {
+	if ( snprintf( cwd, MAXPATHLEN, "%s/%s", cwd, tpath )
+		> MAXPATHLEN - 1 ) {
+	    fprintf( stderr, "%s/%s: path too long\n", cwd, tpath );
+	    exit( 2 );
+	}
     }
     if ( get_root( cwd, file_root, tran_root, tran_name ) != 0 ) {
 	exit( 2 );
