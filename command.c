@@ -1007,6 +1007,7 @@ command_k( char *path_config )
 {
     SNET	*sn;
     char	**av, *line, *p;
+    char	temp[ MAXPATHLEN ];
     int		ac;
     int		linenum = 0;
 
@@ -1047,32 +1048,35 @@ command_k( char *path_config )
 
 	if (( remote_cn != NULL ) && wildcard( av[ 0 ], remote_cn )) {
 	    sprintf( command_file, "command/%s", av[ 1 ] );
-	    if ( snprintf( special_dir, MAXPATHLEN, "%s/%s", special_dir,
+	    if ( snprintf( temp, MAXPATHLEN, "%s/%s", special_dir,
 		    remote_cn ) >= MAXPATHLEN ) {
 		syslog( LOG_ERR, "config file: line %d: special dir too long\n",
 		    linenum );
 		continue;
 	    }
+	    strcpy( special_dir, temp );
 	    return( 0 );
 	}
 	if ( wildcard( av[ 0 ], remote_host )) {
 	    sprintf( command_file, "command/%s", av[ 1 ] );
-	    if ( snprintf( special_dir, MAXPATHLEN, "%s/%s", special_dir,
+	    if ( snprintf( temp, MAXPATHLEN, "%s/%s", special_dir,
 		    remote_host ) >= MAXPATHLEN ) {
 		syslog( LOG_ERR, "config file: line %d: special dir too long\n",
 		    linenum );
 		continue;
 	    }
+	    strcpy( special_dir, temp );
 	    return( 0 );
 	} 
 	if ( wildcard( av[ 0 ], remote_addr )) {
 	    sprintf( command_file, "command/%s", av[ 1 ] );
-	    if ( snprintf( special_dir, MAXPATHLEN, "%s/%s", special_dir,
+	    if ( snprintf( temp, MAXPATHLEN, "%s/%s", special_dir,
 		    remote_addr ) >= MAXPATHLEN ) {
 		syslog( LOG_ERR, "config file: line %d: special dir too long\n",
 		    linenum );
 		continue;
 	    }
+	    strcpy( special_dir, temp );
 	    return( 0 );
 	} 
     }

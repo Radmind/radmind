@@ -56,6 +56,7 @@ main( int argc, char **argv )
     char		*prefix = NULL, *d_path = NULL;
     char                **targv;
     char		cwd[ MAXPATHLEN ];
+    char		temp[ MAXPATHLEN ];
     char		file_root[ MAXPATHLEN ];
     char		tran_root[ MAXPATHLEN ];
     char		tran_name[ MAXPATHLEN ];
@@ -128,17 +129,18 @@ main( int argc, char **argv )
 	exit( 2 );
     }
     if ( *tpath == '/' ) {
-	if ( snprintf( cwd, MAXPATHLEN, "%s", tpath )
-		> MAXPATHLEN - 1 ) {
+	if ( strlen( tpath ) >= MAXPATHLEN ) {
 	    fprintf( stderr, "%s: path too long\n", tpath );
 	    exit( 2 );
 	}
+	strcpy( cwd, tpath );
     } else {
-	if ( snprintf( cwd, MAXPATHLEN, "%s/%s", cwd, tpath )
+	if ( snprintf( temp, MAXPATHLEN, "%s/%s", cwd, tpath )
 		> MAXPATHLEN - 1 ) {
 	    fprintf( stderr, "%s/%s: path too long\n", cwd, tpath );
 	    exit( 2 );
 	}
+	strcpy( cwd, temp );
     }
     if ( get_root( cwd, file_root, tran_root, tran_name ) != 0 ) {
 	exit( 2 );
@@ -237,11 +239,11 @@ main( int argc, char **argv )
 	    fprintf( stderr, "line %d: path too long\n", linenum );
 	    exit( 2 );
 	} 
-	if ( snprintf( path, MAXPATHLEN, "%s", d_path )
-		> MAXPATHLEN - 1) {
+	if ( strlen( d_path ) >= MAXPATHLEN ) {
 	    fprintf( stderr, "line %d: path too long\n", linenum );
 	    exit( 2 );
 	}
+	strcpy( path, d_path );
 	    
 	/* Check transcript order */
 	if ( prepath != 0 ) {
@@ -250,10 +252,11 @@ main( int argc, char **argv )
 		exit( 2 );
 	    }
 	}
-	if ( snprintf( prepath, MAXPATHLEN, "%s", path) >= MAXPATHLEN ) {
+	if ( strlen( path ) >= MAXPATHLEN ) {
 	    fprintf( stderr, "line %d: path too long\n", linenum );
 	    exit( 2 );
 	}
+	strcpy( prepath, path );
 
 	if ((( *targv[ 0 ] != 'f' )  && ( *targv[ 0 ] != 'a' )) || ( remove )) {
 	    if ( updatetran ) {

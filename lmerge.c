@@ -43,10 +43,11 @@ create_node( char *path )
 	perror( "malloc" );
 	return( NULL );
     }
-    if ( snprintf( new_node->path, MAXPATHLEN, "%s", path ) >= MAXPATHLEN ) {
+    if ( strlen( path ) >= MAXPATHLEN ) {
 	fprintf( stderr, "%s: path too long\n", path );
 	return( NULL );
     }
+    strcpy( new_node->path, path );
 
     return( new_node );
 }
@@ -137,12 +138,12 @@ getline:
 	    tran->t_linenum );
 	return( 1 );
     } 
-    if ( snprintf( tran->t_filepath, MAXPATHLEN, "%s", d_path )
-	    > MAXPATHLEN - 1 ) {
+    if ( strlen( d_path ) >= MAXPATHLEN ) {
 	fprintf( stderr, "%s: line %d: %s: path too long\n",
 		tran->t_tran_name, tran->t_linenum, d_path );
 	return( 1 );
     }
+    strcpy( tran->t_filepath, d_path );
 
     /* Check transcript order */
     if ( tran->t_prepath != 0 ) {
@@ -152,12 +153,13 @@ getline:
 	    return( 1 );
 	}
     }
-    if ( snprintf( tran->t_prepath, MAXPATHLEN, "%s", tran->t_filepath )
-	    >= MAXPATHLEN ) { 
+    if ( strlen( tran->t_filepath ) >= MAXPATHLEN ) {
 	fprintf( stderr, "%s: line %d: %s: path too long\n",
 		tran->t_tran_name, tran->t_linenum, tran->t_filepath );
 	return( 1 );
     }
+    strcpy( tran->t_prepath, tran->t_filepath );
+
 
     return( 0 );
 }
@@ -180,6 +182,7 @@ main( int argc, char **argv )
     char		file_root[ MAXPATHLEN ];
     char		tran_root[ MAXPATHLEN ];
     char		tran_name[ MAXPATHLEN ];
+    char		temp[ MAXPATHLEN ];
     struct tran		**trans = NULL;
     struct node		*new_node = NULL;
     struct node		*node = NULL;
@@ -292,21 +295,21 @@ main( int argc, char **argv )
     }
 
     if ( force ) {
-	if ( snprintf( file_root, MAXPATHLEN, "%s", trans[ 1 ]->t_file_root )
-		> MAXPATHLEN - 1 ) {
+	if ( strlen( trans[ 1 ]->t_file_root ) >= MAXPATHLEN ) {
 	    fprintf( stderr, "%s: path too long\n", trans[ 1 ]->t_file_root );
 	    exit( 2 );
 	}
-	if ( snprintf( tran_root, MAXPATHLEN, "%s", trans[ 1 ]->t_tran_root )
-		> MAXPATHLEN - 1 ) {
+	strcpy( file_root, trans[ 1 ]->t_file_root );
+	if ( strlen( trans[ 1 ]->t_tran_root ) >= MAXPATHLEN ) {
 	    fprintf( stderr, "%s: path too long\n", trans[ 1 ]->t_tran_root );
 	    exit( 2 );
 	}
-	if ( snprintf( tran_name, MAXPATHLEN, "%s", trans[ 1 ]->t_tran_name )
-		> MAXPATHLEN - 1 ) {
+	strcpy( tran_root, trans[ 1 ]->t_tran_root );
+	if ( strlen( trans[ 1 ]->t_tran_name ) >= MAXPATHLEN ) {
 	    fprintf( stderr, "%s: path too long\n", trans[ 1 ]->t_tran_name );
 	    exit( 2 );
 	}
+	strcpy( tran_name, trans[ 1 ]->t_tran_name );
     } else {
 	/* Create tran if missing */
 	if (( ofd = open( argv[ argc - 1 ], O_WRONLY | O_CREAT, 0666 ) ) < 0 ) {
@@ -320,18 +323,19 @@ main( int argc, char **argv )
 
 	/* Get paths */
 	if ( *argv[ argc - 1 ] == '/' ) {
-	    if ( snprintf( cwd, MAXPATHLEN, "%s", argv[ argc - 1 ] )
-		    > MAXPATHLEN - 1 ) {
+	    if ( strlen( argv[ argc - 1 ] ) >= MAXPATHLEN ) {
 		fprintf( stderr, "%s: path too long\n", argv[ argc - 1 ] );
 		exit( 2 );
 	    }
+	    strcpy( cwd, argv[ argc - 1 ] );
 	} else {
-	    if ( snprintf( cwd, MAXPATHLEN, "%s/%s", cwd, argv[ argc - 1 ] )
+	    if ( snprintf( temp, MAXPATHLEN, "%s/%s", cwd, argv[ argc - 1 ] )
 		    > MAXPATHLEN - 1 ) {
 		fprintf( stderr, "%s/%s: path too long\n", cwd,
 		    argv[ argc - 1 ] );
 		exit( 2 );
 	    }
+	    strcpy( cwd, temp );
 	}
 	if ( get_root( cwd, file_root, tran_root, tran_name ) != 0 ) {
 	    exit( 2 );

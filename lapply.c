@@ -395,11 +395,11 @@ main( int argc, char **argv )
 	    fprintf( stderr, "%s: line %d: line too long\n", tline, linenum  );
 	    goto error2;
 	}
-	if ( snprintf( targvline, MAXPATHLEN * 2, "%s", tline )
-		>= MAXPATHLEN * 2 ) {
+	if ( strlen( tline ) >= MAXPATHLEN * 2 ) {
 	    fprintf( stderr, "line %d: too long\n", linenum );
 	    goto error2;
 	}
+	strcpy( targvline, tline );
 
 	tac = acav_parse( acav, targvline, &targv );
 
@@ -461,12 +461,12 @@ main( int argc, char **argv )
 		goto error2;
 	    }
 	}
-	len = strlen( path );
-	if ( snprintf( prepath, MAXPATHLEN, "%s", path) >= MAXPATHLEN ) { 
+	if ( strlen( path ) >= MAXPATHLEN ) {
 	    fprintf( stderr, "%s: line %d: path too long\n",
 		    transcript, linenum );
 	    goto error2;
 	}
+	strcpy( prepath, path );
 
 	/* Do type check on local file */
 	switch ( radstat( path, &st, &fstype, &afinfo )) {

@@ -288,13 +288,12 @@ main( int argc, char **argv )
 		    exit( 2 );
 		}
 	    }
-	    len = strlen( path );
-	    if ( snprintf( prepath, MAXPATHLEN, "%s", d_path )
-			>= MAXPATHLEN ) {
+	    if ( strlen( d_path ) >= MAXPATHLEN ) {
 		fprintf( stderr, "%s: line %d: path too long\n",
 			tran, linenum );
 		exit( 2 );
 	    }
+	    strcpy( prepath, d_path );
 
 	    cmp = pathcmp( d_path, pattern );
 	    if ( cmp == 0 ) {

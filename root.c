@@ -29,10 +29,11 @@ get_root( char *path, char *file_root, char *tran_root, char *tran_name )
 	return( -1 );
     }
     *p++ = '\0';
-    if ( snprintf( tran_name, MAXPATHLEN, "%s", p ) > MAXPATHLEN - 1 ) {
+    if ( strlen( p ) >= MAXPATHLEN ) {
         fprintf( stderr, "%s: path too long\n", p );
         return( -1 );
     }
+    strcpy( tran_name, p );
 
     if ( snprintf( test_path, MAXPATHLEN, "%s/tmp/transcript",
             radmind_real_path ) > MAXPATHLEN - 1 ) {
