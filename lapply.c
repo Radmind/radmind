@@ -274,7 +274,21 @@ main( int argc, char **argv )
 	err++;
     }
 
-    if ( err || ( argc - optind != 1 ) ) {
+    if ( argc - optind == 0 ) {
+	if ( ( f = fdopen( 0, "r" ) ) == NULL ) { 
+	    perror( argv[ 1 ] );
+	    goto error0;
+	}
+    } else if ( argc - optind == 1 ) {
+	if ( ( f = fopen( argv[ optind ], "r" ) ) == NULL ) { 
+	    perror( argv[ 1 ] );
+	    goto error0;
+	}
+    } else {
+	err++;
+    }
+
+    if ( err ) {
 	fprintf( stderr, "usage: lapply [ -nsvV ] " );
 	fprintf( stderr, "[ -c checksum ] [ -h host ] [ -p port ] " );
 	fprintf( stderr, "difference-transcript\n" );
@@ -288,11 +302,6 @@ main( int argc, char **argv )
 	}
     } else {
 	if ( verbose ) printf( "No network connection\n" );
-    }
-
-    if ( ( f = fopen( argv[ optind ], "r" ) ) == NULL ) { 
-	perror( argv[ 1 ] );
-	goto error1;
     }
 
     if ( apply( f, NULL, sn ) != 0 ) {
