@@ -24,7 +24,7 @@ SERVER="-h _RADMIND_HOST"
 AUTHLEVEL="-w _RADMIND_AUTHLEVEL"
 EDITOR=${EDITOR:-vi}
 DEFAULTS="/etc/radmind.defaults"
-FSDIFFPATH="."
+FSDIFFROOT="."
 
 PATH=/usr/local/bin:/usr/bin:/bin; export PATH
 RETRY=10
@@ -145,7 +145,7 @@ update)
 	;;
     esac
 
-    fsdiff -A -% ${CHECKSUM} -o ${FTMP} ${FSDIFFPATH}
+    fsdiff -A -% ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
     if [ $? -ne 0 ]; then
 	cleanup
 	exit 1
@@ -214,7 +214,7 @@ create)
 	exit 1
     fi
     FTMP="${TMPDIR}/${TNAME}"
-    fsdiff -C -% ${CHECKSUM} -o ${FTMP} ${FSDIFFPATH}
+    fsdiff -C -% ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
     if [ $? -ne 0 ]; then
 	cleanup
 	exit 1;
@@ -259,7 +259,7 @@ trip)
 	;;
     esac
 
-    fsdiff -C ${CHECKSUM} -o ${FTMP} ${FSDIFFPATH}
+    fsdiff -C ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
     if [ $? -ne 0 ]; then
 	cleanup
 	exit 1
@@ -273,7 +273,7 @@ trip)
     ;;
 
 auto)
-    fsdiff -C ${CHECKSUM} -o ${FTMP} ${FSDIFFPATH}
+    fsdiff -C ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
     if [ $? -ne 0 ]; then
 	echo Auto failure: `hostname` fsdiff
 	cleanup
@@ -290,7 +290,7 @@ auto)
     ktcheck ${AUTHLEVEL} ${SERVER} -q -c sha1
     if [ $? -eq 1 ]; then
 	while true; do
-	    fsdiff -A ${CHECKSUM} -o ${FTMP} ${FSDIFFPATH}
+	    fsdiff -A ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
 	    if [ $? -ne 0 ]; then
 		echo Auto failure: `hostname`: fsdiff
 		cleanup
@@ -337,7 +337,7 @@ force)
 	;;
     esac
 
-    fsdiff -A -% ${CHECKSUM} -o ${FTMP} ${FSDIFFPATH}
+    fsdiff -A -% ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
     if [ $? -ne 0 ]; then
 	cleanup
 	exit 1
