@@ -54,13 +54,13 @@ ischild( const char *parent, const char *child)
     }
 }
 
-    void
+    int 
 apply( FILE *f, char *parent )
 {
     char		tline[ 2 * MAXPATHLEN ];
-    int			tac, targvind, present;
-    char		**targv, dir[ MAXPATHLEN ];
-    char		type;
+    int			tac, present;
+    char		**targv, *dir, *command;
+    char		fstype;
     extern char		*optarg;
     struct stat		st;
     mode_t	   	mode;
@@ -80,108 +80,74 @@ apply( FILE *f, char *parent )
 
 	tac = argcargv( tline, &targv );
 
-	/* check buffer overflow */
+	/* DO CHECK OF BUFFER OVERFLOW */
 
 	if ( tac == 1 ) {
 	    printf( "Command file: %s\n", targv[ 0 ] );
 	} else {
 
 	    /* Get argument offset */
-
 	    if ( ( *targv[ 0 ] == '+' ) || ( *targv[ 0 ] == '-' ) ) {
-		targvind = 1;
-	    } else {
-		targvind = 0;
+		command = targv[ 0 ];
+		targv++;
 	    }
 
 	    /* Do type check on local file */
-
-	    if ( lstat( targv[ 1 + targvind ], &st ) ==  0 ) {
-	        type = t_convert ( S_IFMT & st.st_mode );
+	    if ( lstat( targv[ 1  ], &st ) ==  0 ) {
+	        fstype = t_convert ( S_IFMT & st.st_mode );
 		present = 1;
 	    } else if ( errno != ENOENT ) { 
-		perror( targv[ 1 + targvind ] );
-		goto done;
+		perror( targv[ 1 ] );
+		return( 1 );
 	    } else {
 		present = 0;
 	    }
 
-	    if ( type != *targv[ 0 + targvind ] && present ) {
-		printf( "Must remove %c %s\n", type, targv[ 1 + targvind ] );
+	    printf( " TAC = %d\n", tac );
 
-		if ( type == 'd' ) {
+	    if ( ( fstype != *targv[ 0 ] && present ) 
+		|| 
+		 ( ( tac == 9  || tac == 6 ) && *command == '-' && present ) ) {
+
+		if ( fstype == 'd' ) {
 		    printf( "Calling apply to handle dir\n" );
 
 		    /* Recurse */
+		    dir = targv[ 1 ];
+		    apply( f, dir );
 
-		    strcpy( &dir, targv[ 1 + targvind ] );
-
-		    apply( f, targv[ 1 + targvind ] );
-
-		    /* Directory is empty */
-
+		    /* Directory is now empty */
 		    if ( rmdir( dir ) != 0 ) {
 			perror( dir );
-			goto done;
+			return( 1 );	
 		    }
 
 		    present = 0;
 
 		} else {
-		    printf( "Unlinking %s for update\n", targv[ 1 + targvind ] );
-		    if ( unlink( targv[ 1 + targvind ] ) != 0 ) {
-			perror( targv[ 1 + targvind ] );
-			goto done;
+		    printf( "Unlinking %s for update\n", targv[ 1 ] );
+		    if ( unlink( targv[ 1 ] ) != 0 ) {
+			perror( targv[ 1 ] );
+			return( 1 );
 		    }
 
-		    prsent = 0;
+		    present = 0;
 		}
 	    }
 
 	    /* Do transcript line */
-
-	    switch( *targv[ 0 ] ) {
-
-	    case '+':
+	    if ( *command == '+' ) { 
 
 		/* DOWNLOAD */
-
 		printf( "Have to download something\n" );
-		break;
 
-	    case '-':
-		
-		/* DELTE */
+		present = 1;
+	    }
 
-		if ( type == 'd' ) {
-		    printf( "Calling apply to handle dir\n" );
-
-		    /* Recurse */
-		    
-		    strcpy( &dir, targv[ 2 ] );
-
-		    apply( f, targv[ 2 ] );
-
-		    /* Directory is empty */
-
-		    if ( rmdir( dir ) != 0 ) {
-			perror( dir );
-			goto done;
-		    }
-		} else {
-		    printf( "Unlinking %s\n", targv[ 2 ] ); 
-		    if ( unlink( targv[ 2 ] ) != 0 ) {
-			perror( targv[ 2 ] );
-			goto done;
-		    }
-		}
-		break;
-
-	    default:
+	    if ( present ) {
 
 		/* UPDATE */
-
-		printf( "Updating %s...", targv[ 1 + targvind ] );
+		printf( "Updating %s...", targv[ 1 ] );
 
 		switch ( *targv[ 0 ] ) {
 		case 'f':
@@ -193,10 +159,10 @@ apply( FILE *f, char *parent )
 
 		    /* check mode */
 		    if( mode != st.st_mode ) {
-			printf( "  mode -> %o\n", mode );
+			printf( "  mode -> %o\n", (unsigned int)mode );
 			if ( chmod( targv[ 1 ], mode ) != 0 ) {
 			    perror( "targv[ 1 ]" );
-			    goto done;
+			    return( 1 );
 			}
 		    }
 
@@ -206,7 +172,7 @@ apply( FILE *f, char *parent )
 			if ( gid != st.st_gid ) printf( "  gid -> %i\n", (int)gid );
 			if ( lchown( targv[ 1 ], uid, gid ) != 0 ) {
 			    perror( targv[ 1 ] );
-			    goto done;
+			    return( 1 );
 			}
 		    }
 
@@ -216,7 +182,7 @@ apply( FILE *f, char *parent )
 			times.actime = st.st_atime;
 			if ( utime( targv[ 1 ], &times ) != 0 ) {
 			    perror( targv[ 1 ] );
-			    goto done;
+			    return( 1 );
 			}
 		    }
 		    break;
@@ -230,21 +196,21 @@ apply( FILE *f, char *parent )
 		    if ( !present ) {
 			if ( mkdir( targv[ 1 ], mode ) != 0 ) {
 			    perror( targv[ 1 ] );
-			    goto done;
+			    return( 1 );
 			}
 
 			if ( lchown( targv[ 1 ], uid, gid ) != 0 ) {
-			    perror( "lchown" );
-			    goto done;
+			    perror( targv[ 1 ] );
+			    return( 1 );
 			}
 		    } else {
 
 			/* check mode */
 			if( mode != st.st_mode ) {
-			    printf( "  mode -> %o\n", mode );
+			    printf( "  mode -> %o\n", (unsigned int)mode );
 			    if ( chmod( targv[ 1 ], mode ) != 0 ) {
-				perror( "chmod" );
-				goto done;
+				perror( targv[ 1 ] );
+				return( 1 );
 			    }
 			}
 
@@ -253,8 +219,8 @@ apply( FILE *f, char *parent )
 			    if ( uid != st.st_uid ) printf( "  uid -> %i\n", (int)uid );
 			    if ( gid != st.st_gid ) printf( "  gid -> %i\n", (int)gid );
 			    if ( lchown( targv[ 1 ], uid, gid ) != 0 ) {
-				perror( "lchown" );
-				goto done;
+				perror( targv[ 1 ] );
+				return( 1 );
 			    }
 			}
 		    }
@@ -267,14 +233,14 @@ apply( FILE *f, char *parent )
 
 		    if ( present ) {
 			if ( unlink( targv[ 1 ] ) != 0 ) {
-			    perror( "unlink" );
-			    goto done;
+			    perror( targv[ 1 ] );
+			    return( 1 );
 			}
 		    }
 
 		    if ( link( targv[ 2 ], targv[ 1 ] ) != 0 ) {
-			perror( "link" );
-			goto done;
+			perror( targv[ 1 ] );
+			return( 1 );
 		    }
 		    break;
 
@@ -283,68 +249,51 @@ apply( FILE *f, char *parent )
 		    /* would we ever get into this if?*/
 
 		    if ( unlink( targv[ 1 ] ) != 0 ) {
-			perror( "unlink" );
-			goto done;
+			perror( targv[ 1 ] );
+			return( 1 );
 		    }
 		    
 		    if ( symlink( targv[ 2 ], targv[ 1 ] ) != 0 ) {
-			perror( "symlink" );
-			goto done;
+			perror( targv[ 1 ] );
+			return( 1 );
 		    }
 		    break;
 
-		case 'D':
-		    if ( type != 'D' ) {
-			printf( "Door update to non-door\n" ); 
-		    }
-		    break;
-		case 's':
-		    if ( type != 's' ) {
-			printf( "socket update to non-socket\n" ); 
-		    }
-		    break;
 		case 'p':
-		    if ( type != 'p' ) {
+		    if ( fstype != 'p' ) {
 			printf( "Named pipe update to non-named pipe\n" ); 
 		    }
 		    break;
 		case 'b':
-		    if ( type != 'b' ) {
+		    if ( fstype != 'b' ) {
 			printf( "Blk special update to non-blk special\n" ); 
 		    }
 		    break;
 		case 'c':
-		    if ( type != 'c' ) {
+		    if ( fstype != 'c' ) {
 			printf( "Char special update to non-char special\n" ); 
 		    }
 		    break;
 		default :
 		    printf( "Unkown type %s to update\n", targv[ 1 ] );
-		    break;
-		}
-		break;  // End of defualt switch
+		    return( 1 );
+		} // End of defualt switch
 	    }
 
 	    /* check for child */
 
-	    printf( "Checking child\n" );
+	    printf( "Checking child..." );
 
-	    if ( ! ischild( parent, targv[ 1 + targvind ] ) ) {
+	    if ( ! ischild( parent, targv[ 1 ] ) ) {
 		printf( "  NO!\n" );
-		return;
+		return( 0 );
 	    }
 	    printf( "  YES!\n" );
 	}
 
     }
 
-    return;
-
-done:
-
-    fclose( f );
-
-    exit( 1 );
+    return( 0 );
 }
 
     int
@@ -357,7 +306,10 @@ main( int argc, char **argv )
 	exit( 1 );
     }
 
-    apply( f, NULL );
+    if ( apply( f, NULL ) != 0 ) {
+	fclose( f );
+	exit( 1 );
+    }
 
     exit( 0 );
 }
