@@ -2,7 +2,11 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <dirent.h>
+
+#ifdef SOLARIS
 #include <sys/mkdev.h>
+#endif
+
 #include <sys/stat.h>
 #include <sys/param.h>
 #include <unistd.h>
@@ -12,6 +16,7 @@
 #include "llist.h"
 #include "code.h"
 
+int main( int, char ** );
 void fs_walk( struct llist *, int );
 
     void
@@ -86,7 +91,9 @@ main( int argc, char **argv )
     struct llist	*root;
     extern char    	*optarg;
     extern int    	optind;
+#ifndef linux
     extern int		errno;
+#endif
     int    		c;
     int    		errflag = 0;
     int			flag = 0;
