@@ -205,7 +205,11 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
 		return( 1 );
 	    }
 	}
-	if ( update( path, path, present, 0, st, tac, targv, &afinfo ) != 0 ) {
+	switch ( update( path, path, present, 0, st, tac, targv, &afinfo )) {
+        case 0:
+        case 2:	    /* door or socket, can't be created, but not an error */
+            break;
+        default:
 	    return( 1 );
 	}
     }
