@@ -283,8 +283,9 @@ main( int argc, char **argv )
 		if ( cmpval == 0 ) {
 		    /* File match */
 
-		    if ( ( noupload ) && ( *trans[ candidate ]->targv[ 0 ]
-			    == 'f' ) ) {
+		    if ( ( noupload ) &&
+			    ( *trans[ candidate ]->targv[ 0 ] == 'f' 
+			    || *trans[ candidate ]->targv[ 0 ] == 'a' )) {
 			/* Use lower precedence path */
 			trans[ candidate ]->path = 
 			    trans[ j ]->path;
@@ -300,7 +301,8 @@ main( int argc, char **argv )
 			    goto skipline;
 			}
 		    }
-		    if ( ( force ) && ( *trans[ j ]->targv[ 0 ] == 'f' ) ) {
+		    if ( ( force ) && ( *trans[ j ]->targv[ 0 ] == 'f' 
+			    || *trans[ j ]->targv[ 0 ] == 'a' )) {
 			/* Remove file from lower precedence transcript */
 			if ( snprintf( opath, MAXPATHLEN, "%s/../file/%s/%s",
 				trans[ j ]->path, trans[ j ]->name,
@@ -340,7 +342,8 @@ main( int argc, char **argv )
 		goto skipline;
 	    }
 	    /* output non-files */
-	    if ( *trans[ candidate ]->targv[ 0 ] != 'f' ) {
+	    if ( *trans[ candidate ]->targv[ 0 ] != 'f'
+		    && *trans[ candidate ]->targv[ 0 ] != 'a' ) {
 		goto outputline;
 	    }
 
