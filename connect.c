@@ -8,8 +8,8 @@
 #include "connect.h"
 
 extern void            (*logger)( char * );
-extern struct timeval   timeout;
 extern int              verbose;
+struct timeval          timeout = { 10 * 60, 0 };
 
     SNET *
 connectsn( char *host, int port )
@@ -51,8 +51,7 @@ connectsn( char *host, int port )
 	    perror ( "snet_attach failed" );
 	    continue;
 	}
-	tv.tv_sec = 10;
-	tv.tv_usec = 0;
+	tv = timeout;
 	if ( ( line = snet_getline_multi( sn, logger, &tv) ) == NULL ) {
 	    perror( "snet_getline_multi" );
 	    if ( snet_close( sn ) != 0 ) {
@@ -88,6 +87,7 @@ closesn( SNET *sn )
 	perror( "snet_writef" );
 	return( 1 );
     }
+    tv = timeout;
     if ( ( line = snet_getline_multi( sn, logger, &tv ) ) == NULL ) {
 	perror( "snet_getline_multi" );
 	return( 1 );
