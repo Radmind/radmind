@@ -5,6 +5,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 #ifdef sun
 #include <sys/mkdev.h>
 #endif sun
