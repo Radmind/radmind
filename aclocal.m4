@@ -8,7 +8,6 @@ AC_DEFUN([CHECK_SNET],
     if test -f "$snetdir/snet.h"; then
 	found_snet="yes";
 	CFLAGS="$CFLAGS -I$snetdir";
-	break;
     fi
     if test x_$found_snet != x_yes; then
 	AC_MSG_ERROR(cannot find snet libraries)
