@@ -20,6 +20,7 @@
 #include "download.h"
 #include "chksum.h"
 #include "list.h"
+#include "connect.h"
 
 void output( char* string);
 int check( SNET *sn, char *type, char *path); 
@@ -190,18 +191,15 @@ check( SNET *sn, char *type, char *path)
     int
 main( int argc, char **argv )
 {
-    int			i, c, s, port = htons( 6662 ), err = 0;
+    int			c, port = htons( 6662 ), err = 0;
     int			len, tac, change = 0;
     extern int          optind;
-    char		*host = NULL, *line = NULL, *version = "1.0";
+    char		*host = NULL, *version = "1.0";
     char		*transcript = NULL;
     char                **targv;
     char                cline[ 2 * MAXPATHLEN ];
     struct servent	*se;
-    struct hostent	*he;
-    struct sockaddr_in	sin;
     SNET		*sn;
-    struct timeval	tv;
     FILE		*f;
     struct node		*head = NULL;
 
@@ -257,59 +255,8 @@ main( int argc, char **argv )
     }
     host = argv[ optind ];
 
-    /* Network connection */
-    if ( ( he = gethostbyname( host ) ) == NULL ) {
-	perror( host );
-	exit( 2 );
-    }
-
-    for ( i = 0; he->h_addr_list[ i ] != NULL; i++ ) {
-	if ( ( s = socket( PF_INET, SOCK_STREAM, NULL ) ) < 0 ) {
-	    perror ( host );
-	    exit( 2 );
-	}
-	memset( &sin, 0, sizeof( struct sockaddr_in ) );
-	sin.sin_family = AF_INET;
-	sin.sin_port = port;
-	memcpy( &sin.sin_addr.s_addr, he->h_addr_list[ i ],
-	    ( unsigned int)he->h_length );
-	if ( verbose ) printf( "trying %s... ",
-		inet_ntoa( *( struct in_addr *)he->h_addr_list[ i ] ) );
-	if ( connect( s, ( struct sockaddr *)&sin,
-		sizeof( struct sockaddr_in ) ) != 0 ) {
-	    perror( "connect" );
-	    (void)close( s );
-	    continue;
-	}
-	if ( verbose ) printf( "success!\n" );
-
-	if ( ( sn = snet_attach( s, 1024 * 1024 ) ) == NULL ) {
-	    perror ( "snet_attach failed" );
-	    continue;
-	}
-
-	tv.tv_sec = 10;
-	tv.tv_usec = 0;
-	if ( ( line = snet_getline_multi( sn, logger, &tv) ) == NULL ) {
-	    perror( "snet_getline_multi" );
-	    if ( snet_close( sn ) != 0 ) {
-		perror ( "snet_close" );
-	    }
-	    continue;
-	}
-
-	if ( *line !='2' ) {
-	    fprintf( stderr, "%s\n", line);
-	    if ( snet_close( sn ) != 0 ) {
-		perror ( "snet_close" );
-	    }
-	    continue;
-	}
-	break;
-    }
-
-    if ( he->h_addr_list[ i ] == NULL ) {
-	perror( "connection failed" );
+    if( ( sn = connectsn( host, port )  ) == NULL ) {
+	fprintf( stderr, "%s:%d connection failed.\n", host, port );
 	exit( 2 );
     }
 
@@ -378,26 +325,11 @@ main( int argc, char **argv )
 	}
     }
 
-
-    /* Close network connection */
-    if ( snet_writef( sn, "QUIT\r\n" ) == NULL ) {
-	perror( "snet_writef" );
+    if ( ( closesn( sn ) ) !=0 ) {
+	fprintf( stderr, "can not close sn\n" );
 	exit( 2 );
     }
 
-    if ( ( line = snet_getline_multi( sn, logger, &tv ) ) == NULL ) {
-	perror( "snet_getline_multi" );
-	exit( 2 );
-    }
-
-    if ( *line != '2' ) {
-	perror( line );
-    }
-
-    if ( snet_close( sn ) != 0 ) {
-	perror( "snet_close" );
-	exit( 2 );
-    }
 done:
     if ( change ) {
 	if ( verbose ) {
