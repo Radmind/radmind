@@ -108,7 +108,7 @@ tls_client_start( SNET *sn, char *host, int authlevel )
     struct timeval  tv;
     char            *line;
 
-    if( snet_writef( sn, "STARTTLS\n" ) < 0 ) {
+    if( snet_writef( sn, "STARTTLS\r\n" ) < 0 ) {
 	perror( "snet_writef" );
 	return( -1 );
     }
