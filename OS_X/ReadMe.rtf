@@ -9,6 +9,11 @@
 Radmind is a set of tool that can be used to maintain systems and act as a tripwire for security purposes.\
 \
 
+\f0\b Change Log
+\f1\b0 \
+To see what has been changed in the version see http://www.rsug.itd.umich.edu/software/radmind/changelog.html\
+\
+
 \f0\b Requirements\
 
 \f1\b0 Radmind requires a Macintosh running Max OS X 10.1.3 or later.\
@@ -24,24 +29,26 @@ You will need administrator privileges to install radmind.  Click on the lock ic
 
 \f0\b \cf0 Upgrading Radmind
 \f1\b0 \
-If you are upgrading to version 0.8.1 of the radmind tools, here are the suggested upgrade paths:\
+If you are upgrading the radmind tools from version 0.8.1 or later simply install the tools as described above.\
 \
-How to upgrade to 0.8.1 without adding finder information to the load\
+If you are upgrading the radmind tools from a version prior to 0.8.1, here are the suggested upgrade paths:\
+\
+How to upgrade without adding finder information to the load\
 \
 1 - Prepare clients and server for new transcripts\
-	* Install 0.8.1 on the server.\
-	* Add 0.8.1 to the load.\
-	* Have every clients get the 0.8.1 tools.\
+	* Install the tools on the server.\
+	* Add the tools to the load.\
+	* Have every clients get the new tools.\
 2 - Run the tools as you have in the past.  Since the transcript does not list finder information, the first time the tools are run, any finder information will be removed.  In our testing we have not had any problems with using a set of transcripts that does not include finder information.  It appears that it is not crucial to OS 10.1.5.
 \f0\b \
 
 \f1\b0 \
-How to upgrade to 0.8.1 and add finder information to an existing load\
+How to upgrade the tools and add finder information to an existing load\
 \
 1 - Prepare clients and server for new transcripts\
-	* Install 0.8.1 on the server.\
-	* Add 0.8.1 to the load.\
-	* Have every clients get the 0.8.1 tools.\
+	* Install the tools on the server.\
+	* Add the tools to the load.\
+	* Have every clients get the new tools.\
 2 - Create an overload that includes the finder information\
 	* fsdiff -C -c sha1 -o finderinfo.T /\
 4 - Store the overload on the server\
@@ -53,7 +60,7 @@ How to upgrade to 0.8.1 and add finder information to an existing load\
 \
 Now, the next time the clients run ktcheck, they will get the new transcripts that include directory finder information.\
 \
-If you get stuck with a client trying to use old versions of the tools with a transcript containing finder information you can manually install the 0.8.1 on the client or create a transcript that does include the finder information.  Wes suggested this awk script to remove any finder information listings from a transcript:\
+If you get stuck with a client trying to use old versions of the tools with a transcript containing finder information you can manually install the new tools on the client or create a transcript that does include the finder information.  This awk script will remove any finder information listings from a transcript:\
 \
 	awk '\{ if ( $1 == "d" ) print $1, $2, $3, $4, $5 \}' < new.T > temp.T\
 \pard\ql\qnatural
