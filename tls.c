@@ -133,7 +133,7 @@ tls_client_start( SNET *sn, char *host, int authlevel )
     X509_NAME_get_text_by_NID( X509_get_subject_name( peer ),
 	NID_commonName, buf, sizeof( buf ));
     X509_free( peer );
-    if ( !strcmp( buf, host )) {
+    if ( strcmp( buf, host )) {
 	fprintf( stderr, "%s: invalid server CN\n", buf );
 	return( -1 );
     }
