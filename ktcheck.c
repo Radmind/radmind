@@ -547,6 +547,10 @@ main( int argc, char **argv )
 	    exit( 2 );
 	}
 	free( node );
+
+	if ( change ) {
+	    exit( 1 );
+	}
     }
 
     if ( special_list->l_count > 0 ) {
