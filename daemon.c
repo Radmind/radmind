@@ -189,9 +189,6 @@ main( ac, av )
 
     if ( port == 0 ) {
 	if (( se = getservbyname( "radmind", "tcp" )) == NULL ) {
-	    fprintf( stderr, "%s: can't find radmind service\n"
-		    "%s: continuing with port 6662...\n",
-		    prog, prog );
 	    port = htons( 6662 );
 	} else {
 	    port = se->s_port;
