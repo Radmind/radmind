@@ -860,13 +860,11 @@ cmdloop( int fd, struct sockaddr_in *sin )
     syslog( LOG_INFO, "child for [%s] %s",
 	    inet_ntoa( sin->sin_addr ), remote_host );
     
-    if ( authlevel != 2 ) {
+    if ( authlevel == 0 ) {
 	/* lookup proper command file based on the hostname */
 	if ( command_k( "config" ) < 0 ) {
-	    if ( authlevel == 0 ) {
-		snet_writef( sn, "%d No access for %s\r\n", 500, remote_host );
-		exit( 1 );
-	    }
+	    snet_writef( sn, "%d No access for %s\r\n", 500, remote_host );
+	    exit( 1 );
 	} else {
 	    if ( list_transcripts( sn ) != 0 ) {
 		/* error message given in list_transcripts */
