@@ -86,7 +86,7 @@ n_store_file( SNET *sn, char *filename, char *transcript )
     }
 
     if ( !quiet && !verbose ) {
-	printf( "%s: stored as zero length file\n", filename );
+	printf( "%s: stored as zero length file\n", decode( filename ));
     }
     return( 0 );
 }
@@ -195,7 +195,7 @@ store_file( int fd, SNET *sn, char *filename, char *transcript, char *filetype )
 	return( -1 );
     }
 
-    if ( !quiet && !verbose ) printf( "%s: stored\n", filename );
+    if ( !quiet && !verbose ) printf( "%s: stored\n", decode( filename ));
     return( 0 );
 }
 
