@@ -32,6 +32,45 @@ extern char	*version, *checksumlist;
 int apply( FILE *f, char *parent, SNET *sn );
 void output( char *string);
 
+struct node {
+    char                *path;
+    struct node         *next;
+};
+
+struct node* create_node( char *path );
+void free_node( struct node *node );
+void free_list( struct node *head );
+
+   struct node *
+create_node( char *path )
+{
+    struct node         *new_node;
+
+    new_node = (struct node *) malloc( sizeof( struct node ) );
+    new_node->path = strdup( path );
+
+    return( new_node );
+}
+
+    void
+free_node( struct node *node )
+{
+    free( node->path );
+    free( node );
+}
+
+    void
+free_list( struct node *head )
+{
+    struct node *node;
+
+    while ( head != NULL ) {
+        node = head;
+        head = head->next;
+        free_node( node );
+    }
+}
+
     static int
 ischild( const char *parent, const char *child)
 {
@@ -79,6 +118,7 @@ apply( FILE *f, char *parent, SNET *sn )
     char		*command = "";
     char		fstype;
     struct stat		st;
+    struct node		*head= NULL, *new_node, *node;
     ACAV		*acav;
 
     acav = acav_alloc( );
@@ -120,7 +160,7 @@ apply( FILE *f, char *parent, SNET *sn )
 	}
 
 	if (( *command == '+' ) && ( !network )) {
-	    goto linedone;
+	    continue;
 	}
 
 	strcpy( path, decode( targv[ 1 ] ));
@@ -154,28 +194,63 @@ apply( FILE *f, char *parent, SNET *sn )
 	if ( *command == '-'
 		|| ( present && fstype != *targv[ 0 ] )) {
 	    if ( fstype == 'd' ) {
-
-		/* Recurse */
-		if ( apply( f, path, sn ) != 0 ) {
-		    return( 1 );
-		}
-
-		/* Directory is now empty */
-		if ( rmdir( path ) != 0 ) {
-		    perror( path );
-		    return( 1 );	
+dirchecklist:
+		if ( head == NULL ) {
+		    /* Add dir to empty list */
+		    head = create_node( path );
+		    continue;
+		} else {
+		    if ( ischild( path, head->path)) {
+			/* Add dir to list */
+			new_node = create_node( path );
+			new_node->next = head;
+			head = new_node;
+		    } else {
+			/* remove head */
+			if ( rmdir( head->path ) != 0 ) {
+			     perror( head->path );
+			     return( 1 );
+			}
+			if ( verbose ) printf( "%s deleted\n", path );
+			node = head;
+			head = node->next;
+			free_node( node );
+			goto dirchecklist;
+		    }
 		}
 	    } else {
-		if ( unlink( path ) != 0 ) {
-		    perror( path );
-		    return( 1 );
+filechecklist:
+		if ( head == NULL ) {
+		    if ( unlink( path ) != 0 ) {
+			perror( path );
+			return( 1 );
+		    }
+		    if ( verbose ) printf( "%s deleted\n", path );
+		} else {
+		    if ( ischild( path, head->path)) {
+			if ( unlink( path ) != 0 ) {
+			    perror( path );
+			    return( 1 );
+			}
+			if ( verbose ) printf( "%s deleted\n", path );
+		    } else {
+			/* remove head */
+			if ( rmdir( head->path ) != 0 ) {
+			     perror( head->path );
+			     return( 1 );
+			}
+			if ( verbose ) printf( "%s deleted\n", path );
+			node = head;
+			head = node->next;
+			free_node( node );
+			goto filechecklist;
+		    }
 		}
 	    }
-	    if ( verbose ) printf( "%s deleted\n", path );
 	    present = 0;
 
 	    if ( *command == '-' ) {
-		goto linedone;
+		continue;
 	    }
 	}
 
@@ -218,7 +293,6 @@ apply( FILE *f, char *parent, SNET *sn )
 		perror( temppath );
 		return( 1 );
 	    }
-	    goto linedone;
 
 	}
 
@@ -228,12 +302,20 @@ apply( FILE *f, char *parent, SNET *sn )
 	    return( 1 );
 	}
 
-linedone:
-	if ( !ischild( parent, path )) {
-	    goto done;
-	}
     }
-done:
+    /* Clear out dir list */ 
+    while ( head != NULL ) {
+	/* remove head */
+	if ( rmdir( head->path ) != 0 ) {
+	     perror( head->path );
+	     return( 1 );
+	}
+	if ( verbose ) printf( "%s deleted\n", path );
+	node = head;
+	head = node->next;
+	free_node( node );
+    }
+
     acav_free( acav ); 
     return( 0 );
 }
