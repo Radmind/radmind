@@ -540,15 +540,17 @@ t_new( int type, char *fullname, char *shortname )
 }
 
     void
-transcript_init( char *kdir, char *kfile)
+transcript_init( char *kfile, int kfilemustexist )
 {
     char	**av;
     char	*special = "special.T";
     char	line[ MAXPATHLEN ];
     char	fullpath[ MAXPATHLEN ];
+    char	*p;
     int		length, ac;
     int		foundspecial = 0;
     FILE	*fp;
+    char	*kdir;
 
     /*
      * Make sure that there's always a transcript to read, so other code
@@ -561,11 +563,23 @@ transcript_init( char *kdir, char *kfile)
     }
 
     if (( fp = fopen( kfile, "r" )) == NULL ) {
-	if ( edit_path == APPLICABLE ) {
+	if ( kfilemustexist || ( edit_path == APPLICABLE )) {
 	    perror( kfile );
 	    exit( 1 );
 	}
 	return;
+    }
+
+    if (( kdir = strdup( kfile )) == NULL ) {
+        perror( "strdup failed" );
+        exit( 2 );
+    }
+    if (( p = strrchr( kdir, '/' )) == NULL ) {
+        /* No '/' in kfile - use working directory */
+        kdir = "./";
+    } else {
+        p++;
+        *p = (char)'\0';
     }
 
     while ( fgets( line, sizeof( line ), fp ) != NULL ) {

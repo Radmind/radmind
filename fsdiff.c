@@ -112,7 +112,7 @@ main( int argc, char **argv )
     extern char 	*optarg;
     extern int		optind;
     char		*kfile = _RADMIND_COMMANDFILE;
-    char		*kdir = "";
+    int			gotkfile = 0;
     char		*p;
     int 		c, len, edit_path_change = 0;
     int 		errflag = 0;
@@ -141,6 +141,7 @@ main( int argc, char **argv )
 
 	case 'K':
 	    kfile = optarg;
+	    gotkfile = 1;
 	    break;
 
 	case '1':
@@ -190,20 +191,8 @@ main( int argc, char **argv )
 	exit ( 1 );
     }
 
-    if (( kdir = strdup( kfile )) == NULL ) {
-        perror( "strdup failed" );
-        exit( 2 );
-    }
-    if (( p = strrchr( kdir, '/' )) == NULL ) {
-        /* No '/' in kfile - use working directory */
-        kdir = "./";
-    } else {
-        p++;
-        *p = (char)'\0';
-    }
-
     /* initialize the transcripts */
-    transcript_init( kdir, kfile );
+    transcript_init( kfile, gotkfile );
     root = ll_allocate( argv[ optind ] );
 
     fs_walk( root );
