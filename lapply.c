@@ -170,7 +170,6 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
 	/* Update temp file*/
 	if ( update( temppath, path, present, 1, st, tac, targv )
 		!= 0 ) {
-	    perror( "update" );
 	    return( 1 );
 	}
 	/*
@@ -184,7 +183,6 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
     } else { 
 	/* UPDATE */
 	if ( update( path, path, present, 0, st, tac, targv ) != 0 ) {
-	    perror( "update" );
 	    return( 1 );
 	}
     }
