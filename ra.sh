@@ -7,6 +7,7 @@
 #	update
 #	create
 #	auto
+#	force
 #
 
 # Command line options:
@@ -44,7 +45,7 @@ Yn() {
 }
 
 usage() {
-    echo "Usage:	$0 [ -ct | -h server | -w authlevel ] { trip | update | create | auto }" >&2
+    echo "Usage:	$0 [ -ct | -h server | -w authlevel ] { trip | update | create | auto | force }" >&2
     exit 1
 }
 
@@ -124,7 +125,7 @@ update)
 	    fi
 	;;
 
-    *)	clean up
+    *)	cleanup
     	exit $?
 	;;
     esac
@@ -301,6 +302,40 @@ auto)
 	    fi
 	done
     fi
+    ;;
+
+force)
+    ktcheck ${AUTHLEVEL} ${SERVER} -c sha1
+    case "$?" in
+    0)	;;
+    1)	;;
+
+    *)	cleanup
+    	exit $?
+	;;
+    esac
+
+    fsdiff -A -v ${CHECKSUM} -o ${FTMP} .
+    if [ $? -ne 0 ]; then
+	cleanup
+	exit 1
+    fi
+
+    if [ ! -s ${FTMP} ]; then
+	echo Nothing to apply.
+	cleanup
+	exit 1
+    fi
+    lapply ${AUTHLEVEL} ${SERVER} ${CHECKSUM} ${FTMP}
+    case "$?" in
+    0)	;;
+
+    *)	cleanup
+	    exit $?
+	    ;;
+    esac
+
+    cleanup
     ;;
 
 *)

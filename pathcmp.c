@@ -3,11 +3,11 @@
  * All Rights Reserved.  See COPYRIGHT.
  */
 
+#include "config.h"
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <string.h>
-
-#include "config.h"
 
 #include "pathcmp.h"
 

@@ -74,7 +74,7 @@ v_logger( char *line )
 main( int argc, char **argv )
 {
     int			c, err = 0, port = htons(6662), tac; 
-    int			network = 1, len = 0, rc, lnbf = 0;
+    int			network = 1, len = 0, rc;
     int			negative = 0, tran_only = 0;
     int			respcount = 0;
     extern int		optind;
@@ -125,7 +125,6 @@ main( int argc, char **argv )
 
 	case 'i':
 	    setvbuf( stdout, ( char * )NULL, _IOLBF, 0 );
-	    lnbf = 1;
 	    break;
 
         case 'l':
@@ -220,9 +219,6 @@ main( int argc, char **argv )
     if ( showprogress && verbose ) {
 	err++;
     }
-    if ( verbose && lnbf ) {
-	err++;
-    }
 
     if ( err || ( argc - optind != 1 ))   {
 	fprintf( stderr, "usage: lcreate [ -%%FlnNrTV ] [ -q | -v | -i ] " );
@@ -296,21 +292,29 @@ main( int argc, char **argv )
                     exit( 2 );
                 } 
             }
-            if ( password == NULL ) {
-		printf( "user: %s\n", user );
-                if (( password = getpass( "password:" )) == NULL ) {
-                    fprintf( stderr, "Invalid null password\n" );
-                    exit( 2 );
-                }
-		/* get the length of the password so we can zero it later */
-		len = strlen( password );
-            }
-            if ( verbose ) printf( ">>> LOGIN %s %s\n", user, password );
+
+	    printf( "user: %s\n", user );
+	    if (( password = getpass( "password:" )) == NULL ) {
+		fprintf( stderr, "Invalid null password\n" );
+		exit( 2 );
+	    }
+
+	    len = strlen( password );
+	    if ( len == 0 ) {
+		fprintf( stderr, "Invalid null password\n" );
+		exit( 2 );
+	    }
+
+            if ( verbose ) printf( ">>> LOGIN %s\n", user );
             if ( snet_writef( sn, "LOGIN %s %s\n", user, password ) < 0 ) {
                 fprintf( stderr, "login %s failed: 1-%s\n", user, 
                     strerror( errno ));
                 exit( 2 );                       
             }                            
+
+	    /* clear the password from memory */
+	    memset( password, 0, len );
+
 	    tv = timeout;
 	    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
 		fprintf( stderr, "login %s failed: 2-%s\n", user,
@@ -322,10 +326,6 @@ main( int argc, char **argv )
 		return( 1 );
 	    }
 
-	    /* clear the password from memory */
-	    if ( len ) {
-		memset( password, 0, len );
-	    }
         }
 
 	if ( cksum ) {
@@ -470,7 +470,6 @@ main( int argc, char **argv )
 		    }
 		    respcount += 2;
 		    if ( rc < 0 ) {
-			if ( dodots ) { putchar( (char)'\n' ); }
 			goto stor_failed;
 		    }
 		}
@@ -494,6 +493,7 @@ done:
     exit( 0 );
 
 stor_failed:
+    if ( dodots ) { putchar( (char)'\n' ); }
     while ( respcount > 0 ) {
 	tv.tv_sec = 30;
 	tv.tv_usec = 0;

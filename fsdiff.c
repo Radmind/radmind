@@ -162,9 +162,10 @@ main( int argc, char **argv )
     cksum = 0;
     outtran = stdout;
 
-    while (( c = getopt( argc, argv, "%Ac:Co:K:1V" )) != EOF ) {
+    while (( c = getopt( argc, argv, "%Ac:Co:K:1Vv" )) != EOF ) {
 	switch( c ) {
 	case '%':
+	case 'v':
 	    finish = 100;
 	    break;
 
@@ -236,7 +237,7 @@ main( int argc, char **argv )
     if ( errflag || ( argc - optind != 1 )) {
 	fprintf( stderr, "usage: %s { -C | -A | -1 } [ -V ] ", argv[ 0 ] );
 	fprintf( stderr, "[ -K command ] " );
-	fprintf( stderr, "[ -c cksumtype ] [ -o file [ -%% ] ] path\n" );
+	fprintf( stderr, "[ -c checksum ] [ -o file [ -%% ] ] path\n" );
 	exit ( 2 );
     }
 

@@ -221,10 +221,10 @@ main( int argc, char **argv, char **envp )
 	fprintf( stderr, "usage: %s ", argv[ 0 ] );
 	fprintf( stderr, "[ -rvV ] " );
 	fprintf( stderr, "[ -T transcript | -S ] " );
-	fprintf( stderr, "[ -h host ] [ -p port ]" );
+	fprintf( stderr, "[ -h host ] [ -p port ] " );
         fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );
         fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ] " );
-	fprintf( stderr, "[ diff options ] " );
+	fprintf( stderr, "[ supported diff options ] " );
 	fprintf( stderr, "[ -X \"unsupported diff options\" ] " );
 	fprintf( stderr, "file\n" );
 	exit( 2 );

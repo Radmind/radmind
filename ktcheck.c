@@ -365,7 +365,7 @@ check( SNET *sn, char *type, char *file )
 main( int argc, char **argv )
 {
     int			c, port = htons( 6662 ), err = 0;
-    int			lnbf = 0;
+    int			change = 0;
     int			authlevel = _RADMIND_AUTHLEVEL;
     int			use_randfile = 0;
     char	lcksum[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
@@ -396,7 +396,6 @@ main( int argc, char **argv )
 
 	case 'i':
 	    setvbuf( stdout, ( char * )NULL, _IOLBF, 0 );
-	    lnbf = 1;
 	    break;
 
 	case 'K':
@@ -469,7 +468,7 @@ main( int argc, char **argv )
 	}
     }
 
-    if ( verbose && ( quiet || lnbf )) {
+    if ( verbose && quiet ) {
 	err++;
     }
 

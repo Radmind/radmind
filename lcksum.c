@@ -24,6 +24,7 @@
 #include "code.h"
 #include "pathcmp.h"
 #include "largefile.h"
+#include "progress.h"
 #include "root.h"
 
 void            (*logger)( char * ) = NULL;
@@ -32,6 +33,8 @@ int		linenum = 0;
 int		cksum = 0;
 int		verbose = 1;
 const EVP_MD	*md;
+extern int	showprogress;
+extern off_t	lsize;
 extern char	*version, *checksumlist;
 char            prepath[ MAXPATHLEN ] = {0};
 
@@ -117,9 +120,8 @@ main( int argc, char **argv )
     int			prefixfound = 0;
     int			checkall = 0;
     int			remove = 0, checkapplefile = 0;
-    int			lastpct = -1;
-    float		pct = 0.0;
-    off_t		lsize = 0, bytes = 0;
+    int			exitval = 0;
+    ssize_t		bytes = 0;
     extern int          optind;
     char		*tpath = NULL, *line = NULL;
     char		*prefix = NULL, *d_path = NULL;
@@ -137,7 +139,7 @@ main( int argc, char **argv )
     struct stat		st;
     off_t		cksumsize;
 
-    while ( ( c = getopt ( argc, argv, "Aac:P:nqVv" ) ) != EOF ) {
+    while ( ( c = getopt ( argc, argv, "%Aac:P:nqV" ) ) != EOF ) {
 	switch( c ) {
 	case 'a':
 	    checkall = 1;
@@ -145,6 +147,10 @@ main( int argc, char **argv )
 
 	case 'A':
 	    checkapplefile = 1;
+	    break;
+
+	case '%':
+	    showprogress = 1;
 	    break;
 
 	case 'c':
@@ -174,10 +180,6 @@ main( int argc, char **argv )
 	    printf( "%s\n", version );
 	    printf( "%s\n", checksumlist );
 	    exit( 0 );
-
-	case 'v':
-	    verbose = 2;
-	    break;
 
 	case '?':
 	    err++;
@@ -218,8 +220,7 @@ main( int argc, char **argv )
 	}
 	strcpy( cwd, tpath );
     } else {
-	if ( snprintf( temp, MAXPATHLEN, "%s/%s", cwd, tpath )
-		> MAXPATHLEN - 1 ) {
+	if ( snprintf( temp, MAXPATHLEN, "%s/%s", cwd, tpath ) >= MAXPATHLEN ) {
 	    fprintf( stderr, "%s/%s: path too long\n", cwd, tpath );
 	    exit( 2 );
 	}
@@ -272,40 +273,9 @@ main( int argc, char **argv )
 	}
     }
 
-    /* calculate the loadset size */
-    if ( verbose == 2 ) {
-	while ( fgets( tline, MAXPATHLEN, f ) != NULL ) {
-	    linenum++;
-
-	    tac = argcargv( tline, &targv );
-	    if ( tac != 8 ) {
-		continue;
-	    }
-
-	    switch ( *targv[ 0 ] ) {
-	    case 'a':
-	    case 'f':
-		if ( prefix != NULL ) {
-		    if (( d_path = decode( targv[ 1 ] )) == NULL ) {
-			fprintf( stderr, "%d: path too long\n", linenum );
-			goto badline;
-		    }
-			
-		    if ( strncmp( d_path, prefix, strlen( prefix )) != 0 ) {
-			continue;
-		    }
-		}
-
-		lsize += strtoofft( targv[ 6 ], NULL, 10 );
-		break;
-
-	    default:
-		continue;
-	    }
-	}
-
-	linenum = 0;
-	rewind( f );
+    if ( showprogress ) {
+	/* calculate the loadset size */
+	lsize = lcksum_loadsetsize( f, prefix );
     }
 
     while ( fgets( tline, MAXPATHLEN, f ) != NULL ) {
@@ -316,7 +286,8 @@ main( int argc, char **argv )
 	len = strlen( tline );
 	if (( tline[ len - 1 ] ) != '\n' ) {
 	    fprintf( stderr, "%s: %d: line too long\n", tpath, linenum);
-	    goto badline;
+	    exitval = 1;
+	    goto done;
 	}
 	/* save transcript line -- must free */
 	if ( ( line = strdup( tline ) ) == NULL ) {
@@ -335,7 +306,8 @@ main( int argc, char **argv )
         }
 	if ( tac == 1 ) {
 	    fprintf( stderr, "line %d: invalid transcript line\n", linenum );
-	    goto badline;
+	    exitval = 1;
+	    goto done;
 	}
 
 	if ( *targv[ 0 ] == '-' ) {
@@ -347,40 +319,16 @@ main( int argc, char **argv )
 
 	if (( d_path = decode( targv[ 1 ] )) == NULL ) {
 	    fprintf( stderr, "line %d: path too long\n", linenum );
-	    goto badline;
+	    exitval = 1;
+	    goto done;
 	} 
 	if ( strlen( d_path ) >= MAXPATHLEN ) {
 	    fprintf( stderr, "line %d: path too long\n", linenum );
-	    goto badline;
+	    exitval = 1;
+	    goto done;
 	}
 	strcpy( path, d_path );
 	    
-	/* Check transcript order */
-	if ( prepath != 0 ) {
-	    if ( pathcmp( path, prepath ) < 0 ) {
-		fprintf( stderr, "line %d: bad sort order\n", linenum );
-		goto badline;
-	    }
-	}
-	if ( strlen( path ) >= MAXPATHLEN ) {
-	    fprintf( stderr, "line %d: path too long\n", linenum );
-	    goto badline;
-	}
-	strcpy( prepath, path );
-
-	if ((( *targv[ 0 ] != 'f' )  && ( *targv[ 0 ] != 'a' )) || ( remove )) {
-	    if ( updatetran ) {
-		fprintf( ufs, "%s", line );
-	    }
-	    goto done;
-	}
-
-	if ( tac != 8 ) {
-	    fprintf( stderr, "line %d: %d arguments should be 8\n",
-		    linenum, tac );
-	    goto badline;
-	}
-
 	/* check to see if file against prefix */
 	if ( prefix != NULL ) {
 	    if ( strncmp( d_path, prefix, strlen( prefix ))
@@ -392,13 +340,52 @@ main( int argc, char **argv )
 	    }
 	    prefixfound = 1;
 	}
+	if ( showprogress && ( tac > 0 && *line != '#' )) {
+	    progressupdate( bytes, d_path );
+	}
+	bytes = 0;
+
+	if ((( *targv[ 0 ] != 'f' )  && ( *targv[ 0 ] != 'a' )) || ( remove )) {
+	    if ( updatetran ) {
+		fprintf( ufs, "%s", line );
+	    }
+	    bytes += PROGRESSUNIT;
+	    goto done;
+	}
+
+	if ( tac != 8 ) {
+	    fprintf( stderr, "line %d: %d arguments should be 8\n",
+		    linenum, tac );
+	    exitval = 1;
+	    goto done;
+	}
 
 	if ( snprintf( path, MAXPATHLEN, "%s/%s/%s", file_root, tran_name,
 		d_path ) > MAXPATHLEN - 1 ) {
-	    fprintf( stderr, "%s/%s/%s: path too long\n", file_root,
-		tran_name, d_path );
-	    exit( 2 );
+	    fprintf( stderr, "%d: %s/%s/%s: path too long\n", linenum,
+		file_root, tran_name, d_path );
+	    exitval = 1;
+	    goto done;
 	}
+
+	/* Check transcript order */
+	if ( prepath != 0 ) {
+	    if ( pathcmp( path, prepath ) < 0 ) {
+		if ( updatetran ) {
+		    fprintf( stderr, "line %d: bad sort order\n", linenum );
+		} else {
+		    fprintf( stderr,
+		    "line %d: bad sort order.  Not continuing.\n", linenum );
+		}
+		exit( 2 );
+	    }
+	}
+	if ( strlen( path ) >= MAXPATHLEN ) {
+	    fprintf( stderr, "line %d: path too long\n", linenum );
+	    exitval = 1;
+	    goto done;
+	}
+	strcpy( prepath, path );
 
 	/*
 	 * Since this tool is run on the server, all files can be treated
@@ -428,39 +415,35 @@ main( int argc, char **argv )
 	    exit( 2 );
 	}
 
-	/* check size */
-	if ( cksumsize != strtoofft( targv[ 6 ], NULL, 10 )) {
-	    if ( verbose && !updatetran ) printf( "%s: size wrong\n",
-		    d_path );
-	    ucount++;
-	    if ( updatetran ) {
-		if ( verbose && updatetran ) printf( "%s: size updated\n",
-			d_path );
-	    }
-	    updateline = 1;
-	}
-
 	if (( cksumsize = do_fcksum( fd, lcksum )) < 0 ) {
 	    perror( path );
 	    exit( 2 );
 	}
-	if ( cksumsize != st.st_size ) {
-	    fprintf( stderr, "line %d: checksum wrong in transcript\n",
-		linenum );
-	    exit( 2 );
+
+	/* check size */
+	if ( cksumsize != strtoofft( targv[ 6 ], NULL, 10 )) {
+	    if ( !updatetran ) {
+		if ( verbose ) printf( "line %d: %s: size wrong\n",
+		    linenum, d_path );
+		exitval = 1;
+	    } else {
+		ucount++;
+		if ( verbose ) printf( "%s: size updated\n", d_path );
+	    }
+	    updateline = 1;
 	}
 	bytes += cksumsize;
-
-	pct = ((( float )bytes / ( float )lsize ) * 100.0 );
+	bytes += PROGRESSUNIT;
 
 	/* check cksum */
 	if ( strcmp( lcksum, targv[ 7 ] ) != 0 ) {
-	    if ( verbose && !updatetran ) printf( "line %d: %s: "
+	    if ( !updatetran ) {
+		if ( verbose ) printf( "line %d: %s: "
 		    "checksum wrong\n", linenum, d_path );
-	    ucount++;
-	    if ( updatetran ) {
-		if ( verbose && updatetran ) printf( "%s: checksum updated\n",
-		    d_path ); 
+		exitval = 1;
+	    } else {
+		ucount++;
+		if ( verbose ) printf( "%s: checksum updated\n", d_path ); 
 	    }
 	    updateline = 1;
 	}
@@ -505,15 +488,13 @@ main( int argc, char **argv )
 	    }
 	}
 done:
-	if ( verbose == 2 && ( tac > 0 && *line != '#' )) {
-	    if (( int )pct != lastpct ) {
-		printf( "%%%.2d %s\n", ( int )pct, d_path );
-	    }
-
-	    lastpct = ( int )pct;
+	if ( updatetran && ( exitval != 0 )) {
+	    exit( 2 );
 	}
-
 	free( line );
+    }
+    if ( showprogress ) {
+	progressupdate( bytes, "" );
     }
 
     if ( !prefixfound && prefix != NULL ) {
@@ -521,7 +502,6 @@ done:
     }
 
     if ( updatetran ) {
-
 	if ( ucount ) {
 	    if ( rename( upath, tpath ) != 0 ) {
 		fprintf( stderr, "rename %s to %s failed: %s\n", upath, tpath,
@@ -539,20 +519,12 @@ done:
 	    exit( 0 );
 	}
     } else {
-	if ( ucount ) {
-	    if ( verbose ) printf( "%s: incorrect\n", tran_name );
-	    exit( 1 );
-	} else {
+	if ( exitval == 0 ) {
 	    if ( verbose ) printf( "%s: verified\n", tran_name );
 	    exit( 0 );
+	} else {
+	    if ( verbose ) printf( "%s: incorrect\n", tran_name );
+	    exit( 1 );
 	}
-    }
-    exit( 2 );
-
-badline:
-    if ( checkall ) {
-	goto done;
-    } else {
-	exit( 2 );
     }
 }

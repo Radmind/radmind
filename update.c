@@ -284,8 +284,8 @@ update( const char *path, char *displaypath, int present, int newfile,
      * file.
      */
     if (( mode != ( T_MODE & st->st_mode )) ||
-	    (( uid != st->st_uid || gid != st->st_gid ) &&
-	    (( mode & ( S_ISUID | S_ISGID )) != 0 ))) {
+            (( uid != st->st_uid || gid != st->st_gid ) &&
+            (( mode & ( S_ISUID | S_ISGID )) != 0 ))) {
 	if ( chmod( path, mode ) != 0 ) {
 	    perror( path );
 	    return( 1 );
@@ -298,10 +298,9 @@ update( const char *path, char *displaypath, int present, int newfile,
     }
 
 done:
-
     if ( !quiet && !showprogress ) printf( "\n" );
     if ( showprogress ) {
-	progressupdate( UPDATEUNIT, displaypath );
+	progressupdate( PROGRESSUNIT, displaypath );
     }
 
     return( 0 );

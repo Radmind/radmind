@@ -224,6 +224,10 @@ main( int argc, char **argv )
     if ( noupload && ( tcount > 2 ) ) {
 	err++;
     }
+    /* make sure there's a second transcript */
+    if ( force && ( argv[ optind + 1 ] == NULL )) {
+	err++;
+    }
     if ( force && ( tcount > 1 ) ) {
 	err++;
     }

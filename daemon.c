@@ -49,6 +49,7 @@ int		cksum = 0;
 int		authlevel = _RADMIND_AUTHLEVEL;
 int		checkuser = 0;
 int		connections = 0;
+int             child_signal = 0;
 int		maxconnections = _RADMIND_MAXCONNECTIONS; /* 0 = no limit */
 char		*radmind_path = _RADMIND_PATH;
 SSL_CTX         *ctx = NULL;
@@ -62,39 +63,16 @@ int		main( int, char *av[] );
     void
 hup( int sig )
 {
-
-    syslog( LOG_INFO, "reload %s", version );
+    /* Hup does nothing at the moment */
     return;
 }
 
     void
 chld( int sig )
 {
-    int			pid, status;
-    extern int		errno;
-
-    while (( pid = waitpid( 0, &status, WNOHANG )) > 0 ) {
-	connections--;
-	if ( WIFEXITED( status )) {
-	    if ( WEXITSTATUS( status )) {
-		syslog( LOG_ERR, "child %d exited with %d", pid,
-			WEXITSTATUS( status ));
-	    } else {
-		syslog( LOG_INFO, "child %d done", pid );
-	    }
-	} else if ( WIFSIGNALED( status )) {
-	    syslog( LOG_ERR, "child %d died on signal %d", pid,
-		    WTERMSIG( status ));
-	} else {
-	    syslog( LOG_ERR, "child %d died", pid );
-	}
-    }
-
-    if ( pid < 0 && errno != ECHILD ) {
-	syslog( LOG_ERR, "wait3: %m" );
-	exit( 1 );
-    }
+    child_signal++;
     return;
+
 }
 
 /*
@@ -137,11 +115,12 @@ main( int ac, char **av )
 {
     struct sigaction	sa, osahup, osachld;
     struct sockaddr_in	sin;
-    struct in_addr	b_addr = { INADDR_ANY };
+    struct in_addr	b_addr;
     struct servent	*se;
     int			c, s, err = 0, fd, sinlen, trueint;
     int			dontrun = 0;
     int			ssl_mode = 0;
+    int			use_randfile = 0;
     char		*prog;
     unsigned short	port = 0;
     int			facility = _RADMIND_LOG;
@@ -150,6 +129,8 @@ main( int ac, char **av )
     char		*ca = "cert/ca.pem";
     char		*cert = "cert/cert.pem";
     char		*privatekey = "cert/cert.pem";
+    pid_t		pid;
+    int			status;
 #ifdef HAVE_ZEROCONF
     int			regservice = 0;
     dns_service_discovery_ref	mdnsref = NULL;
@@ -161,6 +142,8 @@ main( int ac, char **av )
     } else {
 	prog++;
     }
+
+     b_addr.s_addr = htonl( INADDR_ANY );
 
     while (( c = getopt( ac, av, "a:b:dD:L:m:p:Ru:UVw:x:y:z:" )) != EOF ) {
 	switch ( c ) {
@@ -197,6 +180,10 @@ main( int ac, char **av )
 
 	case 'p' :		/* TCP port */
 	    port = htons( atoi( optarg ));
+	    break;
+
+	case 'r' :
+	    use_randfile = 1;
 	    break;
 
 	case 'R' :		/* register as Rendezvous service */
@@ -247,7 +234,7 @@ main( int ac, char **av )
     }
 
     if ( err || optind != ac ) {
-	fprintf( stderr, "Usage: radmind [ -dRUV ] [ -a bind-address ] " );
+	fprintf( stderr, "Usage: radmind [ -dRrUV ] [ -a bind-address ] " );
 	fprintf( stderr, "[ -b backlog ] [ -D path ] " );
 	fprintf( stderr, "[ -L syslog-facility ] [ -m max-connections ] " );
 	fprintf( stderr, "[ -p port ] [ -u umask ] " );
@@ -314,11 +301,36 @@ main( int ac, char **av )
     }
 
     if ( authlevel != 0 ) {
-	/* Setup SSL */
 
         SSL_load_error_strings();
         SSL_library_init();    
 
+	if ( use_randfile ) {
+	    char        randfile[ MAXPATHLEN ];
+
+	    /* generates a default path for the random seed file */
+	    if ( RAND_file_name( randfile, sizeof( randfile )) == NULL ) {
+		fprintf( stderr, "RAND_file_name: %s\n",
+			ERR_error_string( ERR_get_error(), NULL ));
+		exit( 1 );
+	    }
+
+	    /* reads the complete randfile and adds them to the PRNG */
+	    if ( RAND_load_file( randfile, -1 ) <= 0 ) {
+		fprintf( stderr, "RAND_load_file: %s: %s\n", randfile,
+			ERR_error_string( ERR_get_error(), NULL ));
+		exit( 1 );
+	    }
+
+	    /* writes a number of random bytes (currently 1024) to randfile */
+	    if ( RAND_write_file( randfile ) < 0 ) {
+		fprintf( stderr, "RAND_write_file: %s: %s\n", randfile,
+			ERR_error_string( ERR_get_error(), NULL ));
+		exit( 1 );
+	    }
+	}
+
+	/* Setup SSL */
         if (( ctx = SSL_CTX_new( SSLv23_server_method())) == NULL ) {
             fprintf( stderr, "SSL_CTX_new: %s\n",
                     ERR_error_string( ERR_get_error(), NULL ));
@@ -472,6 +484,32 @@ main( int ac, char **av )
      * Begin accepting connections.
      */
     for (;;) {
+
+	if ( child_signal > 0 ) {
+	    child_signal = 0;
+	    /* check to see if any children need to be accounted for */
+	    while (( pid = waitpid( 0, &status, WNOHANG )) > 0 ) {
+		connections--;
+		if ( WIFEXITED( status )) {
+		    if ( WEXITSTATUS( status )) {
+			syslog( LOG_ERR, "child %d exited with %d", pid,
+				WEXITSTATUS( status ));
+		    } else {
+			syslog( LOG_INFO, "child %d done", pid );
+		    }
+		} else if ( WIFSIGNALED( status )) {
+		    syslog( LOG_ERR, "child %d died on signal %d", pid,
+			    WTERMSIG( status ));
+		} else {
+		    syslog( LOG_ERR, "child %d died", pid );
+		}
+	    }
+	    if ( pid < 0 && errno != ECHILD ) {
+		syslog( LOG_ERR, "waitpid: %m" );
+		exit( 1 );
+	    }
+	}
+
 	sinlen = sizeof( struct sockaddr_in );
 	if (( fd = accept( s, (struct sockaddr *)&sin, &sinlen )) < 0 ) {
 	    if ( errno != EINTR ) {
