@@ -9,6 +9,7 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -36,6 +37,7 @@ extern SSL_CTX  	*ctx;
 connectsn2( struct sockaddr_in *sin )
 {
     int			s;
+    int			one = 1;
     char		*line;
     struct timeval      tv;
     SNET                *sn = NULL; 
@@ -44,6 +46,12 @@ connectsn2( struct sockaddr_in *sin )
 	perror( "socket" );
 	exit( 2 );
     }
+
+    if ( setsockopt( s, 6, TCP_NODELAY, &one, sizeof( one )) < 0 ) {
+	perror( "setsockopt" );
+	exit( 2 );
+    }
+
     if ( verbose ) printf( "trying %s... ", inet_ntoa( sin->sin_addr ));
     if ( connect( s, (struct sockaddr *)sin,
 	    sizeof( struct sockaddr_in )) != 0 ) {

@@ -11,6 +11,7 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -1321,6 +1322,7 @@ cmdloop( int fd, struct sockaddr_in *sin )
     struct hostent	*hp;
     char		*p;
     int			ac, i;
+    int			one = 1;
     unsigned int	n;
     char		**av, *line;
     struct timeval	tv;
@@ -1356,6 +1358,10 @@ cmdloop( int fd, struct sockaddr_in *sin )
 
     syslog( LOG_INFO, "child for [%s] %s",
 	    inet_ntoa( sin->sin_addr ), remote_host );
+
+    if ( setsockopt( fd, 6, TCP_NODELAY, &one, sizeof( one )) < 0 ) {
+	syslog( LOG_ERR, "setsockopt: %m" );
+    }
 
     if ( maxconnections != 0 ) {
 	if ( connections > maxconnections ) {
