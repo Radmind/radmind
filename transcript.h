@@ -29,10 +29,11 @@
 #define K_CLIENT	0
 #define K_SERVER	1
 
-int			edit_path;
-int			skip;
-int			cksum;
-FILE			*outtran;
+extern int		edit_path;
+extern int		skip;
+extern int		cksum;
+extern FILE		*outtran;
+extern char		*path_prefix;
 
 struct pathinfo {
     char			pi_type;

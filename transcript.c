@@ -37,6 +37,12 @@ static char			*kdir;
 static struct list		*kfile_list;
 struct list			*special_list;
 
+char				*path_prefix = NULL;
+int				edit_path;
+int				skip;
+int				cksum;
+FILE				*outtran;
+
     void 
 transcript_parse( struct transcript *tran ) 
 {
@@ -554,13 +560,24 @@ transcript_select( void )
 	    }
 	}
 
-	if ( !begin_tran->t_pinfo.pi_minus ) {
+	/* This is presumably the NULL transcript. */
+	if ( begin_tran->t_eof ) {
 	    return( begin_tran );
 	}
+
 	/*
 	 * If the highest precedence transcript line has a leading '-',
 	 * then just pretend it's not there.
 	 */
+	if ( begin_tran->t_pinfo.pi_minus ) {
+	    continue;
+	}
+
+	/* Don't look outside of the initial path. */
+	if ( !ischild( begin_tran->t_pinfo.pi_name, path_prefix )) {
+	    continue;
+	}
+
 	transcript_parse( begin_tran );
     }
 }
