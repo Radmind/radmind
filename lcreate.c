@@ -39,7 +39,7 @@ v_logger( char *line )
 store_file( int fd, SNET *sn, char *filename, char *transcript ) 
 {
     struct stat 	st;
-    struct timeval 	tv = { 10, 0 };
+    struct timeval 	tv = { 120, 0 };
     unsigned char	buf[ 8192 ];
     unsigned int	rr;
     char		*line;
@@ -87,7 +87,7 @@ store_file( int fd, SNET *sn, char *filename, char *transcript )
     
     while (( rr = read( fd, buf, sizeof( buf ))) > 0 ) {
 	if ( verbose ) { fputs( "...", stderr ); fflush( stderr ); }
-	tv.tv_sec = 10;
+	tv.tv_sec = 120;
 	tv.tv_usec = 0;
 	if ( snet_write( sn, buf, (int)rr, &tv ) != rr ) {
 	    perror( "snet_write" );
@@ -101,7 +101,7 @@ store_file( int fd, SNET *sn, char *filename, char *transcript )
     }
     if ( verbose ) fputs( "\n>>> .\n", stderr );
 
-    tv.tv_sec = 10;
+    tv.tv_sec = 120;
     tv.tv_usec = 0;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
 	perror( "snet_getline_multi" );
@@ -120,7 +120,7 @@ store_file( int fd, SNET *sn, char *filename, char *transcript )
 main( int argc, char **argv )
 {
     int			i, s, c, err = 0, port = htons(6662), tac, fd, fdt;
-    int			network = 1, exitcode = 0, len, rc;
+    int			network = 1, exitcode = 0, negative = 0, len, rc;
     extern int		optind;
     struct hostent	*he;
     struct servent	*se;
@@ -133,13 +133,17 @@ main( int argc, char **argv )
     extern char		*optarg;
     FILE		*fdiff; 
 
-    while (( c = getopt( argc, argv, "h:np:t:vV" )) != EOF ) {
+    while (( c = getopt( argc, argv, "h:nNp:t:vV" )) != EOF ) {
 	switch( c ) {
 	case 'h':
 	    host = optarg; 
 	    break;
 	case 'n':
 	    network = 0;
+	    break;
+
+	case 'N':
+	    negative = 1;
 	    break;
 
 	case 'p':
@@ -172,7 +176,7 @@ main( int argc, char **argv )
     }
 
     if ( err || ( argc - optind != 1 ))   {
-	fprintf( stderr, "usage: lcreate [ -nv ] " );
+	fprintf( stderr, "usage: lcreate [ -nvN ] " );
 	fprintf( stderr, "[ -h host ] [-p port ] [ -t stored-name ] ");
 	fprintf( stderr, "difference-transcript\n" );
 	exit( 1 );
@@ -223,7 +227,7 @@ main( int argc, char **argv )
 		continue;
 	    }
 
-	    tv.tv_sec = 10;
+	    tv.tv_sec = 120;
 	    tv.tv_usec = 0;
 	    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
 		perror( "snet_getline_multi" );
@@ -251,6 +255,11 @@ main( int argc, char **argv )
 	if ( store_file( fd, sn, NULL, tname ) != 0 ) {
 	    fprintf( stderr, "failed to store transcript \"%s\"\n", tname );
 	    exitcode = 1;
+	    (void)close( fd );
+	    goto done;
+	}
+
+	if ( negative ) {	/* don't upload files */
 	    (void)close( fd );
 	    goto done;
 	}
