@@ -87,10 +87,11 @@ getstat( SNET *sn, char *description, char *stats )
 	perror( "snet_getline 1" );
 	return( -1 );
     }
-    if ( snprintf( stats, MAXPATHLEN, "%s", line ) > MAXPATHLEN - 1 ) {
+    if ( strlen( line ) >= MAXPATHLEN ) {
 	fprintf( stderr, "%s: line too long\n", line );
 	return( -1 );
     }
+    strcpy( stats, line );
 
     if ( verbose ) printf( "<<< %s\n", stats );
 
@@ -115,7 +116,7 @@ createspecial( SNET *sn, struct list *special_list )
 
     /* Open file */
     if ( snprintf( path, MAXPATHLEN, "%sspecial.T.%i", kdir,
-	    getpid()) > MAXPATHLEN - 1 ) {
+	    getpid()) >= MAXPATHLEN ) {
 	fprintf( stderr, "path too long: %sspecial.T.%i\n", kdir,
 		(int)getpid());
 	exit( 2 );
@@ -129,7 +130,7 @@ createspecial( SNET *sn, struct list *special_list )
     for ( node = list_pop_head( special_list ); node != NULL;
 	    node = list_pop_head( special_list )) {
 	if ( snprintf( filedesc, MAXPATHLEN * 2, "SPECIAL %s", node->n_path)
-		> ( MAXPATHLEN * 2 ) -1 ) {
+		>= ( MAXPATHLEN * 2 )) {
 	    fprintf( stderr, "SPECIAL %s: too long\n", node->n_path );
 	    return( 1 );
 	}
@@ -181,14 +182,14 @@ check( SNET *sn, char *type, char *file )
 
     if ( file != NULL ) {
 	if ( snprintf( pathdesc, MAXPATHLEN * 2, "%s %s", type, file  )
-		> ( MAXPATHLEN * 2 ) - 1 ) {
+		>= ( MAXPATHLEN * 2 )) {
 	    fprintf( stderr, "%s %s: too long", type, file );
 	    return( 2 );
 	}
 
 	/* create full path */
 	if ( snprintf( path, MAXPATHLEN, "%s%s", kdir, file )
-		> MAXPATHLEN - 1 ) {
+		>= MAXPATHLEN ) {
 	    fprintf( stderr, "%s%s: path too long\n", kdir, file );
 	    return( 2 );
 	}
@@ -199,7 +200,7 @@ check( SNET *sn, char *type, char *file )
 
 	    /* Check to see if path exists as a directory */
 	    if ( snprintf( tempfile, MAXPATHLEN, "%s%s", kdir, file )
-		    > MAXPATHLEN - 1 ) {
+		    >= MAXPATHLEN ) {
 		fprintf( stderr, "%s%s: path too long\n", kdir, file );
 		return( 2 );
 	    }
@@ -244,17 +245,20 @@ check( SNET *sn, char *type, char *file )
 
 
     } else {
-	if ( snprintf( pathdesc, MAXPATHLEN, "%s", type )
-		> ( MAXPATHLEN * 2 ) - 1 ) {
+	if ( strlen( type ) >= ( MAXPATHLEN * 2 )) {
 	    fprintf( stderr, "%s: too long\n", type );
 	    return( 2 );
 	}
+	strcpy( pathdesc, type );
+
 	file = kfile;
 
 	/* create full path */
-	if ( snprintf( path, MAXPATHLEN, "%s", kfile ) > MAXPATHLEN - 1 ) {
+	if ( strlen( kfile ) >= MAXPATHLEN ) {
 	    fprintf( stderr, "%s: path too long\n", kfile );
+	    return( 2 );
 	}
+	strcpy( path, kfile );
     }
 
     if ( getstat( sn, (char *)&pathdesc, stats ) != 0 ) {
@@ -500,10 +504,11 @@ main( int argc, char **argv )
         p++;
         *p = (char)'\0';
     }
-    if ( snprintf( path, MAXPATHLEN, "%s", kfile ) > MAXPATHLEN - 1 ) {
+    if ( strlen( kfile ) >= MAXPATHLEN ) {
 	fprintf( stderr, "%s: path too long\n", kfile );
 	exit( 2 );
     }
+    strcpy( path, kfile );
 
     if (( sn = connectsn( host, port )) == NULL ) {
 	exit( 2 );
@@ -587,13 +592,13 @@ main( int argc, char **argv )
 	    exit( 2 );
 	}
 
-	if ( snprintf( path, MAXPATHLEN, "%sspecial.T", kdir ) >
-		MAXPATHLEN - 1 ) {
+	if ( snprintf( path, MAXPATHLEN, "%sspecial.T", kdir )
+		>= MAXPATHLEN ) {
 	    fprintf( stderr, "path too long: %sspecial.T\n", kdir );
 	    exit( 2 );
 	}
 	if ( snprintf( tempfile, MAXPATHLEN, "%sspecial.T.%i", kdir,
-		getpid()) > MAXPATHLEN - 1 ) {
+		getpid()) >= MAXPATHLEN ) {
 	    fprintf( stderr, "path too long: %sspecial.T.%i\n", kdir,
 		    (int)getpid());
 	    exit( 2 );
