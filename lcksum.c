@@ -10,11 +10,13 @@
 #include "argcargv.h"
 #include "chksum.h"
 #include "code.h"
+#include "pathcmp.h"
 
 int		linenum = 0;
 int		chksum = 1;
 int		verbose = 0;
 extern char	*version, *checksumlist;
+char            prepath[ MAXPATHLEN ] = {0};
 
 /*
  * exit codes:
@@ -132,6 +134,20 @@ main( int argc, char **argv )
 	}
 
 	tac = acav_parse( NULL, tline, &targv );
+
+	/* Check transcript order */
+	if ( prepath != 0 ) {
+	    if ( pathcmp( targv[ 1 ], prepath ) < 0 ) {
+		fprintf( stderr, "line %d: bad sort order\n", linenum );
+		exit( 1 );
+	    }
+	}
+	len = strlen( targv[ 1 ] );
+	if ( snprintf( prepath, MAXPATHLEN, "%s", targv[ 1 ]) > MAXPATHLEN ) {
+	    fprintf( stderr, "line %d: path too long\n", linenum );
+	    exit( 1 );
+	}
+
 	if ( ( tac != 8 ) || ( *targv[ 0 ] != 'f' ) ) {
 	    if ( updatetran ) {
 		fprintf( ufs, "%s", line );

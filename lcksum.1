@@ -40,6 +40,11 @@ modifies the file size and/or checksum of
 the user must have write access to
 .IR transcript .
 
+.B lcksum
+also verifies that 
+.I transcript
+is sorted in depth first order.
+
 With the \-P option,
 .B lcksum
 will only verify transcript lines with paths starting with
