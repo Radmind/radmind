@@ -33,8 +33,7 @@ fs_walk( struct llist *path  )
     char		temp[ MAXPATHLEN ];
 
     /* call the transcript code */
-    if (( transcript( &path->ll_pinfo, path->ll_pinfo.pi_name ) == 0 ) ||
-	    ( skip )) {
+    if (( transcript( &path->ll_pinfo ) == 0 ) || ( skip )) {
 	return;				
     }
 
