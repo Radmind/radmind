@@ -48,129 +48,121 @@ pathcmp( const char *dir, const char *file )
 }
 
     void
-rm_dir( char* dir, FILE *fdiff )
+apply( FILE *f, char *parent )
 {
     char		tline[ 2 * MAXPATHLEN ];
-    int			tac;
+    int			tac, targvind;
     char		**targv;
-
-    printf( "with rm_dir\n" );
-
-    /* Look at next line to see if there is a file in dir */
-
-    printf( "  Checking for files\n" );
-
-    if ( fgets( tline, MAXPATHLEN, fdiff ) == NULL ) {
-	printf( "  End of File\n" );
-	return;
-    }
-
-    tac = argcargv( tline, &targv );
-
-    /* Next line a '-' ? */
-
-    if ( *targv[ 0 ] != '-' ) {
-	printf( "End of -'s.  Removing %s\n", dir );
-    
-	if ( rmdir( dir ) != 0 ) {
-	    perror( dir );
-	    exit( 1 );
-	}
-	printf( "Success!\n" );
-    }
-
-    printf( "  Found a - %s\n", targv[ 1 ] );
-    printf( "  is %s in %s?\n", targv[ 2 ], dir );
-
-    if ( pathcmp( dir, targv[ 2 ] ) == 0 ) {
-	printf( "    Yes\n" );
-	rm_file( targv[ 2 ] );
-    } else {
-	printf( "    No\n" );
-    }
-
-    return;
-
-}
-
-    int
-main( int argc, char **argv )
-{
-    int			tac, fd;
-    int			exitcode = 0;
-    int			optind = 1;
-    char		**targv;
-    char		tline[ 2 * MAXPATHLEN ];
     char		type;
     extern char		*optarg;
-    FILE		*fdiff; 
     struct stat		st;
     mode_t	   	mode;
     struct utimbuf	times;
     uid_t		uid;
     gid_t		gid;
 
-    if (( fd = open( argv[ optind ], O_RDONLY, 0 )) < 0 ) {
-	perror( argv[ optind ] );
-	exit( 1 );
+    if ( parent != NULL ) {
+	printf( "Working in %s\n", parent );
+    } else {
+	printf( "Working in root\n" );
     }
 
-    if (( fdiff = fdopen( fd, "r" )) == NULL ) {
-	perror( "fdopen" );
-	exit( 1 );
-    }
-
-    while ( fgets( tline, MAXPATHLEN, fdiff ) != NULL ) {
+    while ( fgets( tline, MAXPATHLEN, f ) != NULL ) {
 	tac = argcargv( tline, &targv );
+
+	/* check buffer overflow */
+
 	if ( tac == 1 ) {
 	    printf( "Command file: %s\n", targv[ 0 ] );
-	}
-	else {
-	    printf( "Doing %s\n", tline );
-	    switch( *targv[ 0 ] ) {
-	    case '+':
-		printf( "Have to download something\n" );
-		break;
-	    case '-':
-		printf( "Deleting %s ", targv[ 2 ] );
-		if ( lstat( targv[ 2 ], &st ) != 0 ) {
-		    perror( "lstat" );
-		    goto done;
-		}
-		if ( S_ISDIR( st.st_mode ) ) {
-		    rm_dir( targv[ 2 ], fdiff );
+	} else {
+
+	    /* Get argument offset */
+
+	    if ( *targv[ 0 ] == ( '+' || '-' ) ) {
+		targvind = 1;
+	    } else {
+		targvind = 0;
+	    }
+
+	    /* Do type check on local file */
+
+	    if ( lstat( targv[ 1 + targvind ], &st ) ==  0 ) {
+	        type = t_convert ( S_IFMT & st.st_mode );
+	    } else { 
+		perror( targv[ 1 + targvind ] );
+		goto done;
+	    }
+
+	    if ( type != *targv[ 0 + targvind ] ) {
+		printf( "Must remove %c %s\n", type, targv[ 1 + targvind ] );
+
+		if ( type == 'd' ) {
+		    printf( "Calling apply to handle dir\n" );
+
+		    /* Recurse */
+
+		    apply( f, targv[ 1 + targvind ] );
+
+		    /* Directory is empty */
+
+		    if ( rmdir( targv[ 1 + targvind ] ) != 0 ) {
+			perror( targv[ 2 ] );
+			goto done;
+		    }
+
 		} else {
-		    printf( "using unlink\n" );
-		    if ( unlink( targv[ 2 ] ) != 0 ) {
-			perror( "Unlink" );
+		    printf( "Unlinking %s for update\n", targv[ 1 + targvind ] );
+		    if ( unlink( targv[ 1 + targvind ] ) != 0 ) {
+			perror( targv[ 1 + targvind ] );
 			goto done;
 		    }
 		}
-		
+	    }
+
+	    /* Do transcript line */
+
+	    switch( *targv[ 0 ] ) {
+
+	    case '+':
+
+		/* DOWNLOAD */
+
+		printf( "Have to download something\n" );
 		break;
+
+	    case '-':
+		
+		/* DELTE */
+
+		if ( type == 'd' ) {
+		    printf( "Calling apply to handle dir\n" );
+
+		    /* Recurse */
+
+		    apply( f, targv[ 2 ] );
+
+		    /* Directory is empty */
+
+		    if ( rmdir( targv[ 2 ] ) != 0 ) {
+			perror( targv[ 2 ] );
+			goto done;
+		    }
+		} else {
+		    if ( unlink( targv[ 2 ] ) != 0 ) {
+			perror( targv[ 2 ] );
+			goto done;
+		    }
+		}
+		break;
+
 	    default:
 
 		/* UPDATE */
 
-		/* get file stats */
-
-		if ( lstat( targv[ 1 ], &st ) != 0 ) {
-		    perror( "lstat" );
-		    goto done;
-		}
-
-		type = t_convert ( S_IFMT & st.st_mode );
-
-		printf( "Updating %s...", targv[ 1 ] );
-
-		/* updated based on type */
+		printf( "Updating %s...", targv[ 1 + targvind ] );
 
 		switch ( *targv[ 0 ] ) {
 		case 'f':
-		    if ( type != 'f' ) {
-			perror( "Should be a download\n" ); 
-			goto done;
-		    }
 
 		    mode = strtol( targv[ 2 ], (char **)NULL, 8 );
 		    uid = atoi( targv[ 3 ] );
@@ -181,18 +173,17 @@ main( int argc, char **argv )
 		    if( mode != st.st_mode ) {
 			printf( "  mode -> %o\n", mode );
 			if ( chmod( targv[ 1 ], mode ) != 0 ) {
-			    perror( "chmod" );
+			    perror( "targv[ 1 ]" );
 			    goto done;
 			}
 		    }
 
 		    /* check uid & gid */
-
 		    if( uid != st.st_uid  || gid != st.st_gid ) {
 			if ( uid != st.st_uid ) printf( "  uid -> %i\n", (int)uid );
 			if ( gid != st.st_gid ) printf( "  gid -> %i\n", (int)gid );
 			if ( lchown( targv[ 1 ], uid, gid ) != 0 ) {
-			    perror( "lchown" );
+			    perror( targv[ 1 ] );
 			    goto done;
 			}
 		    }
@@ -202,7 +193,7 @@ main( int argc, char **argv )
 			printf( "%s time -> %i\n", targv[ 1 ], (int)times.modtime );
 			times.actime = st.st_atime;
 			if ( utime( targv[ 1 ], &times ) != 0 ) {
-			    perror( "utime" );
+			    perror( targv[ 1 ] );
 			    goto done;
 			}
 		    }
@@ -210,24 +201,11 @@ main( int argc, char **argv )
 
 		case 'd':
 
-		    printf( "dir\n" );
-
 		    mode = strtol( targv[ 2 ], (char **)NULL, 8 );
 		    uid = atoi( targv[ 3 ] );
 		    gid = atoi( targv[ 4 ] );
 
 		    if ( type != 'd' ) {
-			printf( "Direcetory update to non-directory\n" ); 
-
-			if ( unlink( targv[ 1 ] ) != 0 ) {
-			    perror( "unlink" );
-			    goto done;
-			    }
-			
-			if ( mkdir( targv[ 1 ], mode ) != 0 ) {
-			    perror( "mkdir" );
-			    goto done;
-			}
 		    }
 
 		    /* check mode */
@@ -299,7 +277,7 @@ main( int argc, char **argv )
 		    }
 		    break;
 		default :
-		    printf( "Unkown type %c to update\n", targv[ 1 ] );
+		    printf( "Unkown type %s to update\n", targv[ 1 ] );
 		    break;
 		}
 		break;  // End of defualt switch
@@ -309,7 +287,22 @@ main( int argc, char **argv )
     }
 done:
 
-    fclose( fdiff );
+    fclose( f );
 
-    exit( exitcode );
+    exit( 1 );
+}
+
+    int
+main( int argc, char **argv )
+{
+    FILE		*f; 
+
+    if (( f = fopen( argv[ 1 ], "r" )) == NULL ) {
+	perror( argv[ 1 ] );
+	exit( 1 );
+    }
+
+    apply( f, NULL );
+
+    exit( 0 );
 }
