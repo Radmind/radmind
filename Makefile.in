@@ -240,7 +240,7 @@ package : all man info
 	mkdir -p -m 0755 ${CLIENTVARPKGDIR}
 	${INSTALL} -o root -g staff -m 0755 -c OS_X/command.K \
 	    ${CLIENTVARPKGDIR}
-	${INSTALL} -o root -g staff -m 0755 -c OS_X/apple-neg.T \
+	${INSTALL} -o root -g staff -m 0755 -c OS_X/negative.T \
 	    ${CLIENTVARPKGDIR}
 	chown root:wheel ${MPKGDIR}
 	find ${MPKGDIR}/* -exec chown root:wheel {} \;
