@@ -180,9 +180,11 @@ main( ac, av )
     }
 
     if ( err || optind != ac ) {
-	fprintf( stderr, "Usage: radmind [ -b backlog ] " );
-	fprintf( stderr, "[ -D path ] [ -d ] [ -L syslog-facility ] " );
-	fprintf( stderr, "[ -p port ] [ -u umask ] [ -V ]\n" );
+	fprintf( stderr, "Usage: radmind [ -dUV ] [ -b backlog ] " );
+	fprintf( stderr, "[ -D path ] [ -L syslog-facility ] " );
+	fprintf( stderr, "[ -p port ] [ -u umask ] " );
+	fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );
+	fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ]\n" );
 	exit( 1 );
     }
 
