@@ -133,7 +133,12 @@ f_noauth( sn, ac, av )
     int		ac;
     char	*av[];
 {
-    snet_writef( sn, "%d No access for %s\r\n", 500, remote_host );
+    if ( authlevel == 0 ) {
+	snet_writef( sn, "%d No access for %s\r\n", 500, remote_host );
+    } else {
+	snet_writef( sn, "%d TLS required.\r\n", 501 );
+    }
+
     return( 0 );
 }
 
