@@ -148,7 +148,7 @@ main( int argc, char **argv )
     if ( force && ( tcount > 1 ) ) {
 	err++;
     }
-    if ( (argc - optind ) < 2 ) {
+    if ( !force && ( tcount < 2 )) {
 	err++;
     }
 
@@ -165,8 +165,8 @@ main( int argc, char **argv )
     tpath = argv[ argc - 1 ];
     if ( force ) {
 	/* Check for write access */
-	if ( access( argv[ 3 ], W_OK ) != 0 ) {
-	    perror( argv[ 3 ] );
+	if ( access( argv[ argc - 1 ], W_OK ) != 0 ) {
+	    perror( argv[ argc - 1 ] );
 	    exit( 1 );
 	}
 	tcount++;			/* add dest to tran merge list */
