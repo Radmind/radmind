@@ -86,7 +86,7 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
     if ( *type == 'a' ) {
  
 	if ( snprintf( afinfo->rsrc_path, MAXPATHLEN,
-		"%s/..namedfork/rsrc", path ) > MAXPATHLEN - 1 ) {
+		"%s%s", path, _PATH_RSRCFORKSPEC ) > MAXPATHLEN - 1 ) {
 	    errno = ENAMETOOLONG;
 	    return( -1 );
 	}
