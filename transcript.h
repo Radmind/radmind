@@ -26,8 +26,11 @@ struct info {
     char		    i_link[ MAXPATHLEN ];
     struct stat		    i_stat;
     int			    i_chksum;
+#ifdef notdef
     major_t		    i_maj;
     minor_t		    i_min;
+#endif
+    dev_t		    i_dev;
     char		    i_type;
 };
 
