@@ -7,6 +7,7 @@
  * Return parsed argc/argv from the net.
  */
 
+#include <stdio.h>
 #include <sys/param.h>
 #include <stdlib.h>
 
@@ -15,18 +16,19 @@
 #define ACV_ARGC		10
 #define ACV_WHITE		0
 #define ACV_WORD		1
-static ACAV acavg = NULL;
+static ACAV *acavg = NULL;
 
-    ACAV
+    ACAV*
 acav_alloc( void )
 {
-    ACAV acav;
+    ACAV *acav;
 
-    if ( ( acav = (ACAV)malloc( sizeof( ACAV ) ) ) == NULL ) {
+    if ( ( acav = (ACAV*)malloc( sizeof( ACAV ) ) ) == NULL ) {
 	return( NULL );
     }
+    acav->acv_argv = NULL;
     if ( ( acav->acv_argv =
-	    (char **)malloc( sizeof( char *) * ACV_ARGC )) == NULL ) {
+	    (char **)malloc( sizeof(char *) * ( ACV_ARGC ) ) ) == NULL ) {
 	return( NULL );
     }
     acav->acv_argc = ACV_ARGC;
@@ -34,8 +36,12 @@ acav_alloc( void )
     return( acav );
 }
 
+/*
+ * acav->acv_argv = **argv[] if passed an ACAV
+ */
+
     int
-acav_parse( ACAV acav, char *line, char **argv[] )
+acav_parse( ACAV *acav, char *line, char **argv[] )
 {
     int		ac;
     int		state;
@@ -83,7 +89,7 @@ acav_parse( ACAV acav, char *line, char **argv[] )
 }
 
     int
-acav_free( ACAV acav )
+acav_free( ACAV *acav )
 {
     free( acav->acv_argv );
     free( acav );
