@@ -19,7 +19,7 @@
 ] [
 .BI \-o\  file
 [
-.BI -v
+.BI -%
 ] ]
 .I path
 .sp
@@ -233,6 +233,9 @@ d /xfn               0555     0     0
 .sp
 .SH OPTIONS
 .TP 19
+.B \-%
+percentage done progress output. Requires -o option.
+.TP 19
 .B no option
 fsdiff defaults to -A.  Future releases will require an option explicitly.
 .TP 19
@@ -264,9 +267,6 @@ displays the version number of
 .BR fsdiff ,
 a list  of supported checksumming algorithms in descending
 order of preference and then exits.
-.TP 19
-.B \-v
-verbose progress output. Requires -o option.
 .sp
 .SH FILES
 .TP 19

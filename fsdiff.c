@@ -25,7 +25,6 @@ void            (*logger)( char * ) = NULL;
 extern char	*version, *checksumlist;
 
 void		fs_walk( char *, int, int );
-int		verbose = 0;
 int		dodots = 0;
 int		lastpercent = -1;
 const EVP_MD    *md;
@@ -163,8 +162,12 @@ main( int argc, char **argv )
     cksum = 0;
     outtran = stdout;
 
-    while (( c = getopt( argc, argv, "Ac:Co:K:1Vv" )) != EOF ) {
+    while (( c = getopt( argc, argv, "%Ac:Co:K:1V" )) != EOF ) {
 	switch( c ) {
+	case '%':
+	    finish = 100;
+	    break;
+
 	case 'c':
             OpenSSL_add_all_digests();
             md = EVP_get_digestbyname( optarg );
@@ -174,6 +177,7 @@ main( int argc, char **argv )
             }
             cksum = 1;
             break;
+
 	case 'o':
 	    if (( outtran = fopen( optarg, "w" )) == NULL ) {
 		perror( optarg );
@@ -203,11 +207,8 @@ main( int argc, char **argv )
 	    printf( "%s\n", checksumlist );
 	    exit( 0 );
 
-	case 'v':
-	    finish = 100;
-	    break;
-
 	case '?':
+	    printf( "bad %c\n", c );
 	    errflag++;
 	    break;
 
@@ -216,10 +217,9 @@ main( int argc, char **argv )
 	}
     }
 
-    if (( verbose || finish > 0 ) && ! use_outfile ) {
+    if (( finish != 0 ) && ( !use_outfile )) {
 	errflag++;
     }
-
     if (( edit_path == APPLICABLE ) && ( skip )) {
 	errflag++;
     }
@@ -236,7 +236,7 @@ main( int argc, char **argv )
     if ( errflag || ( argc - optind != 1 )) {
 	fprintf( stderr, "usage: %s { -C | -A | -1 } [ -V ] ", argv[ 0 ] );
 	fprintf( stderr, "[ -K command ] " );
-	fprintf( stderr, "[ -c cksumtype ] [ -o file [ -v ] ] path\n" );
+	fprintf( stderr, "[ -c cksumtype ] [ -o file [ -%% ] ] path\n" );
 	exit ( 2 );
     }
 
