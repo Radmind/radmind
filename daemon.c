@@ -107,15 +107,11 @@ main( ac, av )
 	prog++;
     }
 
-    while (( c = getopt( ac, av, "Vcdp:b:u:" )) != EOF ) {
+    while (( c = getopt( ac, av, "Vdp:b:u:" )) != EOF ) {
 	switch ( c ) {
-	case 'V' :		/* virgin */
+	case 'V' :		/* version */
 	    printf( "%s\n", version );
 	    exit( 0 );
-
-	case 'c' :		/* check config files */
-	    dontrun++;
-	    break;
 
 	case 'd' :		/* debug */
 	    debug++;
@@ -153,6 +149,44 @@ main( ac, av )
 	fprintf( stderr, "Usage: radmind [ -d ] [ -c ] [ -p port ]" );
 	fprintf( stderr, "[ -b backlog ] [ -u umask\n" );
 	exit( 1 );
+    }
+
+    /* Create directory structure */
+    if ( mkdir( "command", 02750 ) != 0 ) {
+	if ( errno != EEXIST ) {
+	    perror( "command" );
+	    exit( 1 );
+	}
+    }
+    if ( mkdir( "file", 02750 ) != 0 ) {
+	if ( errno != EEXIST ) {
+	    perror( "file" );
+	    exit( 1 );
+	}
+    }
+    if ( mkdir( "tmp", 2750 ) != 0 ) {
+	if ( errno != EEXIST ) {
+	    perror( "tmp" );
+	    exit( 1 );
+	}
+    }
+    if ( mkdir( "tmp/file", 2750 ) != 0 ) {
+	if ( errno != EEXIST ) {
+	    perror( "tmp/file" );
+	    exit( 1 );
+	}
+    }
+    if ( mkdir( "tmp/transcript", 2750 ) != 0 ) {
+	if ( errno != EEXIST ) {
+	    perror( "tmp/transcript" );
+	    exit( 1 );
+	}
+    }
+    if ( mkdir( "transcript", 02750 ) != 0 ) {
+	if ( errno != EEXIST ) {
+	    perror( "transcript" );
+	    exit( 1 );
+	}
     }
 
     if ( port == 0 ) {
