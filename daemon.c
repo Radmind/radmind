@@ -98,7 +98,7 @@ main( ac, av )
     unsigned short	port = 0;
     extern int		optind;
     extern char		*optarg;
-    int			yoomask = 077;
+    mode_t		defumask = 077;
 
 
     if (( prog = strrchr( av[ 0 ], '/' )) == NULL ) {
@@ -134,7 +134,7 @@ main( ac, av )
 	    break;
 
 	case 'g' :		/* umask */
-	    yoomask = strtol( optarg, (char **)NULL, 0 );
+	    defumask = strtol( optarg, (char **)NULL, 0 );
 	    break;
 
 	default :
@@ -142,7 +142,7 @@ main( ac, av )
 	}
     }
 
-    umask( yoomask );
+    umask( defumask );
 
     if ( chdir( _PATH_RADMIND ) < 0 ) {
 	perror( _PATH_RADMIND );
