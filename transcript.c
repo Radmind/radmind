@@ -55,6 +55,12 @@ t_parse( struct transcript *tran )
 	} 
     } while ((( ac = argcargv( line, &argv )) == 0 ) || ( *argv[ 0 ] == '#' ));
 
+    if ( ac < 3 ) {
+	fprintf( stderr, "%s: line %d: minimum 3 arguments, got %d\n",
+		tran->t_fullname, tran->t_linenum, ac );
+	exit( 2 );
+    }
+
     if ( strlen( argv[ 0 ] ) != 1 ) {
 	fprintf( stderr, "%s: line %d: %s is too long to be a type\n",
 		tran->t_fullname, tran->t_linenum, argv[ 0 ] );
