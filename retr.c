@@ -229,22 +229,28 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	exit( 2 );
     }
     size = atol( line );
+    if ( verbose ) printf( "<<< %ld\n<<< ", size );
     if ( transize != 0 && size != transize ) {
 	fprintf( stderr, "line %d: size in transcript does not match size"
 	    "from server\n", linenum );
 	return( -1 );
     }
-    if ( verbose ) printf( "<<< %ld\n<<< ", size );
+    if ( size < ( AS_HEADERLEN + ( 3 * sizeof( struct as_entry )) +
+	    sizeof( finfo ))) {
+	fprintf( stderr,
+	    "retrieve %s failed: AppleSingle-encoded file too short\n", path );
+	return( -1 );
+    }
 
     /* read header to determine if file is encoded in applesingle */
     tv = timeout;
-    if (( rc = snet_read( sn, ( char * )&ah, AS_HEADERLEN, &tv ))
-	    != AS_HEADERLEN ) {
+    if (( rc = snet_read( sn, ( char * )&ah, AS_HEADERLEN, &tv )) <= 0 ) {
 	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 	    strerror( errno ));
 	exit( 2 );
     }
-    if ( memcmp( &as_header, &ah, AS_HEADERLEN ) != 0 ) {
+    if (( rc != AS_HEADERLEN ) ||
+	    ( memcmp( &as_header, &ah, AS_HEADERLEN ) != 0 )) {
 	fprintf( stderr,
 	    "retrieve %s failed: corrupt AppleSingle-encoded file\n", path );
 	return( -1 );
@@ -258,14 +264,18 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     /* read header entries */
     tv = timeout;
     if (( rc = snet_read( sn, ( char * )&ae_ents,
-	    ( 3 * sizeof( struct as_entry )), &tv ))
-	    != ( 3 * sizeof( struct as_entry ))) {
+	    ( 3 * sizeof( struct as_entry )), &tv )) <= 0 ) {
 	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 	    strerror( errno ));
 	exit( 2 );
     }
+    if ( rc != ( 3 * sizeof( struct as_entry ))) {
+	fprintf( stderr,
+	    "retrieve %s failed: corrupt AppleSingle-encoded file\n", path );
+	return( -1 );
+    }
 
-    /* Should we check for valid ae_ents here? */
+    /* Should we check for valid ae_ents here? YES! */
 
     if ( cksum ) {
 	EVP_DigestUpdate( &mdctx, (char *)&ae_ents, (unsigned int)rc );
@@ -276,11 +286,15 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 
     /* read finder info */
     tv = timeout;
-    if (( rc = snet_read( sn, finfo, sizeof( finfo ), &tv ))
-	    != sizeof( finfo )) {
+    if (( rc = snet_read( sn, finfo, sizeof( finfo ), &tv )) <= 0 ) {
 	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 	    strerror( errno ));
 	exit( 2 );
+    }
+    if ( rc != sizeof( finfo )) {
+	fprintf( stderr,
+	    "retrieve %s failed: corrupt AppleSingle-encoded file\n", path );
+	return( -1 );
     }
     if ( cksum ) {
 	EVP_DigestUpdate( &mdctx, finfo, (unsigned int)rc );
@@ -298,7 +312,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     /* data fork must exist to write to rsrc fork */        
     if (( dfd = open( temppath, O_CREAT | O_EXCL | O_WRONLY, 0600 )) < 0 ) {
 	perror( temppath );
-	goto error1;
+	return( -1 );
     }
 
     if ( ae_ents[ AS_RFE ].ae_length > 0 ) {
@@ -307,16 +321,15 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 		_PATH_RSRCFORKSPEC ) >= MAXPATHLEN ) {
 	    fprintf( stderr, "%s%s: path too long\n", temppath,
 		_PATH_RSRCFORKSPEC );
-	    return ( -1 );
+	    goto error1;
 	}
 
 	if (( rfd = open( rsrc_path, O_WRONLY, 0 )) < 0 ) {
 	    perror( rsrc_path );
-	    goto error2;
+	    goto error1;
 	};  
 
-	for ( rc = 0, rsize = ae_ents[ AS_RFE ].ae_length; rsize > 0;
-		rsize -= rc ) {
+	for ( rsize = ae_ents[ AS_RFE ].ae_length; rsize > 0; rsize -= rc ) {
 	    tv = timeout;
 	    if (( rc = snet_read( sn, buf, ( int )MIN( sizeof( buf ), rsize ),
 		    &tv )) <= 0 ) {
@@ -349,12 +362,12 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 		&tv )) <= 0 ) {
 	    fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 		strerror( errno ));
-	    goto error2;
+	    goto error1;
 	}
 
 	if ( write( dfd, buf, ( unsigned int )rc ) != rc ) {
 	    perror( temppath );
-	    goto error2;
+	    goto error1;
 	}
 
 	if ( cksum ) {
@@ -401,18 +414,13 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 
     return( 0 );
 
-error1:
-    if ( close( dfd ) < 0 ) {
-	perror( temppath );
-    }
-    return( -1 );
-
 error2:
-    if ( close ( dfd ) < 0 ) {
-	perror( temppath );
-    }
     if ( close( rfd ) < 0 ) {
 	perror( rsrc_path );
+    }
+error1:
+    if ( close ( dfd ) < 0 ) {
+	perror( temppath );
     }
     return( -1 );
 }

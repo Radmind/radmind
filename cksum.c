@@ -41,27 +41,24 @@ do_cksum( char *path, char *cksum_b64 )
     EVP_MD_CTX		mdctx;
     unsigned char 	md_value[ EVP_MAX_MD_SIZE ];
 
+    EVP_DigestInit( &mdctx, md );
+
     if (( fd = open( path, O_RDONLY, 0 )) < 0 ) {
 	return( -1 );
     }
-
-    EVP_DigestInit( &mdctx, md );
-
     while (( rr = read( fd, buf, sizeof( buf ))) > 0 ) {
 	size += rr;
 	EVP_DigestUpdate( &mdctx, buf, (unsigned int)rr );
     }
-
     if ( rr < 0 ) {
+	return( -1 );
+    }
+    if ( close( fd ) != 0 ) {
 	return( -1 );
     }
 
     EVP_DigestFinal( &mdctx, md_value, &md_len );
     base64_e( ( char*)&md_value, md_len, cksum_b64 );
-
-    if ( close( fd ) != 0 ) {
-	return( -1 );
-    }
 
     return( size );
 }
@@ -94,16 +91,6 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
 
     EVP_DigestInit( &mdctx, md ); 
 
-    if (( dfd = open( path, O_RDONLY, 0 )) < 0 ) {
-	return( -1 );
-    }
-
-    if ( afinfo->as_ents[ AS_RFE ].ae_length > 0 ) {
-	if (( rfd = open( afinfo->rsrc_path, O_RDONLY )) < 0 ) {
-	    return( -1 );
-	}
-    }
-
     /* checksum applesingle header */
     EVP_DigestUpdate( &mdctx, (char *)&as_header, AS_HEADERLEN );
     size += (size_t)AS_HEADERLEN;
@@ -119,6 +106,9 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
 
     /* checksum rsrc fork data */
     if ( afinfo->as_ents[ AS_RFE ].ae_length > 0 ) {
+	if (( rfd = open( afinfo->rsrc_path, O_RDONLY )) < 0 ) {
+	    return( -1 );
+	}
 	while (( rc = read( rfd, buf, sizeof( buf ))) > 0 ) {
 	    EVP_DigestUpdate( &mdctx, buf, (unsigned int)rc );
 	    size += (size_t)rc;
@@ -131,16 +121,17 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
 	}
     }
 
+    if (( dfd = open( path, O_RDONLY, 0 )) < 0 ) {
+	return( -1 );
+    }
     /* checksum data fork */
     while (( rc = read( dfd, buf, sizeof( buf ))) > 0 ) {
 	EVP_DigestUpdate( &mdctx, buf, (unsigned int)rc );
 	size += (size_t)rc;
     }
-
     if ( rc < 0 ) {
 	return( -1 );
     }
-
     if ( close( dfd ) < 0 ) {
 	return( -1 );
     }
