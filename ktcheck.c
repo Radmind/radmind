@@ -93,7 +93,6 @@ output( char *string )
     int
 createspecial( SNET *sn, struct node *head )
 {
-    int			fd;
     FILE		*fs;
     struct node 	*prev;
     char		filedesc[ MAXPATHLEN * 2 ];
@@ -108,12 +107,7 @@ createspecial( SNET *sn, struct node *head )
 	exit( 2 );
     }
 
-    if (( fd = open( path, O_WRONLY | O_CREAT | O_TRUNC, 0666 ))
-	    < 0 ) {
-	perror( path );
-	return( 1 );
-    }
-    if (( fs = fdopen( fd, "w" )) == NULL ) {
+    if (( fs = fopen( path, "w" )) == NULL ) {
 	perror( path );
 	return( 1 );
     }
@@ -146,10 +140,6 @@ createspecial( SNET *sn, struct node *head )
     } while ( head != NULL );
 
     if ( fclose( fs ) != 0 ) {
-	perror( path );
-	return( 1 );
-    }
-    if ( close( fd ) != 0 ) {
 	perror( path );
 	return( 1 );
     }
@@ -476,24 +466,44 @@ main( int argc, char **argv )
 		    (int)getpid());
 	    exit( 2 );
 	}
-	if ( do_cksum( tempfile, tcksum ) < 0 ) {
+	/* get file sizes */
+	if ( stat( tempfile, &tst ) != 0 ) {
 	    perror( tempfile );
 	    exit( 2 );
 	}
-	if ( do_cksum( path, lcksum ) < 0 ) {
-	    if ( errno != ENOENT ) {
+	if ( stat( path, &lst ) != 0 ) {
+	    if ( errno == ENOENT ) {
+		goto nolocalspecial;
+	    }
+	    perror( path );
+	    exit( 2 );
+	}
+	if ( cksum ) {
+	    if ( do_cksum( path, lcksum ) < 0 ) {
+		if ( errno == ENOENT ) {
+		    goto nolocalspecial;
+		}
 		perror( path );
 		exit( 2 );
 	    }
+	    if ( do_cksum( tempfile, tcksum ) < 0 ) {
+		perror( tempfile );
+		exit( 2 );
+	    }
+	}
 
-	    /* special.T did not exist */
-	    if ( update ) { 
+	/* specal.T exists */
+	if (( tst.st_size != lst.st_size ) ||
+		( strcmp( tcksum, lcksum) != 0 )) {
+	    /* update special.T */
+	    if ( update ) {
 		if ( rename( tempfile, path ) != 0 ) {
-		    fprintf( stderr, "rename failed: %s %s\n", tempfile, path );
+		    fprintf( stderr, "rename failed: %s %s\n", tempfile,
+			    path );
 		    exit( 2 );
 		}
 	    } else {
-		/* specaial.T not updated */
+		/* No update */
 		if ( unlink( tempfile ) !=0 ) {
 		    perror( tempfile );
 		    exit( 2 );
@@ -501,52 +511,37 @@ main( int argc, char **argv )
 	    }
 	    change++;
 	} else {
-	    /* get file sizes */
-	    if ( stat( tempfile, &tst ) != 0 ) {
+	    /* specaial.T not updated */
+	    if ( unlink( tempfile ) !=0 ) {
 		perror( tempfile );
 		exit( 2 );
 	    }
-	    if ( stat( path, &lst ) != 0 ) {
-		perror( path );
+	}
+	goto done;
+
+nolocalspecial:
+	/* special.T did not exist */
+	if ( update ) { 
+	    if ( rename( tempfile, path ) != 0 ) {
+		fprintf( stderr, "rename failed: %s %s\n", tempfile, path );
 		exit( 2 );
 	    }
-
-	    /* specal.T exists */
-	    if (( tst.st_size != lst.st_size ) ||
-		    ( strcmp( tcksum, lcksum) != 0 )) {
-		/* special.T new from server */
-		if ( update ) {
-		    if ( rename( tempfile, path ) != 0 ) {
-			fprintf( stderr, "rename failed: %s %s\n", tempfile,
-				path );
-			exit( 2 );
-		    }
-		} else {
-		    /* No update */
-		    if ( unlink( tempfile ) !=0 ) {
-			perror( tempfile );
-			exit( 2 );
-		}
-	    }
-
-		change++;
-	    } else {
-
-		/* specaial.T not updated */
-		if ( unlink( tempfile ) !=0 ) {
-		    perror( tempfile );
-		    exit( 2 );
-		}
+	} else {
+	    /* specaial.T not updated */
+	    if ( unlink( tempfile ) !=0 ) {
+		perror( tempfile );
+		exit( 2 );
 	    }
 	}
+	change++;
     }
 
+done:
     if (( closesn( sn )) !=0 ) {
 	fprintf( stderr, "can not close sn\n" );
 	exit( 2 );
     }
 
-done:
     if ( change ) {
 	exit( 1 );
     } else {
