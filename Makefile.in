@@ -220,6 +220,8 @@ SERVERSTARTUPPKGDIR=${MPKGDIR}/server-startup
 SERVERSBINPKGDIR=${MPKGDIR}/server-sbin
 SERVERMANPKGDIR=${MPKGDIR}/server-man
 SERVERVARPKGDIR=${MPKGDIR}/server-var
+SERVERRESOURCES=${MPKGDIR}/server-res
+
 INFOLIST=	$(wildcard OS_X/*.info)	
 
 info :
@@ -257,6 +259,9 @@ package : all man info
 	    ${SERVERVARPKGDIR}/command
 	chown -R root:wheel ${SERVERVARPKGDIR}
 	chmod -R 0700 ${SERVERVARPKGDIR}
+	mkdir -p -m 0755 ${SERVERRESOURCES}
+	${INSTALL} -o root -g wheel -m 0755 -c OS_X/preflight \
+	    ${SERVERRESOURCES}
 
 	# Create client package #
 	mkdir -p -m 0755 ${CLIENTBINPKGDIR}
@@ -290,7 +295,8 @@ package : all man info
 	    ${MPKGDIR}
 	package ${SERVERSBINPKGDIR} tmp/OS_X/server-sbin.info -d ${MPKGDIR}
 	package ${SERVERMANPKGDIR} tmp/OS_X/server-man.info -d ${MPKGDIR}
-	package ${SERVERVARPKGDIR} tmp/OS_X/server-var.info -d ${MPKGDIR}
+	package ${SERVERVARPKGDIR} tmp/OS_X/server-var.info -d ${MPKGDIR} \
+	    -r ${SERVERRESOURCES}
 	cp tmp/OS_X/radmind.info ${MPKGDIR}/radmind-${VERSION}.info
 	cp OS_X/radmind.list ${MPKGDIR}/radmind-${VERSION}.list
 	cp OS_X/License.rtf ${MPKGDIR}

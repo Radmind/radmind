@@ -1,0 +1,7 @@
+#!/bin/sh
+
+if [ -f /var/radmind/config ];then
+    mv /var/radmind/config /var/radmind/config.bak
+fi
+
+exit 0
