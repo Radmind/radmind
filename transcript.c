@@ -15,32 +15,12 @@
 #include "code.h"
 #include "chksum.h"
 #include "argcargv.h"
+#include "pathcmp.h"
+#include "convert.h"
 
 static struct transcript	*tran_head = NULL;
 static struct transcript	*prev_tran = NULL;
 static int			linenum = 0;
-
-/* Just like strcmp(), but pays attention to the meaning of '/'.  */
-    static int
-pathcmp( const unsigned char *p1, const unsigned char *p2 )
-{
-    int		rc;
-
-    do {
-	if (( rc = ( *p1 - *p2 )) != 0 ) {
-	    if (( *p2 != '\0' ) && ( *p1 == '/' )) {
-		return( -1 );
-	    } else if (( *p1 != '\0' ) && ( *p2 == '/' )) {
-		return( 1 );
-	    } else {
-		return( rc );
-	    }
-	}
-	p2++;
-    } while ( *p1++ != '\0' );
-
-    return( 0 );
-}
 
     static void 
 t_parse( struct transcript *tran ) 
@@ -164,34 +144,6 @@ t_parse( struct transcript *tran )
 
     return;
 }
-
-    static char
-t_convert( int type ) 
-{
-    switch( type ) {
-    case S_IFREG:
-	return ( 'f' );
-    case S_IFDIR:
-	return ( 'd' );
-    case S_IFLNK:
-	return ( 'l' );
-    case S_IFCHR:
-	return ( 'c' );
-    case S_IFBLK:
-	return ( 'b' );
-#ifdef SOLARIS
-    case S_IFDOOR:
-	return ( 'D' );
-#endif
-    case S_IFIFO:
-	return ( 'p' );
-    case S_IFSOCK:
-	return ( 's' );
-    default:
-	return ( 0 );
-    }
-}
-
 
     static void
 t_print( struct pathinfo *fs, struct transcript *tran, int flag ) 

@@ -24,7 +24,7 @@ RADMIND_OBJ=	version.o daemon.o command.o argcargv.o auth.o code.o \
 		chksum.o base64.o
 
 FSDIFF_OBJ=	version.o fsdiff.o argcargv.o transcript.o llist.o code.o \
-		hardlink.o chksum.o base64.o
+		hardlink.o chksum.o base64.o pathcmp.o convert.o
 
 KTCHECK_OBJ=	version.o ktcheck.o argcargv.o download.o base64.o code.o \
 		chksum.o list.o connect.o
