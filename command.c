@@ -593,6 +593,7 @@ f_stat( SNET *sn, int ac, char *av[] )
 			"f", enc_file, 
 			DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, 
 			st.st_mtime, st.st_size, cksum_b64 );
+		free( enc_file );
 		return( 0 );
 	    }
 	}
@@ -601,6 +602,7 @@ f_stat( SNET *sn, int ac, char *av[] )
 		av[ 2 ], av[ 3 ], av[ 4 ],
 		st.st_mtime, st.st_size, cksum_b64 );
 
+	free( enc_file );
 	return( 0 );
 
     default:
