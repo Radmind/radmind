@@ -15,15 +15,15 @@ do_chksum( char *path, char *chksum_b64 )
     int			fd;
 
     if (( fd = open( path, O_RDONLY, 0 )) < 0 ) {
-	return( 2 );
+	return( -1 );
     }
 
     if ( do_chksum_fd( fd, chksum_b64 ) != 0 ) {
-	return( 1 );
+	return( -1 );
     }
 
     if ( close( fd ) != 0 ) {
-	return( 1 );
+	return( -1 );
     }
 
     return( 0 );
@@ -45,7 +45,7 @@ do_chksum_fd( int fd, char *chksum_b64 )
     }
 
     if ( rr < 0 ) {
-	return( 1 );
+	return( -1 );
     }
 
     SHA1_Final( md, &sha_ctx );
