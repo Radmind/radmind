@@ -86,22 +86,26 @@ t_parse( struct transcript *tran )
     switch( *argv[ 0 ] ) {
     case 'd':				    /* dir */
 #ifdef __APPLE__
-	if ( ac == 6 ) {
-	    base64_d( argv[ 5 ], strlen( argv[ 5 ] ),
-		tran->t_pinfo.pi_afinfo.fi.fi_data );
-	}
 	if (( ac != 5 ) && ( ac != 6 )) {
 	    fprintf( stderr, "%s: line %d: expected 5 or 6 arguments, got %d\n",
-#else !__APPLE__
-	if ( ac != 5 ) {
-	    fprintf( stderr, "%s: line %d: expected 5 arguments, got %d\n",
-#endif __APPLE__
 		    tran->t_fullname, tran->t_linenum, ac );
 	    exit( 2 );
 	}
+#else !__APPLE__
+	if ( ac != 5 ) {
+	    fprintf( stderr, "%s: line %d: expected 5 arguments, got %d\n",
+		    tran->t_fullname, tran->t_linenum, ac );
+	    exit( 2 );
+	}
+#endif __APPLE__
+
 	tran->t_pinfo.pi_stat.st_mode = strtol( argv[ 2 ], NULL, 8 );
 	tran->t_pinfo.pi_stat.st_uid = atoi( argv[ 3 ] );
 	tran->t_pinfo.pi_stat.st_gid = atoi( argv[ 4 ] );
+	if ( ac == 6 ) {
+	    base64_d( argv[ 5 ], strlen( argv[ 5 ] ),
+		    tran->t_pinfo.pi_afinfo.fi.fi_data );
+	}
 	break;
 
     case 'p':
@@ -403,11 +407,10 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 	if (( fs->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
 		( fs->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) ||
 #ifdef __APPLE__
-		( mode != tran_mode ) || ( memcmp( fs->pi_afinfo.fi.fi_data,
-		tran->t_pinfo.pi_afinfo.fi.fi_data, FINFOLEN ) != 0 )) {
-#else
-		( mode != tran_mode )) {
+		( memcmp( fs->pi_afinfo.fi.fi_data,
+		tran->t_pinfo.pi_afinfo.fi.fi_data, FINFOLEN ) != 0 ) ||
 #endif __APPLE__
+		( mode != tran_mode )) {
 	    t_print( fs, tran, PR_STATUS );
 	    
 	}

@@ -92,12 +92,11 @@ update( const char *path, char *displaypath, int present, int newfile,
 	break;
 
     case 'd':
-
+	if (( tac != 5 )
 #ifdef __APPLE__
-	if (( tac != 5 ) && ( tac != 6 )) {
-#else
-	if ( tac != 5 ) {
+		&& ( tac != 6 )
 #endif __APPLE__
+		) {
 	    fprintf( stderr,
 		"%d: incorrect number of arguments\n", linenum );
 	    return( 1 );
@@ -128,7 +127,7 @@ update( const char *path, char *displaypath, int present, int newfile,
 		printf( "%s: updating", displaypath );
 	    }
 	}
-	if( mode != st->st_mode ) {
+	if ( mode != st->st_mode ) {
 	    if ( chmod( path, mode ) != 0 ) {
 		perror( path );
 		return( 1 );
@@ -137,7 +136,7 @@ update( const char *path, char *displaypath, int present, int newfile,
 	}
 
 	/* check uid & gid */
-	if( uid != st->st_uid  || gid != st->st_gid ) {
+	if ( uid != st->st_uid || gid != st->st_gid ) {
 	    if ( chown( path, uid, gid ) != 0 ) {
 		perror( path );
 		return( 1 );
@@ -149,34 +148,20 @@ update( const char *path, char *displaypath, int present, int newfile,
 		if ( !quiet ) printf( " gid" );
 	    }
 	}
+
 #ifdef __APPLE__
 	/* Check finder info */
 	if ( tac == 6 ) {
+	    memset( fi_data, 0, sizeof( fi_data ));
 	    base64_d( targv[ 5 ], strlen( targv[ 5 ] ), fi_data );
-	    tran_finfo++;
+	} else {
+	    memcpy( fi_data, null_buf, sizeof( null_buf ));
 	}
-	if ( memcmp( fi_data, null_buf, sizeof( null_buf )) != 0 ) {
-	    fs_finfo++;
-	}
-	if ( fs_finfo && !tran_finfo ) {
-	    //remove fs_finfo
-	    if ( setattrlist( path, &alist, null_buf, sizeof( null_buf ),
-		    FSOPT_NOFOLLOW ) != 0 ) {
+	if ( memcmp( afinfo->fi.fi_data, fi_data, FINFOLEN ) != 0 ) {
+	    if ( setattrlist( path, &alist,
+		    fi_data, FINFOLEN, FSOPT_NOFOLLOW ) != 0 ) {
 		fprintf( stderr,
-		    "retrieve %s failed: Could not set attributes\n",
-		    path );
-		return( -1 );
-	    }
-	    if ( !quiet ) printf( " finder-info" );
-	}
-	if ( tran_finfo && ( !fs_finfo || ( fs_finfo &&
-		( memcmp( afinfo->fi.fi_data, fi_data, FINFOLEN ) != 0 )))) {
-	    //set fs_finfo
-	    if ( setattrlist( path, &alist, fi_data, FINFOLEN,
-		    FSOPT_NOFOLLOW ) != 0 ) {
-		fprintf( stderr,
-		    "retrieve %s failed: Could not set attributes\n",
-		    path );
+		    "retrieve %s failed: Could not set attributes\n", path );
 		return( -1 );
 	    }
 	    if ( !quiet ) printf( " finder-info" );

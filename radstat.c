@@ -31,6 +31,8 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 {
 #ifdef __APPLE__
     struct stat			rsrc_st;
+    static char			null_buf[ 32 ] = { 0 };
+    extern struct attrlist 	alist;
 #endif __APPLE__
 
     if ( lstat( path, st ) != 0 ) {
@@ -39,15 +41,11 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
     switch( st->st_mode & S_IFMT ) {
     case S_IFREG:
 #ifdef __APPLE__
+	/* Check to see if it's an HFS+ file */
 	if ( afinfo != NULL ) {
-	    static char			null_buf[ 32 ] = { 0 };
-	    extern struct attrlist 	alist;
-
-	    /* Check to see if it's an HFS+ file */
 	    if (( getattrlist( path, &alist, &afinfo->fi,
-		    sizeof( struct finderinfo ), FSOPT_NOFOLLOW ) == 0 )
-		    && ( memcmp( &afinfo->fi.fi_data, null_buf,
-		    sizeof( null_buf )) != 0 )) {
+		    sizeof( struct finderinfo ), FSOPT_NOFOLLOW ) == 0 ) &&
+    ( memcmp( &afinfo->fi.fi_data, null_buf, sizeof( null_buf )) != 0 )) {
 		*type = 'a';
 		break;
 	    }
@@ -55,38 +53,44 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 #endif __APPLE__
 	*type = 'f';
 	break;
+
     case S_IFDIR:
 #ifdef __APPLE__
+	/* Get any finder info */
 	if ( afinfo != NULL ) {
-	    extern struct attrlist 	alist;
-
-	    /* Get any finder info */
 	    getattrlist( path, &alist, &afinfo->fi,
 		sizeof( struct finderinfo ), FSOPT_NOFOLLOW );
 	}
 #endif __APPLE__
 	*type = 'd';
 	break;
+
     case S_IFLNK:
 	*type = 'l';
 	break;
+
     case S_IFCHR:
 	*type = 'c';
 	break;
+
     case S_IFBLK:
 	*type = 'b';
 	break;
+
 #ifdef sun
     case S_IFDOOR:
 	*type = 'D';
 	break;
 #endif sun
+
     case S_IFIFO:
 	*type = 'p';
 	break;
+
     case S_IFSOCK:
 	*type = 's';
 	break;
+
     default:
 	return ( 1 );
     }
