@@ -164,6 +164,7 @@ main( int argc, char **argv )
 	    }
 
 	    if ( !tran->t_pinfo.pi_minus ) {
+		printf( "%s:\n", tran->t_shortname );
 		t_print( NULL, tran, PR_TRAN_ONLY );
 	    }
 
