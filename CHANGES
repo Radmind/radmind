@@ -1,3 +1,8 @@
+0.8.1
+    Commented out "extra tokens" on #endif for linux compiling.
+    Added wildcard and directory finder-info to man pages.
+    Added numeric range ( <min-max> ) support for config file.
+
 0.8.0
     Added access checking to the retr and stat commands on sever based on a
 	clients command file.
