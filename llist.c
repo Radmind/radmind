@@ -17,9 +17,9 @@ ll_allocate( char *name )
     } 
 
     /* copy info into new item */
-    strcpy( new->ll_info.name, name );
+    strcpy( new->ll_info.i_name, name );
     new->ll_next = NULL;
-    new->ll_info.chksum = 0;
+    new->ll_info.i_chksum = 0;
     new->ll_flag = 0;
 
     return new;
@@ -33,7 +33,7 @@ ll_free( struct llist *head )
     
     for ( ; head != NULL; head = next ) {
         next = head->ll_next;
-	free( head->ll_info.name );
+	free( head->ll_info.i_name );
         free( head );
     }
 }
@@ -47,7 +47,7 @@ ll_insert( struct llist **headp, struct llist *new )
 
     /* find where in the list to put the new entry */
     for ( current = headp; *current != NULL; current = &(*current)->ll_next) {
-	ret = strcmp( new->ll_info.name, (*current)->ll_info.name );
+	ret = strcmp( new->ll_info.i_name, (*current)->ll_info.i_name );
 	if ( ret <= 0 ) {
 	    break;
 	}
