@@ -64,6 +64,24 @@ getnextline( struct tran *tran )
     } else {
 	tran->remove = 0;
     }
+
+    /* Check transcript order */
+    if ( tran->prepath != 0 ) {
+	if ( pathcmp( tran->targv[ 1 ], tran->prepath ) < 0 ) {
+	    fprintf( stderr, "%s: line %d: bad sort order\n",
+			tran->name, tran->linenum );
+	    return( 1 );
+	}
+    }
+    len = strlen( tran->targv[ 1 ] );
+    if ( snprintf( tran->prepath, MAXPATHLEN, "%s",
+	    tran->targv[ 1 ]) > MAXPATHLEN ) { 
+	fprintf( stderr, "%s: line %d: path too long\n",
+		tran->name, tran->linenum );
+	return( 1 );
+    }
+
+    tran->linenum++;
     return( 0 );
 }
 
@@ -156,6 +174,8 @@ main( int argc, char **argv )
 	}
 	trans[ i ]->num = i;
 	trans[ i ]->eof = 0;
+	trans[ i ]->linenum = 0;
+	*trans[ i ]->prepath = 0;
 
 	/* open tran */
 	if ( ( trans[ i ]->fs = fopen( argv[ i + optind ], "r" ) ) == NULL ) {
@@ -179,18 +199,22 @@ main( int argc, char **argv )
 	}
 	trans[ i ]->line = NULL;
 	if ( getnextline( trans[ i ] ) < 0 ) {
-	    fprintf( stderr, "getnextline\n" );
 	    exit( 1 );
 	}
     }
 
-    /* Get new transcript name from transcript path */
-    if ( ( tname = strrchr( tpath, '/' ) ) == NULL ) {
-	tname = tpath;
-	tpath = ".";
+    if ( force ) {
+	tname = trans[ 1 ]->name;
+	tpath = trans[ 1 ]->path;
     } else {
-	*tname = (char)'\0';
-	tname++;
+	/* Get new transcript name from transcript path */
+	if ( ( tname = strrchr( tpath, '/' ) ) == NULL ) {
+	    tname = tpath;
+	    tpath = ".";
+	} else {
+	    *tname = (char)'\0';
+	    tname++;
+	}
     }
 
     if ( !force ) {
@@ -220,7 +244,7 @@ main( int argc, char **argv )
 	    candidate = i;
 	    fileloc = i;
 
-	    if ( force && ( candidate == ( tcount -1 ) ) ) {
+	    if ( force && ( candidate == ( tcount - 1 ) ) ) {
 		goto outputline;
 	    }
 
@@ -232,6 +256,7 @@ main( int argc, char **argv )
 		cmpval = pathcmp( trans[ candidate ]->targv[ 1 ],
 		    trans[ j ]->targv[ 1 ] );
 		if ( cmpval == 0 ) {
+		    /* File match */
 
 		    if ( ( noupload ) && ( *trans[ candidate ]->targv[ 0 ]
 			    == 'f' ) ) {
@@ -252,10 +277,8 @@ main( int argc, char **argv )
 		    }
 		    if ( ( force ) && ( *trans[ j ]->targv[ 0 ] == 'f' ) ) {
 			/* Remove file from lower precedence transcript */
-			sprintf( opath,"%s/../file/%s/%s",
-			    trans[ j ]->path,
-			    trans[ j ]->name,
-			    trans[ j ]->targv[ 1 ] );
+			sprintf( opath,"%s/../file/%s/%s", trans[ j ]->path,
+			    trans[ j ]->name, trans[ j ]->targv[ 1 ] );
 			if ( unlink( opath ) != 0 ) {
 			    perror( opath );
 			    exit( 1 );
@@ -264,7 +287,6 @@ main( int argc, char **argv )
 		    }
 		    /* Advance lower precedence transcript */
 		    if ( getnextline( trans[ j ] ) < 0 ) {
-			fprintf( stderr, "getnextline\n" );
 			exit( 1 );
 		    }
 		} else if ( cmpval > 0 ) {
@@ -285,45 +307,25 @@ main( int argc, char **argv )
 		goto skipline;
 	    }
 	    /* output non-files */
-	    if ( force && ( *trans[ candidate ]->targv[ 0 ] == 'd' ) ) {
-		sprintf( npath, "%s/../file/%s/%s", tpath, tname,
-		    trans[ candidate ]->targv[ 1 ] );
-		if ( mkdirs( npath ) != 0 ) {
-		    perror( npath );
-		    exit( 1 );
-		}
-		sprintf( npath, "%s/../file/%s/%s", tpath, tname,
-		    trans[ candidate ]->targv[ 1 ] );
-		if ( mkdir( npath, 0777 ) != 0 ) {
-		    perror( npath );
-		    exit( 1 );
-		}
-		if ( verbose ) printf( "created %s\n", npath );
-	    }
 	    if ( *trans[ candidate ]->targv[ 0 ] != 'f' ) {
 		goto outputline;
 	    }
 
-	    sprintf( opath,"%s/../file/%s/%s", trans[ candidate ]->path,
-		trans[ fileloc ]->name, trans[ candidate ]->targv[ 1 ] );
-
-	    if ( force ) {
-		sprintf( npath, "%s/../file/%s/%s", tpath, tname,
-		    trans[ candidate ]->targv[ 1 ] );
-		if ( copy( opath, npath ) != 0 ) {
-		    exit( 1 );
-		}
-		if ( verbose ) printf( "copied %s to %s\n", opath, npath );
-		goto outputline;
-	    }
-
-	    sprintf( npath, "%s/../file/%s.%d/%s", tpath, tname,
-		(int)getpid(), trans[ candidate ]->targv[ 1 ] );
 	    /*
 	     * Assume that directory structure is present so the entire path
 	     * is not recreated for every file.  Only if link fails is
 	     * mkdirs() called.
 	     */
+	    sprintf( opath,"%s/../file/%s/%s", trans[ candidate ]->path,
+		trans[ fileloc ]->name, trans[ candidate ]->targv[ 1 ] );
+
+	    if ( !force ) {
+		sprintf( npath, "%s/../file/%s.%d/%s", tpath, tname,
+		    (int)getpid(), trans[ candidate ]->targv[ 1 ] );
+	    } else {
+		sprintf( npath, "%s/../file/%s/%s", tpath, tname,
+		    trans[ candidate ]->targv[ 1 ] );
+	    }
 
 	    /* First try to link file */
 	    if ( link( opath, npath ) != 0 ) {
@@ -331,8 +333,13 @@ main( int argc, char **argv )
 		/* If that fails, verify directory structure */
 		if ( ( file = strrchr( trans[ candidate ]->targv[ 1 ], '/' ) )
 			!= NULL ) {
-		    sprintf( npath, "%s/../file/%s.%d/%s", tpath,
-			tname, (int)getpid(), trans[ candidate ]->targv[ 1 ] ); 
+		    if ( !force ) {
+			sprintf( npath, "%s/../file/%s.%d/%s", tpath, tname,
+			    (int)getpid(), trans[ candidate ]->targv[ 1 ] );
+		    } else {
+			sprintf( npath, "%s/../file/%s/%s", tpath, tname,
+			    trans[ candidate ]->targv[ 1 ] );
+		    }
 		    if ( mkdirs( npath ) != 0 ) {
 			fprintf( stderr, "%s: mkdirs failed\n", npath );
 			exit( 1 );
@@ -341,8 +348,8 @@ main( int argc, char **argv )
 
 		/* Try link again */
 		if ( link( opath, npath ) != 0 ) {
-		    fprintf( stderr, "creating %s by linking to %s",
-			npath, opath );
+		    fprintf( stderr, "linking %s -> %s: ",
+			opath, npath );
 		    perror( "" );
 		    exit( 1 );
 		}
@@ -351,13 +358,13 @@ main( int argc, char **argv )
 		tname, trans[ candidate ]->targv[ 1 ]);
 		
 outputline:
+	    /* Output line */
 	    if ( fputs( trans[ candidate ]->line, ofs ) == EOF ) {
 		perror( trans[ candidate ]->line );
 		exit( 1 );
 	    }
 skipline:
 	    if ( getnextline( trans[ candidate ] ) != 0 ) {
-		fprintf( stderr, "getnextline\n" );
 		exit( 1 );
 	    }
 	}
