@@ -400,7 +400,7 @@ create_directories( char *path )
 {
     char 	*p;
 
-    for ( p = path; p != NULL; p = strchr( p, '/' )) {
+    for ( p = strchr( path, '/' ); p != NULL; p = strchr( p, '/' )) {
 	*p = '\0';
 	if ( mkdir( path, 0777 ) < 0 ) {
 	    if ( errno != EEXIST ) {
