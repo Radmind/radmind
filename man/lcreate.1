@@ -30,11 +30,12 @@
 .sp
 .SH DESCRIPTION
 .B lcreate
-reads a transcript and uploads all corresponding files to the radmind server.
+reads and uploads a transcript and all corresponding files to the
+radmind server.
 .sp
 .B lcreate
 verifies the size listed in the transcript with the actual size of the file 
-and stops on any differences.
+and stops on any differences.  
 If the -F option is given,
 .B lcreate
 will store the file on the server and give a warning.
@@ -44,8 +45,7 @@ If the -n option is given, no files or transcripts are uploaded.  Instead,
 uses access(2) to verify that all files in the transcript exist in the filesystem and are readable by the user.
 .sp
 If the -N option is
-given, indicating the transcript specified for upload is
-.B negative,
+given, indicating the transcript specified for upload is negative,
 .B lcreate
 will upload all corresponding files as zero length.
 .sp
@@ -59,6 +59,10 @@ with the -t option.
 .B lcreate
 will print ( to the standard output ) the entire protocol exchange with the
 radmind server when the -v option is given.
+.sp
+By default,
+.B lcreate
+displays the percentage of bytes processed in a format that can be passed directly to iHook.
 .sp
 .B lcreate
 stores a Macintosh HFS+ file's data and corresponding metadata in a single
@@ -129,7 +133,8 @@ a list  of supported checksumming algorithms in descending
 order of preference and then exits.
 .TP 19
 .B \-v
-displays communication with the radmind server.
+increase the verbosity.  -v produces one line for each file stored on the
+server.  -vv displays all communication with the radmind server.
 .sp
 .TP 19
 .BI \-w\  auth-level
