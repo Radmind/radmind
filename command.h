@@ -13,9 +13,10 @@ int		cmdloop ___P(( int ));
 int		cmd_lookup ___P(( char * ));
 char		**find_file ___P(( char *, char * ));
 void		do_chksum ___P(( char *, char * ));
+int		keyword ___P(( int, char*[] ));
 int		create_directories ___P (( char * ));
 extern char	*path_radmind;
-extern char	*c_hostname;
+extern char	*remote_host;
 
 struct command {
     char	*c_name;
