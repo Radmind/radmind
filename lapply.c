@@ -406,6 +406,7 @@ main( int argc, char **argv )
     while ( fgets( tline, MAXPATHLEN, f ) != NULL ) {
 	linenum++;
 
+	/* Check line length */
 	len = strlen( tline );
         if (( tline[ len - 1 ] ) != '\n' ) {
 	    fprintf( stderr, "%s: line %d: line too long\n", tline, linenum  );
@@ -418,6 +419,11 @@ main( int argc, char **argv )
 	}
 
 	tac = acav_parse( acav, targvline, &targv );
+
+        /* Skip blank lines and comments */
+        if (( tac == 0 ) || ( *targv[ 0 ] == '#' )) {
+	    continue;
+        }
 
 	if ( tac == 1 ) {
 	    strcpy( transcript, targv[ 0 ] );
