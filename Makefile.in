@@ -30,7 +30,7 @@ RADMINDSYSLOG=LOG_LOCAL7
 INCPATH=        @CPPFLAGS@ -I${srcdir}/libsnet -I.
 OPTOPTS=	@OPTOPTS@
 CC=		@CC@
-DEFS=		@PAMDEFS@ @TLSDEFS@ @ZEROCONFDEFS@
+DEFS=		
 LIBS=		-lsnet @LIBS@
 LDFLAGS=	-Llibsnet/.libs @LDFLAGS@ ${LIBS}
 INSTALL=	@INSTALL@
@@ -135,7 +135,7 @@ tls.o : tls.c
 		-c ${srcdir}/tls.c
 
 radmind : libsnet/libsnet.la ${RADMIND_OBJ} Makefile
-	${CC} ${CFLAGS} -o radmind ${RADMIND_OBJ} ${LDFLAGS} @PAMLIBS@ 
+	${CC} ${CFLAGS} -o radmind ${RADMIND_OBJ} ${LDFLAGS}
 
 fsdiff : ${FSDIFF_OBJ}
 	${CC} -o fsdiff ${FSDIFF_OBJ} ${LDFLAGS}

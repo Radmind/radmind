@@ -26,9 +26,15 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
-#ifdef PAM
-#include <pam_appl.h>
-#endif /* PAM */
+#ifdef HAVE_LIBPAM
+    #ifdef HAVE_PAM_PAM_APPL_H
+	#include <pam/pam_appl.h>
+    #elif HAVE_SECURITY_PAM_APPL_H
+	#include <security/pam_appl.h>
+    #else /* HAVE_PAM_ not defined */
+	die die die
+    #endif /* HAVE_PAM_* */
+#endif /* HAVE_LIBPAM */
 
 extern SSL_CTX  *ctx;
 
@@ -70,11 +76,11 @@ int		f_stor ___P(( SNET *, int, char *[] ));
 int		f_noauth ___P(( SNET *, int, char *[] ));
 int		f_notls ___P(( SNET *, int, char *[] ));
 int		f_starttls ___P(( SNET *, int, char *[] ));
-#ifdef PAM
+#ifdef HAVE_LIBPAM
 int		f_login ___P(( SNET *, int, char *[] ));
 int 		exchange( int num_msg, struct pam_message **msgm,
 		    struct pam_response **response, void *appdata_ptr );
-#endif /* PAM */
+#endif /* HAVE_LIBPAM */
 
 
 char		*user = NULL;
@@ -102,9 +108,9 @@ struct command	notls[] = {
     { "RETRieve",	f_notls },
     { "STORe",		f_notls },
     { "STARttls",       f_starttls },
-#ifdef PAM
+#ifdef HAVE_LIBPAM
     { "LOGIn",       	f_notls },
-#endif /* PAM */
+#endif /* HAVE_LIBPAM */
 };
 
 struct command	noauth[] = {
@@ -114,9 +120,9 @@ struct command	noauth[] = {
     { "STATus",		f_noauth },
     { "RETRieve",	f_noauth },
     { "STORe",		f_noauth },
-#ifdef PAM
+#ifdef HAVE_LIBPAM
     { "LOGIn",       	f_noauth },
-#endif /* PAM */
+#endif /* HAVE_LIBPAM */
 };
 
 struct command	auth[] = {
@@ -127,9 +133,9 @@ struct command	auth[] = {
     { "RETRieve",	f_retr },
     { "STORe",		f_stor },
     { "STARttls",       f_starttls },
-#ifdef PAM
+#ifdef HAVE_LIBPAM
     { "LOGIn",       	f_login },
-#endif /* PAM */
+#endif /* HAVE_LIBPAM */
 };
 
 struct command *commands  = NULL;
@@ -799,7 +805,7 @@ f_starttls( snet, ac, av )
     return( 0 );
 }
 
-#ifdef PAM
+#ifdef HAVE_LIBPAM
     int
 exchange( int num_msg, struct pam_message **msg,
     struct pam_response **resp, void *appdata_ptr)
@@ -953,7 +959,7 @@ f_login( snet, ac, av )
 
     return( 0 );
 }
-#endif /* PAM */
+#endif /* HAVE_LIBPAM */
 
 /* sets command file for connected host */
     int

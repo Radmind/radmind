@@ -14,46 +14,8 @@ AC_DEFUN([CHECK_SNET],
     else
 	LIBS="$LIBS -lsnet";
 	LDFLAGS="$LDFLAGS -L$snetdir";
-	HAVE_SNET=yes
     fi
-    AC_SUBST(HAVE_SNET)
     AC_MSG_RESULT(yes)
-])
-
-AC_DEFUN([CHECK_PAM],
-[
-    AC_MSG_CHECKING(for pam)
-    pamdirs="/usr/local /usr"
-    AC_ARG_WITH(pam,
-	    AC_HELP_STRING([--with-pam=DIR], [path to pam]),
-	    pamdirs="$withval")
-    for dir in $pamdirs; do
-	pamdir="$dir"
-	if test -f "$dir/include/security/pam_appl.h"; then
-	    found_pam="yes";
-	    CPPFLAGS="$CPPFLAGS -I$pamdir/include/security";
-	    break;
-	fi
-	if test -f "$dir/include/pam/pam_appl.h"; then
-	    found_pam="yes";
-	    CPPFLAGS="$CPPFLAGS -I$pamdir/include/pam";
-	    break
-	fi
-    done
-    if test x_$found_pam != x_yes; then
-	HAVE_PAM=no
-	PAMLIBS=;
-	AC_SUBST(PAMLIBS)
-	AC_MSG_RESULT(no)
-    else
-	PAMDEFS=-DPAM;
-	AC_SUBST(PAMDEFS)
-	PAMLIBS=-lpam;
-	AC_SUBST(PAMLIBS)
-	HAVE_PAM=yes
-	AC_SUBST(HAVE_PAM)
-	AC_MSG_RESULT(yes)
-    fi
 ])
 
 AC_DEFUN([CHECK_SSL],
@@ -81,13 +43,10 @@ AC_DEFUN([CHECK_SSL],
     if test x_$found_ssl != x_yes; then
 	AC_MSG_ERROR(cannot find ssl libraries)
     else
-	TLSDEFS=-DTLS;
-	AC_SUBST(TLSDEFS)
+	AC_DEFINE(HAVE_LIBSSL)
 	LIBS="$LIBS -lssl -lcrypto";
 	LDFLAGS="$LDFLAGS -L$ssldir/lib";
-	HAVE_SSL=yes
     fi
-    AC_SUBST(HAVE_SSL)
     AC_MSG_RESULT(yes)
 ])
 
@@ -107,13 +66,9 @@ AC_DEFUN([CHECK_ZEROCONF],
 	fi
     done
     if test x_$found_zeroconf != x_yes; then
-	HAVE_ZEROCONF=no
 	AC_MSG_RESULT(no)
     else
-	ZEROCONFDEFS=-DZEROCONF;
-	AC_SUBST(ZEROCONFDEFS)
-	HAVE_ZEROCONF=yes
-	AC_SUBST(HAVE_ZEROCONF)
+	AC_DEFINE(HAVE_ZEROCONF)
 	AC_MSG_RESULT(yes)
     fi
 ])

@@ -39,9 +39,11 @@ AC_CHECK_LIB([nsl], [inet_ntoa])
 AC_CHECK_LIB([socket], [socket])
 AC_CHECK_LIB([ssl], [SSL_accept], , [CHECK_SSL])
 AC_CHECK_LIB([crypto], [SSLeay_version], , [CHECK_SSL])
-AC_CHECK_LIB([pam], [pam_start], , [CHECK_PAM])
+AC_CHECK_LIB([pam], [pam_start],
+    AC_CHECK_HEADERS(pam/pam_appl.h, , [AC_CHECK_HEADERS(security/pam_appl.h)]))
 
 CHECK_ZEROCONF
+
 
 # Miscellaneous:
 if test x_$GCC = x_yes; then
