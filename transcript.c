@@ -114,7 +114,14 @@ t_parse( struct transcript *tran )
 	tran->t_pinfo.pi_stat.st_gid = atoi( argv[ 4 ] );
 	tran->t_pinfo.pi_stat.st_mtime = atoi( argv[ 5 ] );
 	tran->t_pinfo.pi_stat.st_size = atoi( argv[ 6 ] );
-	tran->t_pinfo.pi_chksum = atoi( argv[ 7 ] );
+	if ( tran->t_type != T_NEGATIVE ) {
+	    if (( chksum ) && ( strcmp( "-", argv [ 7 ] ) == 0  )) {
+		fprintf( stderr, "%s: line %d: no chksums in transcript\n",
+			tran->t_name, tran->t_linenum );
+		exit( 1 );
+	    }
+	}
+	strcpy( tran->t_pinfo.pi_chksum_b64, argv[ 7 ] );
 	break;
 
     case '-':
@@ -130,7 +137,6 @@ t_parse( struct transcript *tran )
 	exit( 1 );
     }
 
-    tran->t_pinfo.pi_chksum = 0;
     return;
 }
 
@@ -223,11 +229,11 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 		( flag == PR_DOWNLOAD ))) {
 	    fprintf( outtran, "+ " );
 	}
-	fprintf( outtran, "f %-37s\t%.4lo %5d %5d %9d %7d %d\n", epath,
+	fprintf( outtran, "f %-37s\t%.4lo %5d %5d %9d %7d %s\n", epath,
 		(unsigned long)( T_MODE & cur->pi_stat.st_mode ), 
 		(int)cur->pi_stat.st_uid, (int)cur->pi_stat.st_gid,
 		(int)cur->pi_stat.st_mtime, (int)cur->pi_stat.st_size,
-		cur->pi_chksum );
+		cur->pi_chksum_b64 );
 	break;
 
     case 'c':
@@ -268,6 +274,9 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
     } 
     if ( ret < 0 ) {
 	/* name is in the fs, but not in the tran */
+	if ( cur->pi_type == 'f' ) {
+	    do_chksum( cur );
+	}
 	t_print( cur, tran, PR_FS_ONLY );
 	return T_MOVE_FS;
     } 
@@ -286,7 +295,9 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
     switch( cur->pi_type ) {
     case 'f':			    /* file */
 	if ( tran->t_type != T_NEGATIVE ) {
-	    if ( chksum && ( cur->pi_chksum != tran->t_pinfo.pi_chksum )) {
+	    do_chksum( cur );
+	    if (( chksum ) && 
+	strcmp( cur->pi_chksum_b64, tran->t_pinfo.pi_chksum_b64 ) != 0 ) {
 		t_print( cur, tran, PR_DOWNLOAD );
 		break;
 	    }

@@ -29,7 +29,7 @@ struct pathinfo {
     char		pi_name[ MAXPATHLEN ];
     char		pi_link[ MAXPATHLEN ];
     struct stat		pi_stat;
-    int			pi_chksum;
+    char		pi_chksum_b64[ 29 ];
     dev_t		pi_dev;
 };
 
@@ -48,3 +48,4 @@ void	transcript_init( char * );
 void	transcript_free( void );
 char	*hardlink( struct pathinfo * );
 void	hardlink_free( void );
+void	do_chksum( struct pathinfo * );
