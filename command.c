@@ -591,8 +591,8 @@ command_k( char *path_config )
 	}
 	if ( ac != 2 ) {
 	    syslog( LOG_ERR, "config file: line %d: invalid number of \
-		arguments\n" );
-	    return( -1 );
+		arguments\n", linenum );
+	    continue;
 	}
 
 	if (( strcasecmp( av[ 0 ], remote_host ) == 0 )
