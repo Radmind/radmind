@@ -117,7 +117,10 @@ main( int argc, char **argv, char **envp )
 		perror( "malloc" );
 		exit( 2 );
 	    }
-	    sprintf( opt, "-%c", c );
+	    if ( snprintf( opt, sizeof( opt ), "-%c", c ) > sizeof( opt )) {
+		fprintf( stderr, "-%c: too large\n", c );
+		exit( 2 );
+	    }
 	    if (( diffargv[ diffargc++ ] = strdup( opt )) == NULL ) {
 		perror( "strdup" );
 		exit( 2 );

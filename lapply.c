@@ -253,7 +253,11 @@ filechecklist:
 
 	/* DOWNLOAD */
 	if ( *command == '+' ) {
+#ifdef DARWIN
+	    if (( *targv[ 0 ] != 'f' ) || ( *targv[ 0 ] != 'a' )) {
+#else !DARWIN
 	    if ( *targv[ 0 ] != 'f' ) {
+#endif DARWIN
 		fprintf( stderr, "line %d: \"%c\" invalid download type\n",
 			linenum, *targv[ 0 ] );
 		return( 1 );
@@ -262,9 +266,18 @@ filechecklist:
 	    strcpy( chksum_b64, targv[ 7 ] );
 
 	    if ( special ) {
-		sprintf( pathdesc, "SPECIAL %s", encode( path ));
+		if ( snprintf( pathdesc, MAXPATHLEN * 2, "SPECIAL %s",
+			encode( path ))) {
+		    fprintf( stderr, "SPECIAL %s: too long\n", encode( path ));
+		    return( 1 );
+		}
 	    } else {
-		sprintf( pathdesc, "FILE %s %s", transcript, encode( path ));
+		if ( snprintf( pathdesc, MAXPATHLEN * 2, "FILE %s %s",
+			transcript, encode( path ))) {
+		    fprintf( stderr, "FILE %s %s: too long\n", transcript,
+			encode( path ));
+		    return( 1 );
+		}
 	    }
 
 	    if ( retr( sn, pathdesc, path, NULL, chksum_b64,
@@ -285,6 +298,9 @@ filechecklist:
 		perror( "update" );
 		return( 1 );
 	    }
+#ifdef DARWIN
+	    // Convert apple single -> apple file here
+#endif
 	    if ( rename( temppath, path ) != 0 ) {
 		perror( temppath );
 		return( 1 );
