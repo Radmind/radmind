@@ -359,6 +359,19 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
 	break;
 
     case 'c':
+	dev = cur->pi_stat.st_rdev;
+	if ( tran->t_type != T_NEGATIVE ) {
+	    if (( cur->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
+		    ( cur->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) || 
+		    ( mode != tran_mode )) {
+		t_print( cur, tran, PR_STATUS );
+	    }
+	}
+	if ( dev != tran->t_pinfo.pi_dev ) {
+	    t_print( cur, tran, PR_STATUS );
+	}	
+	break;
+
     case 'b':
 	dev = cur->pi_stat.st_rdev;
 	if (( cur->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
