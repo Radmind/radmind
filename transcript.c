@@ -559,10 +559,11 @@ t_new( int type, char *name )
 }
 
     void
-transcript_init(  char *cmd )
+transcript_init( char *prepath, char *cmd )
 {
     char	**av;
     char	line[ MAXPATHLEN ];
+    char	fullpath[ MAXPATHLEN ];
     int		length, ac;
     int		foundspecial = 0;
     extern int	edit_path;
@@ -578,7 +579,13 @@ transcript_init(  char *cmd )
 	return;
     }
 
-    if (( fp = fopen( cmd, "r" )) == NULL ) {
+    if ( strlen( prepath ) + strlen( cmd ) + 2 > MAXPATHLEN ) {
+	fprintf( stderr, "command path too long: %s/%s\n", prepath, cmd );
+	exit( 1 );
+    }
+    sprintf( fullpath, "%s/%s", prepath, cmd);
+
+    if (( fp = fopen( fullpath, "r" )) == NULL ) {
 	if ( edit_path == FS2TRAN ) {
 	    perror( cmd );
 	    exit( 1 );
@@ -605,19 +612,21 @@ transcript_init(  char *cmd )
 	    exit ( 1 );
 	} 
 
-	if ( strlen( av[ 1 ] ) > MAXPATHLEN ) {
+	if ( strlen( prepath ) + strlen( av[ 1 ] ) + 2 > MAXPATHLEN ) {
 	    fprintf( stderr, "command: line %d: transcript name too long\n",
 		    linenum );
-	    fprintf( stderr, "command: line %d: %s\n", linenum, av[ 1 ] );
+	    fprintf( stderr, "command: line %d: %s/%s\n",
+		    linenum, prepath, av[ 1 ] );
 	    exit( 1 );
 	}
+	sprintf( fullpath, "%s/%s", prepath, av[ 1 ] );
 
 	switch( *av[ 0 ] ) {
 	case 'p':				/* positive */
-	    t_new( T_POSITIVE, av[ 1 ] );
+	    t_new( T_POSITIVE, fullpath );
 	    break;
 	case 'n':				/* negative */
-	    t_new( T_NEGATIVE, av[ 1 ] );
+	    t_new( T_NEGATIVE, fullpath );
 	    break;
 	case 's':				/* special */
 	    foundspecial++;
