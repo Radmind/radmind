@@ -39,7 +39,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *location, char *chksumval,
     int			dodots = 0;
 
     if ( chksum && ( strcmp( chksumval, "-" ) == 0 ) ) {
-	fprintf( stderr, "Chksum not in transcript\n" );
+	fprintf( stderr, "line %d: Chksum not listed\n", linenum);
 	return( -1 );
     }
 
