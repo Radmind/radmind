@@ -77,11 +77,10 @@ t_parse( struct transcript *tran )
     tran->t_pinfo.pi_type = argv[ 0 ][ 0 ];
 
     epath = decode( argv[ 1 ] );
-
     if ( pathcmp( epath, tran->t_pinfo.pi_name ) < 0 ) {
 	printf( "%s: line %d: bad sort order\n",
 		tran->t_name, tran->t_linenum );
-	exit ( 1 );
+	exit( 1 );
     }
 
     strcpy( tran->t_pinfo.pi_name, epath );
@@ -535,6 +534,7 @@ t_new( int type, char *name )
 	perror( "malloc" );
 	exit( 1 );
     }
+    memset( new, 0, sizeof( struct transcript ));
 
     new->t_type = type;
     if ( new->t_type == T_NULL ) {
@@ -548,7 +548,6 @@ t_new( int type, char *name )
 	    perror( name );
 	    exit( 1 );
 	}
-
 	t_parse( new );
     }
 
@@ -564,7 +563,7 @@ transcript_init(  char *cmd )
     char	**av;
     char	line[ MAXPATHLEN ];
     int		length, ac;
-    int		special = 0;
+    int		foundspecial = 0;
     extern int	edit_path;
     FILE	*fp;
 
@@ -620,7 +619,7 @@ transcript_init(  char *cmd )
 	    t_new( T_NEGATIVE, av[ 1 ] );
 	    break;
 	case 's':				/* special */
-	    special = 1;
+	    foundspecial++;
 	    continue;
 	default:
 	    fprintf( stderr, "command: line %d: '%s' invalid\n",
@@ -632,7 +631,7 @@ transcript_init(  char *cmd )
     fclose( fp );
 
     /* open the special transcript if there were any special files */
-    if ( special == 1 ) {
+    if ( foundspecial ) {
 	t_new( T_SPECIAL, "special.T" );
     }
 
