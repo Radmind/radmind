@@ -465,12 +465,12 @@ f_stor( SNET *sn, int ac, char *av[] )
     }
 
 
-    if (( fd = open( upload, O_CREAT|O_EXCL|O_WRONLY, 0444 )) < 0 ) {
+    if (( fd = open( upload, O_CREAT|O_EXCL|O_WRONLY, 0666 )) < 0 ) {
 	if ( mkdirs( upload ) < 0 ) {
 	    snet_writef( sn, "%d %s: %s\r\n", 555, upload, strerror( errno ));
 	    return( 1 );
 	}
-	if (( fd = open( upload, O_CREAT|O_EXCL|O_WRONLY, 0444 )) < 0 ) {
+	if (( fd = open( upload, O_CREAT|O_EXCL|O_WRONLY, 0666 )) < 0 ) {
 	    snet_writef( sn, "%d %s: %s\r\n", 555, upload, strerror( errno ));
 	    return( 1 );
 	}
