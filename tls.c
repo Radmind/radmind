@@ -39,21 +39,26 @@ tls_client_setup( int use_randfile, int authlevel, char *ca, char *cert, char *p
     if ( use_randfile ) {
 	char        randfile[ MAXPATHLEN ];
 
+	/* generates a default path for the random seed file */
 	if ( RAND_file_name( randfile, sizeof( randfile )) == NULL ) {
 	    fprintf( stderr, "RAND_file_name: %s\n",
 		    ERR_error_string( ERR_get_error(), NULL ));
 	    return( -1 );
 	}
-	if ( RAND_load_file( randfile, -1 ) <= 0 ) { 
+
+	/* reads the complete randfile and adds them to the PRNG */
+	if ( RAND_load_file( randfile, -1 ) <= 0 ) {
 	    fprintf( stderr, "RAND_load_file: %s: %s\n", randfile,
 		    ERR_error_string( ERR_get_error(), NULL ));
 	    return( -1 );
 	}
+
+	/* writes a number of random bytes (currently 1024) to randfile */
 	if ( RAND_write_file( randfile ) < 0 ) {
 	    fprintf( stderr, "RAND_write_file: %s: %s\n", randfile,
 		    ERR_error_string( ERR_get_error(), NULL ));
 	    return( -1 );
-	}     
+	}
     }
 
     if (( ctx = SSL_CTX_new( SSLv23_client_method())) == NULL ) {
