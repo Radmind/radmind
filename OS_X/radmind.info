@@ -1,16 +1,9 @@
-Title                	Radmind for Mac OS X
-Version              	0.6.0
-Description          	This package installs radmind for Mac OS X
+# the name to display in Installer.app
+Title		Radmind
 
-DefaultLocation      	/
-Relocatable          	NO
+# This will indicate that the packages are in the .mpkg directory itself
+PackageLocation ./
 
-NeedsAuthorization   	YES
-Application          	NO
-InstallOnly          	NO
-DisableStop         	NO
-rootVolumeOnly		YES
-RequiresReboot 		NO
-UseUserMask 		YES
-OverwritePermissions 	NO
-InstallFat 		NO
+# Setting this to YES will cause failures not to show and checks to be
+# skipped.  Just leave it as NO
+FastInstall NO

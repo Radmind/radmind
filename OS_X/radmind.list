@@ -1,0 +1,5 @@
+# It is crucial that you have a return after the last line in the .list file.
+# Otherwise loading the .mpkg will fail.
+radmind-client.pkg:Required
+radmind-server.pkg::Unselected
+

@@ -17,18 +17,18 @@ RADMIND_HOST=radmind
 RADMINDSYSLOG=LOG_LOCAL7
 
 # Solaris
-CC=	gcc
-CWARN=	-Wall -Wmissing-prototypes -Wconversion
-ADDLIBS=	-lnsl -lsocket
-INSTALL=	/usr/ucb/install
-OPENSSL=	/usr/local/openssl
+#CC=	gcc
+#CWARN=	-Wall -Wmissing-prototypes -Wconversion
+#ADDLIBS=	-lnsl -lsocket
+#INSTALL=	/usr/ucb/install
+#OPENSSL=	/usr/local/openssl
 
 # MacOSX
-#CC=	cc
-##CWARN=	-Wall -Wmissing-prototypes -Wconversion
-#ADDLIBS=
-#INSTALL=	install
-#OPENSSL=
+CC=	cc
+CWARN=	-Wall -Wmissing-prototypes -Wconversion
+ADDLIBS=
+INSTALL=	install
+OPENSSL=
 
 #
 # Should not need to edit anything after here.
@@ -179,34 +179,43 @@ install	: all
 
 STARTUPITEMSDIR=/Library/StartupItems
 STARTUPDIR=${STARTUPITEMSDIR}/RadmindServer
-PACKAGEDIR=${DISTDIR}/package
+CLIENTPKGDIR=${DISTDIR}/client
+SERVERPKGDIR=${DISTDIR}/server
 
 package : all
-	mkdir -p -m 0755 ${PACKAGEDIR}${SBINDIR}
-	${INSTALL} -o root -g wheel -m 0555 -c radmind ${PACKAGEDIR}${SBINDIR}
-	mkdir -p -m 0755 ${PACKAGEDIR}${BINDIR}
+	# Create server package #
+	mkdir -p -m 0755 ${SERVERPKGDIR}${SBINDIR}
+	${INSTALL} -o root -g wheel -m 0555 -c radmind ${SERVERPKGDIR}${SBINDIR}
+	mkdir -p -m 0775 ${SERVERPKGDIR}${STARTUPITEMSDIR}
+	mkdir -m 0755 ${SERVERPKGDIR}${STARTUPDIR}
+	${INSTALL} -o root -g wheel -m 0755 -c OS_X/RadmindServer \
+	    ${SERVERPKGDIR}${STARTUPDIR}
+	${INSTALL} -o root -g wheel -m 0644 -c OS_X/StartupParameters.plist \
+	    ${SERVERPKGDIR}${STARTUPDIR};
+
+	# Create client package #
+	mkdir -p -m 0755 ${CLIENTPKGDIR}${BINDIR}
 	for i in ${BINTARGETS}; do \
-	    ${INSTALL} -o root -g wheel -m 0555 -c $$i ${PACKAGEDIR}${BINDIR}/; \
+	    ${INSTALL} -o root -g wheel -m 0555 -c $$i \
+		${CLIENTPKGDIR}${BINDIR}/; \
 	done
-	mkdir -p -m 0755 ${PACKAGEDIR}${MANDIR}/man1   
+	mkdir -p -m 0755 ${CLIENTPKGDIR}${MANDIR}/man1   
 	for i in ${MAN1TARGETS}; do \
 	    ${INSTALL} -o root -g wheel -m 0444 -c $$i \
-		${PACKAGEDIR}${MANDIR}/man1/; \
+		${CLIENTPKGDIR}${MANDIR}/man1/; \
 	done 
-	mkdir -p -m 0755 ${PACKAGEDIR}${VARDIR}/client
+	mkdir -p -m 0755 ${CLIENTPKGDIR}${VARDIR}/client
 	${INSTALL} -o root -g staff -m 0755 -c OS_X/command.K \
-	    ${PACKAGEDIR}${VARDIR}/client
-	mkdir -p -m 0775 ${PACKAGEDIR}${STARTUPITEMSDIR}
-	mkdir -m 0755 ${PACKAGEDIR}${STARTUPDIR}
-	${INSTALL} -o root -g wheel -m 0755 -c OS_X/RadmindServer \
-	    ${PACKAGEDIR}${STARTUPDIR}
-	${INSTALL} -o root -g wheel -m 0644 -c OS_X/StartupParameters.plist \
-	    ${PACKAGEDIR}${STARTUPDIR};
+	    ${CLIENTPKGDIR}${VARDIR}/client
 	chown root:wheel ${DISTDIR}
 	find ${DISTDIR}/* -exec chown root:wheel {} \;
-	package ${PACKAGEDIR} OS_X/radmind.info -d .. 
-	chown root:wheel ../radmind.pkg
-	cd ..; tar zvcf radmind.pkg.tgz radmind.pkg/*
+	package ${CLIENTPKGDIR} OS_X/radmind-client.info -d ${DISTDIR}
+	package ${SERVERPKGDIR} OS_X/radmind-server.info -d ${DISTDIR}
+	rm -rf ${CLIENTPKGDIR} ${SERVERPKGDIR}
+	cp OS_X/radmind.info ${DISTDIR}
+	cp OS_X/radmind.list ${DISTDIR}
+	mv ${DISTDIR} ../radmind.mpkg
+	cd ..; tar zvcf radmind.mpkg.tgz radmind.mpkg/*
 
 clean :
 	rm -f *.o a.out core
