@@ -344,7 +344,7 @@ f_stat( SNET *sn, int ac, char *av[] )
     char		cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
     struct stat		st;
     int			key;
-    char		*enc_file, stranpath[ MAXPATHLEN ];
+    char		*enc_file;
     struct node		*node;
 
     switch ( key = keyword( ac, av )) {
@@ -448,8 +448,8 @@ f_stat( SNET *sn, int ac, char *av[] )
 	}
 
 	if (( av = special_t( path, enc_file )) == NULL ) {
-	    sprintf( stranpath, "transcript/special.T" );
-	    if (( av = special_t( stranpath, enc_file )) == NULL ) {
+	    if (( av = special_t( "transcript/special.T", enc_file ))
+		    == NULL ) {
 		snet_writef( sn, "%s %s %o %d %d %d %d %s\r\n", "f", enc_file, 
 		    DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, 
 		    st.st_mtime, (int)st.st_size, cksum_b64 );
