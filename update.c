@@ -10,11 +10,11 @@
 
 #include "update.h"
 
-extern int verbose;
+extern int quiet;
 extern int linenum;
 
     int
-update( char *path, int present, struct stat st, int tac, char **targv )
+update( char *path, char *displaypath, int present, int newfile, struct stat st, int tac, char **targv )
 {
     mode_t              mode;
     struct utimbuf      times;
@@ -33,13 +33,19 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 	uid = atoi( targv[ 3 ] );
 	gid = atoi( targv[ 4 ] );
 	times.modtime = atoi( targv[ 5 ] );
-	if ( verbose ) printf( "%s: updating", path );
+	if ( !quiet ) {
+	    if ( newfile ) {
+		printf( "%s: created updating", displaypath );
+	    } else {
+		printf( "%s: updating", displaypath );
+	    }
+	}
 	if( mode != st.st_mode ) {
 	    if ( chmod( path, mode ) != 0 ) {
 		perror( path );
 		return( 1 );
 	    }
-	    if ( verbose ) printf( " mode" );
+	    if ( !quiet ) printf( " mode" );
 	}
 	if( uid != st.st_uid  || gid != st.st_gid ) {
 	    if ( chown( path, uid, gid ) != 0 ) {
@@ -47,10 +53,10 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 		return( 1 );
 	    }
 	    if ( uid != st.st_uid ) {
-		if ( verbose ) printf( " uid" );
+		if ( !quiet ) printf( " uid" );
 	    }
 	    if ( gid != st.st_gid ) {
-		if ( verbose ) printf( " gid" );
+		if ( !quiet ) printf( " gid" );
 	    }
 	}
 
@@ -61,7 +67,7 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 		perror( path );
 		return( 1 );
 	    }
-	    if ( verbose ) printf( " time" ); 
+	    if ( !quiet ) printf( " time" ); 
 	}
 	break;
 
@@ -83,7 +89,7 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 		perror( path );
 		return( 1 );
 	    }
-	    if ( verbose ) printf( "%s created\n", path );
+	    newfile = 1;
 	    if ( lstat( path, &st ) != 0 ) {
 		perror( path );
 		return( 1 );
@@ -92,13 +98,19 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 	}
 
 	/* check mode */
-	if ( verbose ) printf( "%s: updating", path );
+	if ( !quiet ) {
+	    if ( newfile ) {
+		printf( "%s: created updating", displaypath );
+	    } else {
+		printf( "%s: updating", displaypath );
+	    }
+	}
 	if( mode != st.st_mode ) {
 	    if ( chmod( path, mode ) != 0 ) {
 		perror( path );
 		return( 1 );
 	    }
-	    if ( verbose ) printf( " mode" );
+	    if ( !quiet ) printf( " mode" );
 	}
 
 	/* check uid & gid */
@@ -108,10 +120,10 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 		return( 1 );
 	    }
 	    if ( uid != st.st_uid ) {
-		if ( verbose ) printf( " uid" );
+		if ( !quiet ) printf( " uid" );
 	    }
 	    if ( gid != st.st_gid ) {
-		if ( verbose ) printf( " gid" );
+		if ( !quiet ) printf( " gid" );
 	    }
 	}
 	break;
@@ -126,8 +138,8 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 	    perror( path );
 	    return( 1 );
 	}
-	if ( verbose ) printf( "%s hard linked to %s",
-	    path, targv[ 2 ] );
+	if ( !quiet ) printf( "%s: hard linked to %s",
+	    displaypath, targv[ 2 ] );
 	break;
 
     case 'l':
@@ -147,8 +159,8 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 	    perror( path );
 	    return( 1 );
 	}
-	if ( verbose ) printf( "%s symbolic linked to %s",
-	    path, targv[ 2 ] );
+	if ( !quiet ) printf( "%s: symbolic linked to %s",
+	    displaypath, targv[ 2 ] );
 	break;
 
     case 'p':
@@ -171,16 +183,22 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 		return( 1 );
 	    }
 	    present = 1;
-	    if ( verbose ) printf( "%s created\n", path );
+	    newfile = 1;
 	}
 	/* check mode */
-	if ( verbose ) printf( "%s: updating", path );
+	if ( !quiet ) {
+	    if ( newfile ) {
+		printf( "%s: created updating", displaypath );
+	    } else {
+		printf( "%s: updating", displaypath );
+	    }
+	}
 	if( mode != st.st_mode ) {
 	    if ( chmod( path, mode ) != 0 ) {
 		perror( path );
 		return( 1 );
 	    }
-	    if ( verbose ) printf( " mode" );
+	    if ( !quiet ) printf( " mode" );
 	}
 	/* check uid & gid */
 	if( uid != st.st_uid  || gid != st.st_gid ) {
@@ -189,10 +207,10 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 		return( 1 );
 	    }
 	    if ( uid != st.st_uid ) {
-		if ( verbose ) printf( " uid" );
+		if ( !quiet ) printf( " uid" );
 	    }
 	    if ( gid != st.st_gid ) {
-		if ( verbose ) printf( " gid" );
+		if ( !quiet ) printf( " gid" );
 	    }
 	}
 	break;
@@ -242,16 +260,16 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 		return( 1 );
 	    }
 	    present = 1;
-	    if ( verbose ) printf( "%s created\n", path );
+	    newfile = 1;
 	}
 	/* check mode */
-	if ( verbose ) printf( "%s: updating", path );
+	if ( !quiet ) printf( "%s: updating", path );
 	if( mode != st.st_mode ) {
 	    if ( chmod( path, mode ) != 0 ) {
 		perror( path );
 		return( 1 );
 	    }
-	    if ( verbose ) printf( " mode" );
+	    if ( !quiet ) printf( " mode" );
 	}
 	/* check uid & gid */
 	if( uid != st.st_uid  || gid != st.st_gid ) {
@@ -260,10 +278,10 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 		return( 1 );
 	    }
 	    if ( uid != st.st_uid ) {
-		if ( verbose ) printf( " uid" );
+		if ( !quiet ) printf( " uid" );
 	    }
 	    if ( gid != st.st_gid ) {
-		if ( verbose ) printf( " gid" );
+		if ( !quiet ) printf( " gid" );
 	    }
 	}
 	break;
@@ -283,13 +301,19 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 	    break;
 	}
 	/* check mode */
-	if ( verbose ) printf( "%s: updating", path );
+	if ( !quiet ) {
+	    if ( newfile ) {
+		printf( "%s: created updating", displaypath );
+	    } else {
+		printf( "%s: updating", displaypath );
+	    }
+	}
 	if( mode != st.st_mode ) {
 	    if ( chmod( path, mode ) != 0 ) {
 		perror( path );
 		return( 1 );
 	    }
-	    if ( verbose ) printf( " mode" );
+	    if ( !quiet ) printf( " mode" );
 	}
 	/* check uid & gid */
 	if( uid != st.st_uid  || gid != st.st_gid ) {
@@ -298,10 +322,10 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 		return( 1 );
 	    }
 	    if ( uid != st.st_uid ) {
-		if ( verbose ) printf( " uid" );
+		if ( !quiet ) printf( " uid" );
 	    }
 	    if ( gid != st.st_gid ) {
-		if ( verbose ) printf( " gid" );
+		if ( !quiet ) printf( " gid" );
 	    }
 	}
 	break;
@@ -310,7 +334,7 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 	return( 1 );
     }
 
-    if ( verbose ) printf( "\n" );
+    if ( !quiet ) printf( "\n" );
 
     return( 0 );
 }

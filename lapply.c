@@ -16,9 +16,13 @@
 #include "pathcmp.h"
 #include "update.h"
 
+int apply( FILE *f, char *parent, SNET *sn );
+void output( char *string);
+
 void		(*logger)( char * ) = NULL;
 int		linenum = 0;
 int		chksum = 0;
+int		quiet = 0;
 int		verbose = 0;
 int		special = 0;
 int		safe = 0;
@@ -26,9 +30,6 @@ int		network = 1;
 char		transcript[ 2 * MAXPATHLEN ] = { 0 };
 char		prepath[ MAXPATHLEN ]  = { 0 };
 extern char	*version, *checksumlist;
-
-int apply( FILE *f, char *parent, SNET *sn );
-void output( char *string);
 
 struct node {
     char                *path;
@@ -99,8 +100,6 @@ output( char *string )
 
 /*
  * Never exit.  Must return so main can close network connection.
- * 
- * Must save parent and command pointers between recursive calls.
  */
 
     int 
@@ -145,7 +144,7 @@ apply( FILE *f, char *parent, SNET *sn )
 	    } else {
 		special = 0;
 	    }
-	    if ( verbose ) printf( "Command file: %s\n", transcript );
+	    if ( verbose ) printf( "Transcript: %s\n", transcript );
 	    continue;
 	}
 
@@ -209,7 +208,7 @@ dirchecklist:
 			     perror( head->path );
 			     return( 1 );
 			}
-			if ( verbose ) printf( "%s deleted\n", path );
+			if ( !quiet ) printf( "%s: deleted\n", path );
 			node = head;
 			head = node->next;
 			free_node( node );
@@ -223,21 +222,21 @@ filechecklist:
 			perror( path );
 			return( 1 );
 		    }
-		    if ( verbose ) printf( "%s deleted\n", path );
+		    if ( !quiet ) printf( "%s: deleted\n", path );
 		} else {
 		    if ( ischild( path, head->path)) {
 			if ( unlink( path ) != 0 ) {
 			    perror( path );
 			    return( 1 );
 			}
-			if ( verbose ) printf( "%s deleted\n", path );
+			if ( !quiet ) printf( "%s: deleted\n", path );
 		    } else {
 			/* remove head */
 			if ( rmdir( head->path ) != 0 ) {
 			     perror( head->path );
 			     return( 1 );
 			}
-			if ( verbose ) printf( "%s deleted\n", path );
+			if ( !quiet ) printf( "%s: deleted\n", path );
 			node = head;
 			head = node->next;
 			free_node( node );
@@ -280,10 +279,10 @@ filechecklist:
 		return( 1 );
 	    }
 	    fstype = t_convert((int)( S_IFMT & st.st_mode ));
-	    present = 1;
 
 	    /* Update temp file*/
-	    if ( update( temppath, present, st, tac, targv ) != 0 ) {
+	    if ( update( temppath, path, present, 1, st, tac, targv )
+		    != 0 ) {
 		perror( "update" );
 		return( 1 );
 	    }
@@ -294,7 +293,7 @@ filechecklist:
 
 	} else { 
 	    /* UPDATE */
-	    if ( update( path, present, st, tac, targv ) != 0 ) {
+	    if ( update( path, path, present, 0, st, tac, targv ) != 0 ) {
 		perror( "update" );
 		return( 1 );
 	    }
@@ -308,7 +307,7 @@ filechecklist:
 	     perror( head->path );
 	     return( 1 );
 	}
-	if ( verbose ) printf( "%s deleted\n", path );
+	if ( quiet ) printf( "%s: deleted\n", path );
 	node = head;
 	head = node->next;
 	free_node( node );
@@ -328,7 +327,7 @@ main( int argc, char **argv )
     struct servent	*se;
     SNET		*sn;
 
-    while (( c = getopt ( argc, argv, "c:h:np:sVv" )) != EOF ) {
+    while (( c = getopt ( argc, argv, "c:h:np:qsVv" )) != EOF ) {
 	switch( c ) {
 	case 'c':
 	    if ( strcasecmp( optarg, "sha1" ) != 0 ) {
@@ -351,6 +350,10 @@ main( int argc, char **argv )
 		}
 		port = se->s_port;
 	    }
+	    break;
+	case 'q':
+	    quiet = 1;
+	    logger = NULL;
 	    break;
 	case 's':
 	    safe = 1;
@@ -400,7 +403,7 @@ main( int argc, char **argv )
 	    goto error0;
 	}
     } else {
-	if ( verbose ) printf( "No network connection\n" );
+	if ( !quiet ) printf( "No network connection\n" );
     }
 
     if ( apply( f, NULL, sn ) != 0 ) {
