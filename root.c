@@ -84,9 +84,6 @@ get_root( char *path, char *file_root, char *tran_root, char *tran_name )
             sprintf( tran_root, "%s", real_path );
         }
     }
-    printf( "file_root: %s\n", file_root );
-    printf( "tran_root: %s\n", tran_root );
-    printf( "tran_name: %s\n", tran_name );
 
     return( 0 );
 }
