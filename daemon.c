@@ -24,6 +24,8 @@
 
 #include "command.h"
 
+void            (*logger)( char * ) = NULL;
+
 int		debug = 0;
 int		backlog = 5;
 int		verbose = 0;

@@ -12,6 +12,8 @@
 #include "code.h"
 #include "pathcmp.h"
 
+void            (*logger)( char * ) = NULL;
+
 int		linenum = 0;
 int		chksum = 1;
 int		verbose = 0;

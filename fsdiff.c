@@ -11,6 +11,8 @@
 #include "llist.h"
 #include "applefile.h"
 
+void            (*logger)( char * ) = NULL;
+
 extern char	*version, *checksumlist;
 
 void	fs_walk( struct llist * );
