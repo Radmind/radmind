@@ -169,19 +169,19 @@ install	: all
 	done
 
 package : all
-        -mkdir ${DISTDIR}
-        -mkdir -p ${DISTDIR}${DESTDIR}
-        -mkdir -p ${DISTDIR}${SBINDIR}
-        ${INSTALL} -m 0555 -c radmind ${DISTDIR}${SBINDIR}/
-        -mkdir -p ${DISTDIR}${BINDIR}
-        for i in ${BINTARGETS}; do \
-            ${INSTALL} -m 0555 -c $$i ${DISTDIR}${BINDIR}/; \
-        done
-        -mkdir -p ${DISTDIR}/${MANDIR}
-        -mkdir -p ${DISTDIR}/${MANDIR}/man1
-        for i in ${MAN1TARGETS}; do \
-            ${INSTALL} -m 0444 -c $$i ${DISTDIR}${MANDIR}/man1/; \
-        done
+	-mkdir ${DISTDIR}
+	-mkdir -p ${DISTDIR}${DESTDIR}
+	-mkdir -p ${DISTDIR}${SBINDIR}
+	${INSTALL} -m 0555 -c radmind ${DISTDIR}${SBINDIR}/
+	-mkdir -p ${DISTDIR}${BINDIR}
+	for i in ${BINTARGETS}; do \
+	    ${INSTALL} -m 0555 -c $$i ${DISTDIR}${BINDIR}/; \
+	done
+	-mkdir -p ${DISTDIR}/${MANDIR}
+	-mkdir -p ${DISTDIR}/${MANDIR}/man1
+	for i in ${MAN1TARGETS}; do \
+	    ${INSTALL} -m 0444 -c $$i ${DISTDIR}${MANDIR}/man1/; \
+	done
 
 clean :
 	rm -f *.o a.out core
