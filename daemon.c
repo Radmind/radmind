@@ -271,7 +271,7 @@ main( int ac, char **av )
     }
     if ( mkdir( "special", 0750 ) != 0 ) {
 	if ( errno != EEXIST ) {
-	    perror( "file" );
+	    perror( "special" );
 	    exit( 1 );
 	}
     }

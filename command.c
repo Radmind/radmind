@@ -1425,7 +1425,7 @@ cmdloop( int fd, struct sockaddr_in *sin )
 	    }
 	}
 	if ( i >= ncommands ) {
-	    snet_writef( sn, "%d Command %s unregcognized\r\n", 500, av[ 0 ] );
+	    snet_writef( sn, "%d Command %s unrecognized\r\n", 500, av[ 0 ] );
 	    continue;
 	}
 	if ( (*(commands[ i ].c_func))( sn, ac, av ) < 0 ) {

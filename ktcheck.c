@@ -408,7 +408,7 @@ main( int argc, char **argv )
 	case 'p':
 	    if (( port = htons ( atoi( optarg )) ) == 0 ) {
 		if (( se = getservbyname( optarg, "tcp" )) == NULL ) {
-		    fprintf( stderr, "%s: service unkown\n", optarg );
+		    fprintf( stderr, "%s: service unknown\n", optarg );
 		    exit( 2 );
 		}
 		port = se->s_port;

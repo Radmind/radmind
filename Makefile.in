@@ -205,7 +205,7 @@ rash : FRC
 	-mkdir tmp
 	sed -e 's@_RADMIND_HOST@${RADMIND_HOST}@g' \
 	    -e 's@_RADMIND_AUTHLEVEL@${RADMIND_AUTHLEVEL}@g' \
-	    ra.sh > tmp/ra.sh; 
+	    ${srcdir}/ra.sh > tmp/ra.sh; 
 
 man : FRC
 	-mkdir tmp

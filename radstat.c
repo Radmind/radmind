@@ -24,7 +24,7 @@
 /* Return values:
  * < 0 system error - errno set
  *   0 okay
- *   1 error - unkown file type, errno not set
+ *   1 error - unknown file type, errno not set
  */
 
     int
