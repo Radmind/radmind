@@ -511,7 +511,8 @@ main( int argc, char **argv )
 	 * verify its contents
 	 */
 	/* Special exists */
-	if (( !cksum ) || (( tst.st_size != lst.st_size ) ||
+	if ( !cksum ||
+		(( tst.st_size != lst.st_size ) ||
 		( strcmp( tcksum, lcksum) != 0 ))) {
 	    /* update special.T */
 	    if ( update ) {
