@@ -440,6 +440,10 @@ error1:
 retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     ssize_t transize, char *trancksum )
 {
+#ifndef ENOTSUP
+#define ENOTSUP EOPNOTSUPP
+#endif /* ENOTSUP */
+
     errno = ENOTSUP;
     return( -1 );
 }

@@ -511,6 +511,10 @@ sn_error:
 stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize, 
     char *trancksum, struct applefileinfo *afinfo )
 {
+#ifndef ENOTSUP
+#define ENOTSUP EOPNOTSUPP
+#endif /* ENOTSUP */
+
     errno = ENOTSUP;
     return( -1 );
 }
