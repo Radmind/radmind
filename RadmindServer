@@ -6,7 +6,7 @@
 # Start up radmind server
 ##
 
-if [ "${RADMINDSERVER:=-YES-}" = "-YES-" ]; then
+if [ "${RADMINDSERVER:=-NO-}" = "-YES-" ]; then
     CheckForNetwork
 
     if [ "${NETWORKUP}" = "-NO-" ]; then exit; fi
