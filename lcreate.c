@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <sys/param.h>
 #include <netinet/in.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -71,6 +72,7 @@ main( int argc, char **argv )
     FILE		*tran; 
     struct stat		st;
     struct applefileinfo	afinfo;
+    ssize_t		size = 0;
 
     while (( c = getopt( argc, argv, "c:h:nNp:qt:TvV" )) != EOF ) {
 	switch( c ) {
@@ -161,7 +163,7 @@ main( int argc, char **argv )
 
 	if ( cksum ) {
 	    if ( do_cksum( argv[ optind ], cksumval ) < 0 ) {
-	       perror( tname );
+		perror( tname );
 		exitcode = 2;
 		goto done;
 	    }
@@ -175,19 +177,6 @@ main( int argc, char **argv )
 
 	if (( rc = stor_file( sn, pathdesc, argv[ optind ], 0, cksumval ))
 		<  0 ) {
-	    switch( rc ) {
-	    case -3:
-		fprintf( stderr, "failed to store transcript \"%s\":\
-		    checksum not listed in transcript\n", dpath );
-		break;
-	    case -2:
-		fprintf( stderr, "failed to store transcript \"%s\":\
-		    checksum list in transcript wrong\n", dpath );
-		break;
-	    default:
-		fprintf( stderr, "failed to store transcript \"%s\"\n", tname );
-		break;
-	    }
 	    exitcode = 2;
 	    goto done;
 	}
@@ -238,6 +227,24 @@ main( int argc, char **argv )
 	    }
 
 	    if ( !network ) {
+		if ( cksum ) {
+		    if ( *targv[ 0 ] == 'f' ) {
+			size = do_cksum( dpath, cksumval );
+		    } else {
+			/* apple file */
+			size = do_acksum( dpath, cksumval, &afinfo );
+		    }
+		    if ( size < 0 ) {
+			fprintf( stderr, "%s: %s\n", dpath, strerror( errno ));
+			exitcode = 2;
+			break;
+		    } else if ( size != atol( targv[ 6 ] )) {
+			fprintf( stderr, "line %d: size in transcript does "
+			    "not match size of file\n", linenum );
+			exitcode = 2;
+			break;
+		    }
+		}
 		if ( access( dpath,  R_OK ) < 0 ) {
 		    perror( dpath );
 		    exitcode = 2;
@@ -269,20 +276,6 @@ main( int argc, char **argv )
 		    }
 		    if ( rc < 0 ) {
 			if ( dodots ) { putchar( (char)'\n' ); }
-			switch( rc ) {
-			case -3:
-			    fprintf( stderr, "failed to store file %s: \
-				checksum not listed in transcript\n", dpath );
-			    break;
-			case -2:
-			    fprintf( stderr, "failed to store file %s: \
-				checksum listed in transcript wrong\n", dpath );
-			    break;
-			default:
-			    fprintf( stderr, "failed to store file %s\n",
-				dpath );
-			    break;
-			}
 			exitcode = 2;
 			goto done;
 		    }
