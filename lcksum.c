@@ -219,13 +219,17 @@ main( int argc, char **argv )
 	    exit( 2 );
 	}
 
-	if (( tac != 8 )
-		|| (( *targv[ 0 ] != 'f' )  && ( *targv[ 0 ] != 'a' ))
-		|| ( remove )) {
+	if ((( *targv[ 0 ] != 'f' )  && ( *targv[ 0 ] != 'a' )) || ( remove )) {
 	    if ( updatetran ) {
 		fprintf( ufs, "%s", line );
 	    }
 	    goto done;
+	}
+
+	if ( tac != 8 ) {
+	    fprintf( stderr, "line %d: %d arguments should be 8\n",
+		    linenum, tac );
+	    exit( 2 );
 	}
 
 	/* check to see if file against prefix */
