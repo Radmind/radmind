@@ -81,7 +81,7 @@ struct command	noauth[] = {
     { "STATus",		f_noauth },
     { "RETRieve",	f_noauth },
     { "STORe",		f_noauth },
-    { "STARTTLS",       f_starttls },
+    { "STARttls",       f_starttls },
 };
 
 struct command	auth[] = {
@@ -91,7 +91,7 @@ struct command	auth[] = {
     { "STATus",		f_stat },
     { "RETRieve",	f_retr },
     { "STORe",		f_stor },
-    { "STARTTLS",       f_starttls },
+    { "STARttls",       f_starttls },
 };
 
 struct command *commands  = noauth;
