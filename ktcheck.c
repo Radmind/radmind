@@ -102,7 +102,8 @@ createspecial( SNET *sn, struct node *head )
     }
 
     do {
-	if ( snprintf( filedesc, MAXPATHLEN * 2, "SPECIAL %s", head->path)) {
+	if ( snprintf( filedesc, MAXPATHLEN * 2, "SPECIAL %s", head->path)
+		> ( MAXPATHLEN * 2 ) -1 ) {
 	    fprintf( stderr, "SPECIAL %s: too long\n", head->path );
 	    return( 1 );
 	}
