@@ -85,6 +85,25 @@ t_parse( struct transcript *tran )
     /* reading and parsing the line */
     switch( *argv[ 0 ] ) {
     case 'd':				    /* dir */
+#ifdef __APPLE__
+	if ( ac == 6 ) {
+	    base64_d( argv[ 5 ], strlen( argv[ 5 ] ),
+		tran->t_pinfo.pi_afinfo.fi.fi_data );
+	}
+	if (( ac != 5 ) && ( ac != 6 )) {
+	    fprintf( stderr, "%s: line %d: expected 5 or 6 arguments, got %d\n",
+#else !__APPLE__
+	if ( ac != 5 ) {
+	    fprintf( stderr, "%s: line %d: expected 5 arguments, got %d\n",
+#endif __APPLE__
+		    tran->t_fullname, tran->t_linenum, ac );
+	    exit( 2 );
+	}
+	tran->t_pinfo.pi_stat.st_mode = strtol( argv[ 2 ], NULL, 8 );
+	tran->t_pinfo.pi_stat.st_uid = atoi( argv[ 3 ] );
+	tran->t_pinfo.pi_stat.st_gid = atoi( argv[ 4 ] );
+	break;
+
     case 'p':
     case 'D':
     case 's':
@@ -163,6 +182,8 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
     char		*epath;
     dev_t		dev;
 
+    static char         null_buf[ 32 ] = { 0 };
+
     if ( edit_path == APPLICABLE ) {
 	cur = &tran->t_pinfo;
     } else {
@@ -185,10 +206,30 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 
     /* print out info to file based on type */
     switch( cur->pi_type ) {
-    case 'd':
     case 's':
     case 'D':
     case 'p':
+	fprintf( outtran, "%c %-37s\t%.4lo %5d %5d\n", cur->pi_type, epath, 
+		(unsigned long )( T_MODE & cur->pi_stat.st_mode ), 
+		(int)cur->pi_stat.st_uid, (int)cur->pi_stat.st_gid );
+	break;
+
+    case 'd':
+#ifdef __APPLE__
+	if ( memcmp( &cur->pi_afinfo.fi.fi_data, null_buf,
+		sizeof( null_buf )) != 0 ) { 
+
+	    char	finfo_e[ SZ_BASE64_E( FINFOLEN ) ];
+
+	    base64_e( cur->pi_afinfo.fi.fi_data, FINFOLEN, finfo_e );
+
+	    fprintf( outtran, "%c %-37s\t%.4lo %5d %5d %s \n", cur->pi_type,
+		    epath, (unsigned long )( T_MODE & cur->pi_stat.st_mode ), 
+		    (int)cur->pi_stat.st_uid, (int)cur->pi_stat.st_gid,
+		    finfo_e );
+	    break;
+	}
+#endif __APPLE__
 	fprintf( outtran, "%c %-37s\t%.4lo %5d %5d\n", cur->pi_type, epath, 
 		(unsigned long )( T_MODE & cur->pi_stat.st_mode ), 
 		(int)cur->pi_stat.st_uid, (int)cur->pi_stat.st_gid );
@@ -299,7 +340,7 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 	    }
 	} else if ( fs->pi_type == 'a' ) {
 	    if ( do_acksum( fs->pi_name, fs->pi_cksum_b64,
-	    	    &fs->afinfo )
+	    	    &fs->pi_afinfo )
 		    < 0 ) {
 		perror( fs->pi_name );
 		exit( 2 );
@@ -356,6 +397,19 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 	break;
 
     case 'd':				/* dir */
+
+	if (( fs->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
+		( fs->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) ||
+#ifdef __APPLE__
+		( mode != tran_mode ) || ( memcmp( fs->pi_afinfo.fi.fi_data,
+		tran->t_pinfo.pi_afinfo.fi.fi_data, FINFOLEN ) != 0 )) {
+#else
+		( mode != tran_mode )) {
+#endif __APPLE__
+	    t_print( fs, tran, PR_STATUS );
+	    
+	}
+	break;
     case 'D':
     case 'p':
     case 's':
@@ -433,7 +487,7 @@ transcript( struct pathinfo *new )
      */
     if ( new != NULL ) {
 	switch ( radstat( new->pi_name, &new->pi_stat, &new->pi_type,
-		&new->afinfo )) {
+		&new->pi_afinfo )) {
 	case 0:
 	    break;
 	case 1:
