@@ -59,7 +59,7 @@ fs_walk( char *path, int start, int finish )
 		return;
 	    }
 
-	    if ( ischild( tran->t_pinfo.pi_name, temp )) {
+	    if ( ischild( tran->t_pinfo.pi_name, path )) {
 		/*
 		 * XXX
 		 * This strcpy() is not itself dangerous, because pi_name
