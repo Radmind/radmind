@@ -348,9 +348,7 @@ f_retr( sn, ac, av )
 	} 
 
 	/* Check for access */
-	if ( list_check( tran_list, d_tran )) {
-	    break;
-	} else {
+	if ( !list_check( tran_list, d_tran )) {
 	    syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s", d_tran );
 	    snet_writef( sn, "%d No access for %s:%s\r\n", 540, d_tran,
 		d_path );
