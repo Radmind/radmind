@@ -548,7 +548,7 @@ main( int argc, char **argv )
 	}
 	free( node );
 
-	if ( change ) {
+	if ( !update && change ) {
 	    exit( 1 );
 	}
     }
