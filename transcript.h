@@ -43,5 +43,5 @@ struct transcript {
 };
  
 int transcript( struct info *, char *, FILE * );
-void transcript_init( void );
+void transcript_init( int );
 void transcript_free( void );
