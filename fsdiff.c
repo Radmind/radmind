@@ -19,10 +19,10 @@
 char	*version = VERSION;
 
 int	main( int, char ** );
-void	fs_walk( struct llist *, int );
+void	fs_walk( struct llist * );
 
     void
-fs_walk( struct llist *path, int flag ) 
+fs_walk( struct llist *path  ) 
 {
     DIR			*dir;
     struct dirent	*de;
@@ -33,7 +33,7 @@ fs_walk( struct llist *path, int flag )
 
     /* call the transcript code */
     if (( transcript( &path->ll_pinfo, path->ll_pinfo.pi_name ) == 0 ) ||
-	    ( flag & FLAG_SKIP )) {
+	    ( skip )) {
 	return;				
     }
 
@@ -53,16 +53,13 @@ fs_walk( struct llist *path, int flag )
 	}
 
 	/* construct relative pathname to put in list */
-	if ( !( flag & FLAG_INIT )) {
-	    if (( strlen( path->ll_pinfo.pi_name ) +
-		    strlen( de->d_name + 2 )) > MAXPATHLEN ) {
-		fprintf( stderr, "ERROR: Illegal length of path\n" );
-		exit( 1 );
-	    }
-	    sprintf( temp, "%s/%s", path->ll_pinfo.pi_name, de->d_name );
-	} else {
-	    sprintf( temp, "%s", de->d_name );
+	if (( strlen( path->ll_pinfo.pi_name ) +
+		strlen( de->d_name + 2 )) > MAXPATHLEN ) {
+	    fprintf( stderr, "ERROR: Illegal length of path\n" );
+	    exit( 1 );
 	}
+
+	sprintf( temp, "%s/%s", path->ll_pinfo.pi_name, de->d_name );
 
 	/* allocate new node for newly created relative pathname */
 	new = ll_allocate( temp );
@@ -79,7 +76,7 @@ fs_walk( struct llist *path, int flag )
 
     /* call fswalk on each element in the sorted list */
     for ( cur = head; cur != NULL; cur = cur->ll_next ) {
-	 fs_walk ( cur, 0 );
+	 fs_walk ( cur );
     }
 
     ll_free( head );
@@ -99,9 +96,7 @@ main( int argc, char **argv )
     char		*cmd = "command.K";
     int 		c;
     int 		errflag = 0;
-    int			flag = 0;	/* XXX do we need a flag  */  
 
-    flag |= FLAG_INIT;
     edit_path = TRAN2FS;
     outtran = stdout;
 
@@ -119,7 +114,7 @@ main( int argc, char **argv )
 	    break;
 
 	case '1':
-	    flag |= FLAG_SKIP;
+	    skip = 1;
 	    break;	
 
 	case 'T':		/* want to record differences from tran */
@@ -139,7 +134,7 @@ main( int argc, char **argv )
 	}
     }
 
-    if (( edit_path == FS2TRAN ) && ( flag & FLAG_SKIP )) {
+    if (( edit_path == FS2TRAN ) && ( skip )) {
 	errflag++;
     }
 
@@ -150,20 +145,11 @@ main( int argc, char **argv )
     }
 
     /* initialize the transcripts */
-    transcript_init( flag, cmd );
+    transcript_init(  cmd );
 
-    if ( flag & FLAG_SKIP ) {
-	root = ll_allocate( argv[ optind ] );
-    } else if ( chdir( argv[ optind ] ) != 0 ) {
-	if ( errno != ENOTDIR ) {
-	    perror( argv[ optind ] );
-	    exit( 1 );
-	}
-	root = ll_allocate( argv[ optind ] );
-    } else {
-	root = ll_allocate( "." );
-    }
-    fs_walk( root, flag );
+    root = ll_allocate( argv[ optind ] );
+
+    fs_walk( root );
 
     /* free the transcripts */
     transcript_free( );
