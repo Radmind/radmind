@@ -258,8 +258,8 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     if ( size < ( AS_HEADERLEN + ( 3 * sizeof( struct as_entry )) +
 	    sizeof( finfo ))) {
 	fprintf( stderr,
-	    "retrieve applefile %s failed: AppleSingle-encoded file too \
-	    short\n", path );
+	    "retrieve applefile %s failed: AppleSingle-encoded file too "
+	    "short\n", path );
 	return( -1 );
     }
 
