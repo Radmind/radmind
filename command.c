@@ -29,10 +29,10 @@
 #define DEFAULT_UID     0
 #define DEFAULT_GID     0
 
-#define COMMAND 0
-#define TRANSCRIPT 1
-#define SPECIAL 2
-#define FILE 3
+#define K_COMMAND 1
+#define K_TRANSCRIPT 2
+#define K_SPECIAL 3
+#define K_FILE 4
 
 
 int		f_quit ___P(( SNET *, int, char *[] ));
@@ -43,10 +43,11 @@ int		f_retr ___P(( SNET *, int, char *[] ));
 int		f_stor ___P(( SNET *, int, char *[] ));
 
 char		command_file[ MAXPATHLEN ];
+char		upload_xscript[ MAXPATHLEN ];
 
     int
 f_quit( sn, ac, av )
-    SNET		*sn;
+    SNET	*sn;
     int		ac;
     char	*av[];
 {
@@ -56,7 +57,7 @@ f_quit( sn, ac, av )
 
     int
 f_noop( sn, ac, av )
-    SNET		*sn;
+    SNET	*sn;
     int		ac;
     char	*av[];
 {
@@ -66,7 +67,7 @@ f_noop( sn, ac, av )
 
     int
 f_help( sn, ac, av )
-    SNET		*sn;
+    SNET	*sn;
     int		ac;
     char	*av[];
 {
@@ -75,8 +76,94 @@ f_help( sn, ac, av )
 }
 
     int
+keyword( int ac, char *av[] )
+{
+    /*
+     * For now let's always check the biggest max,
+     * and later we can worry about command specific
+     * checks or no. remote_host is global. +5 is for
+     * "/tmp\0"
+     */
+
+    int		rc;
+
+    if ( ac < 2 ) { 
+	return( -1 );
+    }
+
+    if ( strcasecmp( av[ 1 ], "COMMAND" ) == 0 ) {
+	if ( ac != 2 ) {
+	    return( -1 );
+	}
+
+	if ( strlen( command_file + 5 ) > MAXPATHLEN )  {
+	    syslog( LOG_WARNING, "[tmp]/%s longer than MAXPATHLEN",
+		    command_file );
+	    return( -1 );
+	}
+	return( K_COMMAND );
+    }
+
+    if ( strcasecmp( av[ 1 ], "SPECIAL" ) == 0 ) {
+	if ( ac != 3 ) {
+	    return( -1 );
+	}
+
+	if ( strlen( av[ 1 ] ) + strlen( av[ 2 ] ) +
+		strlen( remote_host) + 5 > MAXPATHLEN ) {
+	    syslog( LOG_WARNING,
+		    "Overflow attempt: %s/%s-%s longer than MAXPATHLEN",
+		    av[ 1 ], av[ 2 ], remote_host );
+	    return( -1 );
+	}
+	rc = K_SPECIAL;
+
+    } else if ( strcasecmp( av[ 1 ], "TRANSCRIPT" ) == 0 ) {
+	if ( ac != 3 ) {
+	    return( -1 );
+	}
+
+	if ( strlen( av[ 1 ] ) + strlen( av[ 2 ] ) + 5 > MAXPATHLEN ) {
+	    syslog( LOG_WARNING, "[tmp]/%s/%s longer than MAXPATHLEN",
+		    av[ 1 ], av [ 2 ] );
+	    return( -1 );
+	}
+	rc = K_TRANSCRIPT;
+
+    } else if ( strcasecmp( av[ 1 ], "FILE" ) == 0 ) {
+	if ( ac != 4 ) {
+	    return( -1 );
+	}
+
+	if ( strstr( av[ 3 ], "../" ) != NULL ) {
+	    syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s", av[ 3 ] );
+	    return( -1 );
+	}
+
+	if ( strlen( av[ 1 ] ) + strlen( av[ 2 ] ) +
+		strlen( av[ 3 ] ) + 5 > MAXPATHLEN ) {
+	    syslog( LOG_WARNING, "Overflow attempt: %s/%s/%s longer than
+		    MAXPATHLEN", av[ 1 ], av[ 2 ], av[ 3 ] );
+	    return( -1 );
+	}
+
+	rc = K_FILE;
+
+    } else {
+	return( -1 );
+    }
+
+    if ( strstr( av[ 2 ], "../" ) != NULL ) {
+	syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s", av[ 2 ] );
+	return( -1 );
+    }
+
+    return( rc );
+}
+
+    int
 f_retr( sn, ac, av )
-    SNET		*sn;
+    SNET	*sn;
     int		ac;
     char	*av[];
 {
@@ -86,75 +173,34 @@ f_retr( sn, ac, av )
     struct timeval	tv;
     char		buf[8192];
     char		path[ MAXPATHLEN ];
-    char		*tmp, *d_path, *d_xscript, d_pth[ MAXPATHLEN ];
+    char		*d_path;
     int			fd;
 
-    /* XXX check auth */
-
-    if ( ac < 2 ) { 
-	snet_writef( sn, "%d RETR Syntax error\r\n", 540 );
-	return( 1 );
-    }
-
-    if ( strcasecmp( av[ 1 ], "COMMAND" ) == 0 ) {
-	if ( ac != 2 ) { 
-	    snet_writef( sn, "%d RETR Syntax error\r\n", 540 );
-	    return( 1 );
-	}
+    switch ( keyword( ac, av )) {
+    case K_COMMAND:
         sprintf( path, "%s", command_file );
+	break;
 
-    } else if ( strcasecmp( av[ 1 ], "TRANSCRIPT" ) == 0 ) {
-        if ( ac != 3 ) {
-	    return( 1 );
-	}
-        
-	d_path = decode( av[ 2 ] );
-	if ( strlen( av[ 1 ] ) + strlen(  av[ 2 ] ) + 1 > MAXPATHLEN ) {
-	    syslog( LOG_WARNING, 
-		"Overflow attempt: %s/%s longer than MAXPATHLEN", 
-		    av[ 1 ], av[ 2 ] );
+    case K_TRANSCRIPT:
+	sprintf( path, "transcript/%s", decode( av[ 2 ] ));
+	break;
+
+    case K_SPECIAL:
+	sprintf( path, "special/%s", decode( av[ 2 ] ));
+	break;
+
+    case K_FILE:
+	if (( d_path = strdup( decode( av[ 3 ] ))) == NULL ) {
+	    syslog( LOG_ERR, "f_retr: strdup: %s: %m", av[ 3 ] );
+	    snet_writef( sn, "%d Can't allocate memory: %s\r\n", 555, av[ 3 ] );
 	    return( -1 );
 	}
-	    
-        sprintf( path, "transcript/%s", d_path );
+	sprintf( path, "file/%s/%s", decode( av[ 2 ] ), d_path );
+	free( d_path );
+	break;
 
-    } else if ( strcasecmp( av[ 1 ], "SPECIAL" ) == 0 ) {
-
-	if ( ac != 3 ) {
-	    snet_writef( sn, "%d RETR Syntax error\r\n", 540 );
-	    return( 1 );
-	}
-	d_path = decode( av[ 2 ] );
-        
-	if ( strlen( av[ 1 ] ) + strlen( av[ 2 ] ) + 1 > MAXPATHLEN ) {
-	    syslog( LOG_WARNING, 
-		"Overflow attempt: special/%s longer than MAXPATHLEN", d_path );
-	    return( -1 );
-	}
-	    
-        sprintf( path, "special/%s", d_path );
-    } else if ( strcasecmp( av[ 1 ], "FILE" ) == 0 ) {
-        if ( ac != 4 ) {
-	    snet_writef( sn, "%d RETR Syntax error\r\n", 540 );
-	    return( 1 );
-	}
-
-	/* use local mem, because decode reuses memory */
-	tmp = decode( av[ 3 ] );
-	memcpy( d_pth, tmp, MAXPATHLEN );
-	d_path = d_pth;
-	d_xscript = decode( av[ 2 ] );
-
-	if ( strlen( av[ 1 ] ) + strlen( av[ 2 ] ) + 
-		strlen( d_path ) + 2 > MAXPATHLEN ) {
-	    syslog( LOG_WARNING, 
-		"Overflow attempt: %s/%s/%s longer than MAXPATHLEN", 
-		    av[ 1 ], d_xscript, d_path );
-	    return( 1 );
-	}
-	sprintf( path, "file/%s/%s", d_xscript, d_path );
-    } else {
-        snet_writef( sn, "%d RETR Syntax error\r\n", 540 );
+    default:
+	snet_writef( sn, "%d RETR Syntax error\r\n", 540 );
 	return( 1 );
     }
 
@@ -205,148 +251,70 @@ f_retr( sn, ac, av )
     return( 0 );
 }
 
-
-/* lookup the appropriate command file for the connected host */
-
-    int
-cmd_lookup( path_config )
-    char	*path_config;
-{
- 
-    SNET		*sn;
-    char	**av, *line;
-    int		ac;
-
-    if (( sn = snet_open( path_config, O_RDONLY, 0, 0 )) == NULL ) {
-        syslog( LOG_ERR, "cmd_lookup: snet_open: %s", path_config );
-	return( -1 );
-    }
-
-    while (( line = snet_getline( sn, NULL )) != NULL ) {
-        if (( ac = argcargv( line, &av )) < 0 ) {
-	    perror( "argcargv" );
-	    return( -1 );
-	}
-
-	if ( ( ac == 0 ) || ( *av[ 0 ] == '#' ) ) {
-	    continue;
-	}
-
-	if ( strcasecmp( av[ 0 ], c_hostname ) == 0 ) {
-	    sprintf( command_file, "command/%s", av[ 1 ] );
-	    return( 0 );
-	}
-    }
-
-    /* If we get here, the host that connected is not in the config
-       file. So screw him. */
-
-    syslog( LOG_INFO, "host not in config file: %s", c_hostname );
-    return( -1 );
-}
-
 /* Pass this function the ENCODED version of the file... */
     char **
-find_file( transcript, file )
-    char 	*transcript, *file;
+find_file( char *transcript, char *file )
 {
+    FILE		*fs;
+    int			ac, len;
+    char		**av;
+    static char		line[ MAXPATHLEN ];
 
-    SNET		*sn;
-    int		ac;
-    char	*line, **av;
-
-    if (( sn = snet_open( transcript, O_RDONLY, 0, 0 )) == NULL ) {
+    if (( fs = fopen( transcript, "r" )) == NULL ) {
+	syslog( LOG_ERR, "find_file: f_open: %s %m", transcript );
 	return( NULL );
     }
 
-    while (( line = snet_getline( sn, NULL )) != NULL ) {
-	if (( ac = argcargv( line, &av )) < 0 ) {
-	    syslog( LOG_ERR, "find_file: %s", transcript );
+    while ( fgets( line, MAXPATHLEN, fs ) != NULL ) {
+	len = strlen( line );
+	if (( line[ len - 1 ] ) != '\n' ) {
+	    syslog( LOG_ERR, "find_file: %s: line too long", transcript );
+	    (void)fclose( fs );
 	    return( NULL );
 	}
-
+	if (( ac = argcargv( line, &av )) < 6 ) {
+	    syslog( LOG_ERR, "find_file: %s ac is: %d", transcript, ac );
+	    (void)fclose( fs );
+	    return( NULL );
+	}
 	if ( *av[ 0 ] != 'f' ) {
 	    continue;
 	}
 
 	if ( strcmp( av[ 1 ], file ) == 0 ) { 
-	    if ( snet_close( sn ) < 0 ) {
-	        syslog( LOG_ERR, "find_file: snet_close: %m" );
-	    }
+	    (void)fclose( fs );
 	    return( av );
 	}
     }
 
+    (void)fclose( fs );
     return( NULL );
 }
 
     int
-f_stat( sn, ac, av )
-    SNET		*sn;
-    int		ac;
-    char	*av[];
+f_stat( SNET *sn, int ac, char *av[] )
 {
 
     char 		path[ MAXPATHLEN ];
     char		chksum_b64[ 29 ];
     struct stat		st;
-    int			req_type;
-    char		*d_path, *enc_file;
+    int			key;
+    char		*enc_file, stranpath[ MAXPATHLEN ];
 
-    if ( ac < 2 ) {
-	snet_writef( sn, "%d STAT Syntax error\r\n", 530 );
-	return( 1 );
-    }
-        
-    if ( strcasecmp( av[ 1 ], "command" ) == 0 ) {
-	req_type = COMMAND;
+    switch ( key = keyword( ac, av )) {
+    case K_COMMAND:
         sprintf( path, "%s", command_file );
-    } else if ( strcasecmp( av[ 1 ], "transcript" ) == 0 ) {
-        req_type = TRANSCRIPT;
-        if ( ac != 3 ) {
-	    snet_writef( sn, "%d STAT Syntax error\r\n", 530 );
-	    return( 1 );
-	}
+	break;
 
-	d_path = decode( av[ 2 ] );
-	/* XXX can transcripts have '/'s */
-	if ( strchr( d_path, '/' ) != NULL ) {
-	    snet_writef(sn, "%d Illegal name, %s\r\n", 532, av[ 2 ]);
-	    return( 1 );
-	}
+    case K_TRANSCRIPT:
+	sprintf( path, "%s/%s", "transcript", decode( av[ 2 ] ));
+	break;
 
-	if ( strlen( av[ 1 ] ) + strlen( d_path ) + 2 > MAXPATHLEN ) {
-	    syslog( LOG_WARNING, 
-	    "Overflow attempt: %s/%s longer than MAXPATHLEN", av[ 1 ], d_path );
-	    return( 1 );
-	}
+    case K_SPECIAL:
+	sprintf( path, "%s/%s-%s", "special", decode( av[ 2 ] ), remote_host );
+	break;
 
-	sprintf( path, "%s/%s", "transcript", d_path );
-        
-    } else if ( strcasecmp( av[ 1 ], "special" ) == 0 ) {
-        req_type = SPECIAL;
-        if ( ac != 3 ) {
-	    snet_writef( sn, "%d STAT Syntax error\r\n", 530 );
-	    return( 1 );
-	}
-
-	d_path = decode( av[ 2 ] );
-
-	if ( strstr( d_path, "../" ) != NULL ) {
-	    syslog( LOG_WARNING, "leet d00d at the gates!: %s", av[ 2 ] );
-	    return( 1 );
-	}
-        
-	if (( strlen( av[ 1 ] ) + strlen( d_path ) + strlen( c_hostname ) + 3 )
-							> MAXPATHLEN ) {
-	    syslog( LOG_WARNING, 
-		"Overflow attempt: %s/%s-%s longer than MAXPATHLEN", 
-		av[ 1 ], d_path, c_hostname );
-	    return( -1 );
-	}
-	sprintf( path, "%s/%s-%s", "special", d_path, c_hostname );
-
-    } else {
+    default:
 	snet_writef( sn, "%d STAT Syntax error\r\n", 530 );
 	return( 1 );
     }
@@ -362,27 +330,26 @@ f_stat( sn, ac, av )
     do_chksum( path, chksum_b64 );
 
     snet_writef( sn, "%d Returning STAT information\r\n", 230 );
-    switch ( req_type ) {
-    case COMMAND:
+    switch ( key ) {
+    case K_COMMAND:
 	snet_writef( sn, "%s %s %o %d %d %d %d %s\r\n", "f", "command", 
 		    DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, st.st_mtime, 
 		    st.st_size, chksum_b64 );
 	return( 0 );
         
 		    
-    case TRANSCRIPT:
+    case K_TRANSCRIPT:
 	snet_writef( sn, "%s %s %o %d %d %d %d %s\r\n", "f", av[ 2 ], 
 		    DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, st.st_mtime, 
 		    st.st_size, chksum_b64 );
 	return( 0 );
     
-    case SPECIAL:
+    case K_SPECIAL:
 	/*  status on a special file comes from 1 of three cases:
 	 *  1. A transcript in the special file directory
 	 *  2. A transcript in the Transcript dir with .T appended
 	 *  3. No transcript is found, and constants are returned
 	 */
-
 
         /* look for transcript containing the information */
 	if ( ( strlen( path ) + 2 ) > MAXPATHLEN ) {
@@ -401,27 +368,28 @@ f_stat( sn, ac, av )
 	strcat( path, ".T" );
 
 	/* store value of av[ 2 ], because argcargv will be called
-	 * (from find_file, and that will blow away the current values
+	 * from find_file, and that will blow away the current values
 	 * for av[ 2 ]
 	 */
-	if ( ( enc_file = (char *)malloc( strlen( av[ 2 ] + 1 ) ) ) == NULL ) {
-	    syslog( LOG_ERR, "f_stat: malloc: %m" );
+
+
+	if (( enc_file = strdup( av[ 2 ] )) == NULL ) {
+	    syslog( LOG_ERR, "f_stat: strdup: %s %m", av[ 2 ] );
+	    snet_writef( sn, "%d Can't allocate memory: %s\r\n", 555, av[ 2 ]);
 	    return( -1 );
 	}
-	strcpy( enc_file, av[ 2 ] );
 
-	if ( ( av = find_file( path, av[ 2 ] ) ) == NULL ) {
-	    /* check global xscripts file */
-	    if ( ( av = find_file( _PATH_TRANSCRIPTS, enc_file ) ) == NULL ) {
-		snet_writef( sn, "%s %s %o %d %d %d %d %d\r\n", "f", enc_file, 
+	if (( av = find_file( path, enc_file )) == NULL ) {
+	    sprintf( stranpath, "%s/special.T", _PATH_TRANSCRIPTS );
+	    if (( av = find_file( stranpath, enc_file )) == NULL ) {
+		snet_writef( sn, "%s %s %o %d %d %d %d %s\r\n", "f", enc_file, 
 		    DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, 
 		    st.st_mtime, st.st_size, chksum_b64 );
 		return( 0 );
 	    }
 	}
-
-	snet_writef( sn, "%s %s %s %s %s %d %d %d\r\n", "f", enc_file, 
-	    av[ 3 ], av[ 4 ], st.st_mtime, st.st_size, chksum_b64 );
+	snet_writef( sn, "%s %s %s %s %s %d %d %s\r\n", "f", enc_file, av[ 2 ],
+		av[ 3 ], av[ 4 ], st.st_mtime, st.st_size, chksum_b64 );
 
 	return( 0 );
 
@@ -430,121 +398,50 @@ f_stat( sn, ac, av )
     }
 }
 
-
     int 
-create_directories( path ) 
-    char	*path;
+create_directories( char *path ) 
 {
+    char 	*p;
 
-    char 	*i;
-    int		done = 0;
-
-    while ( *path == '/' ) {
-        path++;
-    }
-
-    i = path;
-
-    while ( 1 ) {
-	if ( ( i = strchr( i, '/' ) ) == NULL ) {
-	    break;
-	}
-    
-	*i = '\0';
-	printf("Attempting %s\n", path );
-	/* make a dir */
+    for ( p = path; p != NULL; p = strchr( p, '/' )) {
+	*p = '\0';
 	if ( mkdir( path, 0777 ) < 0 ) {
 	    if ( errno != EEXIST ) {
 		return( -1 );
 	    }
 	}
-	*i = '/';
-	if ( done ) {
-	    break;
-	}
-        i++;
+	*p++ = '/';
     }
-    
+
     return( 0 );
 }
 
-
-
-char	upload_xscript[ MAXPATHLEN ];
-
     int
-f_stor( sn, ac, av )
-    SNET		*sn;
-    int		ac;
-    char	*av[];
+f_stor( SNET *sn, int ac, char *av[] )
 {
-
     char 		*sizebuf;
     char		xscriptdir[ MAXPATHLEN ];
-    char		upload_file[ MAXPATHLEN ];
-    char		buff[ 8192 ];
-    char		*upload, *line;
-    char		*tmp;
-    char		*d_path, *d_xscript, d_pth[ MAXPATHLEN ];
-    int			size, fd;
-    unsigned int	r;
+    char		upload[ MAXPATHLEN ];
+    char		buf[ 8192 ];
+    char		*line;
+    char		*d_path;
+    int			fd;
+    unsigned int	len, rc;
     struct timeval	tv;
-    int			remain;
- 
-    if ( ac < 2 ) {
-	snet_writef( sn, "%d STOR Syntax error\r\n", 550 );
-	return( 1 );
-    }
 
-    if ( strcasecmp( av[ 1 ], "command" ) == 0 ) {
-        if ( ac != 2 ) { 
-	    snet_writef( sn, "%d STOR Syntax error\r\n", 550 );
-	    return( 1 );
-	}
+    switch ( keyword( ac, av )) {
+    case K_COMMAND:
+	sprintf( upload, "tmp/%s", command_file );
+	break;
 
-	/* pathlen check 
-	 * 5 = tmp/ + null char
-	 */
-        if ( strlen( command_file + 5 ) > MAXPATHLEN )  {
-	    syslog( LOG_WARNING, "tmp/%s longer than MAXPATHLEN", 
-		    command_file );
-	    return( 1 );
-	}
-	sprintf( upload_file, "tmp/%s", command_file );
-	if (( fd = open( command_file, O_CREAT|O_EXCL|O_WRONLY, 0444 )) < 0 ) {
-	    if ( errno == EEXIST ) {
-		snet_writef( sn, "%d File Exists: %s\r\n", 555, command_file );
-		return( 1 );
-	    } else {
-		syslog( LOG_ERR, "f_stor: open: %m" );
-		return( -1 );
-	    }
-	}
-	    
-    } else if ( strcasecmp( av[ 1 ], "transcript" ) == 0 ) {
-        if ( ac != 3 ) { 
-	    snet_writef( sn, "%d STOR Syntax error\r\n", 550 );
-	    return( 1 );
-	}
+    case K_SPECIAL:
+	sprintf( upload, "%s/%s-%s", "special",
+		decode( av[ 2 ] ), remote_host );
+	break;
 
-	/* hot decoding action */
-
-	d_path = decode( av[ 2 ] );
-	/* Check for a / or a ../ in the xscript name */
-	if ( strchr( d_path, '/' ) != NULL ) {
-	    snet_writef( sn, "%d / Not Allowed\r\n", 554 );
-	    return( 0 );
-	}
-	/* 15 = tmp/transcript + null char */
-
-        if ( ( strlen( d_path ) + 15 ) > MAXPATHLEN ) {
-	    syslog( LOG_WARNING, "tmp/transcript/%s longer than MAXPATHLEN", 
-		    d_path );
-	    return( 1 );
-	}
-
-        sprintf( xscriptdir, "tmp/file/%s", d_path );
-        sprintf( upload_file, "tmp/transcript/%s", d_path );
+    case K_TRANSCRIPT:
+        sprintf( xscriptdir, "tmp/file/%s", decode( av[ 2 ] ));
+        sprintf( upload, "tmp/transcript/%s", decode( av[ 2 ] ));
 
 	/* don't decode the transcript name, since it will just be
 	 * used later to compare in a stor file.
@@ -555,155 +452,148 @@ f_stor( sn, ac, av )
 	if ( mkdir ( xscriptdir, 0777 ) < 0 ) {
 	    if ( errno == EEXIST ) {
 	        snet_writef( sn, "%d Transcript exists\r\n", 551 );
-		return( 0 );
-	    }
-	    syslog( LOG_ERR, "f_stor: mkdir: %s: %m", xscriptdir );
-	    return( -1 );
-	}
-
-	if ( ( fd = open( upload_file, O_CREAT|O_EXCL|O_WRONLY, 0444 ) ) < 0 ) {
-	    if ( errno == EEXIST ) {
-		snet_writef( sn, "%d File Exists: %s\r\n", 555, upload_file );
 		return( 1 );
-	    } else {
-		syslog( LOG_ERR, "f_stor: open: %m" );
-		return( -1 );
 	    }
-	}
-
-    } else if ( strcasecmp( av[ 1 ], "file" ) == 0 ) {
-        if ( ac != 4 ) { 
-	    snet_writef( sn, "%d STOR Syntax error\r\n", 550 );
+	    snet_writef( sn, "%d %s: %s\r\n",
+		    551, xscriptdir, strerror( errno ));
 	    return( 1 );
 	}
+	break;
 
+    case K_FILE:
 	/* client must have provided a transcript name before giving 
 	 * files in that transcript
-	 *
-	 * Is this really a good idea?  This means that if the client
-	 * loses connection in the middle of a bunch of files in a large
-	 * transcript, he has to start over, she can't even re-upload the
-	 * transcript file, because stuff can't be overwritten...
-	 * Should we consider allowing overwrites at least?
 	 */
-	if ( ( strcmp( upload_xscript, av[ 2 ] ) != 0 ) ) {
+	if (( strcmp( upload_xscript, av[ 2 ] ) != 0 )) {
 	    snet_writef( sn, "%d Incorrect Transcript\r\n", 552 );
-	    return( 0 );
-	}
-
-	/* hot decoding action */
-	/* This function uses the same memory, so use a temp. */
-	tmp = decode( av[ 3 ] );
-	memcpy( d_pth, tmp, MAXPATHLEN );
-	d_path = d_pth;
-	d_xscript = decode( av[ 2 ] );
-
-	/* Check for a ../ in the xscript name */
-	if ( strstr( d_path, "../" ) != NULL ) {
-	    snet_writef( sn, "%d / Not Allowed\r\n", 554 );
-	    return( 0 );
-	}
-
-	/* 9 = tmp/file + null char */
-        if ( ( strlen( d_xscript ) + strlen( d_path ) + 9 ) > MAXPATHLEN ) {
-	    syslog( LOG_WARNING, "tmp/file/%s/%s longer than MAXPATHLEN", 
-		    d_xscript, d_path );
 	    return( 1 );
 	}
 
-	sprintf( upload_file, "tmp/file/%s/%s", d_xscript, d_path );
-
-	/* Create directories.  we can't do a
-	 * "stor file rh7.0 bin/ls"
-	 * unless the server creates tmp/rh7.0/bin first.
-	 */
-
-	if ( ( fd = open( upload_file, O_CREAT|O_EXCL|O_WRONLY, 0444 ) ) < 0 ) {
-	    if ( errno == EEXIST ) {
-		snet_writef( sn, "%d File Exists: %s\r\n", 555, upload );
-		return( 1 );
-	   } else if ( errno == ENOENT ) {
-		if ( create_directories( upload_file ) < 0 ) {
-		    if ( close( fd ) < 0 ) {
-			syslog( LOG_ERR, "f_stor: close: %m" );
-		    }
-		    return( -1 );
-		}
-		if ( ( fd = open( upload_file, O_CREAT|O_EXCL|O_WRONLY, 0444 ))
-									< 0 ) {
-		    if ( errno == EEXIST ) {
-			snet_writef( sn, "%d File Exists: %s\r\n", 555, upload);
-			return( 1 );
-		    } else {
-			syslog( LOG_ERR, "f_stor: open: %m" );
-			return( -1 );
-		    }
-		}
-
-	    } else {
-		syslog( LOG_ERR, "f_stor: open: %m" );
-		return( -1 );
-	    }
+	/* decode() uses static mem, so strdup() */
+	if (( d_path = strdup( decode( av[ 3 ] ))) == NULL ) {
+	    syslog( LOG_ERR, "f_stor: strdup: %s: %m", av[ 3 ] );
+	    snet_writef( sn, "%d Can't allocate memory: %s\r\n", 555, av [ 3]);
+	    return( -1 );
 	}
+	sprintf( upload, "tmp/file/%s/%s", decode( av[ 2 ] ), d_path );
+	free( d_path );
+	break;
 
-    } else {
+    default:
         snet_writef( sn, "%d STOR Syntax error\r\n", 550 );
-	return( 0 );
+	return( 1 ); 
     }
 
-    /* Do the transfer*/
- 
+
+    if (( fd = open( upload, O_CREAT|O_EXCL|O_WRONLY, 0444 )) < 0 ) {
+	if ( create_directories( upload ) < 0 ) {
+	    snet_writef( sn, "%d %s: %s\r\n", 555, upload, strerror( errno ));
+	    return( 1 );
+	}
+	if (( fd = open( upload, O_CREAT|O_EXCL|O_WRONLY, 0444 )) < 0 ) {
+	    snet_writef( sn, "%d %s: %s\r\n", 555, upload, strerror( errno ));
+	    return( 1 );
+	}
+    }
+
+
     snet_writef( sn, "%d Storing file\r\n", 350 );
-    /* get the size */
-    /* Will there be a limit? */
 
     tv.tv_sec = 10 * 60;
     tv.tv_usec = 0;
-    
     if ( ( sizebuf = snet_getline( sn, &tv ) ) == NULL ) {
 	syslog( LOG_ERR, "f_stor: snet_getline: %m" );
 	return( -1 );
     }
-    size = atoi( sizebuf );
+    /* Will there be a limit? */
+    len = atoi( sizebuf );
 
-    remain = size;
-    while ( remain > 0 ) {
-	if ( ( r = snet_read( sn, buff, (int)( remain < sizeof(buff) ? remain : 
-			    sizeof( buff ) ), &tv ) ) < 0 ) {
+    for ( ; len > 0; len -= rc ) {
+#define MIN(a,b)	((a)<(b)?(a):(b))
+	tv.tv_sec = 10 * 60;
+	tv.tv_usec = 0;
+	if (( rc = snet_read(
+		sn, buf, (int)MIN( len, sizeof( buf )), &tv )) < 0 ) {
 	    syslog( LOG_ERR, "f_stor: snet_read: %m" );
 	    return( -1 );
 	}
-	remain -= r;
 
-	if ( write( fd, buff, r ) != r ) {
-	    syslog( LOG_ERR, "f_stor: write: %m" );
-	    return( -1 );
+	if ( write( fd, buf, rc ) != rc ) {
+	    snet_writef( sn, "%d %s: %s\r\n", 555, upload, strerror( errno ));
+	    return( 1 );
 	}
+    }
+
+    if ( close( fd ) < 0 ) {
+	snet_writef( sn, "%d %s: %s\r\n", 555, upload, strerror( errno ));
+	return( 1 );
     }
 
     tv.tv_sec = 10 * 60;
     tv.tv_usec = 0;
-    if ( ( line = snet_getline( sn, &tv ) ) == NULL ) {
+    if (( line = snet_getline( sn, &tv )) == NULL ) {
         syslog( LOG_ERR, "f_stor: snet_getline: %m" );
 	return( -1 );
-    } else {
-	if ( strcmp( line, "." ) != 0 ) {
-	    /* #$@% you, client, you lying sack of $@%#! */
-	    if ( close( fd ) < 0 ) {
-		syslog( LOG_ERR, "f_stor: close: %m" );
-	    }
-	    /* should I warn the client that he lied to me? */
-	    snet_writef( sn, "%d File stored\r\n", 250 );
-	    return( 1 );
-	}
     }
-    
-    if ( close( fd ) < 0 ) {
-        syslog( LOG_ERR, "f_stor: close: %m" );
+
+    /* make sure client agrees we're at the end */
+    if ( strcmp( line, "." ) != 0 ) {
+	snet_writef( sn, "%d Length doesn't match sent data\r\n", 555 );
+	(void)unlink( upload );
+
+	tv.tv_sec = 10 * 60;
+	tv.tv_usec = 0;
+	for (;;) {
+	    if (( line = snet_getline( sn, &tv )) == NULL ) {
+		syslog( LOG_ERR, "f_stor: snet_getline: %m" );
+		return( -1 );
+	    }
+	    if ( strcmp( line, "." ) == 0 ) {
+		break;
+	    }
+	}
+
+	return( -1 );
     }
 
     snet_writef( sn, "%d File stored\r\n", 250 );
     return( 0 );
+}
+
+    int
+cmd_lookup( path_config )
+    char	*path_config;
+{
+    SNET	*sn;
+    char	**av, *line;
+    int		ac;
+
+    if (( sn = snet_open( path_config, O_RDONLY, 0, 0 )) == NULL ) {
+        syslog( LOG_ERR, "cmd_lookup: snet_open: %s", path_config );
+	return( -1 );
+    }
+
+    while (( line = snet_getline( sn, NULL )) != NULL ) {
+        if (( ac = argcargv( line, &av )) < 0 ) {
+	    perror( "argcargv" );
+	    return( -1 );
+	}
+
+	if ( ( ac == 0 ) || ( *av[ 0 ] == '#' ) ) {
+	    continue;
+	}
+
+	if ( strcasecmp( av[ 0 ], remote_host ) == 0 ) {
+	    sprintf( command_file, "command/%s", av[ 1 ] );
+	    return( 0 );
+	}
+    }
+
+    /* If we get here, the host that connected is not in the config
+       file. So screw him. */
+
+    syslog( LOG_INFO, "host not in config file: %s", remote_host );
+    return( -1 );
 }
 
 struct command	commands[] = {
@@ -723,7 +613,7 @@ char		hostname[ MAXHOSTNAMELEN ];
 cmdloop( fd )
     int		fd;
 {
-    SNET			*sn;
+    SNET		*sn;
     int			ac, i;
     unsigned int	n;
     char		**av, *line;
