@@ -29,8 +29,8 @@ static struct transcript	*tran_head = NULL;
 static struct transcript	*prev_tran = NULL;
 extern int			edit_path;
 
-    static void 
-t_parse( struct transcript *tran ) 
+    void 
+transcript_parse( struct transcript *tran ) 
 {
     char			line[ 2 * MAXPATHLEN ];
     int				length;
@@ -497,6 +497,34 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
     return T_MOVE_BOTH;
 }
 
+/* 
+ * Loop through the list of transcripts and compare each
+ * to find which transcript to start with. Only switch to the
+ * transcript if it is not at EOF.  A transcript at EOF may
+ * still be returned.
+ */
+    struct transcript *
+transcript_select( void )
+{
+    struct transcript	*next_tran = NULL;
+    struct transcript	*begin_tran = NULL;
+
+    for ( begin_tran = tran_head, next_tran = tran_head->t_next;
+	    next_tran != NULL; next_tran = next_tran->t_next ) {
+	if ( begin_tran->t_eof ) {
+	    begin_tran = next_tran;
+	    continue;
+	}
+	if ( ! next_tran->t_eof ) {
+	    if ( pathcmp( next_tran->t_pinfo.pi_name,
+		    begin_tran->t_pinfo.pi_name ) < 0 ) {
+		begin_tran = next_tran;
+	    }
+	}
+    }
+    return( begin_tran );
+}
+
     int
 transcript( struct pathinfo *new )
 {
@@ -548,31 +576,14 @@ transcript( struct pathinfo *new )
     }
 
     for (;;) {
-	/* 
-	 * Loop through the list of transcripts and compare each
-	 * to find which transcript to start with. Only switch to the
-	 * transcript if it is not at EOF.
-	 */
-	for ( begin_tran = tran_head, next_tran = tran_head->t_next;
-		next_tran != NULL; next_tran = next_tran->t_next ) {
-	    if ( begin_tran->t_eof ) {
-		begin_tran = next_tran;
-		continue;
-	    }
-	    if ( ! next_tran->t_eof ) {
-		if ( pathcmp( next_tran->t_pinfo.pi_name,
-			begin_tran->t_pinfo.pi_name ) < 0 ) {
-		    begin_tran = next_tran;
-		}
-	    }
-	}
+	begin_tran = transcript_select();
 
 	/* move ahead other transcripts that match */
 	for ( next_tran = begin_tran->t_next; next_tran != NULL;
 		next_tran = next_tran->t_next ) {
 	    if ( pathcmp( begin_tran->t_pinfo.pi_name,
 		    next_tran->t_pinfo.pi_name ) == 0 ) {
-		t_parse( next_tran );
+		transcript_parse( next_tran );
 	    }
 	}
 
@@ -584,13 +595,13 @@ transcript( struct pathinfo *new )
 	    /* But don't go into negative directories */
 	    if (( begin_tran->t_type == T_NEGATIVE ) &&
 		    ( begin_tran->t_pinfo.pi_type == 'd' )) {
-		enter = 0;
+		enter = 2;
 	    }
-	    t_parse( begin_tran );
+	    transcript_parse( begin_tran );
 	    return( enter );
 
 	case T_MOVE_TRAN :
-	    t_parse( begin_tran );
+	    transcript_parse( begin_tran );
 	    break;
 
 	default :
@@ -625,7 +636,7 @@ t_new( int type, char *fullname, char *shortname )
 	    perror( fullname );
 	    exit( 2 );
 	}
-	t_parse( new );
+	transcript_parse( new );
     }
 
     new->t_next = tran_head;

@@ -51,9 +51,11 @@ struct transcript {
     FILE		*t_in;
 };
 
-int	transcript( struct pathinfo * );
-void	transcript_init( char *, int );
-void	transcript_free( void );
-char	*hardlink( struct pathinfo * );
-int	hardlink_changed( struct pathinfo *, int );
-void	hardlink_free( void );
+int			transcript( struct pathinfo * );
+void			transcript_init( char *, int );
+struct transcript	*transcript_select( void );
+void			transcript_parse( struct transcript * );
+void			transcript_free( void );
+char			*hardlink( struct pathinfo * );
+int			hardlink_changed( struct pathinfo *, int );
+void			hardlink_free( void );

@@ -89,27 +89,6 @@ free_node( struct node *node )
     free( node );
 }
 
-    static int
-ischild( const char *child, const char *parent )
-{
-    size_t parentlen;
-
-    if ( parent == NULL ) {
-	return 1;
-    } else {
-	parentlen = strlen( parent );
-	if( parentlen > strlen( child )) {
-	    return 0;
-	}
-	if(( strncmp( parent, child, parentlen ) == 0 ) &&
-		child[ parentlen ] == '/' ) {
-	    return 1;
-	} else {
-	    return 0;
-	}
-    }
-}
-
     void
 output( char *string )
 {

@@ -18,6 +18,7 @@
 #include "applefile.h"
 #include "transcript.h"
 #include "llist.h"
+#include "pathcmp.h"
 
 void            (*logger)( char * ) = NULL;
 
@@ -41,16 +42,42 @@ fs_walk( struct llist *path, int start, int finish )
     int			count = 0;
     float		chunk, f = start;
     char		temp[ MAXPATHLEN ];
+    struct transcript	*tran;
+    struct llist	*blah;
 
-    if ( start != lastpercent ) {
+    if (( finish > 0 ) && ( start != lastpercent )) {
 	lastpercent = start;
 	printf( "%%%.2d %s\n", start, path->ll_pinfo.pi_name );
 	fflush( stdout );
     }
 
     /* call the transcript code */
-    if (( transcript( &path->ll_pinfo ) == 0 ) || ( skip )) {
-	return;				
+    switch ( transcript( &path->ll_pinfo )) {
+    case 2 :
+	strcpy( temp, path->ll_pinfo.pi_name );	/* snprintf */
+	for (;;) {
+	    tran = transcript_select();
+	    if ( tran->t_eof ) {
+		return;
+	    }
+
+	    if ( ischild( tran->t_pinfo.pi_name, temp )) {
+		blah = ll_allocate( tran->t_pinfo.pi_name );
+		fs_walk( blah, start, finish );
+		ll_free( blah );
+		transcript_parse( tran );
+	    } else {
+		return;
+	    }
+	}
+
+    case 0 :
+	return;
+    default :
+	if ( skip ) {
+	    return;
+	}
+	break;
     }
 
     /* open directory */
@@ -217,6 +244,8 @@ main( int argc, char **argv )
     root = ll_allocate( argv[ optind ] );
 
     fs_walk( root, 0, finish );
+
+    ll_free( root );
 
     if ( finish > 0 ) {
 	printf( "%%%d\n", ( int )finish );

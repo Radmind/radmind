@@ -3,4 +3,5 @@
  * All Rights Reserved.  See COPYRIGHT.
  */
 
-int pathcmp( const unsigned char *p1, const unsigned char *p2 );
+int pathcmp( const unsigned char *, const unsigned char * );
+int ischild( const unsigned char *, const unsigned char * );
