@@ -163,6 +163,14 @@ create)
    	exit $?
     	;;
     esac
+    echo -n "Enter new transcript name: "
+    read TNAME
+    if [ -z "${TNAME}" ]; then
+	echo "No transcript name provided!"
+	cleanup
+	exit 1
+    fi
+    FTMP="${TMPDIR}/${TNAME}"
     fsdiff -C -v ${CHECKSUM} -o ${FTMP} .
     if [ $? -ne 0 ]; then
 	cleanup
@@ -173,7 +181,7 @@ create)
 	cleanup
 	exit 1
     fi
-    Yn "Edit difference transcript?"
+    Yn "Edit transcript?"
     if [ $? -eq 1 ]; then
 	${EDITOR} ${FTMP}
     fi
