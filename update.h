@@ -3,4 +3,5 @@
  * All Rights Reserved.  See COPYRIGHT.
  */
 
-int update( char *path, char *displaypath, int present, int newfile, struct stat st, int tac, char **targv );
+int update( const char *path, char *displaypath, int present, int newfile,
+    struct stat st, int tac, char **targv );

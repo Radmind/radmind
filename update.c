@@ -20,7 +20,8 @@ extern int quiet;
 extern int linenum;
 
     int
-update( char *path, char *displaypath, int present, int newfile, struct stat st, int tac, char **targv )
+update( const char *path, char *displaypath, int present, int newfile,
+    struct stat st, int tac, char **targv )
 {
     mode_t              mode;
     struct utimbuf      times;

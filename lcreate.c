@@ -238,7 +238,7 @@ main( int argc, char **argv )
 	    } else {
 		if ( snprintf( pathdesc, MAXPATHLEN * 2, "STOR FILE %s %s\r\n", 
 			tname, targv[ 1 ] ) > ( MAXPATHLEN * 2 ) - 1 ) {
-		    fprintf( stderr, "STOR FILE %s %s: path description too
+		    fprintf( stderr, "STOR FILE %s %s: path description too \
 			long\n", tname, dpath );
 		    exitcode = 1;
 		    break;
@@ -267,8 +267,8 @@ main( int argc, char **argv )
 				checksum not listed in transcript\n", dpath );
 			    break;
 			case -2:
-			    fprintf( stderr, "failed to store file %s: checksum 
-				listed in transcript wrong\n", dpath );
+			    fprintf( stderr, "failed to store file %s: \
+				checksum listed in transcript wrong\n", dpath );
 			    break;
 			default:
 			    fprintf( stderr, "failed to store file %s\n",

@@ -1,5 +1,5 @@
-DESTDIR=/usr/local/radmind
-MANDIR=${DESTDIR}/man
+DESTDIR=/usr/local
+MANDIR=${DESTDIR}/share/man
 BINDIR=${DESTDIR}/bin
 SBINDIR=${DESTDIR}/sbin
 
@@ -16,18 +16,18 @@ RADMIND_HOST=radmind
 RADMINDSYSLOG=LOG_LOCAL7
 
 # Solaris
-CC=	gcc
-CWARN=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wconversion
-ADDLIBS=	-lnsl -lsocket
-INSTALL=	/usr/ucb/install
-OPENSSL=	/usr/local/openssl
+#CC=	gcc
+#CWARN=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wconversion
+#ADDLIBS=	-lnsl -lsocket
+#INSTALL=	/usr/ucb/install
+#OPENSSL=	/usr/local/openssl
 
 # MacOSX
-#CC=	cc
-#CWARN=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wconversion
-#ADDLIBS=
-#INSTALL=	install
-#OPENSSL=
+CC=	cc
+CWARN=	-Wall -Wmissing-prototypes -Wconversion
+ADDLIBS=
+INSTALL=	install
+OPENSSL=
 
 #
 # Should not need to edit anything after here.
@@ -176,6 +176,8 @@ install	: all
 	    ${INSTALL} -m 0644 -c $$i ${MANDIR}/man1/; \
 	done
 
+STARTUPDIR=/Library/StartupItems
+
 package : all
 	-mkdir -p ${DISTDIR}${SBINDIR}
 	${INSTALL} -m 0555 -c radmind ${DISTDIR}${SBINDIR}/
@@ -187,10 +189,13 @@ package : all
 	for i in ${MAN1TARGETS}; do \
 	    ${INSTALL} -m 0444 -c $$i ${DISTDIR}${MANDIR}/man1/; \
 	done 
-	-mkdir -p ${DISTDIR}${STARTUP}
-	${INSTALL} -m 0755 -c RadmindServer ${DISTDIR}${STARTUP};
-	${INSTALL} -m 0644 -c StartupParameters.plist ${DISTDIR}${STARTUP};
-	-package ${DISTDIR} radmind.info -d ../
+	-mkdir -p ${DISTDIR}${VARDIR}/client
+	-mkdir -p ${DISTDIR}${STARTUPDIR}
+	${INSTALL} -m 0755 -c OS_X/RadmindServer ${DISTDIR}${STARTUPDIR};
+	${INSTALL} -m 0644 -c OS_X/StartupParameters.plist \
+	    ${DISTDIR}${STARTUPDIR};
+	package ${DISTDIR} OS_X/radmind.info -d ..
+	cd ..; tar zvcf radmind.pkg.tgz radmind.pkg/*
 
 clean :
 	rm -f *.o a.out core
