@@ -22,28 +22,30 @@ struct inolist {
 };
 
 
-static struct devlist	*head = NULL;
+static struct devlist	*dev_head = NULL;
 
-static char		*i_insert( struct devlist *head, struct info *info );
-static struct devlist	*d_insert( struct devlist **head, struct info *info );
-void			d_free( void );
+static char		*i_insert( struct devlist *dev_head,
+				struct info *info );
+static struct devlist	*d_insert( struct devlist **dev_head,
+				struct info *info );
+void			hardlink_free( void );
 
     char *
 hardlink( struct info *info )
 {
     struct devlist	*device;
 
-    device = d_insert( &head, info );
+    device = d_insert( &dev_head, info );
 
     return( i_insert( device, info ));
 }
 
     static struct devlist * 
-d_insert( struct devlist **head, struct info *info )
+d_insert( struct devlist **dev_head, struct info *info )
 {
     struct devlist	*new, **cur;
 
-    for ( cur = head; *cur != NULL; cur = &(*cur)->d_next ) {
+    for ( cur = dev_head; *cur != NULL; cur = &(*cur)->d_next ) {
 	if ( info->i_stat.st_dev <= (*cur)->d_dev ) {
 	    break;
 	}
@@ -68,11 +70,11 @@ d_insert( struct devlist **head, struct info *info )
 }
 
     static char *
-i_insert( struct devlist *head, struct info *info )
+i_insert( struct devlist *dev_head, struct info *info )
 {
     struct inolist	*new, **cur;
 
-    for ( cur = &head->d_ilist; *cur != NULL; cur = &(*cur)->i_next ) {
+    for ( cur = &dev_head->d_ilist; *cur != NULL; cur = &(*cur)->i_next ) {
 	if ( info->i_stat.st_ino <= (*cur)->i_ino ) {
 	    break;
 	}
@@ -105,21 +107,21 @@ i_insert( struct devlist *head, struct info *info )
 }
 
     void
-d_free( )
+hardlink_free( )
 {
     struct devlist	*dev_next;
     struct inolist	*ino_head, *ino_next;
 
-    while ( head != NULL ) {
-	dev_next = head->d_next;
-	ino_head = head->d_ilist;
+    while ( dev_head != NULL ) {
+	dev_next = dev_head->d_next;
+	ino_head = dev_head->d_ilist;
 	while ( ino_head != NULL ) {
 	    ino_next = ino_head->i_next;
 	    free( ino_head->i_name);
 	    free( ino_head );
 	    ino_head = ino_next;
 	}
-	free( head );
-	head = dev_next;
+	free( dev_head );
+	dev_head = dev_next;
     }
 }
