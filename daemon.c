@@ -122,7 +122,7 @@ main( ac, av )
 	    break;
 
 	case 'u' :		/* umask */
-	    umask( strtol( optarg, (char **)NULL, 0 ));
+	    umask( (mode_t)strtol( optarg, (char **)NULL, 0 ));
 	    break;
 
 	default :
