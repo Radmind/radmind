@@ -80,7 +80,7 @@ fs_walk( char *path, int start, int finish )
 	}
 	break;
     default :
-	fprintf( stderr, "transcript returned an unexpect value!\n" );
+	fprintf( stderr, "transcript returned an unexpected value!\n" );
 	exit( 2 );
     }
 

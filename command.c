@@ -888,7 +888,7 @@ f_starttls( SNET *sn, int ac, char **av )
      * Begin TLS
      */
     /* This is where the TLS start */
-    /* At this point the client is also staring TLS */
+    /* At this point the client is also starting TLS */
     /* 1 is for server, 0 is client */
     if (( rc = snet_starttls( sn, ctx, 1 )) != 1 ) {
         syslog( LOG_ERR, "f_starttls: snet_starttls: %s",
