@@ -388,7 +388,7 @@ special_t( char *transcript, char *epath )
 	if (( ac = argcargv( line, &av )) != 8 ) {
 	    continue;
 	}
-	if ( *av[ 0 ] != 'f' ) {
+	if (( *av[ 0 ] != 'f' ) || ( *av[ 0 ] != 'a' )) {
 	    continue;
 	}
 
@@ -522,8 +522,9 @@ f_stat( SNET *sn, int ac, char *av[] )
 		return( 0 );
 	    }
 	}
-	snet_writef( sn, "%s %s %s %s %s %d %d %s\r\n", "f", enc_file, av[ 2 ],
-		av[ 3 ], av[ 4 ], st.st_mtime, (int)st.st_size, cksum_b64 );
+	snet_writef( sn, "%s %s %s %s %s %d %d %s\r\n", av[ 1 ], enc_file,
+	    av[ 2 ], av[ 3 ], av[ 4 ], st.st_mtime, (int)st.st_size,
+	    cksum_b64 );
 
 	return( 0 );
 
