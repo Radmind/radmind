@@ -13,9 +13,6 @@ Should we use "snet.h" or <snet.h>
 * anything that is in a -L dir should be with <include.h> not "include.h"
 which is for local dir.
 
-per sweda: lcksum should rewrite file location to remove file system info using
-the radmind server when run the -N option.
-
 Have Makefile update man pages with correct DEFAULTHOST info.
 
 * use sed

@@ -29,9 +29,9 @@ LDFLAGS=	-L${OPENSSL}/lib -Llibsnet -lnsl -lsnet -lcrypto -lsocket
 INSTALL=	/usr/ucb/install
 
 # Should not need to edit anything after here.
-BINTARGETS=	fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff
+BINTARGETS=	fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff twhich
 MAN1TARGETS=	fsdiff.1 ktcheck.1 lapply.1 lcksum.1 lcreate.1 lfdiff.1 \
-		lmerge.1
+		lmerge.1 twhich.1
 TARGETS=	radmind ${BINTARGETS}
 
 RADMIND_OBJ=	version.o daemon.o command.o argcargv.o auth.o code.o \
@@ -55,6 +55,8 @@ LMERGE_OBJ=	version.o lmerge.o argcargv.o pathcmp.o mkdirs.o list.o
 
 LFDIFF_OBJ=	version.o lfdiff.o argcargv.o connect.o download.o chksum.o \
 		base64.o
+
+TWHICH_OBJ=	version.o argcargv.o lifo.o twhich.o
 
 all : ${TARGETS}
 
@@ -103,6 +105,11 @@ lcreate.o : lcreate.c
 		-D_RADMIND_HOST=\"${RADMIND_HOST}\" \
 		-c lcreate.c
 
+twhich.o : twhich.c
+	${CC} ${CFLAGS} \
+		-D_RADMIND_COMMANDFILE=\"${COMMANDPATH}/${COMMANDFILE}\" \
+		-c twhich.c
+
 radmind : libsnet/libsnet.a ${RADMIND_OBJ} Makefile
 	${CC} ${CFLAGS} -o radmind ${RADMIND_OBJ} ${LDFLAGS}
 
@@ -126,6 +133,10 @@ lmerge: ${LMERGE_OBJ}
 
 lfdiff: ${LFDIFF_OBJ}
 	${CC} -o lfdiff ${LFDIFF_OBJ} ${LDFLAGS}
+
+twhich: ${TWHICH_OBJ}
+	${CC} -o twhich ${TWHICH_OBJ} ${LDFLAGS}
+
 
 FRC :
 
