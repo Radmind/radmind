@@ -75,8 +75,7 @@ do_cksum( char *path, char *cksum_b64 )
  *
  * return values:
  *	>= 0	number of bytes check summed
- * 	-1 	system error: errno set, no message given
- *	-2	system error: error message given
+ * 	< 0 	system error: errno set, no message given
  *
  * do_acksum should only be called on native HFS+ system.
  */
@@ -96,13 +95,11 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
     EVP_DigestInit( &mdctx, md ); 
 
     if (( dfd = open( path, O_RDONLY, 0 )) < 0 ) {
-	perror( path );
 	return( -1 );
     }
 
     if ( afinfo->as_ents[ AS_RFE ].ae_length > 0 ) {
 	if (( rfd = open( afinfo->rsrc_path, O_RDONLY )) < 0 ) {
-	    perror( afinfo->rsrc_path );
 	    return( -1 );
 	}
     }
@@ -127,7 +124,6 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
 	    size += (size_t)rc;
 	}
 	if ( close( rfd ) < 0 ) {
-	    perror( "close rfd" );
 	    return( -1 );
 	}
 	if ( rc < 0 ) {
@@ -146,7 +142,6 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
     }
 
     if ( close( dfd ) < 0 ) {
-	perror( path );
 	return( -1 );
     }
 
