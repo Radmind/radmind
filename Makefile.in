@@ -28,8 +28,8 @@ INSTALL=	@INSTALL@
 CFLAGS=		${DEFS} ${OPTOPTS} @CFLAGS@ ${INCPATH}
 
 BINTARGETS=     fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff twhich
-MAN1TARGETS=    fsdiff.1 ktcheck.1 lapply.1 lcksum.1 lcreate.1 lfdiff.1 \
-                lmerge.1 twhich.1
+MAN1TARGETS=    fsdiff.1 ktcheck.1 lapply.1 lcksum.1 \
+		lcreate.1 lfdiff.1 lmerge.1 twhich.1
 MAN5TARGETS= 	applefile.5
 MAN8TARGETS=	radmind.8
 MANTARGETS=	${MAN1TARGETS} ${MAN5TARGETS} ${MAN8TARGETS}
@@ -162,7 +162,7 @@ man :
 	    sed -e 's@_RADMIND_PATH@${RADMINDDIR}@g'  \
 		-e 's@_RADMIND_COMMANDFILE@${COMMANDFILE}@g' \
 		-e 's@_RADMIND_HOST@${RADMIND_HOST}@g' \
-		$$i > tmp/man/$$i; \
+		man/$$i > tmp/man/$$i; \
 	done
 
 install	: all man
