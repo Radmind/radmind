@@ -8,6 +8,7 @@
 
 #include "transcript.h"
 #include "llist.h"
+#include "afile.h"
 
 extern char	*version, *checksumlist;
 

@@ -115,11 +115,6 @@ printf( "r_size = 0\n" );
     /* calculate total applesingle file size */
     asingle_size = ( AS_HEADERLEN + ( 3 * sizeof( struct as_entry ))
 		+ sizeof( finfo_buf ) + r_size + d_size );
-	( 3 * sizeof( struct as_entry )),
-	sizeof( finfo_buf ),
-	r_size,
-	d_size,
-	asingle_size );
 
     /* tell server how much data to expect */
     if ( snet_writef( sn, "%d\r\n", ( int )asingle_size ) == NULL ) {
