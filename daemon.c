@@ -67,12 +67,12 @@ chld( sig )
     extern int		errno;
 
     while (( pid = waitpid( 0, &status, WNOHANG )) > 0 ) {
+	connections--;
 	if ( WIFEXITED( status )) {
 	    if ( WEXITSTATUS( status )) {
 		syslog( LOG_ERR, "child %d exited with %d", pid,
 			WEXITSTATUS( status ));
 	    } else {
-		connections--;
 		syslog( LOG_INFO, "child %d done", pid );
 	    }
 	} else if ( WIFSIGNALED( status )) {
