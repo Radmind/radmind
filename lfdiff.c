@@ -33,8 +33,9 @@ output( char *string )
 
 /*
  * exit codes:
- *      0       No changes found, everything okay
- *      -1       System error
+ *      0       No differences were found.
+ *	1	Differences were found.
+ *      >1     	An error occurred. 
  */
 
     int
@@ -45,7 +46,7 @@ main( int argc, char **argv, char **envp )
     int			fd;
     extern int          optind, optopt;
     extern char		*version;
-    char		*host = NULL;
+    char		*host = _RADMIND_HOST;
     char		*temppath = NULL;
     char		*transcript = NULL;
     char		*file = NULL;
@@ -59,7 +60,7 @@ main( int argc, char **argv, char **envp )
     /* create argv to pass to diff */
     if ( ( diffargv = (char **)malloc( 1  * sizeof( char * ) ) ) == NULL ) {
 	perror( "malloc" );
-	exit( -1 );
+	exit( 2 );
     }
     diffargc = 0;
     diffargv[ diffargc++ ] = diff;
@@ -74,7 +75,7 @@ main( int argc, char **argv, char **envp )
 	    if ( ( port = htons ( atoi( optarg ) ) ) == 0 ) {
 		if ( ( se = getservbyname( optarg, "tcp" ) ) == NULL ) {
 		    fprintf( stderr, "%s: service unkown\n", optarg );
-		    exit( -1 );
+		    exit( 2 );
 		}
 		port = se->s_port;
 	    }
@@ -99,24 +100,24 @@ main( int argc, char **argv, char **envp )
 	    if ( ( diffargv = (char **)realloc( diffargv, ( sizeof( *diffargv )
 		    + ( 2 * sizeof( char * ) ) ) ) ) == NULL ) {
 		perror( "malloc" );
-		exit( -1 );
+		exit( 2 );
 	    }
 	    sprintf( opt, "-%c", c );
 	    if ( ( diffargv[ diffargc++ ] = strdup( opt ) ) == NULL ) {
 		perror( "strdup" );
-		exit( -1 );
+		exit( 2 );
 	    };
 	    break;
 	case 'C': case 'D': 
 	    if ( ( diffargv = (char **)realloc( diffargv, ( sizeof( *diffargv )
 		    + ( 3 * sizeof( char * ) ) ) ) ) == NULL ) {
 		perror( "malloc" );
-		exit( -1 );
+		exit( 2 );
 	    }
 	    sprintf( opt, "-%c", c );
 	    if ( ( diffargv[ diffargc++ ] = strdup( opt ) ) == NULL ) {
 		perror( "strdup" );
-		exit( -1 );
+		exit( 2 );
 	    };
 	    diffargv[ diffargc++ ] = optarg;
 	    break;
@@ -127,7 +128,7 @@ main( int argc, char **argv, char **envp )
 	    if ( ( diffargv = (char **)realloc( diffargv, ( sizeof( *diffargv )
 		    + ( tac * sizeof( char * ) ) ) ) ) == NULL ) {
 		perror( "malloc" );
-		exit( -1 );
+		exit( 2 );
 	    }
 	    for ( i = 0; i < tac; i++ ) {
 		diffargv[ diffargc++ ] = argcargv[ i ];
@@ -154,13 +155,13 @@ main( int argc, char **argv, char **envp )
 	fprintf( stderr, "[ -h host ] [ -p port ] [ -vV ] [ diff options ] " );
 	fprintf( stderr, "[ -X \"unsupported diff options\" ] " );
 	fprintf( stderr, "file\n" );
-	exit( -1 );
+	exit( 2 );
     }
     file = argv[ optind ];
 
     if( ( sn = connectsn( host, port )  ) == NULL ) {
 	fprintf( stderr, "%s: %d connection failed.\n", host, port );
-	exit( -1 );
+	exit( 2 );
     }
 
     /* create path description */
@@ -181,30 +182,30 @@ main( int argc, char **argv, char **envp )
     if ( ( temppath = retr( sn, pathdesc, file, location, NULL ) )
 	    == NULL ) {
 	fprintf( stderr, "%s: retr failed\n", file );
-	exit( -1 );
+	exit( 2 );
     }
 
     if ( ( closesn( sn ) ) != 0 ) {
 	fprintf( stderr, "can not close sn\n" );
-	exit( -1 );
+	exit( 2 );
     }
 
     if ( ( fd = open( temppath, O_RDONLY ) ) < 0 ) {
 	perror( temppath );
-	exit( -1 );
+	exit( 2 );
     } 
     if ( unlink( temppath ) != 0 ) {
 	perror( temppath );
-	exit( -1 );
+	exit( 2 );
     }
     if ( dup2( fd, 0 ) < 0 ) {
 	perror( temppath );
-	exit( -1 );
+	exit( 2 );
     }
     if ( ( diffargv = (char **)realloc( diffargv, ( sizeof( *diffargv )
 	    + ( 4 * sizeof( char * ) ) ) ) ) == NULL ) {
 	perror( "malloc" );
-	exit( -1 );
+	exit( 2 );
     }
     diffargv[ diffargc++ ] = "--";
     diffargv[ diffargc++ ] = "-";
@@ -214,7 +215,5 @@ main( int argc, char **argv, char **envp )
     execve( diff, diffargv, envp );
 
     perror( diff );
-    printf( "DIE DIE DIE\n" );
-    exit( -1 );
+    exit( 2 );
 }
-
