@@ -1,10 +1,9 @@
 #include <sys/stat.h>
 
-#define T_EOF      0  
-
-#define T_POSITIVE   1
-#define T_NEGATIVE   -1
-#define T_SPECIAL    0
+#define T_NULL		0
+#define T_POSITIVE	1
+#define T_NEGATIVE	2 
+#define T_SPECIAL	3
 
 #define T_MOVE_TRAN  1
 #define T_MOVE_FS    -1
@@ -41,11 +40,12 @@ struct transcript {
     int			    t_form;
     char		    t_name[ MAXPATHLEN ];
     mode_t		    t_mode;
-    int			    t_flag;
+    int			    t_eof;
     FILE		    *t_in;
 };
  
-int	transcript( struct info *, char *, FILE * );
+int	transcript( struct info *, char * );
 void	transcript_init( int );
 void	transcript_free( void );
 char	*hardlink( struct info *info );
+void	d_free( void );
