@@ -24,7 +24,7 @@ t_parse( struct transcript *tran )
 {
     char			line[ 2 * MAXPATHLEN ];
     int				length;
-    char			*buf;
+    char			*epath;
     char			**argv;
     int				ac;
 
@@ -54,12 +54,15 @@ t_parse( struct transcript *tran )
 
     tran->t_pinfo.pi_type = argv[ 0 ][ 0 ];
 
-    buf = decode( argv[ 1 ] );
-    strcpy( tran->t_pinfo.pi_name, buf );
+    epath = decode( argv[ 1 ] );
+    strcpy( tran->t_pinfo.pi_name, epath );
 
     /* reading and parsing the line */
     switch( *argv[ 0 ] ) {
     case 'd':				    /* dir */
+    case 'p':
+    case 'D':
+    case 's':
 	if ( ac != 5 ) {
 	    fprintf( stderr, "%s: line %d: expected 5 arguments, got %d\n",
 		    tran->t_name, tran->t_linenum, ac );
@@ -72,9 +75,6 @@ t_parse( struct transcript *tran )
 
     case 'b':				    /* block or char */
     case 'c':
-    case 'p':
-    case 'D':
-    case 's':
 	if ( ac != 7 ) {
 	    fprintf( stderr, "%s: line %d: expected 7 arguments, got %d\n",
 		    tran->t_name, tran->t_linenum, ac );
@@ -94,8 +94,8 @@ t_parse( struct transcript *tran )
 		    tran->t_name, tran->t_linenum, ac );
 	    exit( 1 );
 	}
-	buf = decode( argv[ 2 ] );
-	strcpy( tran->t_pinfo.pi_link, buf );
+	epath = decode( argv[ 2 ] );
+	strcpy( tran->t_pinfo.pi_link, epath );
 	break;
 
     case 'f':				    /* file */
@@ -160,7 +160,7 @@ t_convert( int type )
 t_print( struct pathinfo *fs, struct transcript *tran, int change ) 
 {
     struct pathinfo	*cur;
-    char		*buf;
+    char		*epath;
     dev_t		dev;
     extern int		edit_path;
 
@@ -193,25 +193,28 @@ t_print( struct pathinfo *fs, struct transcript *tran, int change )
 	cur = &tran->t_pinfo;
     }
 
-    buf = encode( cur->pi_name );
+    epath = encode( cur->pi_name );
 
     /* print out info to file based on type */
     switch( cur->pi_type ) {
     case 'd':
-	fprintf( outtran, "d %-37s\t%.4lo %5d %5d\n", buf, 
+    case 's':
+    case 'D':
+    case 'p':
+	fprintf( outtran, "%c %-37s\t%.4lo %5d %5d\n", cur->pi_type, epath, 
 		(unsigned long )( T_MODE & cur->pi_stat.st_mode ), 
 		(int)cur->pi_stat.st_uid, (int)cur->pi_stat.st_gid );
 	break;
 
     case 'l':
     case 'h':
-	fprintf( outtran, "%c %-37s\t", cur->pi_type, buf );
-	buf = encode( cur->pi_link );
-	fprintf( outtran, "%s\n", buf );
+	fprintf( outtran, "%c %-37s\t", cur->pi_type, epath );
+	epath = encode( cur->pi_link );
+	fprintf( outtran, "%s\n", epath );
 	break;
 
     case 'f':
-	fprintf( outtran, "f %-37s\t%.4lo %5d %5d %9d %7d %d\n", buf,
+	fprintf( outtran, "f %-37s\t%.4lo %5d %5d %9d %7d %d\n", epath,
 		(unsigned long)( T_MODE & cur->pi_stat.st_mode ), 
 		(int)cur->pi_stat.st_uid, (int)cur->pi_stat.st_gid,
 		(int)cur->pi_stat.st_mtime, (int)cur->pi_stat.st_size,
@@ -220,12 +223,9 @@ t_print( struct pathinfo *fs, struct transcript *tran, int change )
 
     case 'c':
     case 'b':
-    case 's':
-    case 'D':
-    case 'p':
 	dev = cur->pi_stat.st_rdev;
 	fprintf( outtran, "%c %-37s\t%.4lo %5d %5d %5d %5d\n",
-		cur->pi_type, buf,
+		cur->pi_type, epath,
 		(unsigned long )( T_MODE & cur->pi_stat.st_mode ), 
 		(int)cur->pi_stat.st_uid, (int)cur->pi_stat.st_gid,
 		(int)major(dev), (int)minor(dev) );
@@ -296,6 +296,9 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
 	break;
 
     case 'd':				/* dir */
+    case 'D':
+    case 'p':
+    case 's':
 	if (( cur->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
 		( cur->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) ||
 		( mode != tran_mode )) {
@@ -312,9 +315,6 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
 
     case 'c':
     case 'b':
-    case 'D':
-    case 'p':
-    case 's':
 	dev = cur->pi_stat.st_rdev;
 	if (( cur->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
 		( cur->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) || 
@@ -338,7 +338,7 @@ transcript( struct pathinfo *new, char *name )
 
     int			move;
     int 		len;
-    char		buf[ MAXPATHLEN ];
+    char		epath[ MAXPATHLEN ];
     char		*path;
     int			ret;
     int			type;
@@ -366,9 +366,9 @@ transcript( struct pathinfo *new, char *name )
 
     /* check to see if a link, then read it in */
     if ( S_ISLNK( new->pi_stat.st_mode )) {
-	len = readlink( new->pi_name, buf, MAXPATHLEN );
-	buf[ len ] = '\0';
-	strcpy( new->pi_link, buf );
+	len = readlink( new->pi_name, epath, MAXPATHLEN );
+	epath[ len ] = '\0';
+	strcpy( new->pi_link, epath );
     }
 
     /* only go into the file if it is a directory */
@@ -478,7 +478,7 @@ t_new( int type, char *name )
 }
 
     void
-transcript_init( int flag, char *cmd )
+transcript_init(  char *cmd )
 {
     char	**av;
     char	line[ MAXPATHLEN ];
@@ -487,7 +487,7 @@ transcript_init( int flag, char *cmd )
     extern int	edit_path;
     FILE	*fp;
 
-    if ( flag & FLAG_SKIP ) {
+    if ( skip ) {
 	t_new( T_NULL, NULL );
 	return;
     }
