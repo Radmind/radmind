@@ -723,7 +723,6 @@ f_starttls( snet, ac, av )
 	    syslog( LOG_ERR, "strdup: %m" );
 	    return( -1 );
 	}
-	special_dir = remote_cn;
 	X509_free( peer );
     }
 
@@ -779,11 +778,19 @@ command_k( char *path_config )
 	    continue;
 	}
 
-	if ( wildcard( av[ 0 ], remote_host )
-		|| wildcard( av[ 0 ], remote_addr )
-		|| (( remote_cn != NULL ) && wildcard( av[ 0 ], remote_cn ))) {
+	if ( wildcard( av[ 0 ], remote_host )) {
 	    sprintf( command_file, "command/%s", av[ 1 ] );
-
+	    special_dir = remote_host;
+	    return( 0 );
+	} 
+	if ( wildcard( av[ 0 ], remote_addr )) {
+	    sprintf( command_file, "command/%s", av[ 1 ] );
+	    special_dir = remote_addr;
+	    return( 0 );
+	} 
+	if (( remote_cn != NULL ) && wildcard( av[ 0 ], remote_cn )) {
+	    sprintf( command_file, "command/%s", av[ 1 ] );
+	    special_dir = remote_cn;
 	    return( 0 );
 	}
     }
@@ -861,11 +868,9 @@ cmdloop( int fd, struct sockaddr_in *sin )
     if (( hp = gethostbyaddr( (char *)&sin->sin_addr,
 	    sizeof( struct in_addr ), AF_INET )) == NULL ) {
 	remote_host = strdup( remote_addr );
-	special_dir = remote_host;
     } else {
 	/* set global remote_host for retr command */
 	remote_host = strdup( hp->h_name );
-	special_dir = remote_host;
 	for ( p = remote_host; *p != '\0'; p++ ) {
 	    *p = tolower( *p );
 	}
