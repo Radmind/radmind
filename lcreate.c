@@ -25,15 +25,14 @@
 
 void		(*logger)( char * ) = NULL;
 int		verbose = 0;
+char		*version = VERSION;
 
-    void
+    static void
 v_logger( char *line )
 {
     fprintf( stderr, "<<< %s\n", line );
     return;
 }
-
-
 
     static int
 store_file( int fd, SNET *sn, char *filename, char *transcript ) 
@@ -133,7 +132,7 @@ main( int argc, char **argv )
     extern char		*optarg;
     FILE		*fdiff; 
 
-    while (( c = getopt( argc, argv, "h:np:t:v" )) != EOF ) {
+    while (( c = getopt( argc, argv, "h:np:t:vV" )) != EOF ) {
 	switch( c ) {
 	case 'h':
 	    host = optarg; 
@@ -159,6 +158,9 @@ main( int argc, char **argv )
 	    verbose = 1;
 	    logger = v_logger;
 	    break;
+	case 'V':
+	    printf( "%s\n", version );
+	    exit( 0 );
 	case '?':
 	    err++;
 	    break;
