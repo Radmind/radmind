@@ -120,6 +120,7 @@ main( int ac, char **av )
     int			c, s, err = 0, fd, sinlen, trueint;
     int			dontrun = 0;
     int			ssl_mode = 0;
+    int			use_randfile = 0;
     char		*prog;
     unsigned short	port = 0;
     int			facility = _RADMIND_LOG;
@@ -179,6 +180,10 @@ main( int ac, char **av )
 
 	case 'p' :		/* TCP port */
 	    port = htons( atoi( optarg ));
+	    break;
+
+	case 'r' :
+	    use_randfile = 1;
 	    break;
 
 	case 'R' :		/* register as Rendezvous service */
@@ -296,11 +301,36 @@ main( int ac, char **av )
     }
 
     if ( authlevel != 0 ) {
-	/* Setup SSL */
 
         SSL_load_error_strings();
         SSL_library_init();    
 
+	if ( use_randfile ) {
+	    char        randfile[ MAXPATHLEN ];
+
+	    /* generates a default path for the random seed file */
+	    if ( RAND_file_name( randfile, sizeof( randfile )) == NULL ) {
+		fprintf( stderr, "RAND_file_name: %s\n",
+			ERR_error_string( ERR_get_error(), NULL ));
+		exit( 1 );
+	    }
+
+	    /* reads the complete randfile and adds them to the PRNG */
+	    if ( RAND_load_file( randfile, -1 ) <= 0 ) {
+		fprintf( stderr, "RAND_load_file: %s: %s\n", randfile,
+			ERR_error_string( ERR_get_error(), NULL ));
+		exit( 1 );
+	    }
+
+	    /* writes a number of random bytes (currently 1024) to randfile */
+	    if ( RAND_write_file( randfile ) < 0 ) {
+		fprintf( stderr, "RAND_write_file: %s: %s\n", randfile,
+			ERR_error_string( ERR_get_error(), NULL ));
+		exit( 1 );
+	    }
+	}
+
+	/* Setup SSL */
         if (( ctx = SSL_CTX_new( SSLv23_server_method())) == NULL ) {
             fprintf( stderr, "SSL_CTX_new: %s\n",
                     ERR_error_string( ERR_get_error(), NULL ));
