@@ -90,8 +90,6 @@ main( ac, av )
     struct servent	*se;
     int			c, s, err = 0, fd, sinlen, trueint;
     int			dontrun = 0;
-    int			pidfd;
-    FILE		*pf;
     char		*prog, *p;
     unsigned short	port = 0;
     extern int		optind;
@@ -207,11 +205,11 @@ main( ac, av )
 	    }
 	    dt = getdtablesize();
 	    for ( i = 0; i < dt; i++ ) {
-		if ( i != s && i != pidfd ) {	/* keep socket and pidfd open */
+		if ( i != s ) {				/* keep socket open */
 		    (void)close( i );
 		}
 	    }
-	    if (( i = open( "/", O_RDONLY, 0 )) != 0 ) {
+	    if (( i = open( "/", O_RDONLY, 0 )) == 0 ) {
 		dup2( i, 1 );
 		dup2( i, 2 );
 	    }
@@ -232,13 +230,6 @@ main( ac, av )
 #else ultrix
     openlog( prog, LOG_NOWAIT|LOG_PID, LOG_RADMIND );
 #endif ultrix
-
-    if (( pf = fdopen( pidfd, "w" )) == NULL ) {
-	syslog( LOG_ERR, "can't fdopen pidfd" );
-	exit( 1 );
-    }
-    fprintf( pf, "%d\n", (int)getpid());
-    fclose( pf );
 
     /* catch SIGHUP */
     memset( &sa, 0, sizeof( struct sigaction ));
