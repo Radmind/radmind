@@ -138,6 +138,7 @@ main( int argc, char **argv )
 
 	case 'V':		
 	    printf( "%s\n", version );
+	    printf( "sha1\n" );
 	    exit( 0 );
 
 	case '?':
