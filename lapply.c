@@ -301,8 +301,7 @@ main( int argc, char **argv )
 	}
     }
 
-    if ((( host == NULL ) && ( network ))
-	    || (( host != NULL ) && ( !network ))) {
+    if (( host == NULL ) &&  network ) {
 	err++;
     }
 
