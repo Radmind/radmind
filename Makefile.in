@@ -2,6 +2,8 @@
 # All Rights Reserved.  See COPYRIGHT.
 
 SHELL = /bin/sh
+
+srcdir = @srcdir@
 VPATH = @srcdir@
 
 prefix=@prefix@
@@ -25,7 +27,7 @@ RADMIND_MAXCONNECTIONS=@maxconnections@
 
 RADMINDSYSLOG=LOG_LOCAL7
 
-INCPATH=        @CPPFLAGS@ -Ilibsnet
+INCPATH=        @CPPFLAGS@ -I${srcdir}/libsnet
 OPTOPTS=	@OPTOPTS@
 CC=		@CC@
 DEFS=		@PAMDEFS@ @TLSDEFS@ @ZEROCONFDEFS@
@@ -75,8 +77,8 @@ all : ${TARGETS}
 
 version.o : version.c
 	${CC} ${CFLAGS} \
-		-DVERSION=\"`cat VERSION`\" \
-		-c version.c
+		-DVERSION=\"`cat ${srcdir}/VERSION`\" \
+		-c ${srcdir}/version.c
 
 daemon.o : daemon.c
 	${CC} ${CFLAGS} \
@@ -84,53 +86,53 @@ daemon.o : daemon.c
 		-D_RADMIND_PATH=\"${RADMINDDIR}\" \
 		-D_RADMIND_LOG=${RADMINDSYSLOG} \
 		-D_RADMIND_MAXCONNECTIONS=${RADMIND_MAXCONNECTIONS} \
-		-c daemon.c
+		-c ${srcdir}/daemon.c
 
 command.o : command.c
 	${CC} ${CFLAGS} \
-		-c command.c
+		-c ${srcdir}/command.c
 
 fsdiff.o : fsdiff.c
 	${CC} ${CFLAGS} \
 		-D_RADMIND_COMMANDFILE=\"${COMMANDFILE}\" \
-		-c fsdiff.c
+		-c ${srcdir}/fsdiff.c
 
 lfdiff.o : lfdiff.c
 	${CC} ${CFLAGS} \
 		-D_PATH_GNU_DIFF=\"${GNU_DIFF}\" \
 		-D_RADMIND_HOST=\"${RADMIND_HOST}\" \
 		-D_RADMIND_AUTHLEVEL=${RADMIND_AUTHLEVEL} \
-		-c lfdiff.c
+		-c ${srcdir}/lfdiff.c
 
 ktcheck.o : ktcheck.c
 	${CC} ${CFLAGS} \
 		-D_RADMIND_HOST=\"${RADMIND_HOST}\" \
 		-D_RADMIND_AUTHLEVEL=${RADMIND_AUTHLEVEL} \
 		-D_RADMIND_COMMANDFILE=\"${COMMANDFILE}\" \
-		-c ktcheck.c
+		-c ${srcdir}/ktcheck.c
 
 lapply.o : lapply.c
 	${CC} ${CFLAGS} \
 		-D_RADMIND_HOST=\"${RADMIND_HOST}\" \
 		-D_RADMIND_AUTHLEVEL=${RADMIND_AUTHLEVEL} \
-		-c lapply.c
+		-c ${srcdir}/lapply.c
 
 lcreate.o : lcreate.c
 	${CC} ${CFLAGS} \
 		-D_RADMIND_HOST=\"${RADMIND_HOST}\" \
 		-D_RADMIND_AUTHLEVEL=${RADMIND_AUTHLEVEL} \
-		-c lcreate.c
+		-c ${srcdir}/lcreate.c
 
 twhich.o : twhich.c
 	${CC} ${CFLAGS} \
 		-D_RADMIND_COMMANDFILE=\"${COMMANDFILE}\" \
-		-c twhich.c
+		-c ${srcdir}/twhich.c
 
 tls.o : tls.c
 	${CC} ${CFLAGS} \
 		-D_RADMIND_TLS_CA=\"${TLS_CA}\" \
 		-D_RADMIND_TLS_CERT=\"${TLS_CERT}\" \
-		-c tls.c
+		-c ${srcdir}/tls.c
 
 radmind : libsnet/libsnet.la ${RADMIND_OBJ} Makefile
 	${CC} ${CFLAGS} -o radmind ${RADMIND_OBJ} ${LDFLAGS} @PAMLIBS@ 
@@ -185,7 +187,7 @@ man : FRC
 		-e 's@_RADMIND_TLS_CA@${TLS_CA}@g' \
 		-e 's@_RADMIND_TLS_CERT@${TLS_CERT}@g' \
 		-e 's@_RADMIND_MAXCONNECTIONS@${RADMIND_MAXCONNECTIONS}@g' \
-		man/$$i > tmp/man/$$i; \
+		${srcdir}/man/$$i > tmp/man/$$i; \
 	done
 
 install	: all man
