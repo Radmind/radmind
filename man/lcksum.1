@@ -4,7 +4,7 @@
 \- verifies a transcript's checksums and file sizes
 .SH SYNOPSIS
 .B lcksum 
-.RB [ \-%nqV ]
+.RB [ \-%inqV ]
 [
 .BI \-P\  prefix 
 ]
@@ -58,6 +58,9 @@ progress output.
 .TP 19
 .BI \-c\  checksum
 enables checksuming.
+.TP 19
+.B \-i
+force line buffering.
 .TP 19
 .B \-n
 verify but do not modify
