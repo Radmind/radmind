@@ -42,7 +42,7 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 	    if ( verbose ) printf( " mode" );
 	}
 	if( uid != st.st_uid  || gid != st.st_gid ) {
-	    if ( lchown( path, uid, gid ) != 0 ) {
+	    if ( chown( path, uid, gid ) != 0 ) {
 		perror( path );
 		return( 1 );
 	    }
@@ -103,7 +103,7 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 
 	/* check uid & gid */
 	if( uid != st.st_uid  || gid != st.st_gid ) {
-	    if ( lchown( path, uid, gid ) != 0 ) {
+	    if ( chown( path, uid, gid ) != 0 ) {
 		perror( path );
 		return( 1 );
 	    }
@@ -184,7 +184,7 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 	}
 	/* check uid & gid */
 	if( uid != st.st_uid  || gid != st.st_gid ) {
-	    if ( lchown( path, uid, gid ) != 0 ) {
+	    if ( chown( path, uid, gid ) != 0 ) {
 		perror( path );
 		return( 1 );
 	    }
@@ -224,11 +224,7 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 	uid = atoi( targv[ 3 ] );
 	gid = atoi( targv[ 4 ] );
 	if ( !present ) {
-	    if ( ( dev = makedev( (major_t)atoi( targv[ 5 ] ),
-		    (minor_t)atoi( targv[ 6 ] ) ) ) == NODEV ) {
-		perror( path );
-		return( 1 );
-	    }
+	    dev = makedev( atoi( targv[ 5 ] ), atoi( targv[ 6 ] ));
 	    if ( mknod( path, mode, dev ) != 0 ) {
 		perror( path );
 		return( 1 );
@@ -251,7 +247,7 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 	}
 	/* check uid & gid */
 	if( uid != st.st_uid  || gid != st.st_gid ) {
-	    if ( lchown( path, uid, gid ) != 0 ) {
+	    if ( chown( path, uid, gid ) != 0 ) {
 		perror( path );
 		return( 1 );
 	    }
@@ -289,7 +285,7 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 	}
 	/* check uid & gid */
 	if( uid != st.st_uid  || gid != st.st_gid ) {
-	    if ( lchown( path, uid, gid ) != 0 ) {
+	    if ( chown( path, uid, gid ) != 0 ) {
 		perror( path );
 		return( 1 );
 	    }
