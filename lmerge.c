@@ -156,7 +156,7 @@ getline:
 main( int argc, char **argv )
 {
     int			c, i, j, cmpval, err = 0, tcount = 0, candidate = NULL;
-    int			force = 0, ofd, fileloc = 0;
+    int			force = 0, ofd, fileloc = 0, match = 0;
     char		*tname = NULL, *file = NULL;
     char		*tpath = NULL;
     char		npath[ 2 * MAXPATHLEN ];
@@ -322,15 +322,16 @@ main( int argc, char **argv )
     
     /* merge */
     for ( i = 0; i < tcount; i++ ) {
-	while ( !(trans[ i ]->eof) ) {
+	while ( !(trans[ i ]->eof)) {
 	    candidate = i;
 	    fileloc = i;
 
-	    if ( force && ( candidate == ( tcount - 1 ) ) ) {
+	    if ( force && ( candidate == ( tcount - 1 ))) {
 		goto outputline;
 	    }
 
 	    /* Compare candidate to other transcripts */
+	    match = 0;
 	    for ( j = i + 1; j < tcount; j++ ) {
 		if ( trans[ j ]->eof ) {
 		    continue;
@@ -339,8 +340,9 @@ main( int argc, char **argv )
 		    trans[ j ]->filepath );
 		if ( cmpval == 0 ) {
 		    /* File match */
+		    match = 1;
 
-		    if ( ( noupload ) &&
+		    if (( noupload ) &&
 			    ( *trans[ candidate ]->targv[ 0 ] == 'f' 
 			    || *trans[ candidate ]->targv[ 0 ] == 'a' )) {
 			/* Use lower precedence path */
@@ -545,6 +547,14 @@ outputline:
 		exit( 2 );
 	    }
 skipline:
+	    if (( trans[ candidate ]->remove ) && match ) {
+		/* Recreate unmatched "-" line */
+		if ( fputs( trans[ candidate ]->line, ofs ) == EOF ) {
+		    perror( trans[ candidate ]->line );
+		    exit( 2 );
+
+		}
+	    }
 	    if ( getnextline( trans[ candidate ] ) != 0 ) {
 		exit( 2 );
 	    }
