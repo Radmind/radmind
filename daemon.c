@@ -507,6 +507,7 @@ main( ac, av )
     }
     
 #ifdef __APPLE__
-    DNSServiceDiscoveryDeallocate( mdnsref );
+    if ( regservice ) 
+	DNSServiceDiscoveryDeallocate( mdnsref );
 #endif /* __APPLE__ */
 }
