@@ -220,7 +220,8 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
     if (( edit_path == APPLICABLE ) && ( flag == PR_FS_ONLY )) {
 	fprintf( outtran, "- " );
 	cur = fs;
-    } else if (( edit_path ==  CREATABLE ) && ( flag == PR_TRAN_ONLY )) {
+    } else if (( edit_path ==  CREATABLE ) &&
+	    (( flag == PR_TRAN_ONLY ) || ( fs->pi_type == 'X' ))) {
 	fprintf( outtran, "- " );
 	cur = &tran->t_pinfo;
     }
@@ -305,13 +306,16 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 		(int)major(dev), (int)minor(dev) );
 	break;
 
+    case 'X' :
+	perror( cur->pi_name );
+	exit( 2 );
+
     default:
 	fprintf( stderr, "PANIC! XXX OOPS!\n" );
 	exit( 2 );
     } 
 }
 
-     
    static int 
 t_compare( struct pathinfo *fs, struct transcript *tran )
 {

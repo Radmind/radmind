@@ -37,8 +37,11 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 #endif /* __APPLE__ */
 
     if ( lstat( path, st ) != 0 ) {
-	return( -1 );
+	memset( &st, 0, sizeof( struct stat ));
+	*type = 'X';
+	return( 0 );
     }
+
     switch( st->st_mode & S_IFMT ) {
     case S_IFREG:
 #ifdef __APPLE__
@@ -46,9 +49,8 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 	if ( afinfo != NULL ) {
 	    if (( getattrlist( path, &getalist, &afinfo->ai,
 		    sizeof( struct attr_info ), FSOPT_NOFOLLOW ) == 0 )) {
-		if (( afinfo->ai.ai_rsrc_len > 0 )
-			|| ( memcmp( afinfo->ai.ai_data, null_buf,
-			FINFOLEN ) != 0 )) {
+		if (( afinfo->ai.ai_rsrc_len > 0 ) ||
+	( memcmp( afinfo->ai.ai_data, null_buf, FINFOLEN ) != 0 )) {
 		    *type = 'a';
 		    break;
 		}
