@@ -250,6 +250,8 @@ f_retr( sn, ac, av )
 	return( -1 );
     }
 
+    syslog( LOG_INFO, "f_retr: 'file' %s retreived", path );
+
     return( 0 );
 }
 
@@ -318,6 +320,7 @@ f_stat( SNET *sn, int ac, char *av[] )
 	return( 1 );
     }
         
+    syslog( LOG_INFO, "f_stat: returning infomation for %s", path );
 
     if ( stat( path, &st ) < 0 ) {
         syslog( LOG_ERR, "f_stat: stat: %m" );
@@ -505,6 +508,8 @@ f_stor( SNET *sn, int ac, char *av[] )
 	snet_writef( sn, "%d %s: %s\r\n", 555, upload, strerror( errno ));
 	return( 1 );
     }
+
+    syslog( LOG_INFO, "f_stor: file %s stored", upload );
 
     tv.tv_sec = 10 * 60;
     tv.tv_usec = 0;
