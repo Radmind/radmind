@@ -25,7 +25,7 @@ LDFLAGS=	-L${OPENSSL}/lib -Llibsnet -lnsl -lsnet -lcrypto -lsocket
 INSTALL=	/usr/ucb/install
 
 # Should not need to edit anything after here.
-BINTARGETS=	fsdiff ktcheck lapply lcksum lcreate lmerge
+BINTARGETS=	fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff
 MAN1TARGETS=	fsdiff.1 lapply.1 lcreate.1 
 TARGETS=	radmind ${BINTARGETS}
 
@@ -46,6 +46,9 @@ LCREATE_OBJ=	version.o lcreate.o argcargv.o code.o connect.o
 LCKSUM_OBJ=	version.o lcksum.o argcargv.o chksum.o base64.o code.o
 
 LMERGE_OBJ=	version.o lmerge.o argcargv.o pathcmp.o mkdirs.o
+
+LFDIFF_OBJ=	version.o lfdiff.o argcargv.o connect.o download.o chksum.o \
+		base64.o
 
 all : ${TARGETS}
 
@@ -83,6 +86,9 @@ lcreate: ${LCREATE_OBJ}
 
 lmerge: ${LMERGE_OBJ}
 	${CC} -o lmerge ${LMERGE_OBJ} ${LDFLAGS}
+
+lfdiff: ${LFDIFF_OBJ}
+	${CC} -o lfdiff ${LFDIFF_OBJ} ${LDFLAGS}
 
 FRC :
 
