@@ -313,7 +313,7 @@ ac_includes_default="\
 #endif"
 
 ac_subdirs_all="$ac_subdirs_all libsnet"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS diffpath server authlevel radminddir maxconnections build_date AWK CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA mktemppath CPP EGREP OPTOPTS subdirs LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS diffpath server authlevel radminddir maxconnections maildomain build_date AWK CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA mktemppath CPP EGREP OPTOPTS subdirs LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -861,6 +861,8 @@ Optional Packages:
   --with-radminddir=DIR   default radmind server storage
   --with-max-connections=MAX
                           maximum number of simultaneous connections
+  --with-maildomain=DOMAIN
+                          default radmind mail domain
   --with-ssl=DIR          path to ssl
   --with-zeroconf=DIR     path to zeroconf
 
@@ -1339,6 +1341,16 @@ if test "${with_maxconnections+set}" = set; then
   maxconnections="$withval"
 else
   maxconnections=0
+fi;
+
+
+
+# Check whether --with-maildomain or --without-maildomain was given.
+if test "${with_maildomain+set}" = set; then
+  withval="$with_maildomain"
+  maildomain="$withval"
+else
+  maildomain=""
 fi;
 
 
@@ -5341,6 +5353,7 @@ s,@server@,$server,;t t
 s,@authlevel@,$authlevel,;t t
 s,@radminddir@,$radminddir,;t t
 s,@maxconnections@,$maxconnections,;t t
+s,@maildomain@,$maildomain,;t t
 s,@build_date@,$build_date,;t t
 s,@AWK@,$AWK,;t t
 s,@CC@,$CC,;t t

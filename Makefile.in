@@ -28,6 +28,7 @@ RADMIND_HOST=@server@
 RADMIND_AUTHLEVEL=@authlevel@
 RADMIND_MAXCONNECTIONS=@maxconnections@
 RADMIND_BUILD_DATE=@build_date@
+RADMIND_MAIL_DOMAIN=@maildomain@
 
 RADMINDSYSLOG=LOG_LOCAL7
 
@@ -219,6 +220,8 @@ rash : FRC
 	    -e 's@_RADMIND_PREAPPLY@${PREAPPLYDIR}@g' \
 	    -e 's@_RADMIND_POSTAPPLY@${POSTAPPLYDIR}@g' \
 	    -e 's@_RADMIND_MKTEMP@${MKTEMP}@g' \
+	    -e 's@_RADMIND_DIR@${RADMINDDIR}@g' \
+	    -e 's@_RADMIND_MAIL_DOMAIN@${RADMIND_MAIL_DOMAIN}@g' \
 	    ${srcdir}/ra.sh > tmp/ra.sh; 
 
 man : FRC

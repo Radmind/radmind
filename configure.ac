@@ -21,6 +21,9 @@ AC_SUBST(radminddir)
 AC_ARG_WITH(maxconnections, AC_HELP_STRING([--with-max-connections=MAX], [maximum number of simultaneous connections]), maxconnections="$withval", maxconnections=0 )
 AC_SUBST(maxconnections) 
 
+AC_ARG_WITH(maildomain, AC_HELP_STRING([--with-maildomain=DOMAIN], [default radmind mail domain]), maildomain="$withval", maildomain="" )
+AC_SUBST(maildomain) 
+
 build_date=`date "+%B %d, %Y"`
 AC_SUBST(build_date) 
 

@@ -25,7 +25,9 @@ TLSLEVEL="_RADMIND_AUTHLEVEL"
 EDITOR=${EDITOR:-vi}
 DEFAULTS="/etc/defaults/radmind"
 FSDIFFROOT="."
-FLAG="/var/radmind/client/.RadmindRunning"
+FLAG="_RADMIND_DIR/client/.RadmindRunning"
+CHECKEDOUT="_RADMIND_DIR/client/.CheckedOut"
+MAILDOMAIN="_RADMIND_MAIL_DOMAIN"
 
 PREAPPLY="_RADMIND_PREAPPLY"
 POSTAPPLY="_RADMIND_POSTAPPLY"
@@ -63,8 +65,16 @@ Yn() {
     return 0
 }
 
+checkedout() {
+    if [ -s ${CHECKEDOUT} ]; then
+	OWNER=`cat ${CHECKEDOUT}`
+	return 1
+    fi
+    return 0
+}
+
 usage() {
-    echo "Usage:	$0 [ -ct | -h server | -w authlevel ] { trip | update | create | auto | force }" >&2
+    echo "Usage:	$0 [ -ct | -h server | -w authlevel ] { trip | update | create | auto | force | checkout | checkin }" >&2
     exit 1
 }
 
@@ -93,6 +103,19 @@ dopostapply() {
 update() {
     opt="$1"
     kopt=
+
+    checkedout
+    if [ $? -eq 1 ]; then
+	echo "Checked out by ${OWNER}"
+	if [ x"$opt" = x"interactive" -a x"$USER" = x"$OWNER" ]; then
+	    Yn "Continue with update?"
+	    if [ $? -eq 0 ]; then
+		exit 1
+	    fi
+	else
+	    exit 1
+	fi
+    fi
 
     if [ x"$opt" = x"interactive" ]; then
 	kopt="-n"
@@ -239,12 +262,43 @@ fi
 trap cleanup HUP INT PIPE QUIT TERM TRAP XCPU XFSZ
 
 case "$1" in
+checkout)
+    checkedout
+    if [ $? -eq 1 ]; then
+	if [ x${OWNER} = x${USER} ]; then
+	    echo "Already checked out"
+	    exit 1
+	fi
+	echo "Already checked out by ${OWNER}"
+	Yn "Force checkout?"
+	if [ $? -eq 0 ]; then
+	    exit 1
+	fi
+	echo ${USER} has removed your checkout on `hostname` | mail -s `hostname`": Checkout broken" ${OWNER}@${MAILDOMAIN:-`hostname`}
+    fi
+    echo ${USER} > ${CHECKEDOUT}
+    ;;
+
+checkin)
+    checkedout
+    if [ $? -eq 0 ]; then
+	echo "Not checked out"
+	exit 1
+    fi
+    if [ x${OWNER} != x${USER} ]; then
+	echo "Currently checked out by ${OWNER}"
+	exit 1
+    fi
+    rm ${CHECKEDOUT}
+    ;;
+
 update)
     update interactive
     cleanup
     ;;
 
 create)
+    # Since create does not modify the system, no need for checkedout
     ktcheck -w ${TLSLEVEL} -h ${SERVER} -n -c sha1
     case "$?" in
     0)	;;
@@ -305,6 +359,7 @@ create)
     ;;
 
 trip)
+    # Since trip does not modify the system, no need for checkedout
     ktcheck -w ${TLSLEVEL} -h ${SERVER} -qn -c sha1
     case "$?" in
     0)
@@ -332,6 +387,11 @@ trip)
     ;;
 
 auto)
+    checkedout
+    if [ $? -eq 1 ]; then
+	echo "Checked out by ${OWNER}"
+	exit 1
+    fi
     fsdiff -C ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
     if [ $? -ne 0 ]; then
 	echo Auto failure: `hostname` fsdiff
@@ -386,6 +446,11 @@ auto)
     ;;
 
 force)
+    checkedout
+    if [ $? -eq 1 ]; then
+	echo "Checked out by ${OWNER}"
+	exit 1
+    fi
     ktcheck -w ${TLSLEVEL} -h ${SERVER} -c sha1
     case "$?" in
     0)	;;
