@@ -33,10 +33,8 @@ Radmind uses the radmind access protocol to communicate with radmind
 clients.
 .sp
 On startup, radmind changes directory to _RADMIND_PATH, creates
-_RADMIND_PATH/command, _RADMIND_PATH/file,
-_RADMIND_PATH/special, _RADMIND_PATH/tmp,
-_RADMIND_PATH/tmp/file, _RADMIND_PATH/tmp/transcript and
-_RADMIND_PATH/transcript ( with permissions 0750 ) if they do not
+command, file, special, tmp, tmp/file, tmp/transcript and
+transcript ( with permissions 0750 ) if they do not
 exist, and begins listening on the radmind port ( by default 6662 ) for
 incoming connections.
 With the
@@ -45,13 +43,19 @@ With the
 as its working directory.
 Radmind forks a child for each connection.
 .sp
-The file _RADMIND_PATH/config contains the list of known clients that
+The file config contains the list of known clients that
 can connect to radmind, one per line.  Each line contains the fully
 qualified domain name or IP address of the client and the client's command file.
-Lines that are blank or begin with '#' are ignored.
-.sp
-\'*' is a wildcard and will match any string.  A number range can be given 
-by "<MIN-MAX>" where MIN is the lower bound and MAX is the upper bound.  '\\'
+Lines that are blank or begin with '#' are ignored.  '*' is a wildcard and
+will match any string.  A number range can be given 
+by "<\c
+.IR min -\c
+.IR max\   >"
+where 
+.I min
+is the lower bound and
+.I max
+is the upper bound.  '\\'
 can be used to escape any character.
 .sp
 A client is only given access to transcripts that are listed in their config
@@ -60,32 +64,42 @@ file.
 .SH DIRECTORY STRUCTURE
 .TP 19
 .B command
-Stores the command files.
+Stores command files.
 .TP 19
 .B transcripts 
-Stores the transcripts.
+Stores transcripts.
 .TP 19
 .B file
 All files served from the radmind server are stored in the
 .B file
 directory.
 All files for a given transcript are stored in
-.B file/<TRANSCRIPT>
-where <TRANSCRIPT> is the name of the transcript.  A file is stored in
-.B file/<TRANSCRIPT>/<PATH>
-where <PATH> is the file's path as listed in the transcript.
+.BI file/ <transcript>
+where
+.I <transcript>
+is the name of the transcript.  A file is stored in
+.BI file/ <transcript>\c
+.RI / <path>
+where
+.I <path>
+is the file's path as listed in the transcript.
 .TP 19
 .B special
 All special files are stored in
 .BR special .
 The special files for a given host are stored in
-.B file/<HOST>
-where <HOST> is the fully qualified domain name of the client.
+.BI file/ <host>
+where <host> is the fully qualified domain name or IP address of the client.
 Individual special files are stored in
-.B special/<HOST>/<PATH>
-where PATH is the path of the special file as listed in the client's
+.BI special/ <host>\c
+.RI / <path>
+where
+.I <path>
+is the path of the special file as listed in the client's
 command file.
-The IP address of the client will be used for <HOST> if there
+The IP address of the client will be used for
+.I <host>
+if there
 is no domain name returned by
 .BR gethostbyname() .
 .TP 19
@@ -113,15 +127,21 @@ NOOP
 do nothing
 .TP 10
 HELP
-Display help message
+Display helpful message
 .TP 10
 STAT
 stat a transcript, command or special file.  When statting a command file or
 transcript, the mode, UID and GID default to 0444, 0, and 0 respectively.
 Status of a special file is determined by a single transcript line listed
-in a file named <SPECIAL_FILE_PATH>.T, where <SPECIAL_FILE_PATH> is the full
+in a file named 
+.BI  special/< special-file-path\c
+>.T, where
+.BI < special-file-path\c
+> is the full
 path to the special file.  If that does not exist, a listing for the file 
-in the special.T transcript in the transcript directory will be used.
+in the
+.B transcript/special.T
+transcript in the transcript directory will be used.
 If neither of those exist, the defaults are returned.
 .TP 10
 RETR
@@ -147,15 +167,16 @@ specifies the radmind working directory, by default _RADMIND_PATH
 .B \-d
 debug mode. Does not disassociate from controlling tty.
 .TP 19
-.B \-L\  syslog-facility
+.BI \-L\  syslog-facility
 specifies which syslog-facilty to log messages to.
 .TP 19
 .BI \-p\  port 
 specifies the port of the radmind server, by default
 .BR 6662 .
 .TP 19
-.B \-u\  umask
-specifies the umask the server uses to write files to the disk.
+.BI \-u\  umask
+specifies the umask the server uses to write files to the disk, defaulting
+to the user's umask.
 .TP 19
 .B \-V
 displays the version of 
