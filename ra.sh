@@ -253,10 +253,11 @@ create)
     1)	Yn "Update command file and/or transcripts?"
 	if [ $? -eq 1 ]; then
 	    ktcheck -w ${TLSLEVEL} -h ${SERVER} -c sha1
-	    rc = $?
-	    if [ $rc -ne 0 ]; then
+	    RC=$?
+	    if [ $RC -ne 1 ]; then
+		echo Nothing to update
 		cleanup
-		exit $rc
+		exit $RC
 	    fi
 	fi
 	;;
@@ -294,7 +295,7 @@ create)
 	    read USERNAME
 	    USERNAME="-U ${USERNAME}"
 	fi
-	lcreate ${PROGRESS} -w ${AUTHLEVEL} ${USERAUTH} ${USERNAME} \
+	lcreate ${PROGRESS} -w ${TLSLEVEL} ${USERAUTH} ${USERNAME} \
 			${CHECKSUM} -h ${SERVER} ${FTMP}
 	if [ $? -ne 0 ]; then
 	    cleanup
