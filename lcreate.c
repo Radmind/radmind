@@ -87,7 +87,7 @@ main( int argc, char **argv )
     char                *user = NULL;
     char                *password = NULL;
 
-    while (( c = getopt( argc, argv, "c:h:iLnNp:P:qt:TU:vVw:x:y:z:" ))
+    while (( c = getopt( argc, argv, "c:h:ilnNp:P:qt:TU:vVw:x:y:z:" ))
 	    != EOF ) {
 	switch( c ) {
         case 'c':
@@ -109,7 +109,7 @@ main( int argc, char **argv )
 	    lnbf = 1;
 	    break;
 
-        case 'L':
+        case 'l':
             login = 1;
             break;
 
@@ -202,7 +202,7 @@ main( int argc, char **argv )
     }
 
     if ( err || ( argc - optind != 1 ))   {
-	fprintf( stderr, "usage: lcreate [ -LnNTV ] [ -q | -v | -i ] " );
+	fprintf( stderr, "usage: lcreate [ -lnNTV ] [ -q | -v | -i ] " );
 	fprintf( stderr, "[ -c checksum ] " );
 	fprintf( stderr, "[ -h host ] [ -p port ] [ -P password ] " );
 	fprintf( stderr, "[ -t stored-name ] [ -U user ] " );
