@@ -243,7 +243,7 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 		perror( path );
 		return( 1 );
 	    }
-	    if ( verbose ) printf( "Updating: %s mode\n", path );
+	    if ( verbose ) printf( "Updating %s mode\n", path );
 	}
 	/* check uid & gid */
 	if( uid != st.st_uid  || gid != st.st_gid ) {
