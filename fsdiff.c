@@ -111,13 +111,13 @@ fs_walk( char *path, int start, int finish )
 
 	if ( path[ len - 1 ] == '/' ) {
 	    if ( snprintf( temp, MAXPATHLEN, "%s%s", path, de->d_name )
-		    > MAXPATHLEN ) {
+		    >= MAXPATHLEN ) {
                 fprintf( stderr, "%s%s: path too long\n", path, de->d_name );
 		exit( 2 );
 	    }
 	} else {
             if ( snprintf( temp, MAXPATHLEN, "%s/%s", path, de->d_name )
-		    > MAXPATHLEN ) {
+		    >= MAXPATHLEN ) {
                 fprintf( stderr, "%s/%s: path too long\n", path, de->d_name );
                 exit( 2 );
             }
