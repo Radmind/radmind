@@ -24,7 +24,7 @@
 #define PR_DOWNLOAD	3 
 #define PR_STATUS	4 
 #define PR_STATUS_NEG	5
-#define PR_STATUS_MINUS	5
+#define PR_STATUS_MINUS	6
 
 #define K_CLIENT	0
 #define K_SERVER	1
