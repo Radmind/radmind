@@ -11,7 +11,7 @@
 #include "connect.h"
 #include "argcargv.h"
 #include "retr.h"
-#include "convert.h"
+#include "radstat.h"
 #include "code.h"
 #include "pathcmp.h"
 #include "update.h"
@@ -180,7 +180,7 @@ apply( FILE *f, char *parent, SNET *sn )
 	}
 
 	/* Do type check on local file */
-	switch ( getfsoinfo( path, &st, &fstype, finfo )) {
+	switch ( radstat( path, &st, &fstype, finfo )) {
 	case 0:
 	    present = 1;
 	    break;
@@ -286,16 +286,16 @@ filechecklist:
 	    }
 
 	    if ( *targv[ 0 ] == 'a' ) {
-		if ( retr_applefile( sn, pathdesc, path, NULL,
-			chksum_b64, temppath, linenum ) != 0 ) {
+		if ( retr_applefile( sn, pathdesc, path, chksum_b64, temppath,
+			linenum ) != 0 ) {
 		    return( 1 );
 		}
-	    } else if ( retr( sn, pathdesc, path, NULL, chksum_b64,
+	    } else if ( retr( sn, pathdesc, path, chksum_b64,
 		    (char *)&temppath ) != 0 ) {
 		return( 1 );
 	    }
 
-	    if ( getfsoinfo( temppath, &st, &fstype, finfo ) < 0 ) {
+	    if ( radstat( temppath, &st, &fstype, finfo ) < 0 ) {
 		perror( temppath );
 		return( 1 );
 	    }
