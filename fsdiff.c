@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <sys/param.h>
 #include <unistd.h>
+#include <strings.h>
 #include <errno.h>
 
 #include "transcript.h"
@@ -101,8 +102,16 @@ main( int argc, char **argv )
     chksum = 0;
     outtran = stdout;
 
-    while (( c = getopt( argc, argv, "o:K:T1V" )) != EOF ) {
+    while (( c = getopt( argc, argv, "c:o:K:T1V" )) != EOF ) {
 	switch( c ) {
+	case 'c':
+	    if ( strcasecmp( optarg, "sha1" ) != 0 ) {
+		perror( optarg );
+		exit( 1 );
+	    }
+	    chksum = 1;
+	    break;
+
 	case 'o':
 	    if (( outtran = fopen( optarg, "w" )) == NULL ) {
 		perror( optarg );
@@ -140,8 +149,8 @@ main( int argc, char **argv )
     }
 
     if ( errflag || ( argc - optind != 1 )) {
-	fprintf( stderr, 
-		"usage: fsdiff [ -T | -1 ] [ -K command ] [ -o file ] path\n" );
+	fprintf( stderr, "usage: fsdiff [ -T | -1 ] [ -K command ] " );
+	fprintf( stderr, "[ -c chksumtype ] [ -o file ] path\n" );
 	exit ( 1 );
     }
 
