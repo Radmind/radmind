@@ -25,6 +25,7 @@ AC_CHECK_LIB([nsl], [inet_ntoa])
 AC_CHECK_LIB([socket], [socket])
 
 CHECK_SSL
+CHECK_PAM
 
 AC_CONFIG_FILES([Makefile
                  libsnet/Makefile])

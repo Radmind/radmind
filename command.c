@@ -9,6 +9,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <pam_appl.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
@@ -61,7 +62,13 @@ int		f_retr ___P(( SNET *, int, char *[] ));
 int		f_stor ___P(( SNET *, int, char *[] ));
 int		f_noauth ___P(( SNET *, int, char *[] ));
 int		f_starttls ___P(( SNET *, int, char *[] ));
+int		f_login ___P(( SNET *, int, char *[] ));
+int 		exchange( int num_msg, const struct pam_message **msg,
+		    struct pam_response **resp, void *appdata_ptr);
 
+
+char		*user = NULL;
+char		*password;
 char		*remote_host = NULL;
 char		*remote_addr = NULL;
 char		*remote_cn = NULL;
@@ -83,6 +90,7 @@ struct command	noauth[] = {
     { "RETRieve",	f_noauth },
     { "STORe",		f_noauth },
     { "STARttls",       f_starttls },
+    { "LOGIn",       	f_noauth },
 };
 
 struct command	auth[] = {
@@ -93,6 +101,7 @@ struct command	auth[] = {
     { "RETRieve",	f_retr },
     { "STORe",		f_stor },
     { "STARttls",       f_starttls },
+    { "LOGIn",       	f_login },
 };
 
 struct command *commands  = noauth;
@@ -731,6 +740,107 @@ f_starttls( snet, ac, av )
 	    /* error message given in list_transcripts */
 	    exit( 1 );
 	}
+    }
+
+    return( 0 );
+}
+
+    int
+exchange( int num_msg, const struct pam_message **msg,
+    struct pam_response **resp, void *appdata_ptr)
+{
+    int				count = 0;
+    struct pam_response		*reply= NULL;
+
+    if ( num_msg <= 0 ) {
+	return( PAM_CONV_ERR );
+    }
+
+    if (( reply = malloc( num_msg * sizeof( struct pam_response ))) == NULL ) {
+	return( PAM_CONV_ERR );
+    }
+
+    for ( count = 0; count < num_msg; count++ ) {
+	char 	*string = NULL;
+
+	switch( msg[ count ]->msg_style ) {
+
+	case PAM_PROMPT_ECHO_OFF:
+	    string = strdup( user );
+	    if ( string == NULL ) {
+		goto exchange_failed;
+	    }
+	    break;
+
+	case PAM_PROMPT_ECHO_ON:
+	    string = strdup( password );
+	    if ( string == NULL ) {
+		goto exchange_failed;
+	    }
+	    break;
+
+	case PAM_TEXT_INFO:
+	case PAM_ERROR_MSG:
+	    string = NULL;
+	    break;
+
+	default:
+	    goto exchange_failed;
+	}
+
+	reply[ count ].resp = string;
+	reply[ count ].resp_retcode = 0;
+	string = NULL;
+    }
+
+    *resp = reply;
+    reply = NULL;
+
+    return( PAM_SUCCESS );
+
+exchange_failed:
+
+    if ( reply ) {
+	for ( count = 0; count < num_msg; count++ ) {
+	    if ( reply[ count ].resp == NULL ) {
+		continue;
+	    }
+	    free( reply[ count ].resp );
+	    reply[ count ].resp = NULL;
+	}
+	free( reply );
+	reply = NULL;
+    }
+
+    return( PAM_CONV_ERR );
+}
+
+
+    int
+f_login( snet, ac, av )
+    SNET                        *snet;
+    int                         ac;    
+    char                        *av[];
+{
+    int				pam_error;
+    pam_handle_t		*pamh;
+    struct pam_conv		pam_conv = {
+	&exchange,
+	NULL
+    };
+
+    if ( ac != 3 ) {  
+        snet_writef( snet, "%d Syntax error\r\n", 501 );
+        return( -1 );
+    }
+    if (( pam_error =  pam_start( "radmind", av[ 3 ], &pam_conv,
+	    &pamh )) != PAM_SUCCESS ) {
+	snet_writef( snet, "%d %s\r\n", 500, pam_strerror( pamh, pam_error ));
+	return( -1 );
+    }
+    if (( pam_error =  pam_authenticate( pamh, 0 )) != PAM_SUCCESS ) {
+	snet_writef( snet, "%d %s\r\n", 500, pam_strerror( pamh, pam_error ));
+	return( -1 );
     }
 
     return( 0 );

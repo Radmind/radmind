@@ -20,6 +20,35 @@ AC_DEFUN([CHECK_SNET],
     AC_MSG_RESULT(yes)
 ])
 
+AC_DEFUN([CHECK_PAM],
+[
+    AC_MSG_CHECKING(for pam)
+    pamdirs="/usr/local /usr"
+    AC_ARG_WITH(pam,
+	    AC_HELP_STRING([--with-pam=DIR], [path to pam]),
+	    pamdirs="$withval")
+    for dir in $pamdirs; do
+	pamdir="$dir"
+	if test -f "$dir/include/security/pam_appl.h"; then
+	    found_pam="yes";
+	    CPPFLAGS="$CPPFLAGS -I$pamdir/include/security";
+	    break;
+	fi
+	if test -f "$dir/include/pam/pam_appl.h"; then
+	    found_pam="yes";
+	    CPPFLAGS="$CPPFLAGS -I$pamdir/include/pam";
+	    break
+	fi
+    done
+    if test x_$found_pam != x_yes; then
+	AC_MSG_ERROR(cannot find pam headers)
+    else
+	LIBS="$LIBS -lpam";
+	HAVE_PAM=yes
+    fi
+    AC_SUBST(HAVE_PAM)
+    AC_MSG_RESULT(yes)
+])
 
 AC_DEFUN([CHECK_SSL],
 [
