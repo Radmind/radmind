@@ -389,11 +389,13 @@ main( int argc, char **argv )
 			    || *trans[ j ]->t_argv[ 0 ] == 'a' )) {
 			/* Remove file from lower precedence transcript */
 			if ( snprintf( opath, MAXPATHLEN, "%s/%s/%s",
-				trans[ j ]->t_path, trans[ j ]->t_tran_name,
+				trans[ j ]->t_file_root,
+				trans[ j ]->t_tran_name,
 				trans[ j ]->t_filepath ) > MAXPATHLEN -1 ) {
 			    fprintf( stderr,
 				"%s/%s/%s: path too long\n",
-				trans[ j ]->t_path, trans[ j ]->t_tran_name,
+				trans[ j ]->t_file_root,
+				trans[ j ]->t_tran_name,
 				trans[ j ]->t_filepath );
 			    exit( 2 );
 			}
