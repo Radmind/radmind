@@ -8,8 +8,8 @@
 #include "snet.h"
 #include "code.h"
 #include "base64.h"
-#include "download.h"
 #include "chksum.h"
+#include "download.h"
 
 #define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
 
@@ -26,7 +26,7 @@ extern int		chksum;
  */
 
     char *
-retr( SNET *sn, char *pathdesc, char *path, char *chksumval ) 
+retr( SNET *sn, char *pathdesc, char *path, char *location, char *chksumval ) 
 {
     struct timeval      tv;
     char 		*line;
@@ -55,16 +55,23 @@ retr( SNET *sn, char *pathdesc, char *path, char *chksumval )
     }
 
     if ( *line != '2' ) {
-	fprintf( stderr, "%s", line );
+	fprintf( stderr, "%s\n", line );
 	return( NULL );
     }
 
     /*Create temp file name*/
-    if ( snprintf( temppath, MAXPATHLEN, "%s.radmind.%i",
-	    path, getpid() ) > MAXPATHLEN ) {
-	fprintf( stderr, "%s.radmind.%i: too long", path,
-		(int)getpid() );
-	goto error3;
+    if ( location == NULL ) {
+	if ( snprintf( temppath, MAXPATHLEN, "%s.radmind.%i",
+		path, getpid() ) > MAXPATHLEN ) {
+	    fprintf( stderr, "%s.radmind.%i: too long", path,
+		    (int)getpid() );
+	    goto error3;
+	}
+    } else {
+	if ( snprintf( temppath, MAXPATHLEN, "%s", location ) > MAXPATHLEN ) {
+	    fprintf( stderr, "%s: too long", path );
+	    goto error3;
+	}
     }
 
     /* Open file */
