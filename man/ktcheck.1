@@ -4,7 +4,7 @@
 \- verify and download command file and transcripts
 .SH SYNOPSIS
 .B ktcheck 
-.RB [ \-inrV ]
+.RB [ \-CinrV ]
 [
 .RB \-q\ |\ \-v
 ] [
@@ -66,6 +66,10 @@ verifies but never downloads the command files or transcripts.  A tempory
 special.T is created for verification and is removed on exit.
 .sp
 .SH OPTIONS
+.TP 19
+.BI \-C
+clean
+.BR _RADMIND_DIR/client .
 .TP 19
 .BI \-c\  checksum
 enables checksuming.
