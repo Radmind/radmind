@@ -6,9 +6,9 @@
 #define T_NEGATIVE   -1
 #define T_SPECIAL    0
 
-#define T_MOVE_BOTH  0
-#define T_MOVE_FS    -1
 #define T_MOVE_TRAN  1
+#define T_MOVE_FS    -1
+#define T_MOVE_BOTH  0
 
 #define T_MODE	     0x0FFF
 
