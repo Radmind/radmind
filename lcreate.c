@@ -42,6 +42,7 @@ int		cksum = 0;
 int		quiet = 0;
 int		linenum = 0;
 extern char	*version;
+extern char	*checksumlist;
 const EVP_MD    *md;
 
     static void
@@ -120,6 +121,7 @@ main( int argc, char **argv )
 	    break;
 	case 'V':
 	    printf( "%s\n", version );
+	    printf( "%s\n", checksumlist );
 	    exit( 0 );
 	case '?':
 	    err++;

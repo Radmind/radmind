@@ -4,4 +4,4 @@
  */
 
 char *version = VERSION;
-char *checksumlist = "sha1";
+char *checksumlist = "sha1\nsha\nmd5\nmd2\ndss1\nmdc2\nripemd160";
