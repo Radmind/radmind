@@ -1,3 +1,8 @@
+DESTDIR=/usr/local/radmind
+MANDIR=${DESTDIR}/man
+BINDIR=${DESTDIR}/bin
+SBINDIR=${DESTDIR}/sbin
+
 VARDIR=/var/radmind
 CONFIGFILE=${VARDIR}/config
 TRANSCRIPTDIR=${VARDIR}/transcript
@@ -15,13 +20,17 @@ CFLAGS= ${CWARN} ${OSNAME} ${INCPATH}
 
 OPENSSL=	/usr/local/openssl
 
-INCPATH=  -I${OPENSSL}/include/openssl -Ilibsnet
-LDFLAGS=  -L${OPENSSL}/lib -Llibsnet -lnsl -lsnet -lcrypto -lsocket
+INCPATH=	-I${OPENSSL}/include/openssl -Ilibsnet
+LDFLAGS=	-L${OPENSSL}/lib -Llibsnet -lnsl -lsnet -lcrypto -lsocket
+INSTALL=	/usr/ucb/install
 
-TARGETS=	radmind fsdiff ktcheck lapply lcksum lcreate lmerge
+# Should not need to edit anything after here.
+BINTARGETS=	fsdiff ktcheck lapply lcksum lcreate lmerge
+MAN1TARGETS=	fsdiff.1 lapply.1 lcreate.1 
+TARGETS=	radmind ${BINTARGETS}
 
 RADMIND_OBJ=	version.o daemon.o command.o argcargv.o auth.o code.o \
-		chksum.o base64.o
+		chksum.o base64.o mkdirs.o
 
 FSDIFF_OBJ=	version.o fsdiff.o argcargv.o transcript.o llist.o code.o \
 		hardlink.o chksum.o base64.o pathcmp.o convert.o
@@ -88,6 +97,20 @@ dist   : clean
 	tar chfFFX - EXCLUDE . | ( cd ${DISTDIR}; tar xvf - )
 	chmod +w ${DISTDIR}/Makefile
 	echo ${VERSION} > ${DISTDIR}/VERSION
+
+install	: all
+	-mkdir -p ${DESTDIR}
+	-mkdir -p ${SBINDIR}
+	${INSTALL} -m 0755 -c radmind ${SBINDIR}/
+	-mkdir -p ${BINDIR}
+	for i in ${BINTARGETS}; do \
+	    ${INSTALL} -m 0755 -c $$i ${BINDIR}/; \
+	done
+	-mkdir -p ${MANDIR}
+	-mkdir ${MANDIR)/man1
+	for i in ${MAN1TARGETS}; do \
+	    ${INSTALL} -m 0644 -c $$i ${MANDIR}/man1/; \
+	done
 
 clean :
 	rm -f *.o a.out core
