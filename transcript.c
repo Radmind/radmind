@@ -360,10 +360,6 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 	t_print( fs, tran, PR_TRAN_ONLY ); 
 	return T_MOVE_TRAN;
     } 
-    if ( cmp < 0 && fs->pi_type != 'X' ) {
-	/* name is not in fs or tran */
-	return( T_MOVE_FS );
-    }
 
     /*
      * after this point, name is in the fs, so if it's 'f', and

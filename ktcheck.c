@@ -40,7 +40,6 @@
 
 void output( char* string);
 int check( SNET *sn, char *type, char *path); 
-int check_command ( SNET *sn, char *path );
 int createspecial( SNET *sn, struct list *special_list );
 int getstat( SNET *sn, char *description, char *stats );
 
@@ -51,10 +50,8 @@ int			verbose = 0;
 int			dodots= 0;
 int			quiet = 0;
 int			update = 1;
-int			change = 0;
 char			*kfile= _RADMIND_COMMANDFILE;
 char			*kdir= "";
-struct list		*special_list;
 const EVP_MD		*md;
 SSL_CTX  		*ctx;
 
@@ -197,7 +194,7 @@ check( SNET *sn, char *type, char *file )
 	    return( 2 );
 	}
 
-	/* Check for path with directories */
+	/* Check for transcript with directories */
 	for ( p = strchr( file, '/' ); p != NULL; p = strchr( p, '/' )) {
 	    *p = '\0';
 
@@ -267,7 +264,8 @@ check( SNET *sn, char *type, char *file )
     if ( getstat( sn, (char *)&pathdesc, stats ) != 0 ) {
 	return( 2 );
     }
-    if (( tac = acav_parse( NULL, stats, &targv )) != 8 ) {
+    tac = acav_parse( NULL, stats, &targv );
+    if ( tac != 8 ) {
 	perror( "Incorrect number of arguments\n" );
 	return( 2 );
     }
@@ -351,118 +349,6 @@ check( SNET *sn, char *type, char *file )
 	return( 0 );
     }
 }
-    int
-check_command( SNET *sn, char *file )
-{
-    int			len, tac;
-    char                **targv;
-    char                cline[ 2 * MAXPATHLEN ];
-    char                path[ 2 * MAXPATHLEN ];
-    FILE		*f;
-
-    switch( check( sn, "COMMAND", file )) { 
-    case 0:
-	break;
-    case 1:
-	change++;
-	if ( !update ) {
-	    return( 1 );
-	}
-	break;
-    case 2:
-	exit( 2 );
-    }
-
-    if ( file == NULL ) {
-	if ( snprintf( path, MAXPATHLEN, "%s", kfile,
-		file ) > MAXPATHLEN - 1 ) {
-	    fprintf( stderr, "path too long: %s\n", kfile );
-	    exit( 2 );
-	}
-    } else {
-	if ( snprintf( path, MAXPATHLEN, "%s/%s", kdir,
-		file ) > MAXPATHLEN - 1 ) {
-	    fprintf( stderr, "path too long: %s/%s\n", kdir, file );
-	    exit( 2 );
-	}
-    }
-    printf( "path: %s\n", path );
-
-    if (( f = fopen( path, "r" )) == NULL ) {
-	perror( path );
-	exit( 2 );
-    }
-
-    while ( fgets( cline, MAXPATHLEN, f ) != NULL ) {
-	linenum++;
-
-	len = strlen( cline );
-	if (( cline[ len - 1 ] ) != '\n' ) {
-	    fprintf( stderr, "%s: %d: line too long\n", kfile, linenum );
-	    exit( 2 );
-	}
-
-	tac = acav_parse( NULL, cline, &targv );
-
-	if (( tac == 0 ) || ( *targv[ 0 ] == '#' )) {
-	    continue;
-	}
-
-	if ( tac != 2 ) {
-	    fprintf( stderr, "%s: %d: invalid command line\n",
-		    kfile, linenum );
-	    exit( 2 );
-	}
-
-	switch( *targv[ 0 ] ) {
-	case 'k':
-	    switch( check_command( sn, targv[ 1 ] )) {
-	    case 0:
-		break;
-	    case 1:
-		change++;
-		if ( !update ) {
-		    return( 1 );
-		}
-		break;
-	    case 2:
-		exit( 2 );
-	    }
-	    break;
-
-	case 'p':
-	case 'n':
-	    switch( check( sn, "TRANSCRIPT", targv[ tac - 1] )) {
-	    case 0:
-		break;
-	    case 1:
-		change++;
-		if ( !update ) {
-		    return( 1 );
-		}
-		break;
-	    case 2:
-		exit( 2 );
-	    }
-
-	case 's':
-	    if ( *targv[ 0 ] == 's' ) {
-		if ( list_insert( special_list, targv[ 1 ] ) != 0 ) {
-		    perror( "list_insert" );
-		    exit( 2 );
-		}
-		continue;
-	    }
-	    break;
-
-	default:
-	    fprintf( stderr, "%s: %d: invalid command line\n",
-		    kfile, linenum );
-	    exit( 2 );
-	}
-    }
-    return( 0 );
-}
 
 /*
  * exit codes:
@@ -475,17 +361,21 @@ check_command( SNET *sn, char *file )
 main( int argc, char **argv )
 {
     int			c, port = htons( 6662 ), err = 0;
-    int			lnbf = 0;
+    int			len, tac, change = 0, lnbf = 0;
     int			authlevel = _RADMIND_AUTHLEVEL;
     int			use_randfile = 0;
     extern int          optind;
     char		*host = _RADMIND_HOST, *p;
+    char                **targv;
+    char                cline[ 2 * MAXPATHLEN ];
     char		tempfile[ MAXPATHLEN ];
     char		path[ MAXPATHLEN ];
     char		lcksum[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
     char		tcksum[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
     struct servent	*se;
     SNET		*sn;
+    FILE		*f;
+    struct list		*special_list;
     struct stat		tst, lst;
 
     while (( c = getopt ( argc, argv, "c:h:iK:np:qrvVw:x:y:z:" )) != EOF ) {
@@ -631,7 +521,7 @@ main( int argc, char **argv )
 	}
     }
 
-    switch( check_command( sn, NULL )) {
+    switch( check( sn, "COMMAND", NULL )) { 
     case 0:
 	break;
     case 1:
@@ -644,10 +534,57 @@ main( int argc, char **argv )
 	exit( 2 );
     }
 
+    if (( f = fopen( kfile, "r" )) == NULL ) {
+	perror( kfile );
+	exit( 2 );
+    }
 
     if (( special_list = list_new( )) == NULL ) {
 	perror( "list_new" );
 	exit( 2 );
+    }
+
+    while ( fgets( cline, MAXPATHLEN, f ) != NULL ) {
+	linenum++;
+
+	len = strlen( cline );
+	if (( cline[ len - 1 ] ) != '\n' ) {
+	    fprintf( stderr, "%s: %d: line too long\n", kfile, linenum );
+	    exit( 2 );
+	}
+
+	tac = acav_parse( NULL, cline, &targv );
+
+	if (( tac == 0 ) || ( *targv[ 0 ] == '#' )) {
+	    continue;
+	}
+
+	if ( tac != 2 ) {
+	    fprintf( stderr, "%s: %d: invalid command line\n",
+		    kfile, linenum );
+	    exit( 2 );
+	}
+
+	if ( *targv[ 0 ] == 's' ) {
+	    if ( list_insert( special_list, targv[ 1 ] ) != 0 ) {
+		perror( "list_insert" );
+		exit( 2 );
+	    }
+	    continue;
+	}
+	    
+	switch( check( sn, "TRANSCRIPT", targv[ tac - 1] )) {
+	case 0:
+	    break;
+	case 1:
+	    change++;
+	    if ( !update ) {
+		goto done;
+	    }
+	    break;
+	case 2:
+	    exit( 2 );
+	}
     }
 
     if ( special_list->l_count > 0 ) {

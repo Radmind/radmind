@@ -64,7 +64,6 @@ extern SSL_CTX  *ctx;
 #define K_TRANSCRIPT 2
 #define K_SPECIAL 3
 #define K_FILE 4
-#define K_COMMAND_OTHER 5
 
 int 		list_transcripts( SNET *sn );
 
@@ -207,7 +206,11 @@ keyword( int ac, char *av[] )
 	return( -1 );
     }
 
-    if (( strcasecmp( av[ 1 ], "COMMAND" ) == 0 ) && ( ac == 2 )) {
+    if ( strcasecmp( av[ 1 ], "COMMAND" ) == 0 ) {
+	if ( ac != 2 ) {
+	    return( -1 );
+	}
+
 	if ( strlen( command_file + 5 ) > MAXPATHLEN )  {
 	    syslog( LOG_WARNING, "[tmp]/%s longer than MAXPATHLEN",
 		    command_file );
@@ -216,9 +219,13 @@ keyword( int ac, char *av[] )
 	return( K_COMMAND );
     }
 
-    if (( strcasecmp( av[ 1 ], "SPECIAL" ) == 0 ) && ( ac == 3 )) {
+    if ( strcasecmp( av[ 1 ], "SPECIAL" ) == 0 ) {
+	if ( ac != 3 ) {
+	    return( -1 );
+	}
+
 	if ( strlen( av[ 1 ] ) + strlen( av[ 2 ] ) +
-		strlen( remote_host ) + 5 > MAXPATHLEN ) {
+		strlen( remote_host) + 5 > MAXPATHLEN ) {
 	    syslog( LOG_WARNING,
 		    "Overflow attempt: %s/%s-%s longer than MAXPATHLEN",
 		    av[ 1 ], av[ 2 ], remote_host );
@@ -226,7 +233,10 @@ keyword( int ac, char *av[] )
 	}
 	rc = K_SPECIAL;
 
-    } else if (( strcasecmp( av[ 1 ], "TRANSCRIPT" ) == 0 ) && ( ac == 3 )) {
+    } else if ( strcasecmp( av[ 1 ], "TRANSCRIPT" ) == 0 ) {
+	if ( ac != 3 ) {
+	    return( -1 );
+	}
 
 	if ( strlen( av[ 1 ] ) + strlen( av[ 2 ] ) + 5 > MAXPATHLEN ) {
 	    syslog( LOG_WARNING, "[tmp]/%s/%s longer than MAXPATHLEN",
@@ -235,10 +245,19 @@ keyword( int ac, char *av[] )
 	}
 	rc = K_TRANSCRIPT;
 
-    } else if (( strcasecmp( av[ 1 ], "FILE" ) == 0 ) && ( ac == 4 )) {
+    } else if ( strcasecmp( av[ 1 ], "FILE" ) == 0 ) {
+	if ( ac != 4 ) {
+	    return( -1 );
+	}
 
-	/* Check for ../ */
-	if ( strstr( av[ 3 ], "../" ) != NULL ) {
+	/* Check for leading ../ */
+	if ( strncmp( av[ 3 ], "../", strlen( "../" )) == 0 ) {
+	    syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s", av[ 3 ] );
+	    return( -1 );
+	}
+
+	/* Check for internal /../ */
+	if ( strstr( av[ 3 ], "/../" ) != NULL ) {
 	    syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s", av[ 3 ] );
 	    return( -1 );
 	}
@@ -250,17 +269,8 @@ keyword( int ac, char *av[] )
 		    av[ 1 ], av[ 2 ], av[ 3 ] );
 	    return( -1 );
 	}
+
 	rc = K_FILE;
-
-    } else if (( strcasecmp( av[ 1 ], "COMMAND" ) == 0 ) && ( ac == 3 )) {
-
-	if ( strlen( "command/" ) + strlen( av[ 2 ] ) + 5 > MAXPATHLEN ) {
-	    syslog( LOG_WARNING,
-		    "Overflow attempt: command/%s longer than MAXPATHLEN",
-		    av[ 2 ] );
-	    return( -1 );
-	}
-	rc = K_COMMAND_OTHER;
 
     } else {
 	return( -1 );
@@ -292,16 +302,6 @@ f_retr( sn, ac, av )
     switch ( keyword( ac, av )) {
     case K_COMMAND:
         sprintf( path, "%s", command_file );
-	break;
-    
-    case K_COMMAND_OTHER:
-	if (( d_path = decode( av[ 2 ] )) == NULL ) {
-	    syslog( LOG_ERR, "f_retr: decode: buffer too small" );
-	    snet_writef( sn, "%d Line too long\r\n", 540 );
-	    return( 1 );
-	} 
-
-	sprintf( path, "command/%s", d_path );
 	break;
 
     case K_TRANSCRIPT:
@@ -467,16 +467,6 @@ f_stat( SNET *sn, int ac, char *av[] )
     switch ( key = keyword( ac, av )) {
     case K_COMMAND:
         sprintf( path, "%s", command_file );
-	break; 
-
-    case K_COMMAND_OTHER:
-	if (( d_path = decode( av[ 2 ] )) == NULL ) {
-	    syslog( LOG_ERR, "f_retr: decode: buffer too small" );
-	    snet_writef( sn, "%d Line too long\r\n", 540 );
-	    return( 1 );
-	} 
-
-	sprintf( path, "command/%s", d_path );
 	break;
 
     case K_TRANSCRIPT:
@@ -542,7 +532,6 @@ f_stat( SNET *sn, int ac, char *av[] )
 	return( 0 );
         
 		    
-    case K_COMMAND_OTHER:
     case K_TRANSCRIPT:
 	snet_writef( sn, "%s %s %o %d %d %d %" PRIofft "d %s\r\n",
 		"f", av[ 2 ], 
@@ -605,7 +594,7 @@ f_stat( SNET *sn, int ac, char *av[] )
 	return( 0 );
 
     default:
-        return( -1 );
+        return( 1 );
     }
 }
 
