@@ -141,7 +141,7 @@ main( ac, av )
     struct sockaddr_in	sin;
     struct servent	*se;
     int			c, s, err = 0, fd, sinlen, trueint;
-    int			dontrun = 0, regservice = 0;
+    int			dontrun = 0;
     int			ssl_mode = 0;
     char		*prog;
     unsigned short	port = 0;
@@ -152,6 +152,7 @@ main( ac, av )
     char		*cert = "cert/cert.pem";
     char		*privatekey = "cert/cert.pem";
 #ifdef __APPLE__
+    int			regservice = 0;
     dns_service_discovery_ref	mdnsref = NULL;
 #endif /* __APPLE */
 
