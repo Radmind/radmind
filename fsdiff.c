@@ -211,7 +211,7 @@ main( int argc, char **argv )
 	    len = strlen( prefix );
 	    if (( len > 1 ) && ( prefix[ len -1 ] == '/' )) {
 		prefix[ len -1 ] = '\0';
-	    {
+	    }
 	    break;
 
 	case 'V':		
