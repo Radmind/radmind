@@ -13,6 +13,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <openssl/evp.h>
@@ -34,6 +35,7 @@ extern int 		linenum;
 extern int		verbose;
 extern int		dodots;
 extern int		cksum;
+extern int		errno;
 
 /*
  * Download requests path from sn and writes it to disk.  The path to
@@ -57,22 +59,24 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, size_t transize,
 
     if ( cksum ) {
 	if ( strcmp( trancksum, "-" ) == 0 ) {
-	    fprintf( stderr, "line %d: cksum not listed\n", linenum);
+	    fprintf( stderr, "line %d: No checksum\n", linenum);
 	    return( -1 );
 	}
 	EVP_DigestInit( &mdctx, md );
     }
 
-    if( snet_writef( sn, "RETR %s\n", pathdesc ) == NULL ) {
-	fprintf( stderr, "snet_writef failed\n" );
-	return( -1 );
-    }
     if ( verbose ) printf( ">>> RETR %s\n", pathdesc );
+    if ( snet_writef( sn, "RETR %s\n", pathdesc ) <= 0 ) {
+	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	exit( 1 );
+    }
 
     tv = timeout;
-    if ( ( line = snet_getline_multi( sn, logger, &tv ) ) == NULL ) {
-	fprintf( stderr, "snet_getline_multi failed\n" );
-	return( -1 );
+    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
+	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	exit( 1 );
     }
 
     if ( *line != '2' ) {
@@ -82,14 +86,14 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, size_t transize,
 
     /*Create temp file name*/
     if ( snprintf( temppath, MAXPATHLEN, "%s.radmind.%i",
-	    path, getpid() ) >= MAXPATHLEN ) {
+	    path, getpid()) >= MAXPATHLEN ) {
 	fprintf( stderr, "%s.radmind.%i: too long", path,
-		(int)getpid() );
+		(int)getpid());
 	goto error3;
     }
 
     /* Open file */
-    if ( ( fd = open( temppath, O_RDWR | O_CREAT | O_EXCL, 0600 ) ) < 0 ) {
+    if (( fd = open( temppath, O_RDWR | O_CREAT | O_EXCL, 0600 )) < 0 ) {
 	perror( temppath );
 	goto error3;
     }
@@ -97,24 +101,25 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, size_t transize,
     /* Get file size from server */
     tv = timeout;
     if (( line = snet_getline( sn, &tv )) == NULL ) {
-	fprintf( stderr, "snet_getline" );
+	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+	    strerror( errno ));
 	goto error;
     }
     size = atoi( line );
     if ( verbose ) printf( "<<< %ld\n<<< ", (long)size );
     if ( transize != 0 && size != transize ) {
-	fprintf( stderr,
-	    "%s: size in transcript does not match size from server\n",
-	    decode( path ));
+	fprintf( stderr, "line %d: size in transcript does not match size
+	    from server\n", linenum );
 	return( -1 );
     }
 
     /* Get file from server */
     while ( size > 0 ) {
 	tv = timeout;
-	if ( ( rr = snet_read( sn, buf, (int)MIN( sizeof( buf ), size ),
-		&tv ) ) <= 0 ) {
-	    fprintf( stderr, "snet_read" );
+	if (( rr = snet_read( sn, buf, (int)MIN( sizeof( buf ), size ),
+		&tv )) <= 0 ) {
+	    fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+		strerror( errno ));
 	    goto error;
 	}
 	if ( write( fd, buf, (size_t)rr ) != rr ) {
@@ -129,13 +134,10 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, size_t transize,
     }
     if ( verbose ) printf( "\n" );
 
-    if ( size != 0 ) {
-	fprintf( stderr, "Did not write correct number of bytes" );
-	goto error;
-    }
     tv = timeout;
-    if ( ( line = snet_getline( sn, &tv ) ) == NULL ) {
-	fprintf( stderr, "snet_getline" );
+    if (( line = snet_getline( sn, &tv )) == NULL ) {
+	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+	    strerror( errno ));
 	goto error;
     }
     if ( strcmp( line, "." ) != 0 ) {
@@ -147,9 +149,10 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, size_t transize,
     /* cksum file */
     if ( cksum ) {
 	EVP_DigestFinal( &mdctx, md_value, &md_len );
-	base64_e( ( char*)&md_value, md_len, cksum_b64 );
+	base64_e(( char*)&md_value, md_len, cksum_b64 );
 	if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
-	    fprintf( stderr, "checksum failed: %s\n", path );
+	    fprintf( stderr, "line %d: checksum in transcript does not match
+		checksum from server\n", linenum );
 	    goto error;
 	}
     }
@@ -198,16 +201,18 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
         EVP_DigestInit( &mdctx, md );
     }
 
-    if( snet_writef( sn, "RETR %s\n", pathdesc ) == NULL ) {
-        fprintf( stderr, "snet_writef failed\n" );
-        return( -1 );
-    }
     if ( verbose ) printf( ">>> RETR %s\n", pathdesc );
+    if ( snet_writef( sn, "RETR %s\n", pathdesc ) <= 0 ) {
+	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	exit( 1 );
+    }
 
     tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-        fprintf( stderr, "snet_getline_multi failed\n" );
-        return( -1 );
+	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	exit( 1 );
     }
 
     if ( *line != '2' ) {
@@ -217,15 +222,15 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 
     /* Get file size from server */
     tv = timeout;
-    if ( ( line = snet_getline( sn, &tv ) ) == NULL ) {
-        fprintf( stderr, "snet_getline" );
-	return( -1 );
+    if (( line = snet_getline( sn, &tv )) == NULL ) {
+	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	exit( 1 );
     }
     size = atol( line );
     if ( transize != 0 && size != transize ) {
-	fprintf( stderr,
-	    "%s: size in transcript does not match size from server\n",
-	    decode( path ));
+	fprintf( stderr, "line %d: size in transcript does not match size
+	    from server\n", linenum );
 	return( -1 );
     }
     if ( verbose ) printf( "<<< %ld\n<<< ", size );
@@ -234,11 +239,12 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     tv = timeout;
     if (( rc = snet_read( sn, ( char * )&ah, AS_HEADERLEN, &tv ))
 	    != AS_HEADERLEN ) {
-	perror( "snet_read" ); 
-	return( -1 );
+	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	exit( 1 );
     }
     if ( memcmp( &as_header, &ah, AS_HEADERLEN ) != 0 ) {
-	fprintf( stderr, "%s: not a radmind AppleSingle file.\n", path );
+	fprintf( stderr, "%s: not a radmind AppleSingle file\n", path );
 	return( -1 );
     }
     if ( cksum ) {
@@ -252,8 +258,9 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     if (( rc = snet_read( sn, ( char * )&ae_ents,
 	    ( 3 * sizeof( struct as_entry )), &tv ))
 	    != ( 3 * sizeof( struct as_entry ))) {
-	perror( "snet_read" );
-	return( -1 );
+	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	exit( 1 );
     }
     if ( cksum ) {
 	EVP_DigestUpdate( &mdctx, (char *)&ae_ents, (unsigned int)rc );
@@ -266,8 +273,9 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     tv = timeout;
     if (( rc = snet_read( sn, finfo, sizeof( finfo ), &tv ))
 	    != sizeof( finfo )) {
-	perror( "snet_read" );
-	return( -1 );
+	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	exit( 1 );
     }
     if ( cksum ) {
 	EVP_DigestUpdate( &mdctx, finfo, (unsigned int)rc );
@@ -292,11 +300,13 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 
     /* data fork must exist to write to rsrc fork */        
     if (( dfd = open( temppath, O_CREAT | O_EXCL | O_WRONLY, 0600 )) < 0 ) {
+	perror( temppath );
 	goto error1;
     }
 
     if (( rfd = open( rsrc_path, O_WRONLY, 0 )) < 0 ) {
-        goto error2;
+	perror( rsrc_path );
+	goto error2;
     };  
 
     for ( rc = 0, rsize = ae_ents[ AS_RFE ].ae_length; rsize > 0;
@@ -304,12 +314,13 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	tv = timeout;
 	if (( rc = snet_read( sn, buf, ( int )MIN( sizeof( buf ), rsize ),
 		&tv )) <= 0 ) {
-	    perror( "snet_read" );
+	    fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+		strerror( errno ));
 	    goto error2;
 	}
 
 	if (( write( rfd, buf, ( unsigned int )rc )) != rc ) {
-	    perror( "rfd write" );
+	    perror( rsrc_path );
 	    goto error2;
 	}
 	if ( cksum ) {
@@ -321,7 +332,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     size -= ae_ents[ AS_RFE ].ae_length;
     
     if ( close( rfd ) < 0 ) {
-	perror( "close rfd" );
+	perror( rsrc_path );
 	exit( 1 );
     }
 
@@ -330,12 +341,13 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     	tv = timeout;
     	if (( rc = snet_read( sn, buf, (int)MIN( sizeof( buf ), size ),
 		&tv )) <= 0 ) {
-	    perror( "snet_read" );
+	    fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+		strerror( errno ));
 	    goto error2;
 	}
 
 	if ( write( dfd, buf, ( unsigned int )rc ) != rc ) {
-	    perror( "dfd write" );
+	    perror( temppath );
 	    goto error2;
 	}
 
@@ -346,7 +358,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     }
 
     if ( close( dfd ) < 0 ) {
-	perror( "close dfd" );
+	perror( temppath );
 	exit( 1 );
     }
     if ( verbose ) printf( "\n" );
@@ -354,12 +366,14 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     /* set finder info for newly decoded applefile */
     if ( setattrlist( temppath, &alist, finfo, sizeof( finfo ),
 	    FSOPT_NOFOLLOW ) != 0 ) {
-	goto error3;
+	fprintf( stderr, "Couldn't set finder info for %s.\n", temppath );
+	return( -1 );
     }
 
     tv = timeout;
     if (( line = snet_getline( sn, &tv )) == NULL ) {
-        fprintf( stderr, "snet_getline" );
+	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+	    strerror( errno ));
         return( -1 );
     }
     if ( strcmp( line, "." ) != 0 ) {
@@ -370,9 +384,10 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 
     if ( cksum ) {
 	EVP_DigestFinal( &mdctx, md_value, &md_len );
-	base64_e( ( char*)&md_value, md_len, cksum_b64 );
+	base64_e(( char*)&md_value, md_len, cksum_b64 );
         if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
-            fprintf( stderr, "checksum failed: %s\n", path );
+	    fprintf( stderr, "line %d: checksum in transcript does not match
+		checksum from server\n", linenum );
             return( -1 );
         }
     }
@@ -392,10 +407,6 @@ error2:
     if ( close( rfd ) < 0 ) {
 	perror( rsrc_path );
     }
-    return( -1 );
-
-error3:
-    fprintf( stderr, "Couldn't set finder info for %s.\n", temppath );
     return( -1 );
 }
 
