@@ -368,9 +368,8 @@ f_retr( sn, ac, av )
     /*
      * Here's a problem.  Do we need to add long long support to
      * snet_writef?
-     * LLL
      */
-    snet_writef( sn, "%d\r\n", (int)st.st_size );
+    snet_writef( sn, "%" PRIofft "d\r\n", st.st_size );
 
     /* dump file */
 
@@ -501,18 +500,18 @@ f_stat( SNET *sn, int ac, char *av[] )
     snet_writef( sn, "%d Returning STAT information\r\n", 230 );
     switch ( key ) {
     case K_COMMAND:
-	/* LLL */
-	snet_writef( sn, "%s %s %o %d %d %d %d %s\r\n", "f", "command", 
-		    DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, st.st_mtime, 
-		    (int)st.st_size, cksum_b64 );
+	snet_writef( sn, "%s %s %o %d %d %d %" PRIofft "d %s\r\n",
+		"f", "command", 
+		DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID,
+		st.st_mtime, st.st_size, cksum_b64 );
 	return( 0 );
         
 		    
     case K_TRANSCRIPT:
-	/* LLL */
-	snet_writef( sn, "%s %s %o %d %d %d %d %s\r\n", "f", av[ 2 ], 
-		    DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, st.st_mtime, 
-		    (int)st.st_size, cksum_b64 );
+	snet_writef( sn, "%s %s %o %d %d %d %" PRIofft "d %s\r\n",
+		"f", av[ 2 ], 
+		DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID,
+		st.st_mtime, st.st_size, cksum_b64 );
 	return( 0 );
     
     case K_SPECIAL:
@@ -528,10 +527,10 @@ f_stat( SNET *sn, int ac, char *av[] )
 		"f_stat: transcript path longer than MAXPATHLEN" );
 
 	    /* return constants */
-	    /* LLL */
-	    snet_writef( sn, "%s %s %o %d %d %d %d %s\r\n", "f", av[ 2 ], 
-		DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, 
-		st.st_mtime, (int)st.st_size, cksum_b64 );
+	    snet_writef( sn, "%s %s %o %d %d %d %" PRIofft "d %s\r\n",
+		    "f", av[ 2 ], 
+		    DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID,
+		    st.st_mtime, st.st_size, cksum_b64 );
 	    return( 0 );
 	}
 
@@ -555,17 +554,17 @@ f_stat( SNET *sn, int ac, char *av[] )
 	if (( av = special_t( path, enc_file )) == NULL ) {
 	    if (( av = special_t( "transcript/special.T", enc_file ))
 		    == NULL ) {
-		/* LLL */
-		snet_writef( sn, "%s %s %o %d %d %d %d %s\r\n", "f", enc_file, 
-		    DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, 
-		    st.st_mtime, (int)st.st_size, cksum_b64 );
+		snet_writef( sn, "%s %s %o %d %d %d %" PRIofft "d %s\r\n",
+			"f", enc_file, 
+			DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, 
+			st.st_mtime, st.st_size, cksum_b64 );
 		return( 0 );
 	    }
 	}
-	/* LLL */
-	snet_writef( sn, "%s %s %s %s %s %d %d %s\r\n", av[ 0 ], enc_file,
-	    av[ 2 ], av[ 3 ], av[ 4 ], st.st_mtime, (int)st.st_size,
-	    cksum_b64 );
+	snet_writef( sn, "%s %s %s %s %s %d %" PRIofft "d %s\r\n",
+		av[ 0 ], enc_file,
+		av[ 2 ], av[ 3 ], av[ 4 ],
+		st.st_mtime, st.st_size, cksum_b64 );
 
 	return( 0 );
 

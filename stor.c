@@ -186,11 +186,7 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
     }
 
     /* tell server how much data to expect */
-    /*
-     * Another long long issue with snet_writef.
-     * LLL
-     */
-    if ( snet_writef( sn, "%d\r\n", st.st_size ) < 0 ) {
+    if ( snet_writef( sn, "%" PRIofft "d\r\n", st.st_size ) < 0 ) {
 	fprintf( stderr, "store %s failed: %s\n", pathdesc,
 	    strerror( errno ));
 	goto sn_error;
