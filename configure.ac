@@ -38,6 +38,8 @@ AC_CHECK_SIZEOF(off_t)
 AC_CHECK_LIB([nsl], [inet_ntoa])
 AC_CHECK_LIB([socket], [socket])
 AC_CHECK_LIB([ssl], [SSL_accept], , [CHECK_SSL])
+AC_CHECK_HEADER([openssl/ssl.h], [], [AC_MSG_ERROR([header file <openssl/ssl.h>
+is required for this software.  You may be running RedHat 9.  If so, see the FAQ or the README for further instructions.])])
 AC_CHECK_LIB([crypto], [SSLeay_version], , [CHECK_SSL])
 AC_CHECK_HEADER([openssl/ssl.h], [], [AC_MSG_ERROR([
 header file <openssl/ssl.h> is required for this software.  You may be
