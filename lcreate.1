@@ -36,6 +36,13 @@ with the -t option.
 will print ( to the standard output ) the entire protocol exchange with the
 radmind server when the -v option is given.
 .sp
+.SH MAC OS X SUPPORT
+.B lcreate
+stores a Macintosh HFS+ file's data and corresponding metadata in a single
+.B applefile(5)
+on the server. Systems running Mac OS X on UFS-formatted drives do not need
+this special support.
+.sp
 .SH OPTIONS
 .TP 19
 .B \-n
@@ -73,6 +80,7 @@ on the server.
 .sp
 .sp
 .SH SEE ALSO
+.BR applefile (5),
 .BR ktcheck (1),
 .BR fsdiff (1),
 .BR lapply (1),

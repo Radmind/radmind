@@ -44,6 +44,15 @@ is not given,
 will use the standard input for reading.
 
 .sp
+.SH MAC OS X SUPPORT
+.B lapply
+decodes
+.B applefiles
+stored on the server by
+.B lcreate(1),
+restoring the files' Mac OS HFS+ metadata to the client machine.
+
+.sp
 .SH OPTIONS
 .TP 19
 .B \-n
@@ -78,6 +87,7 @@ Transcript was applied.
 An error occurred.
 .sp
 .SH SEE ALSO
+.BR applefile (5),
 .BR ktcheck (1),
 .BR fsdiff (1),
 .BR lcreate (1),
