@@ -18,6 +18,7 @@ void output( char* string);
 void			(*logger)( char * ) = NULL;
 extern struct timeval	timeout;
 int			verbose = 0;
+int			linenum = 0;
 int			chksum = 0;
 char			fullpath[ MAXPATHLEN ];
 char			*diff = _PATH_GNU_DIFF;
