@@ -14,13 +14,13 @@
 #include <errno.h>
 #include <netdb.h>
 #include <signal.h>
+#include <snet.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <syslog.h>
 #include <strings.h>
 #include <unistd.h>
 
-#include "snet.h"
 #include "command.h"
 
 int		debug = 0;

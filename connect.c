@@ -4,10 +4,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <snet.h>
 #include <stdio.h>
 #include <unistd.h>
 
-#include "snet.h"
 #include "connect.h"
 
 extern void            (*logger)( char * );

@@ -9,13 +9,13 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
+#include <snet.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <strings.h>
 #include <syslog.h>
 #include <unistd.h>
 
-#include "snet.h"
 #include "auth.h"
 #include "command.h"
 #include "argcargv.h"

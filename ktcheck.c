@@ -3,12 +3,12 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <netdb.h>
+#include <snet.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
 #include <unistd.h>
 
-#include "snet.h"
 #include "connect.h"
 #include "download.h"
 #include "argcargv.h"
@@ -474,8 +474,16 @@ main( int argc, char **argv )
 
 done:
     if ( change ) {
+	if ( verbose ) {
+	    if ( update )  {
+		printf( "Update made\n" );
+	    } else {
+		printf( "Update needed\n" );
+	    }
+	}
 	exit( 1 );
     } else {
+	if ( verbose ) printf( "No updates needed\n" );
 	exit( 0 );
     }
 }

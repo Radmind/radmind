@@ -2,11 +2,11 @@
 #include <sys/stat.h>
 #include <sys/param.h>
 #include <fcntl.h>
+#include <snet.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 
-#include "snet.h"
 #include "download.h"
 #include "chksum.h"
 

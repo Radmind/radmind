@@ -2,12 +2,12 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <netdb.h>
+#include <snet.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
 #include <unistd.h>
 
-#include "snet.h"
 #include "connect.h"
 #include "argcargv.h"
 #include "download.h"

@@ -3,12 +3,12 @@
 #include <netinet/in.h>
 #include <fcntl.h>
 #include <netdb.h>
+#include <snet.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
 #include <unistd.h>
 
-#include "snet.h"
 #include "connect.h"
 #include "download.h"
 #include "argcargv.h"

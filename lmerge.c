@@ -113,7 +113,7 @@ main( int argc, char **argv )
 	    break;
 	case 'u':
 	    errno = 0;
-	    mask = strtol( optarg, (char **)NULL, 0 );
+	    mask = (mode_t)strtol( optarg, (char **)NULL, 0 );
 	    if ( errno != 0 ) {
 		err++;
 		break;
@@ -227,7 +227,7 @@ main( int argc, char **argv )
     if ( !force ) {
 	/* Create file/tname dir */
 	sprintf( npath, "%s/../file/%s.%d", tpath, tname, (int)getpid() );
-	if ( mkdir( npath, 0777 ) != 0 ) {
+	if ( mkdir( npath, (mode_t)0777 ) != 0 ) {
 	    perror( npath );
 	    exit( 1 );
 	}
