@@ -9,6 +9,7 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <arpa/inet.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <netdb.h>
