@@ -1,3 +1,4 @@
+#ifdef __APPLE__
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/paths.h>
@@ -9,8 +10,10 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+
 #include <snet.h>
 
+#include "store_applefile.h"
 #include "chksum.h"
 #include "applefile.h"
 
@@ -194,3 +197,19 @@ store_applefile( const char *path, int afd, SNET *sn, int dodots )
    
     return( 0 ); 
 }
+
+#else !__APPLE__
+
+#include <sys/time.h>
+
+#include <snet.h>
+
+#include "store_applefile.h"
+
+    int    
+store_applefile( const char *path, int afd, SNET *sn, int dodots )
+{
+    return( -1 );
+}
+
+#endif __APPLE__
