@@ -22,6 +22,7 @@
 #include "base64.h"
 #include "update.h"
 #include "code.h"
+#include "radstat.h"
 
 extern int quiet;
 extern int linenum;
@@ -35,6 +36,7 @@ update( const char *path, char *displaypath, int present, int newfile,
     uid_t               uid;
     gid_t               gid;
     dev_t               dev;
+    char		type;
 #ifdef __APPLE__
     char			fi_data[ FINFOLEN ];
     extern struct atterlist     alist;
@@ -111,7 +113,7 @@ update( const char *path, char *displaypath, int present, int newfile,
 		return( 1 );
 	    }
 	    newfile = 1;
-	    if ( lstat( path, st ) != 0 ) {
+	    if ( radstat( (char*)path, st, &type, afinfo ) < 0 ) {
 		perror( path );
 		return( 1 );
 	    }

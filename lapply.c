@@ -181,9 +181,11 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
 	}
     } else { 
 	/* UPDATE */
-	if ( radstat( path, st, &fstype, &afinfo ) < 0 ) {
-	    perror( path );
-	    return( 1 );
+	if ( present ) {
+	    if ( radstat( path, st, &fstype, &afinfo ) < 0 ) {
+		perror( path );
+		return( 1 );
+	    }
 	}
 	if ( update( path, path, present, 0, st, tac, targv, &afinfo ) != 0 ) {
 	    return( 1 );
