@@ -29,8 +29,9 @@
 void		(*logger)( char * ) = NULL;
 struct timeval 	timeout = { 10 * 60, 0 };
 int		linenum = 0;
-int		verbose = 0;
 int		chksum = 0;
+int		verbose = 0;
+char		transcript[ 2 * MAXPATHLEN ];
 
 int apply( FILE *f, char *parent, SNET *sn );
 void output( char* string);
@@ -58,34 +59,32 @@ ischild( const char *parent, const char *child)
 
     void
 output( char *string ) {
-    printf( string );
+    printf( "%s\n", string );
     return;
 }
 
 /*
- * Never exit.  Must return so main can close network connection
+ * Never exit.  Must return so main can close network connection.
+ * 
+ * Must save parent and command pointers between recursive calls.
  */
 
     int 
 apply( FILE *f, char *parent, SNET *sn )
 {
     char		tline[ 2 * MAXPATHLEN ];
-    char		transcript[ 2 * MAXPATHLEN ];
+    char		path[ 2 * MAXPATHLEN ];
     char		chksum_b64[ 29 ];
     int			tac, present, len;
-    char		**targv, *path, *command = "";
+    char		**targv;
+    char		*tempparent, *command = "", *tempcommand;
     char		fstype;
     struct stat		st;
-    /*
-    mode_t	   	mode;
-    struct utimbuf	times;
-    uid_t		uid;
-    gid_t		gid;
-    dev_t		dev;
-    */
 
     while ( fgets( tline, MAXPATHLEN, f ) != NULL ) {
 	linenum++;
+
+	if ( verbose ) printf( "\n%d: %s", linenum, tline );
 
 	len = strlen( tline );
         if (( tline[ len - 1 ] ) != '\n' ) {
@@ -95,40 +94,67 @@ apply( FILE *f, char *parent, SNET *sn )
 
 	tac = argcargv( tline, &targv );
 
+	/*
+	 * What if the next line in a recursive call has the command
+	 * file name?  We are going to lose this when we return.  Do
+	 * we make it global?
+	 */
+
 	if ( tac == 1 ) {
-	    if ( verbose ) printf( "Command file: %s\n", targv[ 0 ] );
 	    strcpy( transcript, targv[ 0 ] );
-	    goto donext;
+	    len = strlen( transcript );
+	    if ( ( transcript[ len - 1 ] != ':' )
+		    || ( transcript[ len - 2 ] != 'T' )
+		    || ( transcript[ len - 3 ] != '.' ) ) {
+		fprintf( stderr, "%s: invalid transcript name\n", transcript );
+		return( 1 );
+	    }
+	    transcript[ len - 1 ] = NULL;
+	    transcript[ len - 2 ] = NULL;
+	    transcript[ len - 3 ] = NULL;
+	    if ( verbose ) printf( "Command file: %s\n", transcript );
+	    continue;
 	}
 
 	/* Get argument offset */
-	if ( ( *targv[ 0 ] == '+' ) || ( *targv[ 0 ] == '-' ) ) {
+	/*
+	 * Why can't I have:
+	 * ( *targv[ 0 ] == ( '+' || '-' ) );
+	 */
+	if ( ( *targv[ 0 ] ==  '+' ) || ( *targv[ 0 ] == '-' ) ) {
 	    command = targv[ 0 ];
 	    targv++;
 	    tac--;
 	}
 
-	path = decode( targv[ 1 ] );
+	strcpy( path, decode( targv[ 1 ] ) );
 
 	/* Do type check on local file */
 	if ( lstat( path, &st ) ==  0 ) {
 	    fstype = t_convert ( (int)( S_IFMT & st.st_mode ) );
 	    present = 1;
-	} else if ( errno != ENOENT ) { 
+	} else if ( errno == ENOENT ) { 
+	    present = 0;
+	} else {
 	    perror( path );
 	    return( 1 );
-	} else {
-	    present = 0;
 	}
 
 	if ( *command == '-' || ( present && fstype != *targv[ 0 ] ) ) {
-
 	    if ( fstype == 'd' ) {
+
+		/* Save pointers */
+		tempparent = parent;
+		tempcommand = command;
 
 		/* Recurse */
 		if ( apply( f, path, sn ) != 0 ) {
 		    return( 1 );
 		}
+
+		/* Restore pointers */
+		parent = tempparent;
+		command = tempcommand;
 
 		/* Directory is now empty */
 		if ( rmdir( path ) != 0 ) {
@@ -144,7 +170,10 @@ apply( FILE *f, char *parent, SNET *sn )
 		present = 0;
 	    }
 	    if ( verbose ) printf( "%s deleted\n", path );
-	    goto donext;
+
+	    if ( *command == '-' ) {
+		goto linedone;
+	    }
 	}
 
 	/* DOWNLOAD */
@@ -171,13 +200,12 @@ apply( FILE *f, char *parent, SNET *sn )
 	    return( 1 );
 	}
 
-	/* check for child */
-donext:
-	if ( ! ischild( parent, path ) ) {
+linedone:
+	if ( !ischild( parent, path ) ) {
 	    return( 0 );
 	}
     }
-
+    
     return( 0 );
 }
 
@@ -185,6 +213,7 @@ donext:
 main( int argc, char **argv )
 {
     int			i, c, s, port = htons( 6662 ), err = 0, network = 1;
+    extern int          optind;
     FILE		*f; 
     char		*host = "rearwindow.rsug.itd.umich.edu";
     char		*line;
@@ -208,6 +237,7 @@ main( int argc, char **argv )
 	    host = optarg;
 	    break;
 	case 'n':
+	    printf( "No network connection\n" );
 	    network = 0;
 	    break;
 	case 'p':
@@ -299,7 +329,7 @@ main( int argc, char **argv )
 	}
     }
 
-    if ( ( f = fopen( argv[ 1 ], "r" ) ) == NULL ) { 
+    if ( ( f = fopen( argv[ optind ], "r" ) ) == NULL ) { 
 	perror( argv[ 1 ] );
 	exit( 1 );
     }
