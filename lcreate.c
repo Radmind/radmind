@@ -5,6 +5,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 #include <netinet/in.h>
 #include <fcntl.h>
 #include <netdb.h>
