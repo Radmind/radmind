@@ -182,7 +182,9 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
     char		*epath;
     dev_t		dev;
 
+#ifdef __APPLE__
     static char         null_buf[ 32 ] = { 0 };
+#endif __APPLE__
 
     if ( edit_path == APPLICABLE ) {
 	cur = &tran->t_pinfo;
