@@ -136,6 +136,14 @@ main( int argc, char **argv )
 
 	tac = acav_parse( NULL, tline, &targv );
 
+        /* Skip blank lines and comments */
+        if (( tac == 0 ) || ( *targv[ 0 ] == '#' )) {
+	    if ( updatetran ) {
+		fprintf( ufs, "%s", line );
+	    }
+            goto done;
+        }
+
 	if ( *targv[ 0 ] == '-' ) {
 	    remove = 1;
 	    targv++;
