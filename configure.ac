@@ -40,7 +40,12 @@ AC_CHECK_LIB([socket], [socket])
 AC_CHECK_LIB([ssl], [SSL_accept], , [CHECK_SSL])
 AC_CHECK_LIB([crypto], [SSLeay_version], , [CHECK_SSL])
 AC_CHECK_LIB([pam], [pam_start],
-    AC_CHECK_HEADERS(pam/pam_appl.h, , [AC_CHECK_HEADERS(security/pam_appl.h)]))
+    [
+    AC_CHECK_HEADERS(pam/pam_appl.h, , [AC_CHECK_HEADERS(security/pam_appl.h)])
+    AC_DEFINE(HAVE_LIBPAM)
+    LIBS="$LIBS -lpam";
+    ] 
+)
 
 CHECK_ZEROCONF
 
