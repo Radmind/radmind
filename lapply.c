@@ -183,9 +183,13 @@ apply( FILE *f, char *parent, SNET *sn )
 		sprintf( pathdesc, "FILE %s %s", transcript, path );
 	    }
 
-	    if ( ( temppath = download( sn, pathdesc, "", path, chksum_b64 ))
+	    if ( ( temppath = retr( sn, pathdesc, path, chksum_b64 ) )
 		    == NULL ) {
 		perror( "download" );
+		return( 1 );
+	    }
+	    if ( rename( temppath, path ) != 0 ) {
+		perror( temppath );
 		return( 1 );
 	    }
 	    if ( present && !safe && ( st.st_nlink > 1 )) {
