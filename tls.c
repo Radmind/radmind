@@ -115,16 +115,6 @@ tls_client_start( SNET *sn, char *host, int authlevel )
     }
     if ( verbose ) printf( ">>> STARTTLS\n" );
 
-    tv = timeout;      
-    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-	perror( "snet_getline_multi" );
-	return( -1 );
-    }
-    if ( *line != '3' ) {
-	fprintf( stderr, "%s\n",  line );
-	return( -1 );
-    }
-
     /*
      * Begin TLS
      */
@@ -150,6 +140,7 @@ tls_client_start( SNET *sn, char *host, int authlevel )
 	return( -1 );
     }
 
+    /* Check to see if command succeeded */
     tv = timeout;      
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
 	perror( "snet_getline_multi" );

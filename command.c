@@ -709,9 +709,6 @@ f_starttls( snet, ac, av )
         return( 1 );
     }
 
-    /* Tell client that is cool */
-    snet_writef( snet, "%d Ready to start TLS\r\n", 320 );
-
     /*
      * Begin TLS
      */
