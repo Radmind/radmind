@@ -5,7 +5,45 @@
 #include <unistd.h>
 
 #include "argcargv.h"
-#include "lifo.h"
+
+struct node {
+    char                *path;
+    struct node         *next;
+};
+
+struct node* create_node( char *path );
+void free_node( struct node *node );
+void free_list( struct node *head );
+
+   struct node *
+create_node( char *path )
+{
+    struct node         *new_node;
+
+    new_node = (struct node *) malloc( sizeof( struct node ) );
+    new_node->path = strdup( path );
+
+    return( new_node );
+}
+
+    void
+free_node( struct node *node )
+{
+    free( node->path );
+    free( node );
+}
+
+    void
+free_list( struct node *head )
+{
+    struct node *node;
+
+    while ( head != NULL ) {
+        node = head;
+        head = head->next;
+        free_node( node );
+    }
+}
 
 /*
  * exit codes:
@@ -13,7 +51,6 @@
  *	1	File not found.
  *      >1     	An error occurred. 
  */
-
 
     int
 main( int argc, char **argv )
@@ -30,7 +67,7 @@ main( int argc, char **argv )
     char	path[ MAXPATHLEN ];
     FILE	*f;
     ACAV	*acav;
-    struct node	*head = NULL;
+    struct node	*head = NULL, *new_node, *node;
 
     while (( c = getopt( argc, argv, "aK:V" )) != EOF ) {
 	switch( c ) {
@@ -117,12 +154,16 @@ main( int argc, char **argv )
 	    specialfile++;
 	    break;
 	default:
-	    insert_head( av[ 1 ], &head );
+	    new_node = create_node( av[ 1 ] );
+	    new_node->next = head;
+	    head = new_node;
 	    break;
 	}
     }
     if ( specialfile ) {
-	insert_head( "special.T", &head );
+	new_node = create_node( "special.T" );
+	new_node->next = head;
+	head = new_node;
     }
     /* Close kfile */
     if ( fclose( f ) != 0 ) {
@@ -131,7 +172,10 @@ main( int argc, char **argv )
     }
 
     while ( head != NULL ) {
-	remove_head( &head, tran );
+	node = head;
+	head = node->next;
+	strncpy( tran, node->path, MAXPATHLEN );
+	free_node( node );
 	if ( snprintf( path, MAXPATHLEN, "%s%s", kdir, tran ) > MAXPATHLEN ) {
 	    fprintf( stderr, "path too long: %s%s\n", kdir, tran );
 	    exit( 2 );
@@ -181,7 +225,7 @@ closetran:
     }
 
 done:
-    free_list( &head );
+    free_list( head );
     acav_free( acav );
 
     if ( match ) {
