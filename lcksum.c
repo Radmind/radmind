@@ -25,7 +25,7 @@ void            (*logger)( char * ) = NULL;
 
 int		linenum = 0;
 int		cksum = 0;
-int		verbose = 0;
+int		verbose = 1;
 int		dodots = 0;
 const EVP_MD	*md;
 extern char	*version, *checksumlist;
@@ -56,7 +56,7 @@ main( int argc, char **argv )
     struct stat		st;
     ssize_t		cksumsize;
 
-    while ( ( c = getopt ( argc, argv, "c:oP:nvV" ) ) != EOF ) {
+    while ( ( c = getopt ( argc, argv, "c:oP:nqV" ) ) != EOF ) {
 	switch( c ) {
 	case 'c':
 	    OpenSSL_add_all_digests();
@@ -78,11 +78,8 @@ main( int argc, char **argv )
 	    printf( "%s\n", version );
 	    printf( "%s\n", checksumlist );
 	    exit( 0 );
-	case 'v':
-	    verbose = 1;
-	    if ( isatty( fileno( stdout ))) {
-		dodots = 1;
-	    }
+	case 'q':
+	    verbose = 0;
 	    break;
 	case '?':
 	    err++;
@@ -100,9 +97,15 @@ main( int argc, char **argv )
     tpath = argv[ optind ];
 
     if ( err || ( argc - optind != 1 ) ) {
-	fprintf( stderr, "usage: %s [ -nvV ] [ -P prefix ] ", argv[ 0 ] );
+	fprintf( stderr, "usage: %s [ -nqV ] [ -P prefix ] ", argv[ 0 ] );
 	fprintf( stderr, "-c checksum transcript\n" );
 	exit( 2 );
+    }
+
+    if ( verbose ) {
+	if ( isatty( fileno( stdout ))) {
+	    dodots = 1;
+	}
     }
 
     if ( access( tpath, amode ) !=0 ) {

@@ -4,7 +4,7 @@
 \- verifies a transcript's checksums and file sizes
 .SH SYNOPSIS
 .B lcksum 
-.RB [ \-nvV ]
+.RB [ \-nqV ]
 [
 .BI \-P\  prefix 
 ]
@@ -64,14 +64,14 @@ verify but do not modify
 only verify transcript lines that begin with 
 .IR prefix .
 .TP 19
+.B \-q
+suppress all messages.
+.TP 19
 .B \-V
 displays the version of 
 .BR lcksum ,
 a list  of supported checksumming algorithms in descending
 order of preference and then exits.
-.TP 19
-.B \-v
-displays update information to the standard output.
 .sp
 .SH EXIT STATUS
 The following exit values are returned:
