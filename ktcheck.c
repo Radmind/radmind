@@ -248,7 +248,7 @@ check( SNET *sn, char *type, char *file )
      * With cksum we only use cksum and size.
      * Without cksum we only use mtime and size.
      */
-    if ( atoi( targv[ 6 ] ) != (long)st.st_size ) {
+    if ( strtoofft( targv[ 6 ], NULL, 10 ) != st.st_size ) {
 	needupdate = 1;
     } else {
 	if ( cksum ) {

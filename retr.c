@@ -108,7 +108,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, off_t transize,
 	return( -1 );
     }
     size = strtoofft( line, NULL, 10 );
-    if ( verbose ) printf( "<<< %ld\n", (long)size );
+    if ( verbose ) printf( "<<< %" PRIofft "d\n", size );
     if ( transize >= 0 && size != transize ) {
 	fprintf( stderr, "line %d: size in transcript does not match size "
 	    "from server\n", linenum );
