@@ -16,18 +16,18 @@ RADMIND_HOST=radmind
 RADMINDSYSLOG=LOG_LOCAL7
 
 # Solaris
-#CC=	gcc
-#CWARN=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wconversion
-#ADDLIBS=	-lnsl -lsocket
-#INSTALL=	/usr/ucb/install
-#OPENSSL=	/usr/local/openssl
+CC=	gcc
+CWARN=	-Wall -Wmissing-prototypes -Wconversion
+ADDLIBS=	-lnsl -lsocket
+INSTALL=	/usr/ucb/install
+OPENSSL=	/usr/local/openssl
 
 # MacOSX
-CC=	cc
-CWARN=	-Wall -Wmissing-prototypes -Wconversion
-ADDLIBS=
-INSTALL=	install
-OPENSSL=
+#CC=	cc
+#CWARN=	-Wall -Wmissing-prototypes -Wconversion
+#ADDLIBS=
+#INSTALL=	install
+#OPENSSL=
 
 #
 # Should not need to edit anything after here.
