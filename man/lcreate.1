@@ -4,7 +4,7 @@
 \-  upload transcripts and their corresponding files
 .SH SYNOPSIS
 .B lcreate
-.RB [ \-lnNrTV ]
+.RB [ \-FlnNrTV ]
 [
 .RB \-q\ |\ \-v\ |\ \-i 
 ] [
@@ -31,6 +31,13 @@
 .SH DESCRIPTION
 .B lcreate
 reads a transcript and uploads all corresponding files to the radmind server.
+.sp
+.B lcreate
+verifies the size listed in the transcript with the actual size of the file 
+and stops on any differences.
+If the -F option is given,
+.B lcreate
+will store the file on the server and give a warning.
 .sp
 If the -n option is given, no files or transcripts are uploaded.  Instead,
 .B lcreate
@@ -65,6 +72,9 @@ this special support.
 .TP 19
 .BI \-c\  checksum
 enables checksuming.
+.TP 19
+.BI \-F
+ignore file size differences.
 .TP 19
 .BI \-h\  hostname
 specifies the radmind server, by default
