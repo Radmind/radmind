@@ -62,7 +62,8 @@ indicates a file must be downloaded. A "-" indicates the given object (
 file, directory, link etc ) must be removed.
 .sp
 .SH TRANSCRIPTS 
-Transcripts have the following format:
+A transcript contains a list of filesystem objects, eg. directories,
+files, symbolic links etc. Transcripts have the following format:
 .sp
 .br
 type	path	[type specific information]
@@ -168,12 +169,30 @@ filesystem, eg. a filesystem snapshot.
 .SH EXAMPLES
 In this example, fsdiff is used to generate a line for the negative
 transcript for /tmp.
-.RS
 .sp
+.RS
 .nf	
-	example% fsdiff -1 /tmp
-	d	/tmp	1777     3     3
-	example%
+example% fsdiff -1 /tmp
+d /tmp               1777     0     3
+example%
+.fi
+.RE
+.sp
+A more complete negative transcript might look like this:
+.sp
+.RS
+.nf
+example% vi negative.T
+f /etc/passwd        0444     0     3 993477914     482 -
+d /proc              0555     0     0
+d /tmp               1777     0     3
+f /var/adm/lastlog   0444     0     1 993662219  976304 -
+f /var/adm/messages  0644     0     0 993661335   94910 -
+f /var/adm/sulog     0600     0     0 993662246     422 -
+f /var/adm/utmpx     0644     0     2 993662219    2604 -
+f /var/adm/wtmpx     0644     4     4 993662219  111600 -
+f /var/cron/log      0600     0     0 993627000    2694 -
+d /xfn               0555     0     0
 .fi
 .RE
 .sp
