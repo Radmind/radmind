@@ -20,11 +20,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef TLS
 #include <openssl/ssl.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
-#endif /* TLS */
 
 #include <snet.h>
 

@@ -17,12 +17,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef TLS
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-
-extern SSL_CTX  *ctx;
-#endif TLS
 
 #include <openssl/evp.h>
 #include <snet.h>
@@ -44,6 +40,7 @@ extern int		verbose;
 extern int		dodots;
 extern int		cksum;
 extern int		errno;
+extern SSL_CTX  	*ctx;
 
 /*
  * Download requests path from sn and writes it to disk.  The path to

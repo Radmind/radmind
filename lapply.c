@@ -13,13 +13,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef TLS
 #include <openssl/ssl.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
-
-SSL_CTX  *ctx;
-#endif TLS
 
 #include <openssl/evp.h>
 #include <snet.h>
@@ -33,10 +29,7 @@ SSL_CTX  *ctx;
 #include "code.h"
 #include "pathcmp.h"
 #include "update.h"
-
-#ifdef TLS
 #include "tls.h"
-#endif /* TLS */
 
 void		(*logger)( char * ) = NULL;
 int		linenum = 0;
@@ -51,6 +44,7 @@ char		transcript[ 2 * MAXPATHLEN ] = { 0 };
 char		prepath[ MAXPATHLEN ]  = { 0 };
 extern char	*version, *checksumlist;
 const EVP_MD    *md;
+SSL_CTX  	*ctx;
 
 struct node {
     char                *path;

@@ -19,14 +19,12 @@
 #include <unistd.h>
 #include <ctype.h>
 
-#ifdef TLS
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 
 extern SSL_CTX  *ctx;
-#endif TLS
 
-#include <openssl/evp.h>
 #include <snet.h>
 
 #include "applefile.h"
@@ -62,9 +60,7 @@ int		f_stat ___P(( SNET *, int, char *[] ));
 int		f_retr ___P(( SNET *, int, char *[] ));
 int		f_stor ___P(( SNET *, int, char *[] ));
 int		f_noauth ___P(( SNET *, int, char *[] ));
-#ifdef TLS
 int		f_starttls ___P(( SNET *, int, char *[] ));
-#endif /* TLS */
 
 char		*remote_host = NULL;
 char		*remote_addr = NULL;
@@ -85,9 +81,7 @@ struct command	noauth[] = {
     { "STATus",		f_noauth },
     { "RETRieve",	f_noauth },
     { "STORe",		f_noauth },
-#ifdef TLS
     { "STARTTLS",       f_starttls },
-#endif TLS
 };
 
 struct command	auth[] = {
@@ -97,9 +91,7 @@ struct command	auth[] = {
     { "STATus",		f_stat },
     { "RETRieve",	f_retr },
     { "STORe",		f_stor },
-#ifdef TLS
     { "STARTTLS",       f_starttls },
-#endif TLS
 };
 
 struct command *commands  = noauth;
@@ -657,7 +649,6 @@ f_stor( SNET *sn, int ac, char *av[] )
     return( 0 );
 }
 
-#ifdef TLS
     int
 f_starttls( snet, ac, av )
     SNET                        *snet;
@@ -744,8 +735,6 @@ f_starttls( snet, ac, av )
 
     return( 0 );
 }
-#endif TLS
-
 
 /* sets command file for connected host */
     int

@@ -18,12 +18,8 @@
 #include <unistd.h>
 #include <string.h>
 
-#ifdef TLS
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-
-extern SSL_CTX  *ctx;
-#endif TLS
 
 #include <openssl/evp.h>
 #include <snet.h>
@@ -42,7 +38,8 @@ extern int		quiet;
 extern int		dodots;
 extern int		cksum;
 extern int		linenum;
-extern void            (*logger)( char * );
+extern void            	(*logger)( char * );
+extern SSL_CTX  	*ctx;
 
     int
 n_stor_file( SNET *sn, char *pathdesc, char *path )

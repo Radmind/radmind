@@ -14,12 +14,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef TLS
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-
-SSL_CTX  *ctx;
-#endif TLS
 
 #include <openssl/evp.h>
 #include <snet.h>
@@ -27,9 +23,7 @@ SSL_CTX  *ctx;
 #include "applefile.h"
 #include "connect.h"
 #include "argcargv.h"
-#ifdef TLS
 #include "tls.h"
-#endif /* TLS */ 
 
 void output( char* string);
 
@@ -40,6 +34,7 @@ int			dodots = 0;
 int			linenum = 0;
 int			cksum = 0;
 const EVP_MD    	*md;
+SSL_CTX  		*ctx;
 
     void
 output( char *string )

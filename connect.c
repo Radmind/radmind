@@ -14,14 +14,10 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef TLS
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-
-extern SSL_CTX  *ctx;
-#endif TLS
-
 #include <openssl/sha.h>
+
 #include <snet.h>
 
 #include "applefile.h"
@@ -32,6 +28,7 @@ extern void            (*logger)( char * );
 extern int              verbose;
 struct timeval          timeout = { 10 * 60, 0 };
 extern int		errno;
+extern SSL_CTX  	*ctx;
 
     static SNET *
 connectsn2( struct sockaddr_in *sin )

@@ -15,12 +15,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef TLS
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-
-SSL_CTX  *ctx;
-#endif TLS
 
 #include <openssl/evp.h>
 #include <snet.h>
@@ -32,9 +28,7 @@ SSL_CTX  *ctx;
 #include "connect.h"
 #include "argcargv.h"
 #include "code.h"
-#ifdef TLS
 #include "tls.h"
-#endif /* TLS */
 
 /*
  * STOR
@@ -55,6 +49,7 @@ int		linenum = 0;
 extern char	*version;
 extern char	*checksumlist;
 const EVP_MD    *md;
+SSL_CTX  	*ctx;
 
     static void
 v_logger( char *line )

@@ -16,13 +16,9 @@
 #include <unistd.h>
 #include <utime.h>
 
-#ifdef TLS
 #include <openssl/ssl.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
-
-SSL_CTX  *ctx;
-#endif TLS
 
 #include <openssl/evp.h>
 #include <snet.h>
@@ -33,9 +29,7 @@ SSL_CTX  *ctx;
 #include "connect.h"
 #include "argcargv.h"
 #include "list.h"
-#ifdef TLS
 #include "tls.h"
-#endif /* TLS */
 
 void output( char* string);
 int check( SNET *sn, char *type, char *path); 
@@ -52,6 +46,7 @@ int			update = 1;
 char			*kfile= _RADMIND_COMMANDFILE;
 char			*kdir= "";
 const EVP_MD		*md;
+SSL_CTX  		*ctx;
 
 extern struct timeval	timeout;
 extern char		*version, *checksumlist;
