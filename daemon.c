@@ -152,37 +152,37 @@ main( ac, av )
     }
 
     /* Create directory structure */
-    if ( mkdir( "command", 02750 ) != 0 ) {
+    if ( mkdir( "command", 0750 ) != 0 ) {
 	if ( errno != EEXIST ) {
 	    perror( "command" );
 	    exit( 1 );
 	}
     }
-    if ( mkdir( "file", 02750 ) != 0 ) {
+    if ( mkdir( "file", 0750 ) != 0 ) {
 	if ( errno != EEXIST ) {
 	    perror( "file" );
 	    exit( 1 );
 	}
     }
-    if ( mkdir( "tmp", 2750 ) != 0 ) {
+    if ( mkdir( "tmp", 0750 ) != 0 ) {
 	if ( errno != EEXIST ) {
 	    perror( "tmp" );
 	    exit( 1 );
 	}
     }
-    if ( mkdir( "tmp/file", 2750 ) != 0 ) {
+    if ( mkdir( "tmp/file", 0750 ) != 0 ) {
 	if ( errno != EEXIST ) {
 	    perror( "tmp/file" );
 	    exit( 1 );
 	}
     }
-    if ( mkdir( "tmp/transcript", 2750 ) != 0 ) {
+    if ( mkdir( "tmp/transcript", 0750 ) != 0 ) {
 	if ( errno != EEXIST ) {
 	    perror( "tmp/transcript" );
 	    exit( 1 );
 	}
     }
-    if ( mkdir( "transcript", 02750 ) != 0 ) {
+    if ( mkdir( "transcript", 0750 ) != 0 ) {
 	if ( errno != EEXIST ) {
 	    perror( "transcript" );
 	    exit( 1 );
