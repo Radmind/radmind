@@ -67,7 +67,7 @@ int		f_noauth ___P(( SNET *, int, char *[] ));
 int		f_starttls ___P(( SNET *, int, char *[] ));
 #ifdef PAM
 int		f_login ___P(( SNET *, int, char *[] ));
-int 		exchange( int num_msg, const struct pam_message **msgm,
+int 		exchange( int num_msg, struct pam_message **msgm,
 		    struct pam_response **response, void *appdata_ptr );
 #endif /* PAM */
 
@@ -767,7 +767,7 @@ f_starttls( snet, ac, av )
 
 #ifdef PAM
     int
-exchange( int num_msg, const struct pam_message **msg,
+exchange( int num_msg, struct pam_message **msg,
     struct pam_response **resp, void *appdata_ptr)
 {
     int				count = 0;
