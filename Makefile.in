@@ -173,7 +173,6 @@ lfdiff: ${LFDIFF_OBJ}
 twhich: ${TWHICH_OBJ}
 	${CC} -o twhich ${TWHICH_OBJ} ${LDFLAGS}
 
-
 FRC :
 
 libsnet/libsnet.la : FRC
@@ -194,6 +193,12 @@ dist   : distclean
 	rm -rf ${DISTDIR}/man
 	mv ${DISTDIR}/tmp ${DISTDIR}/man
 
+rash : FRC
+	-mkdir tmp
+	sed -e 's@_RADMIND_HOST@${RADMIND_HOST}@g' \
+	    -e 's@_RADMIND_AUTHLEVEL@${RADMIND_AUTHLEVEL}@g' \
+	    ra.sh > tmp/ra.sh; 
+
 man : FRC
 	-mkdir tmp
 	-mkdir tmp/man
@@ -209,7 +214,7 @@ man : FRC
 		${srcdir}/man/$$i > tmp/man/$$i; \
 	done
 
-install	: all man
+install	: all man rash
 	-mkdir -p ${exec_prefix}
 	-mkdir -p ${SBINDIR}
 	${INSTALL} -m 0755 -c radmind ${SBINDIR}/
@@ -217,6 +222,7 @@ install	: all man
 	for i in ${BINTARGETS}; do \
 	    ${INSTALL} -m 0755 -c $$i ${BINDIR}/; \
 	done
+	${INSTALL} -m 0755 -c tmp/ra.sh ${BINDIR}/
 	-mkdir -p ${prefix}
 	-mkdir -p ${MANDIR}
 	-mkdir ${MANDIR}/man1
@@ -248,13 +254,14 @@ info :
 		$$i > tmp/$$i; \
 	done
 
-package	: all man info
+package	: all man info rash
 	-mkdir -p -m 0755 ${PKGDIR}/${SBINDIR}
 	${INSTALL} -m 0755 -c radmind ${PKGDIR}/${SBINDIR}/
 	-mkdir -p -m 0755 ${PKGDIR}/${BINDIR}
 	for i in ${BINTARGETS}; do \
 	    ${INSTALL} -m 0755 -c $$i ${PKGDIR}/${BINDIR}/; \
 	done
+	${INSTALL} -m 0755 -c tmp/ra.sh ${PKGDIR}/${BINDIR}/
 	-mkdir -p -m 0755 ${PKGDIR}/${MANDIR}
 	-mkdir -p -m 0755 ${PKGDIR}/${MANDIR}/man1
 	for i in ${MAN1TARGETS}; do \
