@@ -9,12 +9,13 @@
 #include <strings.h>
 #include <unistd.h>
 
+#include "base64.h"
 #include "connect.h"
 #include "argcargv.h"
 #include "code.h"
 #ifdef __APPLE__
-#include "afile.h"
-#include "send_afile.h"
+#include "applefile.h"
+#include "store_applefile.h"
 #endif __APPLE__
 
 /*
@@ -29,6 +30,7 @@
 
 void		(*logger)( char * ) = NULL;
 int		verbose = 0;
+int		chksum = 0;	/* needed to compile */
 int		quiet = 0;
 extern char	*version;
 
@@ -144,8 +146,8 @@ store_file( int fd, SNET *sn, char *filename, char *transcript, char *filetype )
     switch( *filetype ) {
 #ifdef __APPLE__
     case 'a':
-	if ( send_afile( decode( filename ), fd, sn, dodots ) != 0 ) {
-	    perror( "send_afile" );
+	if ( store_applefile( decode( filename ), fd, sn, dodots ) != 0 ) {
+	    perror( "store_applefile" );
 	    return( -1 );
 	}
 	break;
