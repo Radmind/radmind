@@ -174,7 +174,9 @@ dist   : distclean
 	echo ${VERSION} > ${DISTDIR}/VERSION
 
 man : FRC
-	-mkdir -p tmp/man
+	-mkdir tmp
+	-mkdir tmp/man
+	pwd
 	for i in ${MANTARGETS}; do \
 	    sed -e 's@_RADMIND_PATH@${RADMINDDIR}@g'  \
 		-e 's@_RADMIND_COMMANDFILE@${COMMANDFILE}@g' \
@@ -196,28 +198,27 @@ install	: all man
 	done
 	-mkdir -p ${prefix}
 	-mkdir -p ${MANDIR}
-	-mkdir -p ${MANDIR}/man1
+	-mkdir ${MANDIR}/man1
 	for i in ${MAN1TARGETS}; do \
 	    ${INSTALL} -m 0644 -c tmp/man/$$i ${MANDIR}/man1/; \
 	done
-	-mkdir -p ${MANDIR}/man5
+	-mkdir ${MANDIR}/man5
 	for i in ${MAN5TARGETS}; do \
 	    ${INSTALL} -m 0644 -c tmp/man/$$i ${MANDIR}/man5/; \
 	done
-	-mkdir -p ${MANDIR}/man8
+	-mkdir ${MANDIR}/man8
 	 for i in ${MAN8TARGETS}; do \
 	    ${INSTALL} -m 0644 -c tmp/man/$$i ${MANDIR}/man8/; \
 	done
 	-mkdir -p ${CERTDIR}
 
-MPKGDIR=${DISTDIR}-MPKG
-CLIENTBINPKGDIR=${MPKGDIR}/client-bin
-CLIENTMANPKGDIR=${MPKGDIR}/client-man
-CLIENTVARPKGDIR=${MPKGDIR}/client-var
-SERVERSTARTUPPKGDIR=${MPKGDIR}/server-startup
-SERVERSBINPKGDIR=${MPKGDIR}/server-sbin
-SERVERMANPKGDIR=${MPKGDIR}/server-man
-SERVERVARPKGDIR=${MPKGDIR}/server-var
+PKGSDIR=../radmind-packages
+PKGNAME=RadmindTools
+PKGROOTDIR=../RadmindToolsInstaller
+PKGDIR=${PKGROOTDIR}/usr/local/bin
+SBINPKGDIR=${PKGROOTDIR}/usr/local/sbin
+MANPKGDIR=${PKGROOTDIR}/${MANDIR}
+PKGRSRCDIR=${PKGNAME}.pkg/Contents/Resources
 
 INFOLIST=	$(wildcard OS_X/*.info)	
 
@@ -230,82 +231,39 @@ info :
 	done
 
 package : all man info
-	# Create server package #
-	mkdir -p -m 0755 ${SERVERSBINPKGDIR}
-	${INSTALL} -o root -g wheel -m 0555 -c radmind ${SERVERSBINPKGDIR}
-	mkdir -m 0755 ${SERVERSTARTUPPKGDIR} 
-	${INSTALL} -o root -g wheel -m 0755 -c OS_X/RadmindServer \
-	    ${SERVERSTARTUPPKGDIR}
-	${INSTALL} -o root -g wheel -m 0644 -c OS_X/StartupParameters.plist \
-	    ${SERVERSTARTUPPKGDIR}
-	mkdir -p -m 0755 ${SERVERMANPKGDIR}/man8
-	for i in ${MAN8TARGETS}; do \
-	    ${INSTALL} -o root -g wheel -m 0444 -c tmp/man/$$i \
-		${SERVERMANPKGDIR}/man8/; \
-	done
-	mkdir -p -m 0755 ${SERVERVARPKGDIR}
-	mkdir -p -m 0755 ${SERVERVARPKGDIR}/file
-	mkdir -p -m 0755 ${SERVERVARPKGDIR}/transcript
-	mkdir -p -m 0755 ${SERVERVARPKGDIR}/command
-	tar xvf OS_X/tutorial-negative.files.tar -C ${SERVERVARPKGDIR}/file
-	${INSTALL} -o root -g wheel -m 0700 -c OS_X/tutorial-negative.T \
-	    ${SERVERVARPKGDIR}/transcript
-	${INSTALL} -o root -g wheel -m 0700 -c OS_X/config \
-	    ${SERVERVARPKGDIR}
-	${INSTALL} -o root -g wheel -m 0700 -c OS_X/tutorial.K \
-	    ${SERVERVARPKGDIR}/command
-	chown -R root:wheel ${SERVERVARPKGDIR}
-	chmod -R 0700 ${SERVERVARPKGDIR}
-	mkdir -p -m 0755 tmp/server-resources 
-	${INSTALL} -o root -g wheel -m 0755 -c OS_X/preflight \
-	    tmp/server-resources
-
-	# Create client package #
-	mkdir -p -m 0755 ${CLIENTBINPKGDIR}
+	mkdir -p -m 0755 ${PKGDIR}
 	for i in ${BINTARGETS}; do \
 	    ${INSTALL} -o root -g wheel -m 0555 -c $$i \
-		${CLIENTBINPKGDIR}/; \
+		${PKGDIR}/; \
 	done
-	mkdir -p -m 0755 ${CLIENTMANPKGDIR}/man1
+	mkdir -p -m 0755 ${SBINPKGDIR}
+	${INSTALL} -o root -g wheel -m 0555 -c radmind ${SBINPKGDIR}
+	mkdir -p -m 0755 ${MANPKGDIR}/man1
 	for i in ${MAN1TARGETS}; do \
 	    ${INSTALL} -o root -g wheel -m 0444 -c tmp/man/$$i \
-		${CLIENTMANPKGDIR}/man1/; \
+		${MANPKGDIR}/man1/; \
 	done 
-	mkdir -p -m 0755 ${CLIENTMANPKGDIR}/man5
+	mkdir -p -m 0755 ${MANPKGDIR}/man5
 	for i in ${MAN5TARGETS}; do \
 	    ${INSTALL} -o root -g wheel -m 0444 -c tmp/man/$$i \
-		${CLIENTMANPKGDIR}/man5/; \
+		${MANPKGDIR}/man5/; \
 	done 
-	mkdir -p -m 0700 ${CLIENTVARPKGDIR}
-	mkdir -p -m 0700 ${CLIENTVARPKGDIR}/cert
-	mkdir -p -m 0700 ${CLIENTVARPKGDIR}/client
-	${INSTALL} -o root -g staff -m 0700 -c OS_X/tutorial.K \
-	    ${CLIENTVARPKGDIR}/client/command.K
-	${INSTALL} -o root -g staff -m 0700 -c OS_X/tutorial-negative.T \
-	    ${CLIENTVARPKGDIR}/client
-	chown root:wheel ${MPKGDIR}
-	find ${MPKGDIR}/* -exec chown root:wheel {} \;
-	package ${CLIENTBINPKGDIR} tmp/OS_X/client-bin.info -d ${MPKGDIR}
-	package ${CLIENTMANPKGDIR} tmp/OS_X/client-man.info -d ${MPKGDIR}
-	package ${CLIENTVARPKGDIR} tmp/OS_X/client-var.info -d ${MPKGDIR}
-	package ${SERVERSTARTUPPKGDIR} tmp/OS_X/server-startup.info -d \
-	    ${MPKGDIR}
-	package ${SERVERSBINPKGDIR} tmp/OS_X/server-sbin.info -d ${MPKGDIR}
-	package ${SERVERMANPKGDIR} tmp/OS_X/server-man.info -d ${MPKGDIR}
-	package ${SERVERVARPKGDIR} tmp/OS_X/server-var.info -d ${MPKGDIR} \
-	    -r tmp/server-resources 
-	cp tmp/OS_X/radmind.info ${MPKGDIR}/radmind-${VERSION}.info
-	cp OS_X/radmind.list ${MPKGDIR}/radmind-${VERSION}.list
-	cp OS_X/License.rtf ${MPKGDIR}
-	cp OS_X/ReadMe.rtf ${MPKGDIR}
-	cp OS_X/Welcome.rtf ${MPKGDIR}
-	mkdir -p ${MPKGDIR}/Resources
-	cp OS_X/background.tiff ${MPKGDIR}/Resources
-	rm -rf ${CLIENTBINPKGDIR} ${CLIENTMANPKGDIR} ${CLIENTVARPKGDIR} \
-	    ${SERVERSTARTUPPKGDIR} ${SERVERSBINPKGDIR} ${SERVERMANPKGDIR} \
-	    ${SERVERVARPKGDIR} tmp
-	mv ${MPKGDIR} ../radmind-${VERSION}.mpkg
-	cd ..; tar zvcf radmind-${VERSION}.mpkg.tgz radmind-${VERSION}.mpkg/*
+	mkdir -p -m 0755 ${MANPKGDIR}/man8
+	for i in ${MAN8TARGETS}; do \
+	    ${INSTALL} -o root -g wheel -m 0444 -c tmp/man/$$i \
+		${MANPKGDIR}/man8/; \
+	done 
+
+	mkdir -p -m 1755 ${PKGSDIR}
+	chown root:wheel ${PKGSDIR}
+	package ${PKGROOTDIR} tmp/OS_X/RadmindTools.info \
+		-d ${PKGSDIR}
+	mkdir -p ${PKGSDIR}/${PKGRSRCDIR}/English.lproj
+	cp OS_X/License.rtf ${PKGSDIR}/${PKGRSRCDIR}/English.lproj
+	cp OS_X/ReadMe.rtf ${PKGSDIR}/${PKGRSRCDIR}/English.lproj
+	cp OS_X/Welcome.rtf ${PKGSDIR}/${PKGRSRCDIR}/English.lproj
+	cp OS_X/background.tiff ${PKGSDIR}/${PKGRSRCDIR}/English.lproj
+	rm -rf ${PKGROOTDIR} tmp
 
 clean :
 	(cd libsnet; ${MAKE} ${MAKEFLAGS} clean)
