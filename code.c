@@ -21,7 +21,6 @@ encode( char *line )
     }
 
     temp = buf;
-
     for ( ; *line != '\0'; line++, temp++ ) {
 	switch ( *line ) {
 	case ' ' :
@@ -34,15 +33,15 @@ encode( char *line )
 	    temp++;
 	    *temp = 't';
 	    break;
-	case '\m':
-	    *temp = '\\';
-	    temp++;
-	    *temp = 'm';
-	    break;
 	case '\n':
 	    *temp = '\\';
 	    temp++;
 	    *temp = 'n';
+	    break;
+	case '\r':
+	    *temp = '\\';
+	    temp++;
+	    *temp = 'r';
 	    break;
 	case '\\':
 	    *temp = '\\';
@@ -78,9 +77,6 @@ decode( char *line )
 	case '\\':
 	    line++;
 	    switch( *line ) {
-	    case 'm':
-		*temp = '\m';
-		break;
 	    case 'n':
 		*temp = '\n';
 		break;
@@ -89,6 +85,9 @@ decode( char *line )
 		break;
 	    case 'b':
 		*temp = ' ';
+		break;
+	    case 'r':
+		*temp = '\r';
 		break;
 	    case '\\':
 		*temp = '\\';
