@@ -95,7 +95,7 @@ main( int argc, char **argv )
     char                *user = NULL;
     char                *password = NULL;
 
-    while (( c = getopt( argc, argv, "c:Fh:ilnNp:P:qrt:TU:vVw:x:y:z:" ))
+    while (( c = getopt( argc, argv, "c:Fh:ilnNp:qrt:TU:vVw:x:y:z:" ))
 	    != EOF ) {
 	switch( c ) {
         case 'c':
@@ -142,10 +142,6 @@ main( int argc, char **argv )
 		port = se->s_port;
 	    }
 	    break;
-
-        case 'P':
-            password = optarg;
-            break;
 
 	case 'q':
 	    quiet = 1;
@@ -219,7 +215,7 @@ main( int argc, char **argv )
     if ( err || ( argc - optind != 1 ))   {
 	fprintf( stderr, "usage: lcreate [ -FlnNrTV ] [ -q | -v | -i ] " );
 	fprintf( stderr, "[ -c checksum ] " );
-	fprintf( stderr, "[ -h host ] [ -p port ] [ -P password ] " );
+	fprintf( stderr, "[ -h host ] [ -p port ] " );
 	fprintf( stderr, "[ -t stored-name ] [ -U user ] " );
         fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );
         fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ] " );
@@ -287,6 +283,8 @@ main( int argc, char **argv )
                     fprintf( stderr, "Invalid null password\n" );
                     exit( 2 );
                 }
+		/* get the length of the password so we can zero it later */
+		len = strlen( password );
             }
             if ( verbose ) printf( ">>> LOGIN %s %s\n", user, password );
             if ( snet_writef( sn, "LOGIN %s %s\n", user, password ) < 0 ) {
@@ -305,7 +303,10 @@ main( int argc, char **argv )
 		return( 1 );
 	    }
 
-	    /* XXX At this point we should free/clear the password */
+	    /* clear the password from memory */
+	    if ( len ) {
+		memset( password, 0, len );
+	    }
         }
 
 	if ( cksum ) {
