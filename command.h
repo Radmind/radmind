@@ -10,8 +10,8 @@
 #endif __STDC__
 
 int		cmdloop ___P(( int ));
-int		cmd_lookup ___P(( char * ));
-char		**find_file ___P(( char *, char * ));
+int		command_k ___P(( char * ));
+char		**special_t ___P(( char *, char * ));
 void		do_chksum ___P(( char *, char * ));
 int		keyword ___P(( int, char*[] ));
 int		create_directories ___P (( char * ));
