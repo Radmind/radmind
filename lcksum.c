@@ -111,6 +111,15 @@ main( int argc, char **argv )
 	}
     }
 
+    if ( stat( tpath, &st ) != 0 ) {
+	perror( tpath );
+	exit( 2 );
+    }
+    if ( !S_ISREG( st.st_mode )) {
+	fprintf( stderr, "%s: not a regular file\n", tpath );
+	return( 2 );
+    }
+
     if ( access( tpath, amode ) !=0 ) {
 	perror( tpath );
 	exit( 2 );
