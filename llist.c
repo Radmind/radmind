@@ -6,6 +6,7 @@
 #include <sys/param.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "applefile.h"
 #include "transcript.h"

@@ -15,6 +15,7 @@
 #include <snet.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "applefile.h"
 #include "radstat.h"
