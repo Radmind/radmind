@@ -15,6 +15,14 @@
 .BI \-h\  host
 ] [
 .BI \-p\  port 
+] [
+.BI \-w\  auth-level
+] [
+.BI \-x\  ca-pem-file
+] [
+.BI \-y\  cert-pem-file
+] [ 
+.BI \-z\  private-key-file
 ]
 .sp
 .SH DESCRIPTION
@@ -82,6 +90,19 @@ order of preference and then exits.
 .TP 19
 .B \-v
 displays communication with the radmind server.
+.TP 19
+.BI \-w\  auth-level
+TLS authorization level, by default 0.
+0 = no TLS, 1 = server verification, 2 = server and client verification.
+.TP 19
+.BI \-x\  ca-pem-file
+Certificate authority's public certificate, by default _RADMIND_TLS_CA.
+.TP 19
+.BI \-y\  cert-pem-file
+Client's public certificate, by default _RADMIND_TLS_CERT.
+.TP 19
+.BI \-z\  private-key-file
+Client's private key, by default _RADMIND_TLS_CERT.
 .sp
 .SH FILES
 .TP 19

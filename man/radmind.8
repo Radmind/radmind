@@ -18,17 +18,25 @@
 .BI \-u\  umask 
 ] [
 .B \-V
+] [
+.BI \-w\  auth-level
+] [
+.BI \-x\  ca-pem-file
+] [
+.BI \-y\  cert-pem-file
+] [ 
+.BI \-z\  private-key-file
 ]
 .sp
 .SH DESCRIPTION
 Radmind uses the radmind access protocol to communicate with radmind
 clients.
-
-On startup, radmind changes directory to _PATH_RADMIND, creates
-_PATH_RADMIND/command, _PATH_RADMIND/file,
-_PATH_RADMIND/special, _PATH_RADMIND/tmp,
-_PATH_RADMIND/tmp/file, _PATH_RADMIND/tmp/transcript and
-_PATH_RADMIND/transcript ( with permissions 0750 ) if they do not
+.sp
+On startup, radmind changes directory to _RADMIND_PATH, creates
+_RADMIND_PATH/command, _RADMIND_PATH/file,
+_RADMIND_PATH/special, _RADMIND_PATH/tmp,
+_RADMIND_PATH/tmp/file, _RADMIND_PATH/tmp/transcript and
+_RADMIND_PATH/transcript ( with permissions 0750 ) if they do not
 exist, and begins listening on the radmind port ( by default 6662 ) for
 incoming connections.
 With the
@@ -36,16 +44,16 @@ With the
 .I path
 as its working directory.
 Radmind forks a child for each connection.
-
-The file _PATH_RADMIND/config contains the list of known clients that
+.sp
+The file _RADMIND_PATH/config contains the list of known clients that
 can connect to radmind, one per line.  Each line contains the fully
 qualified domain name or IP address of the client and the client's command file.
 Lines that are blank or begin with '#' are ignored.
-
+.sp
 \'*' is a wildcard and will match any string.  A number range can be given 
 by "<MIN-MAX>" where MIN is the lower bound and MAX is the upper bound.  '\\'
 can be used to escape any character.
-
+.sp
 A client is only given access to transcripts that are listed in their config
 file.
 .sp
@@ -134,7 +142,7 @@ Defines the maximum queue of pending connections to
 by default five.
 .TP 19
 .BI \-D\  path
-specifies the radmind working directory, by default _PATH_RADMIND
+specifies the radmind working directory, by default _RADMIND_PATH
 .TP 19
 .B \-d
 debug mode. Does not disassociate from controlling tty.
@@ -153,9 +161,22 @@ specifies the umask the server uses to write files to the disk.
 displays the version of 
 .B  radmind
 and exits.
+.TP 19
+.BI \-w\  auth-level
+TLS authorization level, by default 0.
+0 = no TLS, 1 = server verification, 2 = server and client verification.
+.TP 19
+.BI \-x\  ca-pem-file
+Certificate authority's public certificate, by default _RADMIND_TLS_CA.
+.TP 19
+.BI \-y\  cert-pem-file
+Server's public certificate, by default _RADMIND_TLS_CERT.
+.TP 19
+.BI \-z\  private-key-file
+Server's private key, by default _RADMIND_TLS_CERT.
 .sp
 .SH EXAMPLES
-The following example of _PATH_RADMIND/config defines four known clients,
+The following example of _RADMIND_PATH/config defines four known clients,
 each using one of three different command files.  Also, any client that ends
 with ".lab.umich.edu" will get lab.K as its config file and clients
 in the IP range 212.12.243.1 through 212.12.243.50 will get solaris8.K as their 
@@ -177,7 +198,7 @@ oreo.umich.edu         solaris8.K
 .LP
 .sp
 .SH FILES
-_PATH_RADMIND/config
+_RADMIND_PATH/config
 .sp
 .SH SEE ALSO
 .BR fsdiff (1),

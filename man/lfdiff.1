@@ -19,6 +19,14 @@
 ] [
 .B \-X
 .I unsupported\ diff\ options
+] [
+.BI \-w\  auth-level
+] [
+.BI \-x\  ca-pem-file
+] [
+.BI \-y\  cert-pem-file
+] [ 
+.BI \-z\  private-key-file
 ]
 .I file 
 .sp
@@ -83,6 +91,19 @@ display communication with the radmind server.
 .BI \-X\  unsupported\ diff\ options
 passes options directly to
 .BR diff (1). 
+.TP 19
+.BI \-w\  auth-level
+TLS authorization level, by default 0.
+0 = no TLS, 1 = server verification, 2 = server and client verification.
+.TP 19
+.BI \-x\  ca-pem-file
+Certificate authority's public certificate, by default _RADMIND_TLS_CA.
+.TP 19
+.BI \-y\  cert-pem-file
+Client's public certificate, by default _RADMIND_TLS_CERT.
+.TP 19
+.BI \-z\  private-key-file
+Client's private key, by default _RADMIND_TLS_CERT.
 .sp
 .SH EXIT STATUS 
 The following exit values are returned:
