@@ -122,10 +122,11 @@ file system objects in ./private/tmp.
 This stores apple-pos.T and all files listed in the transcript on the
 radmind server. 
 
-12. lcreate -h radmind /var/radmind/client/apple-neg.T
+12. lcreate -h -N radmind /var/radmind/client/apple-neg.T
 
 This stores apple-neg.T and all files listed in the transcript on the
-radmind server. 
+radmind server.  Since we are storing a negative transcript, we must us the
+-N option which causes lcreate to store all files as zero length files. 
 
 We are now ready to verify the loadsets and make them available from the
 radmind server.  Files and transcripts stored on the server are saved in
@@ -134,14 +135,14 @@ radmind server.  Files and transcripts stored on the server are saved in
 
 1. cd /var/radmind/tmp/transcript
 2. lcksum -c sha1 -vn apple-pos.T
+3. lcksum -c sha1 -v apple-neg.T
 
 lcksum will warn you if the transcript does not match the files stored on
 the server.  If there are any warnings, you can correct the transcript by
 running lcksum again without the -n option.  If files are stored using
-lcreate with the -N, lcksum must be run to correct the checksum and file
-sizes listed in the transcript. 
+lcreate with the -N, lcksum must be run without the -n option to correct the
+checksum and file sizes listed in the transcript. 
 
-3. lcksum -c sha1 -vn apple-neg.T
 4. Check-in both transcripts and their associated files
 
 mv /var/radmind/tmp/transcript/apple-pos.T /var/radmind/transcript
