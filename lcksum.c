@@ -187,8 +187,12 @@ main( int argc, char **argv )
 	    }
 	}
 
-	sprintf( path, "%s/../file/%s/%s", tpath, transcript,
-		decode( targv[ 1 ] ) );
+	if ( snprintf( path, MAXPATHLEN, "%s/../file/%s/%s", tpath, transcript,
+		decode( targv[ 1 ] )) > MAXPATHLEN - 1 ) {
+	    fprintf( stderr, "%s/../file/%s/%s: path too long\n", tpath,
+		transcript, decode( targv[ 1 ] ));
+	    exit( 2 );
+	}
 
 	if ( do_chksum( path, lchksum ) != 0 ) {
 	    perror( path );
