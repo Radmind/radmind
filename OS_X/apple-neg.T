@@ -21,5 +21,5 @@ d ./private/var/root                    0750     0     0
 d ./private/var/run                     0775     0     1
 f ./private/var/sleep.out               0644     0     0 1015477570       0 2jmj7l5rSw0yVb/vlWAYkK/YBwk=
 d ./private/var/spool/printing          0775     1     1
-d ./private/var/tmp                     1777     0     0
+#d ./private/var/tmp                     1777     0     0
 d ./private/var/vm                      0755     0     0
