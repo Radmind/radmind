@@ -105,7 +105,7 @@ main( int argc, char **argv )
     edit_path = TRAN2FS;
     outtran = stdout;
 
-    while (( c = getopt( argc, argv, "o:K:t1V" )) != EOF ) {
+    while (( c = getopt( argc, argv, "o:K:T1V" )) != EOF ) {
 	switch( c ) {
 	case 'o':
 	    if (( outtran = fopen( optarg, "w" )) == NULL ) {
@@ -122,7 +122,7 @@ main( int argc, char **argv )
 	    flag |= FLAG_SKIP;
 	    break;	
 
-	case 't':		/* want to record differences from tran */
+	case 'T':		/* want to record differences from tran */
 	    edit_path = FS2TRAN;
 	    break;
 
@@ -145,7 +145,7 @@ main( int argc, char **argv )
 
     if ( errflag || ( argc - optind != 1 )) {
 	fprintf( stderr, 
-		"usage: fsdiff [ -t | -1 ] [ -K command ] [ -o file ] path\n" );
+		"usage: fsdiff [ -T | -1 ] [ -K command ] [ -o file ] path\n" );
 	exit ( 1 );
     }
 
