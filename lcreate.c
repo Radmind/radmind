@@ -137,12 +137,6 @@ store_file( int fd, SNET *sn, char *filename, char *transcript, char *filetype )
 	return( -1 );
     }
 
-    if ( snet_writef( sn, "%d\r\n", (int)st.st_size ) == NULL ) {
-	perror( "snet_writef" );
-	return( -1 );
-    }
-    if ( verbose ) printf( ">>> %d\n", (int)st.st_size );
-
     if ( verbose && isatty( fileno( stdout ))) {
 	dodots = 1;
     }
@@ -150,13 +144,19 @@ store_file( int fd, SNET *sn, char *filename, char *transcript, char *filetype )
     switch( *filetype ) {
 #ifdef __APPLE__
     case 'a':
-	if ( send_afile( filename, fd, sn, dodots ) != 0 ) {
+	if ( send_afile( decode( filename ), fd, sn, dodots ) != 0 ) {
 	    perror( "send_afile" );
 	    return( -1 );
 	}
 	break;
-#endif __APPLE_
+#endif __APPLE__
     case 'f':
+	if ( snet_writef( sn, "%d\r\n", (int)st.st_size ) == NULL ) {
+	    perror( "snet_writef" );
+	    return( -1 );
+	}
+	if ( verbose ) printf( ">>> %d\n", (int)st.st_size );
+
 	while (( rr = read( fd, buf, sizeof( buf ))) > 0 ) {
 	    if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 	    tv.tv_sec = 120;
@@ -331,8 +331,11 @@ main( int argc, char **argv )
 	    exitcode = 1;
 	    break;
 	}
-
+#ifdef __APPLE__
+	if ( tac >= 2 && ( *targv[ 0 ] == 'f' || *targv[ 0 ] == 'a' )) {
+#else !__APPLE__
 	if ( tac >= 2 && *targv[ 0 ] == 'f' ) {
+#endif __APPLE__
 	    dpath = decode( targv[ 1 ] );
 	    if ( !network ) {
 		if ( access( dpath,  R_OK ) < 0 ) {
@@ -351,7 +354,6 @@ main( int argc, char **argv )
 		    exitcode = 1;
 		    break;
 		} 
-
 		rc = store_file( fdt, sn, targv[ 1 ], tname, targv[ 0 ] ); 
 		(void)close( fdt ); 
 		if ( rc != 0 ) {
