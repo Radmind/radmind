@@ -113,7 +113,6 @@ main( int argc, char **argv )
     extern int		optind;
     char		*kfile = _RADMIND_COMMANDFILE;
     int			gotkfile = 0;
-    char		*p;
     int 		c, len, edit_path_change = 0;
     int 		errflag = 0;
 
