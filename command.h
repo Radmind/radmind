@@ -10,8 +10,12 @@
 #endif __STDC__
 
 int		cmdloop ___P(( int ));
+int		cmd_lookup ___P(( char * ));
+char		**find_file ___P(( char *, char * ));
+extern char	*path_radmind;
+extern char	*c_hostname;
 
 struct command {
     char	*c_name;
-    int		(*c_func) ___P(( NET *, int, char *[] ));
+    int		(*c_func) ___P(( SNET *, int, char *[] ));
 };
