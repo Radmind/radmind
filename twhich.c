@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include "argcargv.h"
+#include "code.h"
 
 struct node {
     char                *path;
@@ -56,26 +57,31 @@ free_list( struct node *head )
 main( int argc, char **argv )
 {
 
-    int		c, err = 0, len, linenum = 0, ac;
-    int		specialfile = 0, displayall = 0, match = 0;
+    int		c, err = 0, len, linenum = 0, ac, defaultkfile = 1;
+    int		server = 0, specialfile = 0, displayall = 0, match = 0;
     extern char	*version;
     char	*kfile = _RADMIND_COMMANDFILE;
     char	*kdir = "";
-    char	*pattern, *p, **av;
+    char	*pattern, *p, *tline, **av;
     char	line[ MAXPATHLEN * 2 ];
     char	tran[ MAXPATHLEN ];
     char	path[ MAXPATHLEN ];
+    char	serverkfile[ MAXPATHLEN ];
     FILE	*f;
     ACAV	*acav;
     struct node	*head = NULL, *new_node, *node;
 
-    while (( c = getopt( argc, argv, "aK:V" )) != EOF ) {
+    while (( c = getopt( argc, argv, "aK:sV" )) != EOF ) {
 	switch( c ) {
 	case 'a':
 	    displayall = 1;
 	    break;
 	case 'K':
+	    defaultkfile = 0;
 	    kfile = optarg;
+	    break;
+	case 's':
+	    server = 1;
 	    break;
 	case 'V':
 	    printf( "%s\n", version );
@@ -100,8 +106,14 @@ main( int argc, char **argv )
 	err++;
     }
 
+    if ( server && defaultkfile ) {
+	err++;
+    }
+
     if ( err ) {
         fprintf( stderr, "Usage: %s [ -aV ] [ -K command file ] file\n",
+	    argv[ 0 ] );
+        fprintf( stderr, "Usage: %s -s -K command [ -aV ] file\n",
 	    argv[ 0 ] );
         exit( 2 );
     }
@@ -111,8 +123,19 @@ main( int argc, char **argv )
 	exit( 2 );
     }
     if (( p = strrchr( kdir, '/' )) == NULL ) { 
-	/* No '/' in kfile - use working directory */
-	kdir = "./";
+	if ( server ) {
+	    /* Build server command file */
+	    kdir = _RADMIND_SERVER_COMMAND_DIR;
+	    if ( snprintf( serverkfile, MAXPATHLEN, "%s%s", kdir, kfile ) >
+		    MAXPATHLEN - 1 ) {
+		fprintf( stderr, "path too long: %s%s\n", kdir, kfile );
+		exit( 2 );
+	    }
+	    kfile = serverkfile;
+	} else {
+	    /* No '/' in kfile - use working directory */
+	    kdir = "./";
+	}
     } else {
 	p++;
 	*p = (char)'\0';
@@ -152,6 +175,13 @@ main( int argc, char **argv )
 	switch( *av[ 0 ] ) {
 	case 's':
 	    specialfile++;
+	    if ( strcmp( decode( av[ 1 ] ), pattern ) == 0 ) {
+		match++;
+		printf( "special.T: line %d\n", specialfile );
+		if ( !displayall ) {
+		    goto done;
+		}
+	    } 
 	    break;
 	default:
 	    new_node = create_node( av[ 1 ] );
@@ -159,11 +189,6 @@ main( int argc, char **argv )
 	    head = new_node;
 	    break;
 	}
-    }
-    if ( specialfile ) {
-	new_node = create_node( "special.T" );
-	new_node->next = head;
-	head = new_node;
     }
     /* Close kfile */
     if ( fclose( f ) != 0 ) {
@@ -176,9 +201,18 @@ main( int argc, char **argv )
 	head = node->next;
 	strncpy( tran, node->path, MAXPATHLEN );
 	free_node( node );
-	if ( snprintf( path, MAXPATHLEN, "%s%s", kdir, tran ) > MAXPATHLEN ) {
-	    fprintf( stderr, "path too long: %s%s\n", kdir, tran );
-	    exit( 2 );
+	if ( server ) {
+	    if ( snprintf( path, MAXPATHLEN, "%s%s", _RADMIND_TRANSCRIPT_DIR,
+		    tran ) > MAXPATHLEN - 1 ) {
+		fprintf( stderr, "path too long: %s%s\n", kdir, tran );
+		exit( 2 );
+	    }
+	} else {
+	    if ( snprintf( path, MAXPATHLEN, "%s%s", kdir, tran )
+		    > MAXPATHLEN - 1 ) {
+		fprintf( stderr, "path too long: %s%s\n", kdir, tran );
+		exit( 2 );
+	    }
 	}
 	if (( f = fopen( path, "r" )) == NULL ) {
 	    perror( path );
@@ -197,6 +231,11 @@ main( int argc, char **argv )
 		return( 1 );
 	    }
 
+	    if (( tline = strdup( line )) == NULL ) {
+		perror( "strdup" );
+		exit( 2 );
+	    }
+
 	    if (( ac = acav_parse( acav, line, &av )) < 0 ) {
 		perror( "acav_parse failed" );
 		exit( 2 );
@@ -206,15 +245,16 @@ main( int argc, char **argv )
 	    if (( ac <= 1 ) || ( *av[ 0 ] == '#' )) {
 		continue;
 	    }
-	    if ( strcmp( av[ 1 ], pattern ) == 0 ) {
-		printf( "%s: line %d\n", path, linenum );
+	    if ( strcmp( decode( av[ 1 ] ), pattern ) == 0 ) {
 		match++;
+		printf( "%s: line %d:\n%s", path, linenum, tline );
 		if ( !displayall ) {
 		    goto closetran;
 		}
 	    } 
 	}
 closetran:
+	free( tline );
 	if ( fclose( f ) != 0 ) {
 	    perror( path );
 	    exit( 2 );

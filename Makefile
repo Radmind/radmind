@@ -3,9 +3,13 @@ MANDIR=${DESTDIR}/man
 BINDIR=${DESTDIR}/bin
 SBINDIR=${DESTDIR}/sbin
 
+# For server
 VARDIR=/var/radmind
 CONFIGFILE=${VARDIR}/config
 TRANSCRIPTDIR=${VARDIR}/transcript
+COMMANDDIR=${VARDIR}/command
+
+# For client
 COMMANDFILE=${VARDIR}/client/command.K
 GNU_DIFF=/usr/local/gnu/bin/diff
 RADMIND_HOST=radmind
@@ -55,7 +59,7 @@ LMERGE_OBJ=	version.o lmerge.o argcargv.o code.o pathcmp.o mkdirs.o list.o
 LFDIFF_OBJ=	version.o lfdiff.o argcargv.o connect.o download.o chksum.o \
 		base64.o
 
-TWHICH_OBJ=	version.o argcargv.o twhich.o
+TWHICH_OBJ=	version.o argcargv.o code.o twhich.o
 
 all : ${TARGETS}
 
@@ -105,6 +109,8 @@ lcreate.o : lcreate.c
 twhich.o : twhich.c
 	${CC} ${CFLAGS} \
 		-D_RADMIND_COMMANDFILE=\"${COMMANDFILE}\" \
+		-D_RADMIND_SERVER_COMMAND_DIR=\"${COMMANDDIR}/\" \
+		-D_RADMIND_TRANSCRIPT_DIR=\"${TRANSCRIPTDIR}/\" \
 		-c twhich.c
 
 radmind : libsnet/libsnet.a ${RADMIND_OBJ} Makefile
