@@ -276,7 +276,8 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 		exit( 1 );
 	    }
 	} else if ( fs->pi_type == 'a' ) {
-	    if ( do_achksum( fs->pi_name, fs->pi_chksum_b64 ) < 0 ) {
+	    if ( do_achksum( fs->pi_name, fs->pi_chksum_b64,
+		    fs->pi_hfs_finfo ) < 0 ) {
 		perror( fs->pi_name );
 		exit( 1 );
 	    }
