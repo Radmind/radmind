@@ -108,8 +108,8 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, size_t transize,
     size = atoi( line );
     if ( verbose ) printf( "<<< %ld\n<<< ", (long)size );
     if ( transize != 0 && size != transize ) {
-	fprintf( stderr, "line %d: size in transcript does not match size
-	    from server\n", linenum );
+	fprintf( stderr, "line %d: size in transcript does not match size"
+	    "from server\n", linenum );
 	return( -1 );
     }
 
@@ -151,8 +151,8 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, size_t transize,
 	EVP_DigestFinal( &mdctx, md_value, &md_len );
 	base64_e(( char*)&md_value, md_len, cksum_b64 );
 	if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
-	    fprintf( stderr, "line %d: checksum in transcript does not match
-		checksum from server\n", linenum );
+	    fprintf( stderr, "line %d: checksum in transcript does not match"
+		"checksum from server\n", linenum );
 	    goto error;
 	}
     }
@@ -229,8 +229,8 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     }
     size = atol( line );
     if ( transize != 0 && size != transize ) {
-	fprintf( stderr, "line %d: size in transcript does not match size
-	    from server\n", linenum );
+	fprintf( stderr, "line %d: size in transcript does not match size"
+	    "from server\n", linenum );
 	return( -1 );
     }
     if ( verbose ) printf( "<<< %ld\n<<< ", size );
@@ -386,8 +386,8 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	EVP_DigestFinal( &mdctx, md_value, &md_len );
 	base64_e(( char*)&md_value, md_len, cksum_b64 );
         if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
-	    fprintf( stderr, "line %d: checksum in transcript does not match
-		checksum from server\n", linenum );
+	    fprintf( stderr, "line %d: checksum in transcript does not match"
+		"checksum from server\n", linenum );
             return( -1 );
         }
     }
