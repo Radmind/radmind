@@ -2982,7 +2982,7 @@ else
 echo $ECHO_N "checking for ssl... $ECHO_C" >&6
     ssldirs="/usr/local/openssl /usr/lib/openssl /usr/openssl \
 	    /usr/local/ssl /usr/lib/ssl /usr/ssl \
-	    /usr/pkg /usr/local"
+	    /usr/pkg /usr/local /usr"
 
 # Check whether --with-ssl or --without-ssl was given.
 if test "${with_ssl+set}" = set; then
@@ -3081,7 +3081,7 @@ else
 echo $ECHO_N "checking for ssl... $ECHO_C" >&6
     ssldirs="/usr/local/openssl /usr/lib/openssl /usr/openssl \
 	    /usr/local/ssl /usr/lib/ssl /usr/ssl \
-	    /usr/pkg /usr/local"
+	    /usr/pkg /usr/local /usr"
 
 # Check whether --with-ssl or --without-ssl was given.
 if test "${with_ssl+set}" = set; then
