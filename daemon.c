@@ -193,11 +193,13 @@ main( ac, av )
 	    port = htons( atoi( optarg ));
 	    break;
 
-#ifdef __APPLE__
 	case 'R' :		/* register as Rendezvous service */
+#ifdef __APPLE__
 	    regservice = 1;
 	    break;
 #endif /* __APPLE */
+	    err++;
+	    break;
 
 	case 'u' :		/* umask */
 	    umask( (mode_t)strtol( optarg, (char **)NULL, 0 ));
