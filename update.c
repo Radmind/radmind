@@ -14,6 +14,7 @@
 #endif
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <utime.h>
 
@@ -38,8 +39,6 @@ update( const char *path, char *displaypath, int present, int newfile,
     char			fi_data[ FINFOLEN ];
     extern struct atterlist     alist;
     static char                 null_buf[ 32 ] = { 0 };
-    int				fs_finfo = 0;
-    int				tran_finfo= 0;
 #endif __APPLE__
 
     switch ( *targv[ 0 ] ) {
