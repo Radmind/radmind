@@ -176,7 +176,7 @@ main( int argc, char **argv )
 	switch( *av[ 0 ] ) {
 	case 's':
 	    specialfile++;
-	    if ( strcmp( decode( av[ 1 ] ), pattern ) == 0 ) {
+	    if ( pathcmp( decode( av[ 1 ] ), pattern ) == 0 ) {
 		match++;
 		printf( "special.T:\ns %s\n", av[ 1 ] );
 		if ( !displayall ) {
@@ -275,7 +275,7 @@ main( int argc, char **argv )
 		exit( 2 );
 	    }
 
-	    cmp = strcmp( decode( av[ 1 ] ), pattern );
+	    cmp = pathcmp( decode( av[ 1 ] ), pattern );
 	    if ( cmp == 0 ) {
 		match++;
 		if (( !remove ) &&
