@@ -30,7 +30,6 @@ void            (*logger)( char * ) = NULL;
 int		linenum = 0;
 int		cksum = 0;
 int		verbose = 1;
-int		dodots = 0;
 const EVP_MD	*md;
 extern char	*version, *checksumlist;
 char            prepath[ MAXPATHLEN ] = {0};
@@ -46,9 +45,11 @@ char            prepath[ MAXPATHLEN ] = {0};
 main( int argc, char **argv )
 {
     int			ufd, c, err = 0, updatetran = 1, updateline = 0;
-    int			ucount = 0, len, tac, amode = R_OK | W_OK;
+    int			ucount = 0, len, tac, amode = R_OK | W_OK, lcount = 0;
     int			prefixfound = 0;
     int			remove = 0;
+    int			lastpct = -1;
+    float		pct = 0.0;
     extern int          optind;
     char		*transcript = NULL, *tpath = NULL, *line;
     char		*prefix = NULL;
@@ -61,7 +62,7 @@ main( int argc, char **argv )
     struct stat		st;
     off_t		cksumsize;
 
-    while ( ( c = getopt ( argc, argv, "c:P:nqV" ) ) != EOF ) {
+    while ( ( c = getopt ( argc, argv, "c:P:nqVv" ) ) != EOF ) {
 	switch( c ) {
 	case 'c':
 	    OpenSSL_add_all_digests();
@@ -83,6 +84,11 @@ main( int argc, char **argv )
 	    printf( "%s\n", version );
 	    printf( "%s\n", checksumlist );
 	    exit( 0 );
+
+	case 'v':
+	    verbose++;
+	    break;
+
 	case 'q':
 	    verbose = 0;
 	    break;
@@ -102,15 +108,9 @@ main( int argc, char **argv )
     tpath = argv[ optind ];
 
     if ( err || ( argc - optind != 1 ) ) {
-	fprintf( stderr, "usage: %s [ -nqV ] [ -P prefix ] ", argv[ 0 ] );
+	fprintf( stderr, "usage: %s [ -nqVv ] [ -P prefix ] ", argv[ 0 ] );
 	fprintf( stderr, "-c checksum transcript\n" );
 	exit( 2 );
-    }
-
-    if ( verbose ) {
-	if ( isatty( fileno( stdout ))) {
-	    dodots = 1;
-	}
     }
 
     if ( stat( tpath, &st ) != 0 ) {
@@ -163,6 +163,15 @@ main( int argc, char **argv )
     } else {
 	*transcript = (char)'\0';
 	transcript++;
+    }
+
+    /* count the lines */
+    if ( verbose == 2 ) {
+	while ( fgets( tline, MAXPATHLEN, f ) != NULL ) {
+	    lcount++;
+	}
+
+	rewind( f );
     }
 
     while ( fgets( tline, MAXPATHLEN, f ) != NULL ) {
@@ -325,6 +334,15 @@ main( int argc, char **argv )
 	    }
 	}
 done:
+	if ( verbose == 2 && ( tac > 0 && *line != '#' )) {
+	    pct = ((( float )linenum / ( float )lcount ) * 100.0 );
+	    if (( int )pct != lastpct ) {
+		printf( "%%%.2d %s\n", ( int )pct, decode( targv[ 1 ] ));
+	    }
+
+	    lastpct = ( int )pct;
+	}
+
 	free( line );
     }
 
