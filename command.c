@@ -34,6 +34,7 @@
 #include "cksum.h"
 #include "code.h"
 #include "mkdirs.h"
+#include "list.h"
 
 #ifdef sun
 #define MIN(a,b)	((a)<(b)?(a):(b))
@@ -62,6 +63,7 @@ char		*remote_addr;
 char		command_file[ MAXPATHLEN ];
 char		upload_xscript[ MAXPATHLEN ];
 const EVP_MD    *md;
+struct node	*tran_list = NULL;
 
     int
 f_quit( sn, ac, av )
@@ -576,8 +578,10 @@ command_k( char *path_config )
 {
     SNET	*sn;
     char	**av, *line;
+    char	kline[ MAXPATHLEN * 2 ];
     int		ac;
     int		linenum = 0;
+    FILE	*f;
 
     if (( sn = snet_open( path_config, O_RDONLY, 0, 0 )) == NULL ) {
         syslog( LOG_ERR, "command_k: snet_open: %s: %m", path_config );
@@ -604,6 +608,32 @@ command_k( char *path_config )
 	if (( strcasecmp( av[ 0 ], remote_host ) == 0 )
 		|| ( strcasecmp( av[ 0 ], remote_addr ) == 0 )) {
 	    sprintf( command_file, "command/%s", av[ 1 ] );
+
+	    /* Create list of transcripts */
+	    if (( f = fopen( command_file, "r" )) == NULL ) {
+		syslog( LOG_ERR, "fopen: %s: %m", command_file );
+	    }
+	    linenum = 0;
+	    while ( fgets( kline, MAXPATHLEN, f ) != NULL ) {
+		linenum++;
+		ac = acav_parse( NULL, kline, &av );
+		if (( ac == 0 ) || ( *av[ 0 ] == '#' )
+			|| ( *av[ 0 ] == 's')) {
+		    continue;
+		}
+		if ( ac != 2 ) {
+		    syslog( LOG_ERR, "%s: %d: invalid command line\n",
+			    command_file, linenum );
+		    return( -1 );
+		}
+		insert_node( av[ 1 ], &tran_list );
+	    }
+	    print_list( tran_list );
+	    if ( fclose( f ) < 0 ) {
+		syslog( LOG_ERR, "fclose: %m" );
+		return( -1 );
+	    }
+
 	    return( 0 );
 	}
     }
