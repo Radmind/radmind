@@ -230,7 +230,8 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 
 	    base64_e( cur->pi_afinfo.fi.fi_data, FINFOLEN, finfo_e );
 	    fprintf( outtran, "%c %-37s\t%.4lo %5d %5d %s\n", cur->pi_type,
-		    epath, (unsigned long )( T_MODE & cur->pi_stat.st_mode ), 
+		    epath,
+		    (unsigned long)( T_MODE & cur->pi_stat.st_mode ), 
 		    (int)cur->pi_stat.st_uid, (int)cur->pi_stat.st_gid,
 		    finfo_e );
 	    break;
@@ -403,12 +404,20 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 	break;
 
     case 'd':				/* dir */
+#ifdef __APPLE__
+	if ( tran->t_type != T_NEGATIVE ) {
+	    if (( fs->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
+		    ( fs->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) ||
+		    ( memcmp( fs->pi_afinfo.fi.fi_data,
+		    tran->t_pinfo.pi_afinfo.fi.fi_data, FINFOLEN ) != 0 ) ||
+		    ( mode != tran_mode )) {
+		t_print( fs, tran, PR_STATUS );
+	    }
+	}
+	break;
+#endif __APPLE__
 	if (( fs->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
 		( fs->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) ||
-#ifdef __APPLE__
-		( memcmp( fs->pi_afinfo.fi.fi_data,
-		tran->t_pinfo.pi_afinfo.fi.fi_data, FINFOLEN ) != 0 ) ||
-#endif __APPLE__
 		( mode != tran_mode )) {
 	    t_print( fs, tran, PR_STATUS );
 	}
