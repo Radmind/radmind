@@ -276,14 +276,9 @@ main( int argc, char **argv )
 	    cmp = strcmp( decode( av[ 1 ] ), pattern );
 	    if ( cmp == 0 ) {
 		match++;
-		if ( remove ) {
-		    printf( "- " );
-		}
 		if (( !remove ) &&
 			(( *av[ 0 ] == 'f' ) || ( *av[ 0 ] == 'a' ))) {
 		    printf( "%s:\n+ %s", tran, tline );
-		} else if ( remove ) {
-		    printf( "%s:\n- %s", tran, tline );
 		} else {
 		    printf( "%s:\n%s", tran, tline );
 		}
