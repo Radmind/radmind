@@ -169,17 +169,17 @@ install	: all
 	done
 
 package :
-        mkdir ${DISTDIR}
-        -mkdir -p ${DISTDIR}${DESTDIR}
-        -mkdir -p ${DISTDIR}${BINDIR}
-        for i in in ${BINTARGETS}; do \
-            ${INSTALL} -m 0755 -c $$i ${DISTDIR}${BINDIR}/; \
-        done
-        -mkdir -p ${DISTDIR}/${MANDIR}
-        -mkdir -p ${DISTDIR}/${MANDIR}/man1
-        for i in ${MAN1TARGETS}; do \
-            ${INSTALL} -m 0644 -c $$i ${DISTDIR}${MANDIR}/man1/; \
-        done 
+	-mkdir ${DISTDIR}
+	-mkdir -p ${DISTDIR}${DESTDIR}
+	-mkdir -p ${DISTDIR}${BINDIR}
+	for i in in ${BINTARGETS}; do \
+	    ${INSTALL} -m 0755 -c $$i ${DISTDIR}${BINDIR}/; \
+	done
+	-mkdir -p ${DISTDIR}/${MANDIR}
+	-mkdir -p ${DISTDIR}/${MANDIR}/man1
+	for i in ${MAN1TARGETS}; do \
+	    ${INSTALL} -m 0644 -c $$i ${DISTDIR}${MANDIR}/man1/; \
+	done 
 
 clean :
 	rm -f *.o a.out core
