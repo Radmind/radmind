@@ -6,4 +6,5 @@
 ./config.log
 ./config.status
 ./libsnet/CVS
+./libsnet/profiled/CVS
 ./libsnet/Makefile
