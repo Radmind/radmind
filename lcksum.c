@@ -139,7 +139,7 @@ main( int argc, char **argv )
     struct stat		st;
     off_t		cksumsize;
 
-    while ( ( c = getopt ( argc, argv, "%Aac:P:nqV" ) ) != EOF ) {
+    while ( ( c = getopt ( argc, argv, "%Aac:inP:qV" ) ) != EOF ) {
 	switch( c ) {
 	case 'a':
 	    checkall = 1;
@@ -161,7 +161,11 @@ main( int argc, char **argv )
 		exit( 2 );
 	    }
 	    cksum = 1;  
-	    break; 
+	    break;
+
+	case 'i':
+	    setvbuf( stdout, ( char * )NULL, _IOLBF, 0 );
+	    break;
 
 	case 'P':
 	    prefix = optarg;
