@@ -268,7 +268,7 @@ clean :
 	(cd libsnet; ${MAKE} ${MAKEFLAGS} clean)
 	rm -f *.o a.out core
 	rm -f ${TARGETS}
-	rm -rf man tmp
+	rm -rf tmp
 
 distclean: clean
 	rm -f config.log config.status Makefile libsnet/Makefile
