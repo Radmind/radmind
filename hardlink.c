@@ -1,14 +1,11 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
+#include <stdio.h>
 
 #ifdef SOLARIS
 #include <sys/mkdev.h>
 #endif
 
-#include <sys/stat.h>
 #include <sys/param.h>
-#include <unistd.h>
 
 #include "transcript.h"
 
@@ -25,10 +22,11 @@ struct inolist {
 };
 
 
-struct devlist		*head = NULL;
+static struct devlist	*head = NULL;
 
 static char		*i_insert( struct devlist *head, struct info *info );
 static struct devlist	*d_insert( struct devlist **head, struct info *info );
+void			d_free( void );
 
     char *
 hardlink( struct info *info )
@@ -106,3 +104,22 @@ i_insert( struct devlist *head, struct info *info )
 
 }
 
+    void
+d_free( )
+{
+    struct devlist	*dev_next;
+    struct inolist	*ino_head, *ino_next;
+
+    while ( head != NULL ) {
+	dev_next = head->d_next;
+	ino_head = head->d_ilist;
+	while ( ino_head != NULL ) {
+	    ino_next = ino_head->i_next;
+	    free( ino_head->i_name);
+	    free( ino_head );
+	    ino_head = ino_next;
+	}
+	free( head );
+	head = dev_next;
+    }
+}
