@@ -135,15 +135,21 @@ main( int argc, char **argv )
 
 	tac = acav_parse( NULL, tline, &targv );
 
+	if ( snprintf( path, MAXPATHLEN, "%s", decode( targv[ 1 ] ))
+		> MAXPATHLEN ) {
+	    fprintf( stderr, "line %d: path too long\n", linenum );
+	    exit( 1 );
+	}
+	    
 	/* Check transcript order */
 	if ( prepath != 0 ) {
-	    if ( pathcmp( targv[ 1 ], prepath ) < 0 ) {
+	    if ( pathcmp( path, prepath ) < 0 ) {
 		fprintf( stderr, "line %d: bad sort order\n", linenum );
 		exit( 1 );
 	    }
 	}
 	len = strlen( targv[ 1 ] );
-	if ( snprintf( prepath, MAXPATHLEN, "%s", targv[ 1 ]) > MAXPATHLEN ) {
+	if ( snprintf( prepath, MAXPATHLEN, "%s", path) > MAXPATHLEN ) {
 	    fprintf( stderr, "line %d: path too long\n", linenum );
 	    exit( 1 );
 	}
