@@ -21,7 +21,7 @@ RADMIND_HOST=@server@
 RADMINDSYSLOG=LOG_LOCAL7
 
 INCPATH=        @CPPFLAGS@ -Ilibsnet
-OPTOPTS=	-Wall -Wmissing-prototypes 
+OPTOPTS=	@OPTOPTS@
 CC=		@CC@
 DEFS=		@TLSDEFS@
 LIBS=		-lsnet @LIBS@

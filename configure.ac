@@ -27,6 +27,12 @@ AC_CHECK_LIB([socket], [socket])
 CHECK_SSL
 CHECK_PAM
 
+# Miscellaneous:
+if test x_$GCC = x_yes; then
+    OPTOPTS=${OPTOPTS:-"-Wall -Wmissing-prototypes"}
+fi
+AC_SUBST(OPTOPTS)
+
 AC_CONFIG_SUBDIRS(libsnet)
 AC_CONFIG_FILES(Makefile)
 AC_OUTPUT
