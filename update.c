@@ -1,0 +1,353 @@
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <netdb.h>
+#include <sha.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/socket.h>
+#include <sys/mkdev.h>
+#include <sys/ddi.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <strings.h>
+#include <utime.h>
+#include <errno.h>
+
+#include "snet.h"
+#include "argcargv.h"
+#include "code.h"
+#include "base64.h"
+#include "convert.h"
+#include "download.h"
+#include "update.h"
+
+extern int verbose;
+extern int linenum;
+
+
+    int
+update( char *path, int present, struct stat st, int tac, char **targv )
+{
+    mode_t              mode;
+    struct utimbuf      times;
+    uid_t               uid;
+    gid_t               gid;
+    dev_t               dev;
+
+    switch ( *targv[ 0 ] ) {
+    case 'f':
+	if ( tac != 8 ) {
+	    // IS THIS OKAY FOR ERROR
+	    fprintf( stderr, "%d: incorrect number of arguments\n", linenum );
+	    return( 1 );
+	}
+	mode = strtol( targv[ 2 ], (char **)NULL, 8 );
+	uid = atoi( targv[ 3 ] );
+	gid = atoi( targv[ 4 ] );
+	times.modtime = atoi( targv[ 5 ] );
+	if( mode != st.st_mode ) {
+	    if ( chmod( path, mode ) != 0 ) {
+		perror( path );
+		return( 1 );
+	    }
+	    if ( verbose ) printf( "    Updating %s mode\n", path );
+	}
+	if( uid != st.st_uid  || gid != st.st_gid ) {
+	    if ( lchown( path, uid, gid ) != 0 ) {
+		perror( path );
+		return( 1 );
+	    }
+	    if ( uid != st.st_uid ) {
+		if ( verbose ) printf( "    Updating %s uid\n", path );
+	    }
+	    if ( gid != st.st_gid ) {
+		if ( verbose ) printf( "    Updating %s gid\n", path );
+	    }
+	}
+
+	if( times.modtime != st.st_mtime ) {
+	    
+	    /*Is this what I should to for access time? */
+
+	    times.actime = st.st_atime;
+	    if ( utime( path, &times ) != 0 ) {
+		perror( path );
+		return( 1 );
+	    }
+	    if ( verbose ) printf( "    Updating %s time\n", path ); 
+	}
+	break;
+
+    case 'd':
+
+	if ( tac != 5 ) {
+	    fprintf( stderr,
+		"%d: incorrect number of arguments\n", linenum );
+	    return( 1 );
+	}
+
+	mode = strtol( targv[ 2 ], (char **)NULL, 8 );
+	uid = atoi( targv[ 3 ] );
+	gid = atoi( targv[ 4 ] );
+
+	if ( !present ) {
+	    mode = strtol( targv[ 2 ], (char**)NULL, 8 );
+	    if ( mkdir( path, mode ) != 0 ) {
+		perror( path );
+		return( 1 );
+	    }
+	    if ( lstat( path, &st ) != 0 ) {
+		perror( path );
+		return( 1 );
+	    }
+	    present = 1;
+	    if ( verbose ) printf( "    %s created\n", path );
+	}
+
+	/* check mode */
+	if( mode != st.st_mode ) {
+	    if ( chmod( path, mode ) != 0 ) {
+		perror( path );
+		return( 1 );
+	    }
+	    if ( verbose ) printf( "    Updating %s mode\n", path );
+	}
+
+	/* check uid & gid */
+	if( uid != st.st_uid  || gid != st.st_gid ) {
+	    if ( lchown( path, uid, gid ) != 0 ) {
+		perror( path );
+		return( 1 );
+	    }
+	    if ( uid != st.st_uid ) {
+		if ( verbose ) printf( "    Updating %s uid\n", path );
+	    }
+	    if ( gid != st.st_gid ) {
+		if ( verbose ) printf( "    Updating %s gid\n", path );
+	    }
+	}
+	break;
+
+    case 'h':
+	if ( tac != 3 ) {
+	    fprintf( stderr,
+		"%d: incorrect number of arguments\n", linenum );
+	    return( 1 );
+	}
+	if ( link( targv[ 2 ], path ) != 0 ) {
+	    perror( path );
+	    return( 1 );
+	}
+	if ( verbose ) printf( "    %s hard link to %s created\n",
+	    path, targv[ 2 ] );
+	break;
+
+    case 'l':
+	if ( tac != 3 ) {
+	    fprintf( stderr,
+		"%d: incorrect number of arguments\n", linenum );
+	    return( 1 );
+	}
+	if ( present ) {
+	    if ( unlink( path ) != 0 ) {
+		perror( path );
+		return( 1 );
+	    }
+	    present = 0;
+	}
+	if ( symlink( targv[ 2 ] , path ) != 0 ) {
+	    perror( path );
+	    return( 1 );
+	}
+	if ( verbose ) printf( "%s symbolic link to %s created\n",
+	    path, targv[ 2 ] );
+	break;
+
+    case 'p':
+	if ( tac != 5 ) { 
+	    fprintf( stderr,
+		"%d: incorrect number of arguments\n", linenum );
+	    return( 1 );
+	}
+	mode = strtol( targv[ 2 ], (char **)NULL, 8 );
+	uid = atoi( targv[ 3 ] );
+	gid = atoi( targv[ 4 ] );
+	if ( !present ) {
+	    mode = mode | S_IFIFO;
+	    if ( mknod( path, mode, NULL ) != 0 ){
+		perror( path );
+		return( 1 );
+	    }
+	    if ( lstat( path, &st ) != 0 ) {
+		perror( path );
+		return( 1 );
+	    }
+	    present = 1;
+	    if ( verbose ) printf( "%s created\n", path );
+	}
+	/* check mode */
+	if( mode != st.st_mode ) {
+	    if ( chmod( path, mode ) != 0 ) {
+		perror( path );
+		return( 1 );
+	    }
+	    if ( verbose ) printf( "    Updating %s mode\n", path );
+	}
+	/* check uid & gid */
+	if( uid != st.st_uid  || gid != st.st_gid ) {
+	    if ( lchown( path, uid, gid ) != 0 ) {
+		perror( path );
+		return( 1 );
+	    }
+	    if ( uid != st.st_uid ) {
+		if ( verbose ) printf( "    Updating %s uid\n", path );
+	    }
+	    if ( gid != st.st_gid ) {
+		if ( verbose ) printf( "    Updating %s gid\n", path );
+	    }
+	}
+	break;
+
+    case 'b':
+    case 'c':
+	if ( tac != 7 ) {
+	    fprintf( stderr,
+		"%d: incorrect number of arguments\n", linenum );
+	    return( 1 );
+	}
+
+	if ( present && ( ( minor( st.st_rdev )
+		!= atoi( targv[ 6 ] ) ) || ( major( st.st_rdev )
+		!= atoi( targv[ 5 ] ) ) ) ) {
+	    if ( unlink( path ) != 0 ) {
+		perror( path );
+		return( 1 );
+	    }
+	    present = 0;
+	}
+
+	mode = strtol( targv[ 2 ], (char **)NULL, 8 );
+	if( *targv[ 0 ] == 'b' ) {
+	    mode = mode | S_IFBLK;
+	} else {
+	    mode = mode | S_IFCHR;
+	}
+	uid = atoi( targv[ 3 ] );
+	gid = atoi( targv[ 4 ] );
+	if ( !present ) {
+	    if ( ( dev = makedev( (major_t)atoi( targv[ 5 ] ),
+		    (minor_t)atoi( targv[ 6 ] ) ) ) == NODEV ) {
+		perror( path );
+		return( 1 );
+	    }
+	    if ( mknod( path, mode, dev ) != 0 ) {
+		perror( path );
+		return( 1 );
+	    }
+	    if ( lstat( path, &st ) !=  0 ) {
+		perror( path );
+		return( 1 );
+	    }
+	    present = 1;
+	    if ( verbose ) printf( "%s created\n", path );
+	}
+	/* check mode */
+	if( mode != st.st_mode ) {
+	    if ( chmod( path, mode ) != 0 ) {
+		perror( path );
+		return( 1 );
+	    }
+	    if ( verbose ) printf( "Updating: %s mode\n", path );
+	}
+	/* check uid & gid */
+	if( uid != st.st_uid  || gid != st.st_gid ) {
+	    if ( lchown( path, uid, gid ) != 0 ) {
+		perror( path );
+		return( 1 );
+	    }
+	    if ( uid != st.st_uid ) {
+		if ( verbose ) printf( "Updating %s uid\n", path );
+	    }
+	    if ( gid != st.st_gid ) {
+		if ( verbose ) printf( "Updating %s gid\n", path );
+	    }
+	}
+	break;
+    case 's':
+	if ( tac != 5 ) { 
+	    fprintf( stderr,
+		"%d: incorrect number of arguments\n", linenum );
+	    return( 1 );
+	}
+	mode = strtol( targv[ 2 ], (char **)NULL, 8 );
+	uid = atoi( targv[ 3 ] );
+	gid = atoi( targv[ 4 ] );
+	if ( !present ) {
+	    fprintf( stderr, "Socket %s not present\n", path );
+	    break;
+	}
+	/* check mode */
+	if( mode != st.st_mode ) {
+	    if ( chmod( path, mode ) != 0 ) {
+		perror( path );
+		return( 1 );
+	    }
+	    if ( verbose ) printf( "    Updating %s mode\n", path );
+	}
+	/* check uid & gid */
+	if( uid != st.st_uid  || gid != st.st_gid ) {
+	    if ( lchown( path, uid, gid ) != 0 ) {
+		perror( path );
+		return( 1 );
+	    }
+	    if ( uid != st.st_uid ) {
+		if ( verbose ) printf( "    Updating %s uid\n", path );
+	    }
+	    if ( gid != st.st_gid ) {
+		if ( verbose ) printf( "    Updating %s gid\n", path );
+	    }
+	}
+	break;
+    case 'D':
+	if ( tac != 5 ) { 
+	    fprintf( stderr,
+		"%d: incorrect number of arguments\n", linenum );
+	    return( 1 );
+	}
+	mode = strtol( targv[ 2 ], (char **)NULL, 8 );
+	uid = atoi( targv[ 3 ] );
+	gid = atoi( targv[ 4 ] );
+	if ( !present ) {
+	    fprintf( stderr, "Door %s not present\n", path );
+	    break;
+	}
+	/* check mode */
+	if( mode != st.st_mode ) {
+	    if ( chmod( path, mode ) != 0 ) {
+		perror( path );
+		return( 1 );
+	    }
+	    if ( verbose ) printf( "    Updating %s mode\n", path );
+	}
+	/* check uid & gid */
+	if( uid != st.st_uid  || gid != st.st_gid ) {
+	    if ( lchown( path, uid, gid ) != 0 ) {
+		perror( path );
+		return( 1 );
+	    }
+	    if ( uid != st.st_uid ) {
+		if ( verbose ) printf( "    Updating %s uid\n", path );
+	    }
+	    if ( gid != st.st_gid ) {
+		if ( verbose ) printf( "    Updating %s gid\n", path );
+	    }
+	}
+	break;
+    default :
+	printf( "%d: Unkown type %s\n", linenum, targv[ 0 ] );
+	return( 1 );
+    }
+    return( 0 );
+}
