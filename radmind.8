@@ -5,17 +5,19 @@
 .SH SYNOPSIS
 .B radmind
 [
+.BI \-b\  backlog
+] [
 .BI \-D\  path
 ] [
 .B \-d
 ] [
-.B \-V
-] [
-.BI \-b\  backlog
+.BI \-L\  syslog-facility
 ] [
 .BI \-p\  port
 ] [
 .BI \-u\  umask 
+] [
+.B \-V
 ]
 .sp
 .SH DESCRIPTION
@@ -81,9 +83,15 @@ specifies the radmind working directory, by default _PATH_RADMIND
 .B \-d
 debug mode. Does not disassociate from controlling tty.
 .TP 19
+.B \-L\  syslog-facility
+specifies which syslog-facilty to log messages to.
+.TP 19
 .BI \-p\  port 
 specifies the port of the radmind server, by default
 .BR 6662 .
+.TP 19
+.B \-u\  umask
+specifies the umask the server uses to write files to the disk.
 .TP 19
 .B \-V
 displays the version of 
