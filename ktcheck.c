@@ -201,8 +201,8 @@ check( SNET *sn, char *type, char *file )
 	    return( 2 );
 	}
 	if ( update ) {
-	    if ( retr( sn, filedesc, path, NULL, schksum,
-		    (char *)&tempfile ) != 0 ) {
+	    if ( retr( sn, filedesc, path, schksum, (char *)&tempfile )
+		    != 0 ) {
 		fprintf( stderr, "%s: retr failed\n", path );
 		return( 2 );
 	    }
@@ -229,8 +229,8 @@ check( SNET *sn, char *type, char *file )
 		perror( path );
 		return( 2 );
 	    }
-	    if ( retr( sn, filedesc, path, NULL, schksum,
-		    (char *)&tempfile ) != 0 ) {
+	    if ( retr( sn, filedesc, path, schksum, (char *)&tempfile )
+		    != 0 ) {
 		fprintf( stderr, "retr failed\n" );
 		return( 2 );
 	    }
