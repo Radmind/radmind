@@ -7,7 +7,6 @@ SBINDIR=${DESTDIR}/sbin
 VARDIR=/var/radmind
 CONFIGFILE=${VARDIR}/config
 TRANSCRIPTDIR=${VARDIR}/transcript
-COMMANDDIR=${VARDIR}/command
 
 # For client
 COMMANDFILE=${VARDIR}/client/command.K
@@ -109,7 +108,6 @@ lcreate.o : lcreate.c
 twhich.o : twhich.c
 	${CC} ${CFLAGS} \
 		-D_RADMIND_COMMANDFILE=\"${COMMANDFILE}\" \
-		-D_RADMIND_SERVER_COMMAND_DIR=\"${COMMANDDIR}/\" \
 		-D_RADMIND_TRANSCRIPT_DIR=\"${TRANSCRIPTDIR}/\" \
 		-c twhich.c
 

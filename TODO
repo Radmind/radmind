@@ -3,5 +3,3 @@ Have Makefile update man pages with correct DEFAULTHOST info.
 * use sed
 man pages have marker, and install script runs sed to replace defines in
 make file
-
-Add server option to twhich to search transcripts - similar to lcksum
