@@ -56,6 +56,25 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 	*type = 'f';
 	break;
     case S_IFDIR:
+#ifdef __APPLE__
+	if ( afinfo != NULL ) {
+	    static char			null_buf[ 32 ] = { 0 };
+	    extern struct attrlist 	alist;
+
+	    /* Check to see if it's an HFS+ file */
+	    if ( getattrlist( path, &alist, &afinfo->fi,
+		    sizeof( struct finderinfo ), FSOPT_NOFOLLOW ) == 0 ) {
+printf( "getattrlist == 0\n" );
+		    if ( memcmp( &afinfo->fi.fi_data, null_buf,
+			    sizeof( null_buf )) != 0 ) {
+printf( "memcmp != 0\n" );
+
+		*type = 'B';
+printf( "B: %s\n", afinfo->fi.fi_data );
+		break;
+	    }}
+	}
+#endif __APPLE__
 	*type = 'd';
 	break;
     case S_IFLNK:
