@@ -103,7 +103,7 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
     size += sizeof( 3 * sizeof( struct as_entry ));
 
     /* checksum finder info data */
-    EVP_DigestUpdate( &mdctx, afinfo->fi.fi_data, FINFOLEN );
+    EVP_DigestUpdate( &mdctx, afinfo->ai.ai_data, FINFOLEN );
     size += FINFOLEN;
 
     /* checksum rsrc fork data */

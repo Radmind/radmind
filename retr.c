@@ -213,7 +213,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     off_t			size;
     size_t			rsize;
     ssize_t			rc;
-    char			finfo[ 32 ];
+    char			finfo[ FINFOLEN ];
     char			buf[ 8192 ];
     char			rsrc_path[ MAXPATHLEN ];
     char			*line;

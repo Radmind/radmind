@@ -52,16 +52,17 @@ struct as_header {
     uint16_t	ah_num_entries;
 };
 
-struct finderinfo {
-    uint32_t   	fi_size;
-    uint8_t	fi_data[ FINFOLEN ];
+struct attr_info {
+    uint32_t   	ai_size;
+    uint8_t	ai_data[ FINFOLEN ];
+    off_t 	ai_rsrc_len;
 };
 
 struct applefileinfo {
 #ifdef __APPLE__
     char                rsrc_path[ MAXPATHLEN ];
 #endif /* __APPLE__ */
-    struct finderinfo	fi;		// finder info
+    struct attr_info	ai;		// finder info
     struct as_entry	as_ents[ 3 ];	// Apple Single entries
 					// For Finder info, rcrs and data forks
     off_t		as_size;	// Total apple single file size 

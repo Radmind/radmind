@@ -15,7 +15,7 @@ struct attrlist		alist = {
     ATTR_CMN_FNDRINFO,
     0,
     0,
-    0,
+    ATTR_FILE_RSRCLENGTH,
     0,
 };
 

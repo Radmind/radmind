@@ -31,8 +31,7 @@
 radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 {
 #ifdef __APPLE__
-    struct stat			rsrc_st;
-    static char			null_buf[ 32 ] = { 0 };
+    static char			null_buf[ FINFOLEN ] = { 0 };
     extern struct attrlist 	alist;
 #endif /* __APPLE__ */
 
@@ -44,11 +43,14 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 #ifdef __APPLE__
 	/* Check to see if it's an HFS+ file */
 	if ( afinfo != NULL ) {
-	    if (( getattrlist( path, &alist, &afinfo->fi,
-		    sizeof( struct finderinfo ), FSOPT_NOFOLLOW ) == 0 ) &&
-    ( memcmp( afinfo->fi.fi_data, null_buf, sizeof( null_buf )) != 0 )) {
-		*type = 'a';
-		break;
+	    if (( getattrlist( path, &alist, &afinfo->ai,
+		    sizeof( struct attr_info ), FSOPT_NOFOLLOW ) == 0 )) {
+		if (( afinfo->ai.ai_rsrc_len > 0 )
+			|| ( memcmp( afinfo->ai.ai_data, null_buf,
+			FINFOLEN ) != 0 )) {
+		    *type = 'a';
+		    break;
+		}
 	    }
 	}
 #endif /* __APPLE__ */
@@ -59,8 +61,8 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 #ifdef __APPLE__
 	/* Get any finder info */
 	if ( afinfo != NULL ) {
-	    getattrlist( path, &alist, &afinfo->fi,
-		sizeof( struct finderinfo ), FSOPT_NOFOLLOW );
+	    getattrlist( path, &alist, &afinfo->ai,
+		sizeof( struct attr_info ), FSOPT_NOFOLLOW );
 	}
 #endif /* __APPLE__ */
 	*type = 'd';
@@ -100,12 +102,6 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
     /* Calculate full size of applefile */
     if ( *type == 'a' ) {
  
-	if ( snprintf( afinfo->rsrc_path, MAXPATHLEN,
-		"%s%s", path, _PATH_RSRCFORKSPEC ) > MAXPATHLEN - 1 ) {
-	    errno = ENAMETOOLONG;
-	    return( -1 );
-	}
-
 	/* Finder Info */
 	afinfo->as_ents[AS_FIE].ae_id = ASEID_FINFO;
 	afinfo->as_ents[AS_FIE].ae_offset = AS_HEADERLEN +
@@ -117,16 +113,7 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 	afinfo->as_ents[AS_RFE].ae_offset =			/* 94 */
 		( afinfo->as_ents[ AS_FIE ].ae_offset
 		+ afinfo->as_ents[ AS_FIE ].ae_length );
-	/* if there's no rsrc fork set rsrc fork len to zero */
-	if ( lstat( afinfo->rsrc_path, &rsrc_st ) != 0 ) {
-	    if ( errno == ENOENT ) {
-		afinfo->as_ents[ AS_RFE ].ae_length = 0;
-	    } else {
-		return( -1 );
-	    }
-	} else {
-	    afinfo->as_ents[ AS_RFE ].ae_length = ( int )rsrc_st.st_size;
-	}
+	afinfo->as_ents[ AS_RFE ].ae_length = afinfo->ai.ai_rsrc_len;
 
 	/* Data Fork */
 	afinfo->as_ents[AS_DFE].ae_id = ASEID_DFORK;

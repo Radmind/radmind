@@ -160,7 +160,7 @@ update( const char *path, char *displaypath, int present, int newfile,
 	} else {
 	    memcpy( fi_data, null_buf, FINFOLEN );
 	}
-	if ( memcmp( afinfo->fi.fi_data, fi_data, FINFOLEN ) != 0 ) {
+	if ( memcmp( afinfo->ai.ai_data, fi_data, FINFOLEN ) != 0 ) {
 	    if ( setattrlist( path, &alist,
 		    fi_data, FINFOLEN, FSOPT_NOFOLLOW ) != 0 ) {
 		fprintf( stderr,
