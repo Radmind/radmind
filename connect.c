@@ -112,7 +112,7 @@ closesn( SNET *sn )
 
     /* Close network connection */
     if ( snet_writef( sn, "QUIT\r\n" ) < 0 ) {
-	fprintf( stderr, "close failed: %s\n", strerror( errno ));
+	fprintf( stderr, "QUIT failed: %s\n", strerror( errno ));
 	exit( 2 );
     }
     tv = timeout;
@@ -125,7 +125,7 @@ closesn( SNET *sn )
 	return( -1 );
     }
     if ( snet_close( sn ) != 0 ) {
-	fprintf( stderr, "close failed: %s\n", strerror( errno ));
+	fprintf( stderr, "snet_close failed: %s\n", strerror( errno ));
 	exit( 2 );
     }
     return( 0 );
