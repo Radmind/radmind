@@ -20,18 +20,18 @@
 int			edit_path;
 FILE			*outtran;
 
-struct info {
-    char		i_type;
-    char		i_name[ MAXPATHLEN ];
-    char		i_link[ MAXPATHLEN ];
-    struct stat		i_stat;
-    int			i_chksum;
-    dev_t		i_dev;
+struct pathinfo {
+    char		pi_type;
+    char		pi_name[ MAXPATHLEN ];
+    char		pi_link[ MAXPATHLEN ];
+    struct stat		pi_stat;
+    int			pi_chksum;
+    dev_t		pi_dev;
 };
 
 struct transcript {
     struct transcript	*t_next;
-    struct info		t_info;
+    struct pathinfo	t_pinfo;
     int 		t_type;
     char		t_name[ MAXPATHLEN ];
     int			t_linenum;
@@ -39,8 +39,8 @@ struct transcript {
     FILE		*t_in;
 };
  
-int	transcript( struct info *, char * );
-void	transcript_init( int );
+int	transcript( struct pathinfo *, char * );
+void	transcript_init( int, char * );
 void	transcript_free( void );
-char	*hardlink( struct info *info );
+char	*hardlink( struct pathinfo * );
 void	hardlink_free( void );

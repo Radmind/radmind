@@ -25,33 +25,33 @@ struct inolist {
 static struct devlist	*dev_head = NULL;
 
 static char		*i_insert( struct devlist *dev_head,
-				struct info *info );
+				struct pathinfo *pinfo );
 static struct devlist	*d_insert( struct devlist **dev_head,
-				struct info *info );
+				struct pathinfo *pinfo );
 void			hardlink_free( void );
 
     char *
-hardlink( struct info *info )
+hardlink( struct pathinfo *pinfo )
 {
     struct devlist	*device;
 
-    device = d_insert( &dev_head, info );
+    device = d_insert( &dev_head, pinfo );
 
-    return( i_insert( device, info ));
+    return( i_insert( device, pinfo ));
 }
 
     static struct devlist * 
-d_insert( struct devlist **dev_head, struct info *info )
+d_insert( struct devlist **dev_head, struct pathinfo *pinfo )
 {
     struct devlist	*new, **cur;
 
     for ( cur = dev_head; *cur != NULL; cur = &(*cur)->d_next ) {
-	if ( info->i_stat.st_dev <= (*cur)->d_dev ) {
+	if ( pinfo->pi_stat.st_dev <= (*cur)->d_dev ) {
 	    break;
 	}
     }
     
-    if (( (*cur) != NULL ) && ( info->i_stat.st_dev == (*cur)->d_dev )) {
+    if (( (*cur) != NULL ) && ( pinfo->pi_stat.st_dev == (*cur)->d_dev )) {
 	return( *cur );
     }
 
@@ -61,7 +61,7 @@ d_insert( struct devlist **dev_head, struct info *info )
 	exit( 1 );
     }
 
-    new->d_dev = info->i_stat.st_dev; 
+    new->d_dev = pinfo->pi_stat.st_dev; 
     new->d_ilist = NULL;
     new->d_next = *cur;
     *cur = new;
@@ -70,17 +70,17 @@ d_insert( struct devlist **dev_head, struct info *info )
 }
 
     static char *
-i_insert( struct devlist *dev_head, struct info *info )
+i_insert( struct devlist *dev_head, struct pathinfo *pinfo )
 {
     struct inolist	*new, **cur;
 
     for ( cur = &dev_head->d_ilist; *cur != NULL; cur = &(*cur)->i_next ) {
-	if ( info->i_stat.st_ino <= (*cur)->i_ino ) {
+	if ( pinfo->pi_stat.st_ino <= (*cur)->i_ino ) {
 	    break;
 	}
     }
 
-    if (( (*cur) != NULL ) && ( info->i_stat.st_ino == (*cur)->i_ino )) {
+    if (( (*cur) != NULL ) && ( pinfo->pi_stat.st_ino == (*cur)->i_ino )) {
 	return( (*cur)->i_name );
     }
     
@@ -90,14 +90,14 @@ i_insert( struct devlist *dev_head, struct info *info )
 	exit( 1 );
     }
 
-    if (( new->i_name = ( char * ) malloc( strlen( info->i_name ) + 1 ))
+    if (( new->i_name = ( char * ) malloc( strlen( pinfo->pi_name ) + 1 ))
 	    == NULL ) {
 	perror( "i_insert malloc" );
 	exit( 1 );
     }
 
-    strcpy( new->i_name, info->i_name );
-    new->i_ino = info->i_stat.st_ino;
+    strcpy( new->i_name, pinfo->pi_name );
+    new->i_ino = pinfo->pi_stat.st_ino;
 
     new->i_next = *cur;
     *cur = new;

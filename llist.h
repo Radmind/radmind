@@ -2,7 +2,7 @@
 #include <sys/param.h>
 
 struct llist {
-    struct info		ll_info;
+    struct pathinfo	ll_pinfo;
     struct llist	*ll_next;
     int			ll_flag;
     char		type;
