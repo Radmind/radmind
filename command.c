@@ -9,7 +9,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <pam_appl.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
@@ -23,6 +22,10 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+
+#ifdef PAM
+#include <pam_appl.h>
+#endif /* PAM */
 
 extern SSL_CTX  *ctx;
 
@@ -62,9 +65,11 @@ int		f_retr ___P(( SNET *, int, char *[] ));
 int		f_stor ___P(( SNET *, int, char *[] ));
 int		f_noauth ___P(( SNET *, int, char *[] ));
 int		f_starttls ___P(( SNET *, int, char *[] ));
+#ifdef PAM
 int		f_login ___P(( SNET *, int, char *[] ));
 int 		exchange( int num_msg, const struct pam_message **msgm,
 		    struct pam_response **response, void *appdata_ptr );
+#endif /* PAM */
 
 
 char		*user = NULL;
@@ -92,7 +97,9 @@ struct command	noauth[] = {
     { "RETRieve",	f_noauth },
     { "STORe",		f_noauth },
     { "STARttls",       f_starttls },
+#ifdef PAM
     { "LOGIn",       	f_noauth },
+#endif /* PAM */
 };
 
 struct command	auth[] = {
@@ -103,7 +110,9 @@ struct command	auth[] = {
     { "RETRieve",	f_retr },
     { "STORe",		f_stor },
     { "STARttls",       f_starttls },
+#ifdef PAM
     { "LOGIn",       	f_login },
+#endif /* PAM */
 };
 
 struct command *commands  = noauth;
@@ -753,6 +762,7 @@ f_starttls( snet, ac, av )
     return( 0 );
 }
 
+#ifdef PAM
     int
 exchange( int num_msg, const struct pam_message **msg,
     struct pam_response **resp, void *appdata_ptr)
@@ -823,7 +833,6 @@ exchange_failed:
 
     return( PAM_CONV_ERR );
 }
-
 
     int
 f_login( snet, ac, av )
@@ -908,6 +917,7 @@ f_login( snet, ac, av )
 
     return( 0 );
 }
+#endif /* PAM */
 
 /* sets command file for connected host */
     int

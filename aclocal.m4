@@ -41,8 +41,11 @@ AC_DEFUN([CHECK_PAM],
 	fi
     done
     if test x_$found_pam != x_yes; then
+	HAVE_PAM=no
 	AC_MSG_ERROR(cannot find pam headers)
     else
+	PAMDEFS=-DPAM;
+	AC_SUBST(PAMDEFS)
 	HAVE_PAM=yes
     fi
     AC_SUBST(HAVE_PAM)
