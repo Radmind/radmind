@@ -6,6 +6,7 @@
 
 #include "argcargv.h"
 #include "code.h"
+#include "pathcmp.h"
 
 struct node {
     char                *path;
@@ -57,7 +58,7 @@ free_list( struct node *head )
 main( int argc, char **argv )
 {
 
-    int		c, err = 0, len, linenum = 0, ac, defaultkfile = 1;
+    int		c, err = 0, len, linenum = 0, ac, defaultkfile = 1, cmp = 0;
     int		server = 0, specialfile = 0, displayall = 0, match = 0;
     extern char	*version;
     char	*kfile = _RADMIND_COMMANDFILE;
@@ -66,6 +67,7 @@ main( int argc, char **argv )
     char	line[ MAXPATHLEN * 2 ];
     char	tran[ MAXPATHLEN ];
     char	path[ MAXPATHLEN ];
+    char            prepath[ MAXPATHLEN ] = { 0 };
     FILE	*f;
     ACAV	*acav;
     struct node	*head = NULL, *new_node, *node;
@@ -99,11 +101,6 @@ main( int argc, char **argv )
     }
 
     pattern = argv[ argc - 1 ];
-
-    len = strlen( kfile );
-    if ( kfile[ len - 1 ] == '/' ) {
-	err++;
-    }
 
     if ( server && defaultkfile ) {
 	err++;
@@ -147,7 +144,7 @@ main( int argc, char **argv )
         len = strlen( line );
         if (( line[ len - 1 ] ) != '\n' ) {
             fprintf( stderr, "%s: line %d too long\n", kfile, linenum );
-            return( 1 );
+            exit( 2 );
         }
 
 	if (( ac = acav_parse( acav, line, &av )) < 0 ) {
@@ -160,22 +157,34 @@ main( int argc, char **argv )
 	    continue;
 	}
 
+	/* Check for valid command file line */
+	if ( ac < 2 ) {
+	    fprintf( stderr, "%s: line %d: Invalid command line - too many
+		arguments\n", kfile, linenum );
+	    exit( 2 );
+	}
+
 	switch( *av[ 0 ] ) {
 	case 's':
 	    specialfile++;
 	    if ( strcmp( decode( av[ 1 ] ), pattern ) == 0 ) {
 		match++;
-		printf( "special.T: line %d\n", specialfile );
+		printf( "special.T:\ns %s\n", av[ 1 ] );
 		if ( !displayall ) {
 		    goto done;
 		}
 	    } 
 	    break;
-	default:
+	case 'n':
+	case 'p':
 	    new_node = create_node( av[ 1 ] );
 	    new_node->next = head;
 	    head = new_node;
 	    break;
+	default:
+	    fprintf( stderr, "%s: line %d: Invalid command line -
+		unknown type\n", kfile, linenum );
+	    exit( 2 );
 	}
     }
     /* Close kfile */
@@ -184,11 +193,8 @@ main( int argc, char **argv )
 	exit( 2 );
     }
 
-    while ( head != NULL ) {
-	node = head;
-	head = node->next;
+    for ( node = head; node != NULL; node = node->next ) {
 	strncpy( tran, node->path, MAXPATHLEN );
-	free_node( node );
 	if ( server ) {
 	    if ( snprintf( path, MAXPATHLEN, "%s../transcript/%s", kdir,
 		    tran ) > MAXPATHLEN - 1 ) {
@@ -208,6 +214,7 @@ main( int argc, char **argv )
 	}
 
 	linenum = 0;
+	sprintf( prepath, "%s", "" );
 
 	while( fgets( line, sizeof( line ), f ) != NULL ) {
 	    linenum++;
@@ -216,9 +223,10 @@ main( int argc, char **argv )
 	    len = strlen( line );
 	    if (( line[ len - 1 ] ) != '\n' ) {
 		fprintf( stderr, "%s: line %d too long\n", path, linenum );
-		return( 1 );
+		exit( 2 );
 	    }
 
+	    /* Save transcript line - must free later */
 	    if (( tline = strdup( line )) == NULL ) {
 		perror( "strdup" );
 		exit( 2 );
@@ -230,19 +238,37 @@ main( int argc, char **argv )
 	    }
 
 	    /* Skip blank lines, comments and transcript names */
-	    if (( ac <= 1 ) || ( *av[ 0 ] == '#' )) {
+	    if (( ac < 2 ) || ( *av[ 0 ] == '#' )) {
 		continue;
 	    }
-	    if ( strcmp( decode( av[ 1 ] ), pattern ) == 0 ) {
-		match++;
-		printf( "%s: line %d:\n%s", tran, linenum, tline );
-		if ( !displayall ) {
-		    goto closetran;
+	    /* Check transcript order */
+	    if ( prepath != 0 ) {
+		if ( pathcmp( av[ 1 ], prepath ) < 0 ) {
+		    fprintf( stderr, "%s: line %d: bad sort order\n",
+				tran, linenum );
+		    exit( 2 );
 		}
-	    } 
+	    }
+	    len = strlen( path );
+	    if ( snprintf( prepath, MAXPATHLEN, "%s", av[ 1 ]) > MAXPATHLEN ) {
+		fprintf( stderr, "%s: line %d: path too long\n",
+			tran, linenum );
+		exit( 2 );
+	    }
+
+	    cmp = strcmp( decode( av[ 1 ] ), pattern );
+	    if ( cmp == 0 ) {
+		match++;
+		printf( "%s:\n%s", tran, tline );
+		if ( !displayall ) {
+		    break;
+		}
+	    } else if ( cmp > 0 ) {
+		/* We have passed where pattern should be - stop looking */
+		break;
+	    }
+	    free( tline );
 	}
-closetran:
-	free( tline );
 	if ( fclose( f ) != 0 ) {
 	    perror( path );
 	    exit( 2 );
