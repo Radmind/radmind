@@ -109,7 +109,7 @@ main( int argc, char **argv )
     }
 
     if ( err || ( ( argc - optind ) < 2 ) ) {
-	fprintf( stderr, "usage: lmerge [ -vV ] " );
+	fprintf( stderr, "usage: lmerge [ -nvV ] " );
 	fprintf( stderr, "transcript1, transcript2, ..., dest\n" );
 	exit( 2 );
     }
