@@ -1,4 +1,4 @@
-.TH radmind "8" "March 2002" "RSUG" "System Manager's Manual"
+.TH radmind "8" "August 2002" "RSUG" "System Manager's Manual"
 .SH NAME
 .B radmind
 \- Remote administration daemon
@@ -32,6 +32,10 @@ can connect to radmind, one per line.  Each line contains the fully
 qualified domain name or IP address of the client and the client's command file.
 Lines that are blank or begin with '#' are ignored.
 
+\'*' is a wildcard and will match any string.  A number range can be given 
+by "<MIN-MAX>" where MIN is the lower bound and MAX is the upper bound.  '\\'
+can be used to escape any character.
+
 Radmind currently supports the following radmind access protocol
 requests:
 .sp
@@ -45,6 +49,9 @@ STAT     stat a transcript, command or special file
 RETR     retrieve a file
 .br
 STOR     store a file
+
+A client is only given access to transcripts that are listed in their config
+file.
 .sp
 .SH OPTIONS
 .TP 19
@@ -67,7 +74,10 @@ and exits.
 .sp
 .SH EXAMPLES
 The following example of _PATH_RADMIND/config defines four known clients,
-each using one of three different command files.
+each using one of three different command files.  Also, any client that ends
+with ".lab.umich.edu" will get lab.K as its config file and clients
+in the IP range 212.12.243.1 through 212.12.243.50 will get solaris8.K as their 
+config file.
 .sp
 .RS
 .nf
@@ -75,9 +85,11 @@ each using one of three different command files.
 # Client               command file
 #
 amber.umich.edu        apple.K
-josh.umich.edu         apple.K
+josh.umich.ede         apple.K
 ben.umich.edu          apple-test.K
 oreo.umich.edu         solaris8.K
+*.lab.umich.edu        lab.K
+212.12.243.<1-50>      solaris8.K
 .fi
 .RE
 .LP
