@@ -257,7 +257,7 @@ install	: all man rash
 	done
 	-mkdir -p ${RADMINDDIR}/client
 	-mkdir -p ${PREAPPLYDIR}
-	-mkdir -p ${POSTAPPYLDIR}
+	-mkdir -p ${POSTAPPLYDIR}
 	-mkdir -p ${CERTDIR}
 
 PKGNAME=RadmindTools-${VERSION}
