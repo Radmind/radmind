@@ -236,7 +236,7 @@ f_retr( sn, ac, av )
     }
 
     snet_writef( sn, "%d Retrieving file\r\n", 240 );
-    snet_writef( sn, "%d\r\n", st.st_size );
+    snet_writef( sn, "%d\r\n", (int)st.st_size );
 
     /* dump file */
 
@@ -357,14 +357,14 @@ f_stat( SNET *sn, int ac, char *av[] )
     case K_COMMAND:
 	snet_writef( sn, "%s %s %o %d %d %d %d %s\r\n", "f", "command", 
 		    DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, st.st_mtime, 
-		    st.st_size, cksum_b64 );
+		    (int)st.st_size, cksum_b64 );
 	return( 0 );
         
 		    
     case K_TRANSCRIPT:
 	snet_writef( sn, "%s %s %o %d %d %d %d %s\r\n", "f", av[ 2 ], 
 		    DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, st.st_mtime, 
-		    st.st_size, cksum_b64 );
+		    (int)st.st_size, cksum_b64 );
 	return( 0 );
     
     case K_SPECIAL:
@@ -382,7 +382,7 @@ f_stat( SNET *sn, int ac, char *av[] )
 	    /* return constants */
 	    snet_writef( sn, "%s %s %o %d %d %d %d %s\r\n", "f", av[ 2 ], 
 		DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, 
-		st.st_mtime, st.st_size, cksum_b64 );
+		st.st_mtime, (int)st.st_size, cksum_b64 );
 	    return( 0 );
 	}
 
@@ -407,12 +407,12 @@ f_stat( SNET *sn, int ac, char *av[] )
 	    if (( av = special_t( stranpath, enc_file )) == NULL ) {
 		snet_writef( sn, "%s %s %o %d %d %d %d %s\r\n", "f", enc_file, 
 		    DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, 
-		    st.st_mtime, st.st_size, cksum_b64 );
+		    st.st_mtime, (int)st.st_size, cksum_b64 );
 		return( 0 );
 	    }
 	}
 	snet_writef( sn, "%s %s %s %s %s %d %d %s\r\n", "f", enc_file, av[ 2 ],
-		av[ 3 ], av[ 4 ], st.st_mtime, st.st_size, cksum_b64 );
+		av[ 3 ], av[ 4 ], st.st_mtime, (int)st.st_size, cksum_b64 );
 
 	return( 0 );
 

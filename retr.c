@@ -47,7 +47,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, size_t transize,
     struct timeval      tv;
     char 		*line;
     int			fd, md_len;
-    size_t              size;
+    size_t              size = 0;
     unsigned char       buf[ 8192 ]; 
     ssize_t             rr;
     extern EVP_MD       *md;
@@ -100,14 +100,14 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, size_t transize,
 	fprintf( stderr, "snet_getline" );
 	goto error;
     }
-    size = atol( line );
+    size = atoi( line );
+    if ( verbose ) printf( "<<< %ld\n<<< ", (long)size );
     if ( transize != 0 && size != transize ) {
 	fprintf( stderr,
 	    "%s: size in transcript does not match size from server\n",
 	    decode( path ));
 	return( -1 );
     }
-    if ( verbose ) printf( "<<< %ld\n<<< ", (long)size );
 
     /* Get file from server */
     while ( size > 0 ) {

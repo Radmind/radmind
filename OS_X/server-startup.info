@@ -1,8 +1,8 @@
-Title                	Radmind server for Mac OS X
+Title                	Radmind server startup items for Mac OS X
 Version              	0.6.0
 Description          	This package installs radmind server for Mac OS X
 
-DefaultLocation      	/
+DefaultLocation      	/Library/StartupItems/RadmindServer
 Relocatable          	NO
 
 NeedsAuthorization   	YES

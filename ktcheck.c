@@ -219,7 +219,7 @@ check( SNET *sn, char *type, char *file )
 	    /* Local file is missing */
 	    if ( update ) {
 		if ( retr( sn, pathdesc, path, (char *)&tempfile,
-			(size_t)atol( targv[ 6 ] ), targv[ 7 ] ) != 0 ) {
+			(size_t)atoi( targv[ 6 ] ), targv[ 7 ] ) != 0 ) {
 		    fprintf( stderr, "%s: retr failed\n", path );
 		    return( 2 );
 		}

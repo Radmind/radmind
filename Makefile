@@ -177,45 +177,48 @@ install	: all
 	    ${INSTALL} -m 0644 -c $$i ${MANDIR}/man1/; \
 	done
 
-STARTUPITEMSDIR=/Library/StartupItems
-STARTUPDIR=${STARTUPITEMSDIR}/RadmindServer
-CLIENTPKGDIR=${DISTDIR}/client
-SERVERPKGDIR=${DISTDIR}/server
+CLIENTBINPKGDIR=${DISTDIR}/client-bin
+CLIENTMANPKGDIR=${DISTDIR}/client-man
+CLIENTVARPKGDIR=${DISTDIR}/client-var
+SERVERSTARTUPPKGDIR=${DISTDIR}/server-startup
+SERVERSBINPKGDIR=${DISTDIR}/server-sbin
 
 package : all
 	# Create server package #
-	mkdir -p -m 0755 ${SERVERPKGDIR}${SBINDIR}
-	${INSTALL} -o root -g wheel -m 0555 -c radmind ${SERVERPKGDIR}${SBINDIR}
-	mkdir -p -m 0775 ${SERVERPKGDIR}${STARTUPITEMSDIR}
-	mkdir -m 0755 ${SERVERPKGDIR}${STARTUPDIR}
+	mkdir -p -m 0755 ${SERVERSBINPKGDIR}
+	${INSTALL} -o root -g wheel -m 0555 -c radmind ${SERVERSBINPKGDIR}
+	mkdir -m 0755 ${SERVERSTARTUPPKGDIR} 
 	${INSTALL} -o root -g wheel -m 0755 -c OS_X/RadmindServer \
-	    ${SERVERPKGDIR}${STARTUPDIR}
+	    ${SERVERSTARTUPPKGDIR}
 	${INSTALL} -o root -g wheel -m 0644 -c OS_X/StartupParameters.plist \
-	    ${SERVERPKGDIR}${STARTUPDIR};
+	    ${SERVERSTARTUPPKGDIR}
 
 	# Create client package #
-	mkdir -p -m 0755 ${CLIENTPKGDIR}${BINDIR}
+	mkdir -p -m 0755 ${CLIENTBINPKGDIR}
 	for i in ${BINTARGETS}; do \
 	    ${INSTALL} -o root -g wheel -m 0555 -c $$i \
-		${CLIENTPKGDIR}${BINDIR}/; \
+		${CLIENTBINPKGDIR}/; \
 	done
-	mkdir -p -m 0755 ${CLIENTPKGDIR}${MANDIR}/man1   
+	mkdir -p -m 0755 ${CLIENTMANPKGDIR}/man1
 	for i in ${MAN1TARGETS}; do \
 	    ${INSTALL} -o root -g wheel -m 0444 -c $$i \
-		${CLIENTPKGDIR}${MANDIR}/man1/; \
+		${CLIENTMANPKGDIR}/man1/; \
 	done 
-	mkdir -p -m 0755 ${CLIENTPKGDIR}${VARDIR}/client
+	mkdir -p -m 0755 ${CLIENTVARPKGDIR}
 	${INSTALL} -o root -g staff -m 0755 -c OS_X/command.K \
-	    ${CLIENTPKGDIR}${VARDIR}/client
+	    ${CLIENTVARPKGDIR}
 	chown root:wheel ${DISTDIR}
 	find ${DISTDIR}/* -exec chown root:wheel {} \;
-	package ${CLIENTPKGDIR} OS_X/radmind-client.info -d ${DISTDIR}
-	package ${SERVERPKGDIR} OS_X/radmind-server.info -d ${DISTDIR}
-	rm -rf ${CLIENTPKGDIR} ${SERVERPKGDIR}
+	package ${CLIENTBINPKGDIR} OS_X/client-bin.info -d ${DISTDIR}
+	package ${CLIENTMANPKGDIR} OS_X/client-man.info -d ${DISTDIR}
+	package ${CLIENTVARPKGDIR} OS_X/client-var.info -d ${DISTDIR}
+	package ${SERVERSTARTUPPKGDIR} OS_X/server-startup.info -d ${DISTDIR}
+	package ${SERVERSBINPKGDIR} OS_X/server-sbin.info -d ${DISTDIR}
+	rm -rf ${CLIENTBINPKGDIR} ${CLIENTMANPKGDIR} ${CLIENTVARPKGDIR} ${SERVERSTARTUPPKGDIR} ${SERVERSBINPKGDIR}
 	cp OS_X/radmind.info ${DISTDIR}
 	cp OS_X/radmind.list ${DISTDIR}
 	mv ${DISTDIR} ../radmind.mpkg
-	cd ..; tar zvcf radmind.mpkg.tgz radmind.mpkg/*
+	#cd ..; tar zvcf radmind.mpkg.tgz radmind.mpkg/*
 
 clean :
 	rm -f *.o a.out core

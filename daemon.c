@@ -156,8 +156,8 @@ main( ac, av )
     }
 
     if ( port == 0 ) {
-	if (( se = getservbyname( "rap", "tcp" )) == NULL ) {
-	    fprintf( stderr, "%s: can't find rap service\n%s: continuing...\n",
+	if (( se = getservbyname( "radmind", "tcp" )) == NULL ) {
+	    fprintf( stderr, "%s: can't find radmind service\n%s: continuing...\n",
 		    prog, prog );
 	    port = htons( 6662 );
 	} else {
