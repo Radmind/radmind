@@ -230,8 +230,13 @@ main( int argc, char **argv )
 		    exitcode = 1;
 		    break;
 		} 
-		rc = stor_file( fdt, sn, targv[ 1 ], targv[ 7 ], tname,
-		    targv[ 0 ], (size_t)atol( targv[ 6 ] )); 
+		if ( *targv[ 0 ] == 'f' ) {
+		    rc = stor_file( fdt, sn, targv[ 1 ], targv[ 7 ], tname,
+			targv[ 0 ], (size_t)atol( targv[ 6 ] )); 
+		} else {
+		    rc = stor_applefile( fdt, sn, targv[ 1 ], targv[ 7 ], tname,
+			targv[ 0 ], (size_t)atol( targv[ 6 ] ));
+		}
 		(void)close( fdt ); 
 		if ( rc < 0 ) {
 		    if ( dodots ) { printf( "\n"); }

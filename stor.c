@@ -211,7 +211,7 @@ stor_applefile( int dfd, SNET *sn, char *filename, char *cksumval,
     size_t		    asingle_size = 0;
     char	    	    rsrc_path[ MAXPATHLEN ];
     char		    buf[ 8192 ];
-    char                *line;
+    char	            *line;
     static char		    null_buf[ 32 ] = { 0 };
     struct timeval	    tv;
     struct stat		    r_stp;	    /* for rsrc fork */
@@ -269,7 +269,7 @@ stor_applefile( int dfd, SNET *sn, char *filename, char *cksumval,
     }
 
     /* must check for finder info here first */
-    if ( getattrlist( filename, &alist, &fi_struct, sizeof( fi_struct ),
+    if ( getattrlist( decode( filename ), &alist, &fi_struct, sizeof( fi_struct ),
 		FSOPT_NOFOLLOW ) != 0 ) {
 	fprintf( stderr, "Non-HFS+ filesystem\n" );
 	goto error1;
@@ -284,9 +284,9 @@ stor_applefile( int dfd, SNET *sn, char *filename, char *cksumval,
 	goto error1;
     }
 
-    if ( snprintf( rsrc_path, MAXPATHLEN, "%s%s", filename, _PATH_RSRCFORKSPEC )
+    if ( snprintf( rsrc_path, MAXPATHLEN, "%s%s", decode( filename ), _PATH_RSRCFORKSPEC )
 		> MAXPATHLEN ) {
-	fprintf( stderr, "%s%s: path too long\n", filename,
+	fprintf( stderr, "%s%s: path too long\n", decode( filename ),
 		_PATH_RSRCFORKSPEC );
 	goto error1;
     }
@@ -322,6 +322,7 @@ stor_applefile( int dfd, SNET *sn, char *filename, char *cksumval,
     /* Check size listed in transcript */
     if ( transize != 0 ) {
 	if ( asingle_size != transize ) {
+printf( "tran: %ld\ncalc: %ld\n", transize, asingle_size );
 	    fprintf( stderr,
 		"%s: size in transcript does not match size of file\n",
 		decode( filename ));
