@@ -47,6 +47,7 @@ main( int argc, char **argv )
 {
     int			ufd, c, err = 0, updatetran = 1, updateline = 0;
     int			ucount = 0, len, tac, amode = R_OK | W_OK;
+    int			prefixfound = 0;
     int			remove = 0;
     extern int          optind;
     char		*transcript = NULL, *tpath = NULL, *line;
@@ -242,6 +243,7 @@ main( int argc, char **argv )
 		}
 		goto done;
 	    }
+	    prefixfound = 1;
 	}
 
 	if ( snprintf( path, MAXPATHLEN, "%s/../file/%s/%s", tpath, transcript,
@@ -324,6 +326,10 @@ main( int argc, char **argv )
 	}
 done:
 	free( line );
+    }
+
+    if ( !prefixfound ) {
+	if ( verbose ) printf( "warning: prefix \"%s\" not found\n", prefix );
     }
 
     if ( updatetran ) {
