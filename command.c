@@ -718,18 +718,18 @@ f_starttls( snet, ac, av )
 	    return( -1 );
 	}
 	X509_free( peer );
+    }
 
-	/* get command file */
-	if ( command_k( "config" ) < 0 ) {
-	    snet_writef( snet, "%d Now access for %s\r\n", 500, remote_host );
-	    return( -1 );
-	} else {
-	    commands  = auth;
-	    ncommands = sizeof( auth ) / sizeof( auth[ 0 ] );
-	    if ( list_transcripts( snet ) != 0 ) {
-		/* error message given in list_transcripts */
-		exit( 1 );
-	    }
+    /* get command file */
+    if ( command_k( "config" ) < 0 ) {
+	snet_writef( snet, "%d Now access for %s\r\n", 500, remote_host );
+	return( -1 );
+    } else {
+	commands  = auth;
+	ncommands = sizeof( auth ) / sizeof( auth[ 0 ] );
+	if ( list_transcripts( snet ) != 0 ) {
+	    /* error message given in list_transcripts */
+	    exit( 1 );
 	}
     }
 
