@@ -454,23 +454,12 @@ main( int argc, char **argv )
 		    }
 		}
 	    } else {
-		/* Fix for broken mkdir on OS X */
-		if ( *trans[ candidate ]->filepath == '/' ) {
-		    if ( snprintf( npath, MAXPATHLEN, "%s/../file/%s%s", tpath,
-			    tname, trans[ candidate ]->filepath )
-			    > MAXPATHLEN - 1 ) {
-			fprintf( stderr, "%s/../file/%s/%s: path too long\n", 
-			    tpath, tname, trans[ candidate ]->filepath );
-			exit( 2 );
-		    }
-		} else {
-		    if ( snprintf( npath, MAXPATHLEN, "%s/../file/%s/%s", tpath,
-			    tname, trans[ candidate ]->filepath )
-			    > MAXPATHLEN - 1 ) {
-			fprintf( stderr, "%s/../file/%s/%s: path too long\n", 
-			    tpath, tname, trans[ candidate ]->filepath );
-			exit( 2 );
-		    }
+		if ( snprintf( npath, MAXPATHLEN, "%s/../file/%s/%s", tpath,
+			tname, trans[ candidate ]->filepath )
+			> MAXPATHLEN - 1 ) {
+		    fprintf( stderr, "%s/../file/%s/%s: path too long\n", 
+			tpath, tname, trans[ candidate ]->filepath );
+		    exit( 2 );
 		}
 	    }
 
@@ -508,29 +497,15 @@ main( int argc, char **argv )
 			    }
 			}
 		    } else {
-			/* Fix for broken mkdir on OS X */
-			if ( *trans[ candidate ]->filepath == '/' ) {
-			    if ( snprintf( npath, MAXPATHLEN,
-				    "%s/../file/%s%s",
-				    tpath, tname, trans[ candidate ]->filepath )
-				    > MAXPATHLEN - 1 ) {
-				fprintf( stderr,
-				    "%s/../file/%s/%s: path too long\n",
-				    tpath, tname,
-				    trans[ candidate ]->filepath );
-				exit( 2 );
-			    }
-			} else {
-			    if ( snprintf( npath, MAXPATHLEN,
-				    "%s/../file/%s%s",
-				    tpath, tname, trans[ candidate ]->filepath )
-				    > MAXPATHLEN - 1 ) {
-				fprintf( stderr,
-				    "%s/../file/%s/%s: path too long\n",
-				    tpath, tname,
-				    trans[ candidate ]->filepath );
-				exit( 2 );
-			    }
+			if ( snprintf( npath, MAXPATHLEN,
+				"%s/../file/%s/%s",
+				tpath, tname, trans[ candidate ]->filepath )
+				> MAXPATHLEN - 1 ) {
+			    fprintf( stderr,
+				"%s/../file/%s/%s: path too long\n",
+				tpath, tname,
+				trans[ candidate ]->filepath );
+			    exit( 2 );
 			}
 		    }
 		    if ( mkdirs( npath ) != 0 ) {
