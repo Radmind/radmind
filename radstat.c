@@ -45,7 +45,7 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 	if ( afinfo != NULL ) {
 	    if (( getattrlist( path, &alist, &afinfo->fi,
 		    sizeof( struct finderinfo ), FSOPT_NOFOLLOW ) == 0 ) &&
-    ( memcmp( &afinfo->fi.fi_data, null_buf, sizeof( null_buf )) != 0 )) {
+    ( memcmp( afinfo->fi.fi_data, null_buf, sizeof( null_buf )) != 0 )) {
 		*type = 'a';
 		break;
 	    }

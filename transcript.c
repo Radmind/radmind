@@ -224,7 +224,7 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 
     case 'd':
 #ifdef __APPLE__
-	if ( memcmp( &cur->pi_afinfo.fi.fi_data, null_buf,
+	if ( memcmp( cur->pi_afinfo.fi.fi_data, null_buf,
 		sizeof( null_buf )) != 0 ) { 
 	    char	finfo_e[ SZ_BASE64_E( FINFOLEN ) ];
 
