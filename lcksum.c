@@ -46,11 +46,12 @@ char            prepath[ MAXPATHLEN ] = {0};
 main( int argc, char **argv )
 {
     int			ufd, c, err = 0, updatetran = 1, updateline = 0;
-    int			ucount = 0, len, tac, amode = R_OK | W_OK, lcount = 0;
+    int			ucount = 0, len, tac, amode = R_OK | W_OK;
     int			prefixfound = 0;
     int			remove = 0;
     int			lastpct = -1;
     float		pct = 0.0;
+    off_t		lsize = 0, bytes = 0;
     extern int          optind;
     char		*tpath = NULL, *line;
     char		*prefix = NULL, *d_path = NULL;
@@ -189,10 +190,27 @@ main( int argc, char **argv )
 	}
     }
 
-    /* count the lines */
+    /* calculate the loadset size */
     if ( verbose == 2 ) {
 	while ( fgets( tline, MAXPATHLEN, f ) != NULL ) {
-	    lcount++;
+	    tac = argcargv( tline, &targv );
+	    if ( tac != 8 ) {
+		continue;
+	    }
+
+	    switch ( *targv[ 0 ] ) {
+	    case 'a':
+	    case 'f':
+		if ( tac != 8 ) {
+		    continue;
+		}
+
+		lsize += strtoofft( targv[ 6 ], NULL, 10 );
+		break;
+
+	    default:
+		continue;
+	    }
 	}
 
 	rewind( f );
@@ -326,6 +344,9 @@ main( int argc, char **argv )
 		linenum );
 	    exit( 2 );
 	}
+	bytes += cksumsize;
+
+	pct = ((( float )bytes / ( float )lsize ) * 100.0 );
 
 	/* check cksum */
 	if ( strcmp( lcksum, targv[ 7 ] ) != 0 ) {
@@ -363,7 +384,6 @@ main( int argc, char **argv )
 	}
 done:
 	if ( verbose == 2 && ( tac > 0 && *line != '#' )) {
-	    pct = ((( float )linenum / ( float )lcount ) * 100.0 );
 	    if (( int )pct != lastpct ) {
 		printf( "%%%.2d %s\n", ( int )pct, d_path );
 	    }
