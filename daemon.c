@@ -28,6 +28,7 @@
 #include <snet.h>
 
 #include "command.h"
+#include "logname.h"
 
 void            (*logger)( char * ) = NULL;
 
@@ -95,6 +96,7 @@ main( ac, av )
     int			dontrun = 0;
     char		*prog;
     unsigned short	port = 0;
+    int			facility = LOG_RADMIND;
     extern int		optind;
     extern char		*optarg;
 
@@ -105,7 +107,7 @@ main( ac, av )
 	prog++;
     }
 
-    while (( c = getopt( ac, av, "VD:dp:b:u:" )) != EOF ) {
+    while (( c = getopt( ac, av, "VD:L:dp:b:u:" )) != EOF ) {
 	switch ( c ) {
 	case 'V' :		/* version */
 	    printf( "%s\n", version );
@@ -113,6 +115,14 @@ main( ac, av )
 
 	case 'D':		/* Set radmind path */
 	    path_radmind = optarg;
+	    break;
+
+	case 'L' :		/* syslog facility */
+	    if (( facility = syslogname( optarg )) == -1 ) {
+		fprintf( stderr, "%s: %s: unknown syslog facility\n",
+			prog, optarg );
+		exit( 1 );
+	    }
 	    break;
 
 	case 'd' :		/* debug */
@@ -263,7 +273,7 @@ main( ac, av )
 #ifdef ultrix
     openlog( prog, LOG_NOWAIT|LOG_PID );
 #else /* ultrix */
-    openlog( prog, LOG_NOWAIT|LOG_PID, LOG_RADMIND );
+    openlog( prog, LOG_NOWAIT|LOG_PID, facility );
 #endif /* ultrix */
 
     /* catch SIGHUP */
