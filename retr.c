@@ -121,7 +121,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, ssize_t transize,
 	return( -1 );
     }
     /* Open file */
-    if (( fd = open( temppath, O_WRONLY | O_CREAT | O_EXCL, 0600 )) < 0 ) {
+    if (( fd = open( temppath, O_WRONLY | O_CREAT, 0600 )) < 0 ) {
 	perror( temppath );
 	return( -1 );
     }
