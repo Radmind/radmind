@@ -297,7 +297,7 @@ update( const char *path, char *displaypath, int present, int newfile,
 		perror( path );
 		return( 1 );
 	    }
-	    if ( lstat( path, st ) !=  0 ) {
+	    if ( lstat( path, st ) != 0 ) {
 		perror( path );
 		return( 1 );
 	    }
