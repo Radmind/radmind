@@ -178,8 +178,8 @@ apply( FILE *f, char *parent, SNET *sn )
 	}
 
 	/* Do type check on local file */
-	if ( lstat( path, &st ) ==  0 ) {
-	    fstype = t_convert ((int)( S_IFMT & st.st_mode ));
+	if ( lstat( path, &st ) == 0 ) {
+	    fstype = t_convert( path, NULL, (int)( S_IFMT & st.st_mode ));
 	    present = 1;
 	} else if ( errno == ENOENT ) { 
 	    present = 0;
@@ -290,7 +290,7 @@ filechecklist:
 		perror( temppath );
 		return( 1 );
 	    }
-	    fstype = t_convert((int)( S_IFMT & st.st_mode ));
+	    fstype = t_convert( path, NULL, (int)( S_IFMT & st.st_mode ));
 
 	    /* Update temp file*/
 	    if ( update( temppath, path, present, 1, st, tac, targv )
