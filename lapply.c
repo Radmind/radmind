@@ -49,9 +49,10 @@ main( int argc, char **argv )
     int			optind = 1;
     char		**targv;
     char		tline[ 2 * MAXPATHLEN ];
+    char		type;
     extern char		*optarg;
     FILE		*fdiff; 
-    struct stat		fileinfo;
+    struct stat		st;
     mode_t	   	mode;
     struct utimbuf	times;
     uid_t		uid;
@@ -73,17 +74,18 @@ main( int argc, char **argv )
 	    printf( "Command file: %s\n", targv[ 0 ] );
 	}
 	else {
+	    printf( "Doing %s\n", tline );
 	    switch( *targv[ 0 ] ) {
 	    case '+':
 		printf( "Have to download something\n" );
 		break;
 	    case '-':
 		printf( "Deleting %s ", targv[ 2 ] );
-		if ( lstat( targv[ 2 ], &fileinfo ) != 0 ) {
+		if ( lstat( targv[ 2 ], &st ) != 0 ) {
 		    perror( "lstat" );
 		    goto done;
 		}
-		if ( S_ISDIR( fileinfo.st_mode ) ) {
+		if ( S_ISDIR( st.st_mode ) ) {
 		    printf( "using rmdir\n" );
 		    if ( rmdir( targv[ 2 ] ) != 0 ) {
 			perror( "rmdir" );
@@ -99,50 +101,161 @@ main( int argc, char **argv )
 		break;
 	    default:
 
-		printf( "updating %s\n", targv[ 1 ] );
+		/* UPDATE */
 
-		mode = strtol( targv[ 2 ], (char **)NULL, 8 );
-		uid = atoi( targv[ 3 ] );
-		gid = atoi( targv[ 4 ] );
-		times.modtime = atoi( targv[ 5 ] );
+		/* get file stats */
 
-		if ( lstat( targv[ 1 ], &fileinfo ) != 0 ) {
+		if ( lstat( targv[ 1 ], &st ) != 0 ) {
 		    perror( "lstat" );
 		    goto done;
 		}
 
-		/* check mode */
+		type = t_convert ( S_IFMT & st.st_mode );
 
-		if( mode != fileinfo.st_mode ) {
-		    printf( "  mode -> %o\n", mode );
-		    if ( chmod( targv[ 1 ], mode ) != 0 ) {
-			perror( "chmod" );
+		printf( "Updating %s...", targv[ 1 ] );
+
+		/* updated based on type */
+
+		switch ( *targv[ 0 ] ) {
+		case 'f':
+		    if ( type != 'f' ) {
+			perror( "Should be a download\n" ); 
 			goto done;
 		    }
-		}
 
-		/* check uid & gid */
+		    mode = strtol( targv[ 2 ], (char **)NULL, 8 );
+		    uid = atoi( targv[ 3 ] );
+		    gid = atoi( targv[ 4 ] );
+		    times.modtime = atoi( targv[ 5 ] );
 
-		if( uid != fileinfo.st_uid  || gid != fileinfo.st_gid ) {
-		    if ( uid != fileinfo.st_uid ) printf( "  uid -> %i\n", (int)uid );
-		    if ( gid != fileinfo.st_gid ) printf( "  gid -> %i\n", (int)gid );
-		    if ( lchown( targv[ 1 ], uid, gid ) != 0 ) {
-			perror( "lchown" );
+		    /* check mode */
+		    if( mode != st.st_mode ) {
+			printf( "  mode -> %o\n", mode );
+			if ( chmod( targv[ 1 ], mode ) != 0 ) {
+			    perror( "chmod" );
+			    goto done;
+			}
+		    }
+
+		    /* check uid & gid */
+
+		    if( uid != st.st_uid  || gid != st.st_gid ) {
+			if ( uid != st.st_uid ) printf( "  uid -> %i\n", (int)uid );
+			if ( gid != st.st_gid ) printf( "  gid -> %i\n", (int)gid );
+			if ( lchown( targv[ 1 ], uid, gid ) != 0 ) {
+			    perror( "lchown" );
+			    goto done;
+			}
+		    }
+
+		    /* check modification time */
+		    if( times.modtime != st.st_mtime ) {
+			printf( "%s time -> %i\n", targv[ 1 ], (int)times.modtime );
+			times.actime = st.st_atime;
+			if ( utime( targv[ 1 ], &times ) != 0 ) {
+			    perror( "utime" );
+			    goto done;
+			}
+		    }
+		    break;
+
+		case 'd':
+
+		    printf( "dir\n" );
+
+		    mode = strtol( targv[ 2 ], (char **)NULL, 8 );
+		    uid = atoi( targv[ 3 ] );
+		    gid = atoi( targv[ 4 ] );
+
+		    if ( type != 'd' ) {
+			printf( "Direcetory update to non-directory\n" ); 
+
+			if ( unlink( targv[ 1 ] ) != 0 ) {
+			    perror( "unlink" );
+			    goto done;
+			    }
+			
+			if ( mkdir( targv[ 1 ], mode ) != 0 ) {
+			    perror( "mkdir" );
+			    goto done;
+			}
+		    }
+
+		    /* check mode */
+		    if( mode != st.st_mode ) {
+			printf( "  mode -> %o\n", mode );
+			if ( chmod( targv[ 1 ], mode ) != 0 ) {
+			    perror( "chmod" );
+			    goto done;
+			}
+		    }
+
+		    /* check uid & gid */
+		    if( uid != st.st_uid  || gid != st.st_gid ) {
+			if ( uid != st.st_uid ) printf( "  uid -> %i\n", (int)uid );
+			if ( gid != st.st_gid ) printf( "  gid -> %i\n", (int)gid );
+			if ( lchown( targv[ 1 ], uid, gid ) != 0 ) {
+			    perror( "lchown" );
+			    goto done;
+			}
+		    }
+		    printf( "  DONE\n" );
+		    break;
+
+		case 'h':
+		    if ( unlink( targv[ 1 ] ) != 0 ) {
+			perror( "unlink" );
 			goto done;
 		    }
-		}
 
-		/* check modification time */
-
-		if( times.modtime != fileinfo.st_mtime ) {
-		    printf( "%s time -> %i\n", targv[ 1 ], (int)times.modtime );
-		    times.actime = fileinfo.st_atime;
-		    if ( utime( targv[ 1 ], &times ) != 0 ) {
-			perror( "utime" );
+		    if ( link( targv[ 2 ], targv[ 1 ] ) != 0 ) {
+			perror( "link" );
 			goto done;
 		    }
+		    break;
+		case 'l':
+		    if ( unlink( targv[ 1 ] ) != 0 ) {
+			perror( "unlink" );
+			goto done;
+		    }
+		    
+		    if ( symlink( targv[ 2 ], targv[ 1 ] ) != 0 ) {
+			perror( "symlink" );
+			goto done;
+		    }
+		    break;
+		case 'D':
+		    if ( type != 'D' ) {
+			printf( "Door update to non-door\n" ); 
+		    }
+		    break;
+		case 's':
+		    if ( type != 's' ) {
+			printf( "socket update to non-socket\n" ); 
+		    }
+		    break;
+		case 'p':
+		    if ( type != 'p' ) {
+			printf( "Named pipe update to non-named pipe\n" ); 
+		    }
+		    break;
+		case 'b':
+		    if ( type != 'b' ) {
+			printf( "Blk special update to non-blk special\n" ); 
+		    }
+		    break;
+		case 'c':
+		    if ( type != 'c' ) {
+			printf( "Char special update to non-char special\n" ); 
+		    }
+		    break;
+		default :
+		    printf( "Unkown type %c to update\n", targv[ 1 ] );
+		    break;
 		}
+		break;  // End of defualt switch
 	    }
+	    printf( "Getting next line\n" );
 	}
     }
 done:
