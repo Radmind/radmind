@@ -199,7 +199,7 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
     }
     if ( rr < 0 ) {
 	perror( path );
-	return( -1 );
+	exit( 2 );
     }
 
     /* Check number of bytes sent to server */
@@ -207,7 +207,7 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
 	fprintf( stderr,
 	    "stor_file %s failed: Sent wrong number of bytes to server\n",
 	    pathdesc );
-	return( -1 );
+	exit( 2 );
     }
 
     /* End transaction with server */
@@ -220,7 +220,7 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
 
     if ( close( fd ) < 0 ) {
 	perror( path );
-	return( -1 );
+	exit( 2 );
     }
 
     /* cksum data sent */
@@ -230,7 +230,7 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
         if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
 	    fprintf( stderr,
 		"line %d: checksum listed in transcript wrong\n", linenum );
-	    if ( ! force ) return( -1 );
+	    if ( ! force ) exit( 2 );
         }
     }
 
@@ -368,7 +368,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 	if ( rc < 0 ) {
 	    fprintf( stderr, "stor_applefile %s failed: %s\n", pathdesc,
 		strerror( errno ));
-	    return( -1 );
+	    exit( 2 );
 	}
     }
 
@@ -389,7 +389,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     if ( rc < 0 ) {
 	fprintf( stderr, "stor_applefile %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	return( -1 );
+	exit( 2 );
     }
 
     /* Check number of bytes sent to server */
@@ -397,7 +397,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
         fprintf( stderr,
             "stor_applefile %s failed: Sent wrong number of bytes to server\n",
             pathdesc );
-	return( -1 );
+	exit( 2 );
     }
 
     /* End transaction with server */
@@ -414,12 +414,12 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 	if ( afinfo->as_ents[ AS_RFE ].ae_length > 0 ) {
 	    close( rfd );
 	}
-	return( -1 );
+	exit( 2 );
     }
     if ( afinfo->as_ents[ AS_RFE ].ae_length > 0 ) {
 	if ( close( rfd ) < 0 ) {
 	    perror( afinfo->rsrc_path );
-	    return( -1 );
+	    exit( 2 );
 	}
     }
 
@@ -430,7 +430,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
         if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
 	    fprintf( stderr,
 		"line %d: checksum listed in transcript wrong\n", linenum );
-	    if ( ! force ) return( -1 );
+	    if ( ! force ) exit( 2 );
         }
     }
 
@@ -527,7 +527,7 @@ n_stor_applefile( SNET *sn, char *pathdesc, char *path )
         fprintf( stderr, "n_stor_applefile %s failed:"
 	    " Sent wrong number of bytes to server\n",
             pathdesc );
-	return( -1 );
+	exit( 2 );
     }
 
     /* End transaction with server */
@@ -549,14 +549,14 @@ n_stor_applefile( SNET *sn, char *pathdesc, char *path )
 stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize, 
     char *trancksum, struct applefileinfo *afinfo )
 {
-    errno = EINVAL;
-    return( -1 );
+    fprintf( stderr, "stor_applefile %s invalid\n", pathdesc );
+    exit( 2 );
 }
 
     int
 n_stor_applefile( SNET *sn, char *pathdesc, char *path )
 {
-    errno = EINVAL;
-    return( -1 );
+    fprintf( stderr, "n_stor_applefile %s invalid\n", pathdesc );
+    exit( 2 );
 }
 #endif /* __APPLE__ */
