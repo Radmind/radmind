@@ -55,11 +55,21 @@ t_parse( struct transcript *tran )
     tran->t_pinfo.pi_type = argv[ 0 ][ 0 ];
 
     epath = decode( argv[ 1 ] );
+
+#ifdef notdef
+    /*
+     * catches "bad sort order" but:
+     * ~canna/Mail/oncall/9 should come before ~canna/Mail/oncall.comps,
+     * however strcmp thinks . comes before / 'alphabetically'. This
+     * means we need a 'smarter' test.
+     */
     if ( strcmp( epath, tran->t_pinfo.pi_name ) < 0 ) {
 	printf( "%s: line %d: bad sort order\n",
 		tran->t_name, tran->t_linenum );
 	exit ( 1 );
     }
+#endif notdef
+
     strcpy( tran->t_pinfo.pi_name, epath );
 
     /* reading and parsing the line */
