@@ -146,15 +146,11 @@ main( int argc, char **argv )
 	    }
 	    printf( "# %s:\n", tran->t_kfile );
 
-	    if (( tran->t_pinfo.pi_type != 'a' ) &&
-		    ( tran->t_pinfo.pi_type != 'f' )) {
-		/* t_print only shows tran name for f and a */
-		printf( "%s:\n", tran->t_shortname );
-	    }
 	    if ( tran->t_pinfo.pi_minus ) {
-		printf( "- " );
+		t_print( NULL, tran, PR_STATUS_MINUS );
+	    } else {
+		t_print( NULL, tran, PR_TRAN_ONLY );
 	    }
-	    t_print( NULL, tran, PR_TRAN_ONLY );
 
 	    if ( !displayall ) {
 		goto done;

@@ -221,30 +221,35 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 	cur = fs;	/* What if this is NULL? */
     }
 
-    /*
-     * If a file is missing from the edit_path that was chosen, a - is 
-     * printed and then the file name that is missing is printed.
-     */
-    if (( edit_path == APPLICABLE ) && ( flag == PR_FS_ONLY )) {
-	fprintf( outtran, "- " );
-	cur = fs;
-    } else if (( edit_path ==  CREATABLE ) &&
-	    (( flag == PR_TRAN_ONLY ) || ( fs->pi_type == 'X' ))) {
-	fprintf( outtran, "- " );
-	cur = &tran->t_pinfo;
-    }
-
-    if (( epath = encode( cur->pi_name )) == NULL ) {
-	fprintf( stderr, "Filename too long: %s\n", cur->pi_name );
-	exit( 2 );
-    }
-
+    /* Print name of transcript if it changed since the last t_print */
     if (( edit_path == APPLICABLE )
 	    && (( flag == PR_TRAN_ONLY ) || ( flag == PR_DOWNLOAD )
 		|| ( flag == PR_STATUS_NEG ))
 	    && ( prev_tran != tran )) {
 	fprintf( outtran, "%s:\n", tran->t_shortname );
 	prev_tran = tran;
+    }
+
+    /*
+     * If a file is missing from the edit_path that was chosen, a - is 
+     * printed and then the file name that is missing is printed.
+     */
+    if ( edit_path == APPLICABLE ) {
+	if ( flag == PR_FS_ONLY ) {
+	    fprintf( outtran, "- " );
+	    cur = fs;
+	} else if ( flag == PR_STATUS_MINUS ) {
+	    fprintf( outtran, "- " );
+	}
+    } else if (( edit_path ==  CREATABLE ) &&
+	    (( flag == PR_TRAN_ONLY ) || ( fs->pi_type == 'X' ))) {
+	fprintf( outtran, "- " );
+	cur = &tran->t_pinfo;
+    } 
+
+    if (( epath = encode( cur->pi_name )) == NULL ) {
+	fprintf( stderr, "Filename too long: %s\n", cur->pi_name );
+	exit( 2 );
     }
 
     /* print out info to file based on type */
