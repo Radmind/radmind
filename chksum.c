@@ -56,7 +56,7 @@ do_chksum( char *path, char *chksum_b64 )
 }
 
 #ifdef __APPLE__
-int
+    int
 do_achksum( char *path, char *chksum_b64 )
 {
     int			afd;
@@ -185,5 +185,11 @@ do_achksum( char *path, char *chksum_b64 )
     strcpy( chksum_b64, mde );
 
     return( 0 );
+}
+#else __APPLE__
+    int
+do_achksum( char *path, char *chksum_b64 )
+{
+    return( -1 );
 }
 #endif __APPLE__

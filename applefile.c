@@ -1,15 +1,18 @@
+#ifdef __APPLE__
 /* check file for AS magic number. If AS, decode. */
 
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/uio.h>
+#ifdef __APPLE__
+#include <sys/paths.h>
+#include <sys/attr.h>
+#endif __APPLE__
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/uio.h>
 #include <unistd.h>
-#include <sys/paths.h>
-#include <sys/attr.h>
 #include <string.h>
 #include <snet.h>
 
@@ -337,3 +340,4 @@ chk_for_finfo( const char *path, char *finfo )
 
     return( err );
 }
+#endif __APPLE__
