@@ -5,9 +5,11 @@
 d /.vol                                 0444     0     0
 
 d /Library/Caches                       0755     0     0
+d /Library/Logs                         0755     0     0
 d /Network/Servers                      0555     0     0
 d /System/Library/Caches                0755     0     0
 
+f /System/Library/Extensions.kextcache  0644     0     0 1044312493       0 2jmj7l5rSw0yVb/vlWAYkK/YBwk=
 # Extensions.mkext is the kernel extension cache file.
 # It is (re)created on boot if:
 #   * The file is missing
