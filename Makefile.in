@@ -301,6 +301,8 @@ package : all man info
 	cp OS_X/License.rtf ${MPKGDIR}
 	cp OS_X/ReadMe.rtf ${MPKGDIR}
 	cp OS_X/Welcome.rtf ${MPKGDIR}
+	mkdir -p ${MPKGDIR}/Resources
+	cp OS_X/background.tiff ${MPKGDIR}/Resources
 	rm -rf ${CLIENTBINPKGDIR} ${CLIENTMANPKGDIR} ${CLIENTVARPKGDIR} \
 	    ${SERVERSTARTUPPKGDIR} ${SERVERSBINPKGDIR} ${SERVERMANPKGDIR} \
 	    ${SERVERVARPKGDIR} tmp
