@@ -146,7 +146,11 @@ createspecial( SNET *sn, struct node *head )
     } while ( head != NULL );
 
     if ( fclose( fs ) != 0 ) {
-	fprintf( stderr, "flcose" );
+	perror( path );
+	return( 1 );
+    }
+    if ( close( fd ) != 0 ) {
+	perror( path );
 	return( 1 );
     }
 
