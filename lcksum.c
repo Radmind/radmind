@@ -16,6 +16,7 @@
 
 #include "argcargv.h"
 #include "chksum.h"
+#include "code.h"
 
 int		linenum = 0;
 int		chksum = 1;
@@ -31,8 +32,8 @@ int		verbose = 0;
     int
 main( int argc, char **argv )
 {
-    int			ufd, c, err = 0, update = 0, utime = 0, ucount = 0;
-    int			len, tac, amode = R_OK;
+    int			ufd, c, err = 0, updatetran = 0, updateline = 0;
+    int			ucount = 0, len, tac, amode = R_OK;
     extern int          optind;
     char		*version = "1.0";
     char		*transcript = NULL, *tpath = NULL, *line;
@@ -42,7 +43,7 @@ main( int argc, char **argv )
     char		upath[ 2 * MAXPATHLEN ];
     char		lchksum[ 29 ];
     FILE		*f, *ufs;
-    struct stat		stats;
+    struct stat		st;
 
     while ( ( c = getopt ( argc, argv, "T:uVv" ) ) != EOF ) {
 	switch( c ) {
@@ -51,7 +52,7 @@ main( int argc, char **argv )
 	    break;
 	case 'u':
 	    amode = R_OK | W_OK;
-	    update = 1;
+	    updatetran = 1;
 	    break;
 	case 'V':
 	    printf( "%s\n", version );
@@ -88,17 +89,17 @@ main( int argc, char **argv )
 	exit( 2 );
     }
 
-    if ( update ) {
+    if ( updatetran ) {
 	sprintf( upath, "%s.%d", tpath, (int)getpid() );
 
-	if ( stat( tpath, &stats ) != 0 ) {
+	if ( stat( tpath, &st ) != 0 ) {
 	    perror( tpath );
 	    exit( 2 );
 	}
 
 	/* Open file */
 	if ( ( ufd = open( upath, O_WRONLY | O_CREAT | O_EXCL,
-		stats.st_mode ) ) < 0 ) {
+		st.st_mode ) ) < 0 ) {
 	    perror( upath );
 	    exit( 2 );
 	}
@@ -119,11 +120,12 @@ main( int argc, char **argv )
 
     while ( fgets( tline, MAXPATHLEN, f ) != NULL ) {
 	linenum++;
+	updateline = 0;
 
 	/* Check line length */
 	len = strlen( tline );
 	if (( tline[ len - 1 ] ) != '\n' ) {
-	    fprintf( stderr, "%s: line too long\n", tline );
+	    fprintf( stderr, "%s: %d: line too long\n", tpath, linenum);
 	    exit( 2 );
 	}
 	/* save transcript line -- must free */
@@ -134,17 +136,14 @@ main( int argc, char **argv )
 
 	tac = acav_parse( NULL, tline, &targv );
 	if ( ( tac != 8 ) || ( *targv[ 0 ] != 'f' ) ) {
-	    if ( update ) {
+	    if ( updatetran ) {
 		fprintf( ufs, "%s", line );
 	    }
 	    goto done;
 	}
 
-	if ( *targv[ 1 ] == '/' ) {
-	    sprintf( path, "%s/../file/%s%s", tpath, transcript, targv[ 1 ] );
-	} else {
-	    sprintf( path, "%s/../file/%s/%s", tpath, transcript, targv[ 1 ] );
-	}
+	sprintf( path, "%s/../file/%s/%s", tpath, transcript,
+		decode( targv[ 1 ] ) );
 
 	if ( do_chksum( path, lchksum ) != 0 ) {
 	    fprintf( stderr, "do_chksum failed on %s\n", path );
@@ -153,52 +152,48 @@ main( int argc, char **argv )
 
 	/* check chksum */
 	if ( strcmp( lchksum, targv[ 7 ] ) != 0 ) {
-	    if ( verbose && !update ) printf( "*** %s: chksum failed\n",
+	    if ( verbose && !updatetran ) printf( "*** %s: chksum wrong\n",
 		    targv[ 1 ] );
-	    if ( update ) {
-		if ( verbose && update ) printf( "*** %s: chksum updated\n",
+	    if ( updatetran ) {
+		if ( verbose && updatetran ) printf( "*** %s: chksum updated\n",
 		    targv[ 1 ] ); 
 		ucount++;
 	    }
-	    utime = 1;
+	    updateline = 1;
 	}
-	targv[ 7 ] = lchksum;
 
 	/* check size */
-	if ( stat( path, &stats ) != 0 ) {
+	if ( stat( path, &st) != 0 ) {
 	    perror( tpath );
 	    exit( 2 );
 	}
-	if ( stats.st_size != atoi( targv[ 6 ] ) ) {
-	    if ( verbose && !update ) printf( "*** %s: size failed\n",
+	if ( st.st_size != atoi( targv[ 6 ] ) ) {
+	    if ( verbose && !updatetran ) printf( "*** %s: size wrong\n",
 		    targv[ 1 ] );
-	    if ( update ) {
-		if ( verbose && update ) printf( "*** %s: size updated\n",
+	    if ( updatetran ) {
+		if ( verbose && updatetran ) printf( "*** %s: size updated\n",
 			targv[ 1 ] );
 		ucount++;
 	    }
-	    utime = 1;
+	    updateline = 1;
 	}
 
-	if ( update ) {
-	    if ( utime ) {
+	if ( updatetran ) {
+	    if ( updateline ) {
 		/* use local mtime */
 		fprintf( ufs, "f %-37s %4s %5s %5s %9d %7d %s\n",
 		    targv[ 1 ], targv[ 2 ], targv[ 3 ], targv[ 4 ],
-		    (int)stats.st_mtime, (int)stats.st_size, targv[ 7 ] );
+		    (int)st.st_mtime, (int)st.st_size, lchksum );
 	    } else {
 		/* use transcript mtime */
-		fprintf( ufs, "f %-37s %4s %5s %5s %9s %7d %s\n",
-		    targv[ 1 ], targv[ 2 ], targv[ 3 ], targv[ 4 ], targv[ 5 ],
-		    (int)stats.st_size, targv[ 7 ] ); 
+		fprintf( ufs, "%s", line );
 	    }
 	}
 done:
 	free( line );
-	utime = 0;
     }
 
-    if ( update ) {
+    if ( updatetran ) {
 
 	if ( ucount ) {
 	    /* reconstruct full transcript path */
