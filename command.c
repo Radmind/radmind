@@ -504,8 +504,10 @@ f_stat( SNET *sn, int ac, char *av[] )
 	/* store value of av[ 2 ], because argcargv will be called
 	 * from special_t(), and that will blow away the current values
 	 * for av[ 2 ]
+	 *
+	 * Could just use new argvargc API... XXX  Notice how we never free
+	 * env_file...
 	 */
-
 
 	if (( enc_file = strdup( av[ 2 ] )) == NULL ) {
 	    syslog( LOG_ERR, "f_stat: strdup: %s %m", av[ 2 ] );
@@ -522,7 +524,7 @@ f_stat( SNET *sn, int ac, char *av[] )
 		return( 0 );
 	    }
 	}
-	snet_writef( sn, "%s %s %s %s %s %d %d %s\r\n", av[ 1 ], enc_file,
+	snet_writef( sn, "%s %s %s %s %s %d %d %s\r\n", av[ 0 ], enc_file,
 	    av[ 2 ], av[ 3 ], av[ 4 ], st.st_mtime, (int)st.st_size,
 	    cksum_b64 );
 
