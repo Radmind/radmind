@@ -163,9 +163,10 @@ main( int argc, char **argv )
     cksum = 0;
     outtran = stdout;
 
-    while (( c = getopt( argc, argv, "%Ac:Co:K:1V" )) != EOF ) {
+    while (( c = getopt( argc, argv, "%Ac:Co:K:1Vv" )) != EOF ) {
 	switch( c ) {
 	case '%':
+	case 'v':
 	    finish = 100;
 	    break;
 
