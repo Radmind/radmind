@@ -238,13 +238,18 @@ main( int ac, char **av )
 	fprintf( stderr, "[ -b backlog ] [ -D path ] " );
 	fprintf( stderr, "[ -L syslog-facility ] [ -m max-connections ] " );
 	fprintf( stderr, "[ -p port ] [ -u umask ] " );
-	fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );
+	fprintf( stderr, "[ -w auth-level ] [ -x ca-pem-file ] " );
 	fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ]\n" );
 	exit( 1 );
     }
 
     if ( maxconnections < 0 ) {
 	fprintf( stderr, "%d: invalid max-connections\n", maxconnections );
+	exit( 1 );
+    }
+
+    if ( checkuser && ( authlevel < 1 )) {
+	fprintf( stderr, "-U requires auth-level > 0\n" );
 	exit( 1 );
     }
 
