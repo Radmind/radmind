@@ -2459,7 +2459,6 @@ fi;
     if test -f "$snetdir/snet.h"; then
 	found_snet="yes";
 	CFLAGS="$CFLAGS -I$snetdir";
-	break;
     fi
     if test x_$found_snet != x_yes; then
 	{ { echo "$as_me:$LINENO: error: cannot find snet libraries" >&5
