@@ -45,6 +45,7 @@ struct transcript {
     FILE		    *t_in;
 };
  
-int transcript( struct info *, char *, FILE * );
-void transcript_init( int );
-void transcript_free( void );
+int	transcript( struct info *, char *, FILE * );
+void	transcript_init( int );
+void	transcript_free( void );
+char	*hardlink( struct info *info );
