@@ -76,6 +76,8 @@ Known Issues
 ------------
 On OpenDarwin based systems, the message "hfs_bwrite: called with lock bit set" is logged when you are doing a high volume of writes to a volume.
 
+lcksum's progress output currently does not provide steady feedback increments.
+
 ----------------
 More Information
 ----------------
