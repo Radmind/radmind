@@ -360,7 +360,7 @@ main( int argc, char **argv )
     }
 
     if ( err ) {
-	fprintf( stderr, "usage: %s [ -nsV ] [ -q | -v ] ", argv[ 0 ] );
+	fprintf( stderr, "usage: %s [ -nsV ] [ -q | -v | -i ] ", argv[ 0 ] );
 	fprintf( stderr, "[ -c checksum ] [ -h host ] [ -p port ] " );
 	fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );
 	fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ] " );
