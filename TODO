@@ -1,4 +1,16 @@
-ssl
-pipe-line lapply
-wild card support in config file
-users file
+For 1.0:
+    TLS
+    users file
+    wild card support in hosts file
+    finder info for directories
+
+For after 1.0:
+    pipe-line lapply
+    special sub directories
+    lmerge -K
+    lapply -K
+
+Maybe:
+    remote server management
+    server replication
+    record client status
