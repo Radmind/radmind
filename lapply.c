@@ -34,7 +34,7 @@ int		verbose = 0;
 int		dodots = 0;
 int		special = 0;
 int		network = 1;
-int		exitval = 2;
+int		change = 0;
 char		transcript[ 2 * MAXPATHLEN ] = { 0 };
 char		prepath[ MAXPATHLEN ]  = { 0 };
 extern char	*version, *checksumlist;
@@ -156,11 +156,11 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
 	if ( *targv[ 0 ] == 'a' ) {
 	    switch ( retr_applefile( sn, pathdesc, path, temppath,
 		(ssize_t)atol( targv[ 6 ] ), cksum_b64 )) {
-	    case 1:
-		exitval = 1;
-		return( 1 );
 	    case -1:
-		exitval = -1;
+		/* Network problem */
+		network = 0;
+		return( 1 );
+	    case 1:
 		return( 1 );
 	    default:
 		break;
@@ -168,11 +168,11 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
 	} else {
 	    switch ( retr( sn, pathdesc, path, (char *)&temppath,
 		(ssize_t)atol( targv[ 6 ] ), cksum_b64 ) != 0 ) {
-	    case 1:
-		exitval = 1;
-		return( 1 );
 	    case -1:
-		exitval = -1;
+		/* Network problem */
+		network = 0;
+		return( 1 );
+	    case 1:
 		return( 1 );
 	    default:
 		break;
@@ -210,6 +210,13 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
     acav_free( acav ); 
     return( 0 );
 }
+
+/*
+ * exit values
+ * 0 - OKAY
+ * 1 - error - system modified
+ * 2 - error - no modification
+ */
 
     int
 main( int argc, char **argv )
@@ -433,8 +440,8 @@ dirchecklist:
 			    if ( do_line( node->tline, 0, &st, sn ) != 0 ) {
 				goto error2;
 			    }
+			    change = 1;
 			}
-			exitval = 1;
 			free_node( node );
 			goto dirchecklist;
 		    }
@@ -467,8 +474,8 @@ filechecklist:
 			    if ( do_line( node->tline, 0, &st, sn ) != 0 ) {
 				goto error2;
 			    }
+			    change = 1;
 			}
-			exitval = 1;
 			free_node( node );
 			goto filechecklist;
 		    }
@@ -494,15 +501,15 @@ filechecklist:
 		if ( do_line( node->tline, 0, &st, sn ) != 0 ) {
 		    goto error2;
 		}
+		change = 1;
 	    }
-	    exitval = 1;
 	    free_node( node );
 	}
 
 	if ( do_line( tline, present, &st, sn ) != 0 ) {
 	    goto error2;
 	}
-	exitval = 1;
+	change = 1;
     }
 
     /* Clear out remove list */ 
@@ -519,8 +526,8 @@ filechecklist:
 	    if ( do_line( node->tline, 0, &st, sn ) != 0 ) {
 		goto error2;
 	    }
+	    change = 1;
 	}
-	exitval = 1;
 	free_node( node );
     }
     acav_free( acav ); 
@@ -545,5 +552,9 @@ error1:
     if ( network ) {
 	closesn( sn );
     }
-    exit( exitval );
+    if ( change ) {
+	exit( 1 );
+    } else {
+	exit( 2 );
+    }
 }
