@@ -24,7 +24,7 @@ void            (*logger)( char * ) = NULL;
 extern char	*version, *checksumlist;
 
 void		fs_walk( struct llist *, int, int );
-int		verbose = 0, prog = 0;
+int		verbose = 0;
 int		dodots = 0;
 const EVP_MD    *md;
 
@@ -42,12 +42,8 @@ fs_walk( struct llist *path, int start, int finish )
     char		temp[ MAXPATHLEN ];
 
     if ( finish > start ) {
-	/* try to make the progress monotonic */
-	if ( start > prog || start == 0 ) {
-	    printf( "%%%.3d %s\n", start, path->ll_pinfo.pi_name );
-	    fflush( stdout );
-	    prog = start;
-	}
+	printf( "%%%.3d %s\n", start, path->ll_pinfo.pi_name );
+	fflush( stdout );
     }
 
     /* call the transcript code */
@@ -111,9 +107,8 @@ fs_walk( struct llist *path, int start, int finish )
 
     /* call fswalk on each element in the sorted list */
     for ( cur = head; cur != NULL; cur = cur->ll_next ) {
-	fs_walk( cur, start, ( int )( f + chunk ));
+	fs_walk( cur, ( int )f, ( int )( f + chunk ));
 	f += chunk;
-	start = f;
     }
 
     ll_free( head );
