@@ -609,7 +609,7 @@ transcript_init( char *prepath, char *cmd )
 	    exit( 1 );
 	}
 	sprintf( fullpath, "%s/%s", prepath, special );
-	t_new( T_SPECIAL, fullpath, av[ 1 ]);
+	t_new( T_SPECIAL, fullpath, special );
     }
 
     if ( tran_head->t_type == T_NULL  && edit_path == FS2TRAN ) {
