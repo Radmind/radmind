@@ -47,8 +47,8 @@ t_parse( struct transcript *tran )
 
     if ( strlen( argv[ 0 ] ) != 1 ) {
 	fprintf( stderr,
-		"%s: line %d: first argument is too long\n",
-		tran->t_name, tran->t_linenum );
+		"%s: line %d: %s is too long to be a type\n",
+		tran->t_name, tran->t_linenum, argv[ 0 ] );
 	exit( 1 );
     }
 
@@ -156,8 +156,7 @@ t_convert( int type )
     case S_IFSOCK:
 	return ( 's' );
     default:
-	fprintf( stderr, "ERROR: unknown file type '%c'\n", type );
-	return ( '0' );
+	return ( 0 );
     }
 }
 
@@ -362,7 +361,10 @@ transcript( struct pathinfo *new, char *name )
     }
 
     type = ( S_IFMT & new->pi_stat.st_mode );
-    new->pi_type = t_convert( type );
+    if (( new->pi_type = t_convert( type )) == 0 ) {
+	fprintf( stderr, "%s is of an uknown type\n", new->pi_name );
+	exit ( 1 );
+    }
 
     /* if it's multiply referenced, check if it's a hardlink */
     if ( !S_ISDIR( new->pi_stat.st_mode ) &&
