@@ -13,10 +13,6 @@
 #include "download.h"
 #include "argcargv.h"
 
-#ifdef SOLARIS
-#define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
-#endif
-
 void output( char* string);
 
 void			(*logger)( char * ) = NULL;

@@ -15,8 +15,6 @@
 #include "chksum.h"
 #include "list.h"
 
-#define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
-
 void output( char* string);
 int check( SNET *sn, char *type, char *path); 
 int createspecial( SNET *sn, struct node *head );

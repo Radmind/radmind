@@ -16,8 +16,6 @@
 #include "pathcmp.h"
 #include "update.h"
 
-#define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
-
 void		(*logger)( char * ) = NULL;
 int		linenum = 0;
 int		chksum = 0;
