@@ -6,6 +6,7 @@ SBINDIR=${DESTDIR}/sbin
 # For server
 VARDIR=/var/radmind
 CONFIGFILE=${VARDIR}/config
+TRANSCRIPTDIR=${VARDIR}/transcript
 
 # For client
 COMMANDFILE=${VARDIR}/client/command.K
@@ -15,13 +16,13 @@ RADMIND_HOST=radmind
 RADMINDSYSLOG=LOG_LOCAL7
 
 # Compiler
-CC=	cc
-#CC=	gcc
-CWARN=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wconversion
-#ADDLIBS=	-lnsl -lsocket
+#CC=	cc
+CC=	gcc
+CWARN=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wconversion -Werror
+ADDLIBS=	-lnsl -lsocket
 INSTALL=	/usr/ucb/install
 #INSTALL=	install
-OPENSSL=	/usr/local
+OPENSSL=	/usr/local/openssl
 
 # Should not need to edit anything after here.
 CFLAGS=		${CWARN} ${OSNAME} ${INCPATH}
@@ -34,28 +35,30 @@ MAN1TARGETS=	fsdiff.1 ktcheck.1 lapply.1 lcksum.1 lcreate.1 lfdiff.1 \
 TARGETS=	radmind ${BINTARGETS}
 
 RADMIND_OBJ=	version.o daemon.o command.o argcargv.o auth.o code.o \
-		chksum.o base64.o mkdirs.o applefile.o connect.o
+		chksum.o base64.o mkdirs.o
 
 FSDIFF_OBJ=	version.o fsdiff.o argcargv.o transcript.o llist.o code.o \
-		hardlink.o chksum.o base64.o pathcmp.o convert.o applefile.o \
-		connect.o
+		hardlink.o chksum.o base64.o pathcmp.o convert.o
+#afile.o
 
 KTCHECK_OBJ=	version.o ktcheck.o argcargv.o retr.o base64.o code.o \
-		chksum.o list.o connect.o applefile.o
+		chksum.o list.o connect.o
 
 LAPPLY_OBJ=	version.o lapply.o argcargv.o code.o base64.o retr.o \
-		convert.o update.o chksum.o connect.o pathcmp.o applefile.o
+		convert.o update.o chksum.o connect.o pathcmp.o 
+#afile.o
 
-LCREATE_OBJ=	version.o lcreate.o argcargv.o code.o connect.o \
-		store_applefile.o applefile.o base64.o
+LCREATE_OBJ=	version.o lcreate.o argcargv.o code.o connect.o
+#send_afile.o \
+#afile.o
 
 LCKSUM_OBJ=	version.o lcksum.o argcargv.o chksum.o base64.o code.o \
-		pathcmp.o applefile.o connect.o
+		pathcmp.o
 
 LMERGE_OBJ=	version.o lmerge.o argcargv.o code.o pathcmp.o mkdirs.o list.o
 
 LFDIFF_OBJ=	version.o lfdiff.o argcargv.o connect.o retr.o chksum.o \
-		base64.o applefile.o
+		base64.o
 
 TWHICH_OBJ=	version.o argcargv.o code.o twhich.o
 
