@@ -58,6 +58,7 @@ int		f_retr ___P(( SNET *, int, char *[] ));
 int		f_stor ___P(( SNET *, int, char *[] ));
 
 char		*remote_host;
+char		*remote_addr;
 char		command_file[ MAXPATHLEN ];
 char		upload_xscript[ MAXPATHLEN ];
 const EVP_MD    *md;
@@ -586,7 +587,8 @@ command_k( char *path_config )
 	    continue;
 	}
 
-	if ( strcasecmp( av[ 0 ], remote_host ) == 0 ) {
+	if (( strcasecmp( av[ 0 ], remote_host ) == 0 )
+		|| ( strcasecmp( av[ 0 ], remote_addr ) == 0 )) {
 	    sprintf( command_file, "command/%s", av[ 1 ] );
 	    return( 0 );
 	}
@@ -627,10 +629,11 @@ cmdloop( int fd, struct sockaddr_in *sin )
 	syslog( LOG_ERR, "snet_attach: %m" );
 	exit( 1 );
     }
+    remote_addr= strdup( inet_ntoa( sin->sin_addr ));
 
     if (( hp = gethostbyaddr( (char *)&sin->sin_addr,
 	    sizeof( struct in_addr ), AF_INET )) == NULL ) {
-	remote_host = strdup( inet_ntoa( sin->sin_addr ));
+	remote_host = strdup( remote_addr );
     } else {
 	/* set global remote_host for retr command */
 	remote_host = strdup( hp->h_name );
