@@ -1,7 +1,7 @@
 {
   Description     = "Radmind Server";
   Provides        = ("Radmind Server");
-  Requires        = (""Disks", Resolver");
+  Requires        = ("Resolver", "Disks");
   OrderPreference = "None";
   Messages =
   {
