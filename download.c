@@ -55,7 +55,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *file, char *chksumval )
  */
 
     char *
-download( SNET *sn, char *pathdesc, char* path, char *file, char *chksumval ) 
+download( SNET *sn, char *pathdesc, char *path, char *file, char *chksumval ) 
 {
     struct timeval      tv;
     char 		*line;
@@ -93,11 +93,20 @@ download( SNET *sn, char *pathdesc, char* path, char *file, char *chksumval )
     if ( temppath == NULL ) { perror( "malloc" );
 	return ( NULL );
     }
-    if ( snprintf( temppath, MAXPATHLEN, "%s/%s.radmind.%i",
-	    path, file, getpid() ) > MAXPATHLEN ) {
-	fprintf( stderr, "%s/%s.radmind.%i: too long", path, file,
-		(int)getpid() );
-	goto error3;
+    if ( *path == '\0' ) {
+	if ( snprintf( temppath, MAXPATHLEN, "%s.radmind.%i",
+		file, getpid() ) > MAXPATHLEN ) {
+	    fprintf( stderr, "%s.radmind.%i: too long", file,
+		    (int)getpid() );
+	    goto error3;
+	}
+    } else {
+	if ( snprintf( temppath, MAXPATHLEN, "%s/%s.radmind.%i",
+		path, file, getpid() ) > MAXPATHLEN ) {
+	    fprintf( stderr, "%s/%s.radmind.%i: too long", path, file,
+		    (int)getpid() );
+	    goto error3;
+	}
     }
 
     /* Open file */
