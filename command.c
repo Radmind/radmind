@@ -251,9 +251,9 @@ f_retr( sn, ac, av )
     return( 0 );
 }
 
-/* Pass this function the ENCODED version of the file... */
+/* looks for special file info in transcripts */
     char **
-find_file( char *transcript, char *file )
+special_t( char *transcript, char *epath )
 {
     FILE		*fs;
     int			ac, len;
@@ -261,27 +261,24 @@ find_file( char *transcript, char *file )
     static char		line[ MAXPATHLEN ];
 
     if (( fs = fopen( transcript, "r" )) == NULL ) {
-	syslog( LOG_ERR, "find_file: f_open: %s %m", transcript );
 	return( NULL );
     }
 
     while ( fgets( line, MAXPATHLEN, fs ) != NULL ) {
 	len = strlen( line );
 	if (( line[ len - 1 ] ) != '\n' ) {
-	    syslog( LOG_ERR, "find_file: %s: line too long", transcript );
-	    (void)fclose( fs );
-	    return( NULL );
+	    syslog( LOG_ERR, "special_t: %s: line too long", transcript );
+	    break;
 	}
-	if (( ac = argcargv( line, &av )) < 6 ) {
-	    syslog( LOG_ERR, "find_file: %s ac is: %d", transcript, ac );
-	    (void)fclose( fs );
-	    return( NULL );
+
+	if (( ac = argcargv( line, &av )) != 8 ) {
+	    continue;
 	}
 	if ( *av[ 0 ] != 'f' ) {
 	    continue;
 	}
 
-	if ( strcmp( av[ 1 ], file ) == 0 ) { 
+	if ( strcmp( av[ 1 ], epath ) == 0 ) { 
 	    (void)fclose( fs );
 	    return( av );
 	}
@@ -368,7 +365,7 @@ f_stat( SNET *sn, int ac, char *av[] )
 	strcat( path, ".T" );
 
 	/* store value of av[ 2 ], because argcargv will be called
-	 * from find_file, and that will blow away the current values
+	 * from special_t(), and that will blow away the current values
 	 * for av[ 2 ]
 	 */
 
@@ -379,9 +376,9 @@ f_stat( SNET *sn, int ac, char *av[] )
 	    return( -1 );
 	}
 
-	if (( av = find_file( path, enc_file )) == NULL ) {
+	if (( av = special_t( path, enc_file )) == NULL ) {
 	    sprintf( stranpath, "%s/special.T", _PATH_TRANSCRIPTS );
-	    if (( av = find_file( stranpath, enc_file )) == NULL ) {
+	    if (( av = special_t( stranpath, enc_file )) == NULL ) {
 		snet_writef( sn, "%s %s %o %d %d %d %d %s\r\n", "f", enc_file, 
 		    DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, 
 		    st.st_mtime, st.st_size, chksum_b64 );
@@ -560,8 +557,9 @@ f_stor( SNET *sn, int ac, char *av[] )
     return( 0 );
 }
 
+/* sets command file for connected host */
     int
-cmd_lookup( path_config )
+command_k( path_config )
     char	*path_config;
 {
     SNET	*sn;
@@ -569,7 +567,7 @@ cmd_lookup( path_config )
     int		ac;
 
     if (( sn = snet_open( path_config, O_RDONLY, 0, 0 )) == NULL ) {
-        syslog( LOG_ERR, "cmd_lookup: snet_open: %s", path_config );
+        syslog( LOG_ERR, "command_k: snet_open: %s", path_config );
 	return( -1 );
     }
 
@@ -627,7 +625,7 @@ cmdloop( fd )
     
     /* lookup proper command file based on the hostname */
 
-    if ( cmd_lookup( _PATH_CONFIG ) < 0 ) {
+    if ( command_k( _PATH_CONFIG ) < 0 ) {
         snet_writef( sn, "%d Access Denied\r\n", 500 );
 	exit( 1 );
     }
