@@ -241,6 +241,12 @@ main( int argc, char **argv )
 	exit ( 2 );
     }
 
+    /* verify the path we've been given exists */
+    if ( access( argv[ optind ], F_OK | R_OK ) != 0 ) {
+	perror( argv[ optind ] );
+	exit( 2 );
+    }
+
     /* initialize the transcripts */
     transcript_init( kfile, gotkfile );
 
