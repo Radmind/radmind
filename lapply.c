@@ -429,6 +429,11 @@ main( int argc, char **argv )
 	/* Get argument offset */
 	if (( *targv[ 0 ] ==  '+' )
 		|| ( *targv[ 0 ] == '-' )) {
+	    if ( strcmp( transcript, "" ) == 0 ) {
+		fprintf( stderr, "line %d: no transcript indicated\n",
+		    linenum );
+		goto error2;
+	    }
 	    command = targv[ 0 ];
 	    targv++;
 	    tac--;
