@@ -177,15 +177,15 @@ main( int argc, char **argv )
 
 	switch( *av[ 0 ] ) {
 	case 's':
-	    /* special transcript should always be searched first */
-	    specialfile++;
-	    new_node = head;
-	    head = create_node( "special.T" );
-	    head->next = new_node;
 	    if (( d_path = decode( av[ 1 ] )) == NULL ) {
 		fprintf( stderr, "line %d: path too long\n", linenum );
 		exit( 2 );
-	    } 
+	    }
+
+	    if ( !strncmp( d_path, pattern, strlen( d_path ) ) ) {
+		specialfile++;
+	    }
+
 	    break;
 
 	case 'n':
@@ -208,6 +208,14 @@ main( int argc, char **argv )
 	    exit( 2 );
 	}
     }
+
+    /* special transcript should always be searched first */
+    if ( specialfile ) {
+	new_node = create_node( "special.T" );
+	new_node->next = head;
+	head = new_node;
+    }
+
     /* Close kfile */
     if ( fclose( f ) != 0 ) {
 	perror( kfile );
