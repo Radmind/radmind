@@ -368,7 +368,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     if ( setattrlist( temppath, &alist, finfo, sizeof( finfo ),
 	    FSOPT_NOFOLLOW ) != 0 ) {
 	fprintf( stderr,
-	    "retrieve %s failed: Could not set attributes\n", pathdesc )
+	    "retrieve %s failed: Could not set attributes\n", pathdesc );
 	return( -1 );
     }
 
