@@ -347,16 +347,18 @@ main( int argc, char **argv )
 
 	    dpath = decode( targv[ 1 ] );
 
-	    /* Verify transcript line is correct */
-	    if ( radstat( dpath, &st, &type, &afinfo ) != 0 ) {
-		perror( dpath );
-		exitcode = 2;
-		break;
-	    }
-	    if ( *targv[ 0 ] != type ) {
-		fprintf( stderr, "line %d: file type wrong\n", linenum );
-		exitcode = 2;
-		break;
+	    if ( !negative ) {
+		/* Verify transcript line is correct */
+		if ( radstat( dpath, &st, &type, &afinfo ) != 0 ) {
+		    perror( dpath );
+		    exitcode = 2;
+		    break;
+		}
+		if ( *targv[ 0 ] != type ) {
+		    fprintf( stderr, "line %d: file type wrong\n", linenum );
+		    exitcode = 2;
+		    break;
+		}
 	    }
 
 	    if ( !network ) {
