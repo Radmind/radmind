@@ -40,7 +40,7 @@
 
 void output( char* string);
 int check( SNET *sn, char *type, char *path); 
-int createspecial( SNET *sn, struct node *head );
+int createspecial( SNET *sn, struct list *special_list );
 int getstat( SNET *sn, char *description, char *stats );
 
 void			(*logger)( char * ) = NULL;
@@ -105,10 +105,10 @@ output( char *string )
 }
 
     int
-createspecial( SNET *sn, struct node *head )
+createspecial( SNET *sn, struct list *special_list )
 {
     FILE		*fs;
-    struct node 	*prev;
+    struct node 	*node;
     char		filedesc[ MAXPATHLEN * 2 ];
     char		path[ MAXPATHLEN ];
     char		stats[ MAXPATHLEN ];
@@ -126,10 +126,11 @@ createspecial( SNET *sn, struct node *head )
 	return( 1 );
     }
 
-    do {
-	if ( snprintf( filedesc, MAXPATHLEN * 2, "SPECIAL %s", head->path)
+    for ( node = list_pop_head( special_list ); node != NULL;
+	    node = list_pop_head( special_list )) {
+	if ( snprintf( filedesc, MAXPATHLEN * 2, "SPECIAL %s", node->n_path)
 		> ( MAXPATHLEN * 2 ) -1 ) {
-	    fprintf( stderr, "SPECIAL %s: too long\n", head->path );
+	    fprintf( stderr, "SPECIAL %s: too long\n", node->n_path );
 	    return( 1 );
 	}
 
@@ -145,13 +146,8 @@ createspecial( SNET *sn, struct node *head )
 	    fprintf( stderr, "fputs" );
 	    return( 1 );
 	}
-
-	prev = head;
-	head = head->next;
-
-	free( prev->path );
-	free( prev );
-    } while ( head != NULL );
+	free( node );
+    }
 
     if ( fclose( fs ) != 0 ) {
 	perror( path );
@@ -375,7 +371,7 @@ main( int argc, char **argv )
     struct servent	*se;
     SNET		*sn;
     FILE		*f;
-    struct node		*head = NULL;
+    struct list		*special_list;
     struct stat		tst, lst;
 
     while (( c = getopt ( argc, argv, "c:h:iK:np:qrvVw:x:y:z:" )) != EOF ) {
@@ -538,6 +534,11 @@ main( int argc, char **argv )
 	exit( 2 );
     }
 
+    if (( special_list = list_new( )) == NULL ) {
+	perror( "list_new" );
+	exit( 2 );
+    }
+
     while ( fgets( cline, MAXPATHLEN, f ) != NULL ) {
 	linenum++;
 
@@ -560,7 +561,10 @@ main( int argc, char **argv )
 	}
 
 	if ( *targv[ 0 ] == 's' ) {
-	    insert_node( targv[ 1 ], &head);
+	    if ( list_insert( special_list, targv[ 1 ] ) != 0 ) {
+		perror( "list_insert" );
+		exit( 2 );
+	    }
 	    continue;
 	}
 	    
@@ -578,8 +582,8 @@ main( int argc, char **argv )
 	}
     }
 
-    if ( head != NULL ) {
-	if ( createspecial( sn, head ) != 0 ) {
+    if ( special_list->l_count > 0 ) {
+	if ( createspecial( sn, special_list ) != 0 ) {
 	    exit( 2 );
 	}
 

@@ -92,7 +92,7 @@ char		special_dir[ MAXPATHLEN ];
 char		command_file[ MAXPATHLEN ];
 char		upload_xscript[ MAXPATHLEN ];
 const EVP_MD    *md = NULL;
-struct node	*tran_list = NULL;
+struct list	*tran_list = NULL;
 int		ncommands = 0;
 int		authorized = 0;
 char		hostname[ MAXHOSTNAMELEN ];
@@ -298,7 +298,6 @@ f_retr( sn, ac, av )
     char		path[ MAXPATHLEN ];
     char		*d_path, *d_tran;
     int			fd;
-    struct node		*node = NULL;
 
     switch ( keyword( ac, av )) {
     case K_COMMAND:
@@ -313,12 +312,9 @@ f_retr( sn, ac, av )
 	} 
 
 	/* Check for access */
-	for ( node = tran_list; node != NULL; node = node->next ) {
-	    if ( strcmp( d_tran, node->path ) == 0 ) {
-		break;
-	    }
-	}
-	if ( node == NULL ) {
+	if ( list_check( tran_list, d_tran )) {
+	    break;
+	} else {
 	    syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s", d_tran );
 	    snet_writef( sn, "%d No access for %s\r\n", 540, d_tran );
 	    return( 1 );
@@ -354,12 +350,9 @@ f_retr( sn, ac, av )
 	} 
 
 	/* Check for access */
-	for ( node = tran_list; node != NULL; node = node->next ) {
-	    if ( strcmp( d_tran, node->path ) == 0 ) {
-		break;
-	    }
-	}
-	if ( node == NULL ) {
+	if ( list_check( tran_list, d_tran )) {
+	    break;
+	} else {
 	    syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s", d_tran );
 	    snet_writef( sn, "%d No access for %s:%s\r\n", 540, d_tran,
 		d_path );
@@ -474,7 +467,6 @@ f_stat( SNET *sn, int ac, char *av[] )
     struct stat		st;
     int			key;
     char		*enc_file, *d_tran, *d_path;
-    struct node		*node;
 
     switch ( key = keyword( ac, av )) {
     case K_COMMAND:
@@ -489,12 +481,9 @@ f_stat( SNET *sn, int ac, char *av[] )
 	} 
 
 	/* Check for access */
-	for ( node = tran_list; node != NULL; node = node->next ) {
-	    if ( strcmp( d_tran, node->path ) == 0 ) {
-		break;
-	    }
-	}
-	if ( node == NULL ) {
+	if ( list_check( tran_list, d_tran )) {
+	    break;
+	} else {
 	    syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s", d_tran );
 	    snet_writef( sn, "%d No access for %s\r\n", 540, d_tran );
 	    return( 1 );
@@ -1103,6 +1092,13 @@ list_transcripts( SNET *sn )
     FILE		*f;
     char                **av;
 
+    if (( tran_list = list_new( )) == NULL ) {
+	snet_writef( sn,
+	    "%d Service not available, closing transmission channel\r\n", 421 );
+	syslog( LOG_ERR, "new_list: %m" );
+	return( -1 );
+    }
+
     /* Create list of transcripts */
     if (( f = fopen( command_file, "r" )) == NULL ) {
 	snet_writef( sn,
@@ -1126,7 +1122,14 @@ list_transcripts( SNET *sn )
 		    command_file, linenum );
 	    return( -1 );
 	}
-	insert_node( av[ 1 ], &tran_list );
+	if ( list_insert( tran_list, av[ 1 ] ) != 0 ) {
+	    snet_writef( sn,
+		"%d Service not available, closing transmission channel\r\n",
+		421 );
+	    syslog( LOG_ERR, "list_insert: %m" );
+	    return( -1 );
+	}
+
     }
     if ( ferror( f )) {
 	snet_writef( sn,
