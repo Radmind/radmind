@@ -18,6 +18,7 @@ RADMINDDIR=@radminddir@
 # For client
 COMMANDFILE=${RADMINDDIR}/client/command.K
 CERTDIR=${RADMINDDIR}/cert
+CLIENTDIR=${RADMINDDIR}/client
 TLS_CA=${CERTDIR}/ca.pem
 TLS_CERT=${CERTDIR}/cert.pem
 GNU_DIFF=@diffpath@
@@ -241,6 +242,7 @@ install	: all man rash
 	 for i in ${MAN8TARGETS}; do \
 	    ${INSTALL} -m 0644 -c tmp/man/$$i ${MANDIR}/man8/; \
 	done
+	-mkdir -p ${CLIENTDIR}
 	-mkdir -p ${CERTDIR}
 
 PKGNAME=RadmindTools-${VERSION}
@@ -280,6 +282,7 @@ package	: all man info rash
 	    ${INSTALL} -m 0644 -c tmp/man/$$i ${PKGDIR}/${MANDIR}/man8/; \
 	done
 	-mkdir -p -m 0755 ${PKGDIR}${CERTDIR}
+	-mkdir -p -m 0755 ${PKGDIR}${CLIENTDIR}
 	-mkdir -p -m 0755 ${PKGRSRCDIR}
 	${INSTALL} -m 0644 -c OS_X/License.rtf ${PKGRSRCDIR}
 	${INSTALL} -m 0644 -c OS_X/ReadMe.rtf ${PKGRSRCDIR}
