@@ -220,7 +220,6 @@ check( SNET *sn, char *type, char *file )
 	    if ( update ) {
 		if ( retr( sn, pathdesc, path, (char *)&tempfile,
 			(size_t)atoi( targv[ 6 ] ), targv[ 7 ] ) != 0 ) {
-		    fprintf( stderr, "%s: retr failed\n", path );
 		    return( 2 );
 		}
 		if ( utime( tempfile, &times ) != 0 ) {
@@ -268,7 +267,6 @@ check( SNET *sn, char *type, char *file )
 	    }
 	    if ( retr( sn, pathdesc, path, (char *)&tempfile,
 		    (size_t)atol( targv[ 6 ] ), targv[ 7 ] ) != 0 ) {
-		fprintf( stderr, "retr failed\n" );
 		return( 2 );
 	    }
 	    if ( utime( tempfile, &times ) != 0 ) {

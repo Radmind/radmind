@@ -198,7 +198,6 @@ main( int argc, char **argv, char **envp )
     }
 
     if ( retr( sn, pathdesc, path, (char *)&temppath, 0, "-" ) != 0 ) {
-	fprintf( stderr, "%s: retr failed\n", file );
 	exit( 2 );
     }
 
