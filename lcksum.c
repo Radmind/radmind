@@ -45,11 +45,8 @@ main( int argc, char **argv )
     FILE		*f, *ufs;
     struct stat		st;
 
-    while ( ( c = getopt ( argc, argv, "T:uVv" ) ) != EOF ) {
+    while ( ( c = getopt ( argc, argv, "uvV" ) ) != EOF ) {
 	switch( c ) {
-	case 'T':
-	    tpath = optarg;
-	    break;
 	case 'u':
 	    amode = R_OK | W_OK;
 	    updatetran = 1;
@@ -69,13 +66,11 @@ main( int argc, char **argv )
 	}
     }
 
-    if ( tpath == NULL ) {
-	err++;
-    }
+    tpath = argv[ optind ];
 
-    if ( err || ( argc - optind != 0 ) ) {
-	fprintf( stderr, "usage: lchksum [ -uvV ] " );
-	fprintf( stderr, "-T transcript\n" );
+    if ( err || ( argc - optind != 1 ) ) {
+	fprintf( stderr, "usage: lcksum [ -uvV ] " );
+	fprintf( stderr, "transcript\n" );
 	exit( 2 );
     }
 
@@ -90,7 +85,11 @@ main( int argc, char **argv )
     }
 
     if ( updatetran ) {
-	sprintf( upath, "%s.%d", tpath, (int)getpid() );
+	memset( upath, 0, MAXPATHLEN );
+	if ( snprintf( upath, MAXPATHLEN, "%s.%i", tpath, (int)getpid() )
+		> MAXPATHLEN - 1) {
+	    fprintf( stderr, "%s.%i: path too long\n", tpath, (int)getpid() );
+	}
 
 	if ( stat( tpath, &st ) != 0 ) {
 	    perror( tpath );
@@ -146,7 +145,8 @@ main( int argc, char **argv )
 		decode( targv[ 1 ] ) );
 
 	if ( do_chksum( path, lchksum ) != 0 ) {
-	    fprintf( stderr, "do_chksum failed on %s\n", path );
+	    fprintf( stderr, "checksum failed on %s: ", path );
+	    perror( NULL );
 	    exit( 2 );
 	}
 
@@ -154,10 +154,10 @@ main( int argc, char **argv )
 	if ( strcmp( lchksum, targv[ 7 ] ) != 0 ) {
 	    if ( verbose && !updatetran ) printf( "*** %s: chksum wrong\n",
 		    targv[ 1 ] );
+	    ucount++;
 	    if ( updatetran ) {
 		if ( verbose && updatetran ) printf( "*** %s: chksum updated\n",
 		    targv[ 1 ] ); 
-		ucount++;
 	    }
 	    updateline = 1;
 	}
@@ -170,10 +170,10 @@ main( int argc, char **argv )
 	if ( st.st_size != atoi( targv[ 6 ] ) ) {
 	    if ( verbose && !updatetran ) printf( "*** %s: size wrong\n",
 		    targv[ 1 ] );
+	    ucount++;
 	    if ( updatetran ) {
 		if ( verbose && updatetran ) printf( "*** %s: size updated\n",
 			targv[ 1 ] );
-		ucount++;
 	    }
 	    updateline = 1;
 	}
@@ -197,24 +197,32 @@ done:
 
 	if ( ucount ) {
 	    /* reconstruct full transcript path */
-	    *(transcript - 1) = '/';
+	    if ( *tpath != '.' ) {
+		*(transcript - 1) = '/';
+	    } else {
+		tpath = transcript;
+	    }
+
 	    if ( rename( upath, tpath ) != 0 ) {
-		perror( upath );
+		fprintf( stderr, "rename: %s %s\n", upath, tpath );
 		exit( 2 );
 	    }
-	    if ( verbose ) printf( "*** %s: updated\n", transcript );
+	    if ( verbose ) printf( "*** %s updated\n", transcript );
 	} else {
 	    if ( unlink( upath ) != 0 ) {
 		perror( upath );
 		exit( 2 );
 	    }
-	    if ( verbose ) printf ( "*** %s: verified\n", transcript );
+	    if ( verbose ) printf( "*** %s verified\n", transcript );
+	}
+    } else {
+	if ( ucount ) {
+	    if ( verbose ) printf( "*** %s incorrect\n", transcript );
+	    exit( 1 );
+	} else {
+	    if ( verbose ) printf( "*** %s verified\n", transcript );
+	    exit( 0 );
 	}
     }
-
-    if ( ucount ) {
-	exit( 1 );
-    } else {
-	exit( 0 );
-    }
+    exit( 2 );
 }
