@@ -394,7 +394,7 @@ main( int argc, char **argv )
 	f = stdin; 
     } else if ( argc - optind == 1 ) {
 	if (( f = fopen( argv[ optind ], "r" )) == NULL ) { 
-	    perror( optind );
+	    perror( argv[ optind ]);
 	    goto error0;
 	}
     } else {
