@@ -306,7 +306,7 @@ filechecklist:
 	    }
 #endif __APPLE__
 
-	    if ( getfsoinfo( path, &st, &fstype, finfo ) < 0 ) {
+	    if ( getfsoinfo( temppath, &st, &fstype, finfo ) < 0 ) {
 		perror( path );
 		return( 1 );
 	    }
