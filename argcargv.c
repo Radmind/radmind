@@ -28,6 +28,7 @@ acav_alloc( void )
     }
     if ( ( acav->acv_argv =
 	    (char **)malloc( sizeof(char *) * ( ACV_ARGC ) ) ) == NULL ) {
+	free( acav );
 	return( NULL );
     }
     acav->acv_argc = ACV_ARGC;
