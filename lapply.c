@@ -108,16 +108,16 @@ output( char *string )
     int
 do_line( char *tline, int present, struct stat *st, SNET *sn )
 {
-    char                fstype;
-    char                *command = "";
-    ACAV                *acav;
-    int			tac;
-    char                **targv;
+    char                	fstype;
+    char        	        *command = "";
+    ACAV               		*acav;
+    int				tac;
+    char 	               	**targv;
     struct applefileinfo        afinfo;
-    char                path[ 2 * MAXPATHLEN ];
-    char		temppath[ 2 * MAXPATHLEN ];
-    char		pathdesc[ 2 * MAXPATHLEN ];
-    char		cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
+    char     	       		path[ 2 * MAXPATHLEN ];
+    char			temppath[ 2 * MAXPATHLEN ];
+    char			pathdesc[ 2 * MAXPATHLEN ];
+    char			cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
 
     acav = acav_alloc( );
 
@@ -168,21 +168,21 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
 	    return( 1 );
 	}
 	/* Update temp file*/
-	if ( update( temppath, path, present, 1, st, tac, targv )
+	if ( update( temppath, path, present, 1, st, tac, targv, &afinfo )
 		!= 0 ) {
 	    return( 1 );
 	}
-	/*
-	 * rename doesn't mangle meta-data on HFS+, no need
-	 * to change this around for HFS+ formatted Darwin volumes
-	 */
+
+	 /*
+	  * rename doesn't mangle forked files
+	  */
 	if ( rename( temppath, path ) != 0 ) {
 	    perror( temppath );
 	    return( 1 );
 	}
     } else { 
 	/* UPDATE */
-	if ( update( path, path, present, 0, st, tac, targv ) != 0 ) {
+	if ( update( path, path, present, 0, st, tac, targv, &afinfo ) != 0 ) {
 	    return( 1 );
 	}
     }

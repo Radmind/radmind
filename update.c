@@ -9,11 +9,16 @@
 #ifdef sun
 #include <sys/mkdev.h>
 #endif sun
+#ifdef __APPLE__
+#include <sys/attr.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <utime.h>
 
+#include "applefile.h"
+#include "base64.h"
 #include "update.h"
 #include "code.h"
 
@@ -22,14 +27,20 @@ extern int linenum;
 
     int
 update( const char *path, char *displaypath, int present, int newfile,
-    struct stat *st, int tac, char **targv )
+    struct stat *st, int tac, char **targv, struct applefileinfo *afinfo )
 {
     mode_t              mode;
     struct utimbuf      times;
     uid_t               uid;
     gid_t               gid;
     dev_t               dev;
-
+#ifdef __APPLE__
+    char			fi_data[ FINFOLEN ];
+    extern struct atterlist     alist;
+    static char                 null_buf[ 32 ] = { 0 };
+#endif __APPLE__
+    int			fs_finfo = 0;
+    int			tran_finfo= 0;
 
     switch ( *targv[ 0 ] ) {
     case 'a':
@@ -82,7 +93,11 @@ update( const char *path, char *displaypath, int present, int newfile,
 
     case 'd':
 
+#ifdef __APPLE__
+	if (( tac != 5 ) && ( tac != 6 )) {
+#else
 	if ( tac != 5 ) {
+#endif __APPLE__
 	    fprintf( stderr,
 		"%d: incorrect number of arguments\n", linenum );
 	    return( 1 );
@@ -93,7 +108,6 @@ update( const char *path, char *displaypath, int present, int newfile,
 	gid = atoi( targv[ 4 ] );
 
 	if ( !present ) {
-	    mode = strtol( targv[ 2 ], (char**)NULL, 8 );
 	    if ( mkdir( path, mode ) != 0 ) {
 		perror( path );
 		return( 1 );
@@ -135,6 +149,39 @@ update( const char *path, char *displaypath, int present, int newfile,
 		if ( !quiet ) printf( " gid" );
 	    }
 	}
+#ifdef __APPLE__
+	/* Check finder info */
+	if ( tac == 6 ) {
+	    base64_d( targv[ 5 ], strlen( targv[ 5 ] ), fi_data );
+	    tran_finfo++;
+	}
+	if ( memcmp( fi_data, null_buf, sizeof( null_buf )) != 0 ) {
+	    fs_finfo++;
+	}
+	if ( fs_finfo && !tran_finfo ) {
+	    //remove fs_finfo
+	    if ( setattrlist( path, &alist, null_buf, sizeof( null_buf ),
+		    FSOPT_NOFOLLOW ) != 0 ) {
+		fprintf( stderr,
+		    "retrieve %s failed: Could not set attributes\n",
+		    path );
+		return( -1 );
+	    }
+	    if ( !quiet ) printf( " finder-info" );
+	}
+	if ( tran_finfo && ( !fs_finfo || ( fs_finfo &&
+		( memcmp( afinfo->fi.fi_data, fi_data, FINFOLEN ) != 0 )))) {
+	    //set fs_finfo
+	    if ( setattrlist( path, &alist, fi_data, FINFOLEN,
+		    FSOPT_NOFOLLOW ) != 0 ) {
+		fprintf( stderr,
+		    "retrieve %s failed: Could not set attributes\n",
+		    path );
+		return( -1 );
+	    }
+	    if ( !quiet ) printf( " finder-info" );
+	}
+#endif __APPLE__
 	break;
 
     case 'h':
