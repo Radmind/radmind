@@ -5,7 +5,7 @@
 .SH SYNOPSIS
 .B radmind
 [
-.B \-dUV
+.B \-dRUV
 ] [
 .BI \-b\  backlog
 ] [
@@ -187,11 +187,14 @@ specifies which syslog-facilty to log messages to.
 .BI \-m\  max-connections 
 specifies the maximum number of simultaneous connections, by
 default _RADMIND_MAXCONNECTIONS.
-Value must be greater then or equal to 0 with 0 indicating no limit.
+Value must be greater than or equal to 0 with 0 indicating no limit.
 .TP 19
 .BI \-p\  port 
 specifies the port of the radmind server, by default
 .BR 6662 .
+.TP 19
+.BI \-R
+registers daemon as a Rendezvous service (Mac OS X only).
 .TP 19
 .BI \-u\  umask
 specifies the umask the server uses to write files to the disk, defaulting
