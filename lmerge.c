@@ -31,6 +31,7 @@ getnextline( struct tran *tran )
 {
     int len;
 
+getline:
     if ( fgets( tran->tline, MAXPATHLEN, tran->fs ) == NULL ) {
 	tran->eof = 1;
 	return( 0 );
@@ -56,6 +57,10 @@ getnextline( struct tran *tran )
 	    tran->tline, &(tran->targv) )  ) < 0 ) {
 	fprintf( stderr, "acav_parse\n" );
 	return( -1 );
+    }
+    /* Skip blank lines and comments */
+    if (( tran->tac == 0 ) || ( *tran->targv[ 0 ] == '#' )) {
+	goto getline;
     }
 
     if ( *tran->targv[ 0 ] == '-' ) {
@@ -147,8 +152,12 @@ main( int argc, char **argv )
     }
 
     if ( err ) {
-	fprintf( stderr, "usage: %s [ -fnvV ] [ -u umask ] ", argv[ 0 ] );
-	fprintf( stderr, "transcript1, transcript2, ..., dest\n" );
+	fprintf( stderr, "Usage: %s [-vV] [ -u umask ] ", argv[ 0 ] );
+	fprintf( stderr, "transcript... dest\n" );
+	fprintf( stderr, "       %s -f [-vV] [ -u umask ] ", argv[ 0 ] );
+	fprintf( stderr, "transcript1 transcript2\n" );
+	fprintf( stderr, "       %s -n [-vV] [ -u umask ] ", argv[ 0 ] );
+	fprintf( stderr, "transcript1 transcript2 dest\n" );
 	exit( 1 );
     }
 

@@ -37,6 +37,9 @@ If multiple transcripts list the same file system object, the transcript
 line from the highest precedence transcript is written to
 .IR dest .
 
+Blank lines and comments ( lines starting with # ) are not written to
+.IR dest .
+
 With the \-f option
 .B lmerge
 does not create a new transcript and merges the first transcript into the
