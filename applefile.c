@@ -27,15 +27,6 @@ extern int              chksum;
 void            (*logger)( char * );
 
 char			null_buf[ 32 ] = { 0 };
-struct attrlist		alist = {
-    ATTR_BIT_MAP_COUNT,
-    0,
-    ATTR_CMN_FNDRINFO,
-    0,
-    0,
-    0,
-    0,
-};
 
 struct as_header	as_header = {
     0x00051600,
@@ -69,6 +60,16 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *chksumval,
     unsigned char       mde[ SZ_BASE64_E( sizeof( md )) ];
     SHA_CTX             sha_ctx;
 
+    struct attrlist		alist = {
+	ATTR_BIT_MAP_COUNT,
+	0,
+	ATTR_CMN_FNDRINFO,
+	0,
+	0,
+	0,
+	0,
+    };
+
     memset( &as_dest, '\0', ( int )sizeof( struct as_header ));
     memset( &ae_finfo, '\0', ( int )sizeof( struct as_entry ));
     memset( &ae_rfork, '\0', ( int )sizeof( struct as_entry ));
@@ -101,18 +102,11 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *chksumval,
     }
 
     /* Create temp file name */
-    if ( location == NULL ) {
-        if ( snprintf( temppath, MAXPATHLEN, "%s.radmind.%i",
-                path, getpid() ) > MAXPATHLEN ) {
-            fprintf( stderr, "%s.radmind.%i: too long", path,
-                    (int)getpid() );
-            exit( 1 );
-        }
-    } else {
-        if ( snprintf( temppath, MAXPATHLEN, "%s", location ) > MAXPATHLEN ) {
-            fprintf( stderr, "%s: too long", path );
-            exit( 1 );
-        }
+    if ( snprintf( temppath, MAXPATHLEN, "%s.radmind.%i",
+	    path, getpid() ) > MAXPATHLEN ) {
+	fprintf( stderr, "%s.radmind.%i: too long", path,
+		(int)getpid() );
+	exit( 1 );
     }
 
     /* Get file size from server */
