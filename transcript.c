@@ -562,6 +562,7 @@ t_new( int type, char *name )
 transcript_init( char *prepath, char *cmd )
 {
     char	**av;
+    char	*special = "special.T";
     char	line[ MAXPATHLEN ];
     char	fullpath[ MAXPATHLEN ];
     int		length, ac;
@@ -642,7 +643,13 @@ transcript_init( char *prepath, char *cmd )
 
     /* open the special transcript if there were any special files */
     if ( foundspecial ) {
-	t_new( T_SPECIAL, "special.T" );
+	if ( strlen( prepath ) + strlen( special ) + 2 > MAXPATHLEN ) {
+	    fprintf( stderr, 
+		    "special path too long: %s/%s\n", prepath, special );
+	    exit( 1 );
+	}
+	sprintf( fullpath, "%s/%s", prepath, special );
+	t_new( T_SPECIAL, fullpath  );
     }
 
     if ( tran_head->t_type == T_NULL  && edit_path == FS2TRAN ) {
