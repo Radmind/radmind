@@ -19,7 +19,7 @@
     Added code to work around Mac OS X DNS bugs.
     Changed the names of the default Mac OS X negative file.
     Changed the umask that the server runs under on Mac OS X so that
-    The Finder will not update, e.g. .DS_Store files.
+	the Finder will not update, e.g. .DS_Store files.
 
 0.6.1
     Updated example negative transcript to match tutorial.

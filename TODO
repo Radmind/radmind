@@ -6,6 +6,7 @@ For 1.0:
 
 For after 1.0:
     pipe-line lapply
+    %-done feedback
     special sub directories
     lmerge -K
     lapply -K

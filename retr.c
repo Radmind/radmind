@@ -406,7 +406,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	EVP_DigestFinal( &mdctx, md_value, &md_len );
 	base64_e(( char*)&md_value, md_len, cksum_b64 );
         if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
-	    fprintf( stderr, "line %d: checksum in transcript does not match"
+	    fprintf( stderr, "line %d: checksum in transcript does not match "
 		"checksum from server\n", linenum );
             return( -1 );
         }
