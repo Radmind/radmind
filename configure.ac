@@ -27,6 +27,6 @@ AC_CHECK_LIB([socket], [socket])
 CHECK_SSL
 CHECK_PAM
 
-AC_CONFIG_FILES([Makefile
-                 libsnet/Makefile])
+AC_CONFIG_SUBDIRS(libsnet)
+AC_CONFIG_FILES(Makefile)
 AC_OUTPUT

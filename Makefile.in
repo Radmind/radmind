@@ -25,7 +25,7 @@ OPTOPTS=	-Wall -Wmissing-prototypes
 CC=		@CC@
 DEFS=		@TLSDEFS@
 LIBS=		-lsnet @LIBS@
-LDFLAGS=	-Llibsnet @LDFLAGS@ ${LIBS}
+LDFLAGS=	-Llibsnet/.libs @LDFLAGS@ ${LIBS}
 INSTALL=	@INSTALL@
 
 CFLAGS=		${DEFS} ${OPTOPTS} @CFLAGS@ ${INCPATH}
@@ -121,7 +121,7 @@ tls.o : tls.c
 		-D_RADMIND_TLS_CERT=\"${TLS_CERT}\" \
 		-c tls.c
 
-radmind : libsnet/libsnet.a ${RADMIND_OBJ} Makefile
+radmind : libsnet/libsnet.la ${RADMIND_OBJ} Makefile
 	${CC} ${CFLAGS} -o radmind ${RADMIND_OBJ} ${LDFLAGS}
 
 fsdiff : ${FSDIFF_OBJ}
@@ -151,7 +151,7 @@ twhich: ${TWHICH_OBJ}
 
 FRC :
 
-libsnet/libsnet.a : FRC
+libsnet/libsnet.la : FRC
 	cd libsnet; ${MAKE} ${MFLAGS} CC=${CC}
 
 VERSION=`date +%Y%m%d`
@@ -280,4 +280,5 @@ clean :
 	rm -rf tmp
 
 distclean: clean
-	rm -f config.log config.status Makefile libsnet/Makefile
+	rm -f config.log config.status Makefile
+	cd libsnet; make distclean
