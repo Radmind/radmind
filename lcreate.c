@@ -92,6 +92,7 @@ store_file( int fd, SNET *sn, char *filename, char *transcript )
     unsigned char	buf[ 8192 ];
     unsigned int	rr;
     char		*line;
+    int			dodots = 1;
 
     if ( fstat( fd, &st) < 0 ) {
 	perror( filename );
@@ -135,9 +136,13 @@ store_file( int fd, SNET *sn, char *filename, char *transcript )
 	return( -1 );
     }
     if ( verbose ) printf( ">>> %d\n", (int)st.st_size );
+
+    if ( verbose && isatty( fileno( stdout ))) {
+	dodots = 1;
+    }
     
     while (( rr = read( fd, buf, sizeof( buf ))) > 0 ) {
-	if ( verbose ) { fputs( "...", stdout ); fflush( stdout ); }
+	if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 	tv.tv_sec = 120;
 	tv.tv_usec = 0;
 	if ( snet_write( sn, buf, (int)rr, &tv ) != rr ) {

@@ -36,6 +36,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *location, char *chksumval )
     size_t              size;
     char                buf[ 8192 ]; 
     unsigned char	chksumcalc[ 29 ];
+    int			dodots = 0;
 
     if ( chksum && ( strcmp( chksumval, "-" ) == 0 ) ) {
 	fprintf( stderr, "Chksum not in transcript" );
@@ -89,6 +90,13 @@ retr( SNET *sn, char *pathdesc, char *path, char *location, char *chksumval )
     size = atoi( line );
     if ( verbose ) printf( "<<< %d\n<<< ", size );
 
+    /*
+     * If output is not a tty, don't bother with the dots.
+     */
+    if ( verbose && isatty( fileno( stdout ))) {
+	dodots = 1;
+    }
+
     /* Get file from server */
     while ( size > 0 ) {
 	tv = timeout;
@@ -101,10 +109,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *location, char *chksumval )
 	    perror( temppath );
 	    goto error;
 	}
-	if ( verbose ) {
-	    putc( '.', stdout );
-	    fflush( stdout );
-	}
+	if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 	size -= rr;
     }
     if ( verbose ) printf( "\n" );
