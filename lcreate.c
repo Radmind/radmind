@@ -12,6 +12,10 @@
 #include "connect.h"
 #include "argcargv.h"
 #include "code.h"
+#ifdef DARWIN
+#include "afile.h"
+#include "send_afile.h"
+#endif
 
 /*
  * STOR
@@ -86,7 +90,7 @@ n_store_file( SNET *sn, char *filename, char *transcript )
 }
 
     static int
-store_file( int fd, SNET *sn, char *filename, char *transcript ) 
+store_file( int fd, SNET *sn, char *filename, char *transcript, char *filetype ) 
 {
     struct stat 	st;
     struct timeval 	tv;
@@ -142,17 +146,31 @@ store_file( int fd, SNET *sn, char *filename, char *transcript )
     if ( verbose && isatty( fileno( stdout ))) {
 	dodots = 1;
     }
-    
-    while (( rr = read( fd, buf, sizeof( buf ))) > 0 ) {
-	if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
-	tv.tv_sec = 120;
-	tv.tv_usec = 0;
-	if ( snet_write( sn, buf, (int)rr, &tv ) != rr ) {
-	    perror( "snet_write" );
+
+    switch( *filetype ) {
+#ifdef DARWIN
+    case 'a':
+	if ( send_afile( filename, fd, sn, dodots ) != 0 ) {
+	    perror( "send_afile" );
 	    return( -1 );
 	}
+	break;
+#endif
+    case 'f':
+	while (( rr = read( fd, buf, sizeof( buf ))) > 0 ) {
+	    if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
+	    tv.tv_sec = 120;
+	    tv.tv_usec = 0;
+	    if ( snet_write( sn, buf, (int)rr, &tv ) != rr ) {
+		perror( "snet_write" );
+		return( -1 );
+	    }
+	}
+	break;
+    default:
+	fprintf( stderr, "%c: unkown file type\n", *filetype );
+	return( -1 );
     }
-
     if ( rr < 0 ) {
 	perror( filename );
 	return( -1 );
@@ -246,7 +264,7 @@ main( int argc, char **argv )
     }
 
     if ( err || ( argc - optind != 1 ))   {
-	fprintf( stderr, "usage: lcreate [ -nNTvV ] " );
+	fprintf( stderr, "usage: lcreate [ -nNTV ] [ -q | -v ]" );
 	fprintf( stderr, "[ -h host ] [-p port ] [ -t stored-name ] ");
 	fprintf( stderr, "difference-transcript\n" );
 	exit( 1 );
@@ -274,7 +292,7 @@ main( int argc, char **argv )
 	    exit( 1 );
 	}
 
-	if ( store_file( fd, sn, NULL, tname ) != 0 ) {
+	if ( store_file( fd, sn, NULL, tname, "f" ) != 0 ) {
 	    fprintf( stderr, "failed to store transcript \"%s\"\n", tname );
 	    exitcode = 1;
 	    (void)close( fd );
@@ -334,7 +352,7 @@ main( int argc, char **argv )
 		    break;
 		} 
 
-		rc = store_file( fdt, sn, targv[ 1 ], tname ); 
+		rc = store_file( fdt, sn, targv[ 1 ], tname, targv[ 0 ] ); 
 		(void)close( fdt ); 
 		if ( rc != 0 ) {
 		    fprintf( stderr, "failed to store file %s\n", dpath );
