@@ -9,13 +9,23 @@
 #include <sys/attr.h>
 #include "applefile.h"
 
-struct attrlist		alist = {
+struct attrlist		getalist = {
     ATTR_BIT_MAP_COUNT,
     0,
     ATTR_CMN_FNDRINFO,
     0,
     0,
     ATTR_FILE_RSRCLENGTH,
+    0,
+};
+
+struct attrlist		setalist = {
+    ATTR_BIT_MAP_COUNT,
+    0,
+    ATTR_CMN_FNDRINFO,
+    0,
+    0,
+    0,
     0,
 };
 

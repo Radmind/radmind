@@ -36,7 +36,6 @@
 
 extern struct timeval	timeout;
 extern struct as_header as_header;
-extern struct attrlist  alist;
 extern int		verbose;
 extern int		quiet;
 extern int		dodots;
@@ -392,14 +391,14 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 
     /* write finder info data to server */
     tv = timeout;
-    if ( snet_write( sn, afinfo->fi.fi_data, FINFOLEN, &tv ) != FINFOLEN ) {
+    if ( snet_write( sn, afinfo->ai.ai_data, FINFOLEN, &tv ) != FINFOLEN ) {
 	fprintf( stderr, "store %s failed: %s\n", pathdesc,
 	    strerror( errno ));
 	goto sn_error;
     }
     size -= FINFOLEN;
     if ( cksum ) {
-	EVP_DigestUpdate( &mdctx, afinfo->fi.fi_data, FINFOLEN );
+	EVP_DigestUpdate( &mdctx, afinfo->ai.ai_data, FINFOLEN );
     }
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 
@@ -512,10 +511,161 @@ sn_error:
     snet_close( sn );
     exit( 2 );
 }
+
+    int
+n_stor_applefile( SNET *sn, char *pathdesc, char *path )
+{
+    struct timeval      	tv;
+    char                	*line; 
+    struct applefileinfo	afinfo;
+    off_t			size;
+
+    /* Setup fake apple file info */
+    /* Finder Info */
+    memset( &afinfo, 0, sizeof( afinfo ));
+    sprintf( afinfo.ai.ai_data + FI_CREATOR_OFFSET, "%s", "RDMD" );
+    afinfo.as_ents[AS_FIE].ae_id = ASEID_FINFO;
+    afinfo.as_ents[AS_FIE].ae_offset = AS_HEADERLEN +
+	( 3 * sizeof( struct as_entry ));               /* 62 */
+    afinfo.as_ents[AS_FIE].ae_length = FINFOLEN;
+
+    /* Resource Fork */
+    afinfo.as_ents[AS_RFE].ae_id = ASEID_RFORK;
+    afinfo.as_ents[AS_RFE].ae_offset =                     /* 94 */
+	    ( afinfo.as_ents[ AS_FIE ].ae_offset
+	    + afinfo.as_ents[ AS_FIE ].ae_length );
+    afinfo.as_ents[ AS_RFE ].ae_length = 0;
+
+    /* Data Fork */
+    afinfo.as_ents[AS_DFE].ae_id = ASEID_DFORK;
+    afinfo.as_ents[ AS_DFE ].ae_offset =
+	( afinfo.as_ents[ AS_RFE ].ae_offset
+	+ afinfo.as_ents[ AS_RFE ].ae_length );
+    afinfo.as_ents[ AS_DFE ].ae_length = 0;
+
+    afinfo.as_size = afinfo.as_ents[ AS_DFE ].ae_offset
+	+ afinfo.as_ents[ AS_DFE ].ae_length;
+
+    size = afinfo.as_size;
+
+    /* tell server what it is getting */
+    if ( snet_writef( sn, "%s", pathdesc ) < 0 ) {
+	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	goto sn_error;
+    }
+    if ( verbose ) printf( ">>> %s", pathdesc );
+    tv = timeout;
+    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
+	if ( snet_eof( sn )) {
+	    fprintf( stderr, "store %s failed: Connection closed\n",
+		pathdesc );
+	} else {
+	    fprintf( stderr, "store %s failed: %s\n", pathdesc,
+		strerror( errno ));
+	}
+	goto sn_error;
+    }
+    if ( *line != '3' ) {
+	/* Error from server - transaction aborted */
+        fprintf( stderr, "%s\n", line );
+        return( -1 );
+    }
+
+    /* tell server how much data to expect and send '.' */
+    if ( snet_writef( sn, "%" PRIofft "d\r\n", afinfo.as_size ) < 0 ) {
+	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	goto sn_error;
+    }
+    if ( verbose ) printf( ">>> %" PRIofft "d\n", afinfo.as_size );
+
+    /* write applesingle header to server */
+    tv = timeout;
+    if ( snet_write( sn, (char *)&as_header, AS_HEADERLEN, &tv )
+	    != AS_HEADERLEN ) {
+	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	goto sn_error;
+    }
+    size -= AS_HEADERLEN;
+    if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
+
+    /* write header entries to server */
+    tv = timeout;
+    if ( snet_write( sn, ( char * )&afinfo.as_ents,
+		( 3 * sizeof( struct as_entry )), &tv )
+		!= ( 3 * sizeof( struct as_entry ))) {
+	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	goto sn_error;
+    }
+    size -= ( 3 * sizeof( struct as_entry ));
+    if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
+
+    /* write finder info data to server */
+    tv = timeout;
+    if ( snet_write( sn, afinfo.ai.ai_data, FINFOLEN, &tv ) != FINFOLEN ) {
+	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	goto sn_error;
+    }
+    size -= FINFOLEN;
+    if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
+
+    /* Check number of bytes sent to server */
+    if ( size != 0 ) {
+        fprintf( stderr,
+            "store %s failed: Sent wrong number of bytes to server\n",
+            pathdesc );
+        goto sn_error;
+    }
+
+    /* End transaction with server */
+    if ( snet_writef( sn, ".\r\n" ) < 0 ) {
+	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	goto sn_error;
+    }
+    if ( verbose ) fputs( "\n>>> .\n", stdout );
+    tv = timeout;
+    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
+	if ( snet_eof( sn )) {
+	    fprintf( stderr, "store %s failed: Connection closed\n",
+		pathdesc );
+	} else {
+	    fprintf( stderr, "store %s failed: %s\n", pathdesc,
+		strerror( errno ));
+	}
+	goto sn_error;
+    }
+    if ( *line != '2' ) {
+	/* Error from server - transaction aborted */
+        fprintf( stderr, "%s\n", line );
+        return( -1 );
+    }
+
+    if ( !quiet && !verbose ) {
+        printf( "%s: stored as zero length applefile\n", path );
+    }
+    return( 0 );
+
+sn_error:
+    snet_close( sn );
+    exit( 2 );
+}
+
 #else /* __APPLE__ */
     int
 stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize, 
     char *trancksum, struct applefileinfo *afinfo )
+{
+    errno = EINVAL;
+    return( -1 );
+}
+
+    int
+n_stor_file( SNET *sn, char *pathdesc, char *path )
 {
     errno = EINVAL;
     return( -1 );

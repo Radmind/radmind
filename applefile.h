@@ -37,6 +37,8 @@
 
 #define FINFOLEN	32
 
+#define FI_CREATOR_OFFSET 4
+
 /* applesingle entry */
 struct as_entry {
     uint32_t	ae_id;

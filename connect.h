@@ -14,5 +14,6 @@ int retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 int n_stor_file( SNET *sn, char *pathdesc, char *path );
 int stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
     char *trancksum );
+int n_stor_applefile( SNET *sn, char *pathdesc, char *path );
 int stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     char *trancksum, struct applefileinfo *afinfo );

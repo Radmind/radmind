@@ -41,7 +41,7 @@ update( const char *path, char *displaypath, int present, int newfile,
     char		type;
 #ifdef __APPLE__
     char			fi_data[ FINFOLEN ];
-    extern struct attrlist     alist;
+    extern struct attrlist	setalist;
     static char                 null_buf[ 32 ] = { 0 };
 #endif /* __APPLE__ */
 
@@ -161,7 +161,7 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    memcpy( fi_data, null_buf, FINFOLEN );
 	}
 	if ( memcmp( afinfo->ai.ai_data, fi_data, FINFOLEN ) != 0 ) {
-	    if ( setattrlist( path, &alist,
+	    if ( setattrlist( path, &setalist,
 		    fi_data, FINFOLEN, FSOPT_NOFOLLOW ) != 0 ) {
 		fprintf( stderr,
 		    "retrieve %s failed: Could not set attributes\n", path );

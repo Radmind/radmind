@@ -32,7 +32,7 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 {
 #ifdef __APPLE__
     static char			null_buf[ FINFOLEN ] = { 0 };
-    extern struct attrlist 	alist;
+    extern struct attrlist 	getalist;
 #endif /* __APPLE__ */
 
     if ( lstat( path, st ) != 0 ) {
@@ -43,7 +43,7 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 #ifdef __APPLE__
 	/* Check to see if it's an HFS+ file */
 	if ( afinfo != NULL ) {
-	    if (( getattrlist( path, &alist, &afinfo->ai,
+	    if (( getattrlist( path, &getalist, &afinfo->ai,
 		    sizeof( struct attr_info ), FSOPT_NOFOLLOW ) == 0 )) {
 		if (( afinfo->ai.ai_rsrc_len > 0 )
 			|| ( memcmp( afinfo->ai.ai_data, null_buf,
@@ -61,7 +61,7 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 #ifdef __APPLE__
 	/* Get any finder info */
 	if ( afinfo != NULL ) {
-	    getattrlist( path, &alist, &afinfo->ai,
+	    getattrlist( path, &getalist, &afinfo->ai,
 		sizeof( struct attr_info ), FSOPT_NOFOLLOW );
 	}
 #endif /* __APPLE__ */

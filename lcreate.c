@@ -406,11 +406,22 @@ main( int argc, char **argv )
 		}
 
 		if ( negative ) {
-		    if (( rc = n_stor_file( sn, pathdesc,
-			    decode( targv[ 1 ] ))) < 0 ) {
-			fprintf( stderr, "failed to store file %s\n", dpath );
-			exitcode = 2;
-			break;
+		    if ( *targv[ 0 ] == 'a' ) {
+			if (( rc = n_stor_applefile( sn, pathdesc,
+				decode( targv[ 1 ] ))) < 0 ) {
+			    fprintf( stderr, "failed to store file %s\n",
+				dpath );
+			    exitcode = 2;
+			    break;
+			}
+		    } else {
+			if (( rc = n_stor_file( sn, pathdesc,
+				decode( targv[ 1 ] ))) < 0 ) {
+			    fprintf( stderr, "failed to store file %s\n",
+				dpath );
+			    exitcode = 2;
+			    break;
+			}
 		    }
 		} else {
 		    if ( *targv[ 0 ] == 'a' ) {

@@ -219,7 +219,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     char			*line;
     struct as_header		ah;
     extern struct as_header	as_header;
-    extern struct attrlist	alist;
+    extern struct attrlist	setalist;
     struct as_entry		ae_ents[ 3 ]; 
     struct timeval		tv;
     extern EVP_MD       	*md;
@@ -272,7 +272,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     }  
     if ( verbose ) printf( "<<< " );
     if ( size < ( AS_HEADERLEN + ( 3 * sizeof( struct as_entry )) +
-	    sizeof( finfo ))) {
+	    FINFOLEN )) {
 	fprintf( stderr,
 	    "retrieve applefile %s failed: AppleSingle-encoded file too "
 	    "short\n", path );
@@ -325,12 +325,12 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 
     /* read finder info */
     tv = timeout;
-    if (( rc = snet_read( sn, finfo, sizeof( finfo ), &tv )) <= 0 ) {
+    if (( rc = snet_read( sn, finfo, FINFOLEN, &tv )) <= 0 ) {
 	fprintf( stderr, "retrieve applefile %s failed: 6-%s\n", pathdesc,
 	    strerror( errno ));
 	return( -1 );
     }
-    if ( rc != sizeof( finfo )) {
+    if ( rc != FINFOLEN ) {
 	fprintf( stderr,
 	    "retrieve applefile %s failed: corrupt AppleSingle-encoded file\n",
 	    path );
@@ -430,7 +430,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     if ( verbose ) printf( "\n" );
 
     /* set finder info for newly decoded applefile */
-    if ( setattrlist( temppath, &alist, finfo, sizeof( finfo ),
+    if ( setattrlist( temppath, &setalist, finfo, FINFOLEN,
 	    FSOPT_NOFOLLOW ) != 0 ) {
 	fprintf( stderr,
 	    "retrieve applefile %s failed: Could not set attributes\n",
