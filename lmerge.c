@@ -234,7 +234,12 @@ main( int argc, char **argv )
 
     if ( !force ) {
 	/* Create file/tname dir */
-	sprintf( npath, "%s/../file/%s.%d", tpath, tname, (int)getpid() );
+	if ( snprintf( npath, MAXPATHLEN, "%s/../file/%s.%d", tpath, tname,
+		(int)getpid()) > MAXPATHLEN -1 ) {
+	    fprintf( stderr, "%s/../file/%s.%d: path too long\n", tpath, tname,
+		(int)getpid());
+	    exit( 1 );
+	}
 	if ( mkdir( npath, (mode_t)0777 ) != 0 ) {
 	    perror( npath );
 	    exit( 1 );
@@ -242,7 +247,12 @@ main( int argc, char **argv )
     }
 
     /* Create temp transcript/tname file */
-    sprintf( opath, "%s/%s.%d", tpath, tname, (int)getpid() );
+    if ( snprintf( opath, MAXPATHLEN, "%s/%s.%d", tpath, tname, (int)getpid())
+	    > MAXPATHLEN - 1 ) {
+	fprintf( stderr, "%s/%s.%d: path too long\n", tpath, tname,
+	    (int)getpid());
+	exit( 1 );
+    }
     if ( ( ofd = open( opath, O_WRONLY | O_CREAT | O_EXCL,
 	    0666 ) ) < 0 ) {
 	perror( opath );
@@ -292,8 +302,15 @@ main( int argc, char **argv )
 		    }
 		    if ( ( force ) && ( *trans[ j ]->targv[ 0 ] == 'f' ) ) {
 			/* Remove file from lower precedence transcript */
-			sprintf( opath,"%s/../file/%s/%s", trans[ j ]->path,
-			    trans[ j ]->name, trans[ j ]->filepath );
+			if ( snprintf( opath, MAXPATHLEN, "%s/../file/%s/%s",
+				trans[ j ]->path, trans[ j ]->name,
+				trans[ j ]->filepath ) > MAXPATHLEN -1 ) {
+			    fprintf( stderr,
+				"%s/../file/%s/%s: path too long\n",
+				trans[ j ]->path, trans[ j ]->name,
+				trans[ j ]->filepath );
+			    exit( 1 );
+			}
 			if ( unlink( opath ) != 0 ) {
 			    perror( opath );
 			    exit( 1 );
@@ -331,16 +348,32 @@ main( int argc, char **argv )
 	     * is not recreated for every file.  Only if link fails is
 	     * mkdirs() called.
 	     */
-	    sprintf( opath,"%s/../file/%s/%s", trans[ candidate ]->path,
-		trans[ fileloc ]->name,
-		trans[ candidate ]->filepath );
+	    if ( snprintf( opath, MAXPATHLEN, "%s/../file/%s/%s",
+		    trans[ candidate ]->path, trans[ fileloc ]->name,
+		    trans[ candidate ]->filepath ) > MAXPATHLEN - 1 ) {
+		fprintf( stderr, "%s/../file/%s/%s: path too long\n",
+		    trans[ candidate ]->path, trans[ fileloc ]->name,
+		    trans[ candidate ]->filepath );
+		exit( 1 );
+	    }
 
 	    if ( !force ) {
-		sprintf( npath, "%s/../file/%s.%d/%s", tpath, tname,
-		    (int)getpid(), trans[ candidate ]->filepath );
+		if ( snprintf( npath, MAXPATHLEN, "%s/../file/%s.%d/%s",
+			tpath, tname, (int)getpid(),
+			trans[ candidate ]->filepath ) > MAXPATHLEN - 1 ) {
+		    fprintf( stderr, "%s/../file/%s.%d/%s: path too long\n",
+			tpath, tname, (int)getpid(),
+			trans[ candidate ]->filepath );
+		    exit( 1 );
+		}
 	    } else {
-		sprintf( npath, "%s/../file/%s/%s", tpath, tname,
-		    trans[ candidate ]->filepath );
+		if ( snprintf( npath, MAXPATHLEN, "%s/../file/%s/%s", tpath,
+			tname, trans[ candidate ]->filepath )
+			> MAXPATHLEN - 1 ) {
+		    fprintf( stderr, "%s/../file/%s/%s: path too long\n", 
+			tpath, tname, trans[ candidate ]->filepath );
+		    exit( 1 );
+		}
 	    }
 
 	    /* First try to link file */
@@ -350,12 +383,26 @@ main( int argc, char **argv )
 		if ( ( file = strrchr( trans[ candidate ]->targv[ 1 ], '/' ) )
 			!= NULL ) {
 		    if ( !force ) {
-			sprintf( npath, "%s/../file/%s.%d/%s", tpath, tname,
-			    (int)getpid(), 
-			    trans[ candidate ]->filepath );
+			if ( snprintf( npath, MAXPATHLEN, "%s/../file/%s.%d/%s",
+				tpath, tname, (int)getpid(), 
+				trans[ candidate ]->filepath )
+				> MAXPATHLEN - 1 ) {
+			    fprintf( stderr,
+				"%s/../file/%s.%d/%s: path too long\n",
+				tpath, tname, (int)getpid(),
+				trans[ candidate ]->filepath );
+			    exit( 1 );
+			}
 		    } else {
-			sprintf( npath, "%s/../file/%s/%s", tpath, tname,
-			    trans[ candidate ]->filepath );
+			if ( snprintf( npath, MAXPATHLEN, "%s/../file/%s/%s",
+				tpath, tname, trans[ candidate ]->filepath )
+				> MAXPATHLEN - 1 ) {
+			    fprintf( stderr,
+				"%s/../file/%s/%s: path too long\n",
+				tpath, tname, trans[ candidate ]->filepath );
+			    exit( 1 );
+			}
+
 		    }
 		    if ( mkdirs( npath ) != 0 ) {
 			fprintf( stderr, "%s: mkdirs failed\n", npath );
@@ -389,7 +436,12 @@ skipline:
 
     if ( force && ( dirlist != NULL ) ) {
 	while ( dirlist != NULL ) {
-	    sprintf( opath, "%s/../file/%s/%s", tpath, tname, dirlist->path );
+	    if ( snprintf( opath, MAXPATHLEN, "%s/../file/%s/%s", tpath,
+		    tname, dirlist->path ) > MAXPATHLEN ) {
+		fprintf( stderr, "%s/../file/%s/%s: path too long\n", 
+		    tpath, tname, dirlist->path );
+		exit( 1 );
+	    }
 	    if ( unlink( opath ) != 0 ) {
 		perror( opath );
 		exit( 1 );
@@ -401,15 +453,34 @@ skipline:
 
     /* Rename temp transcript and file structure */
     if ( !force ) {
-	sprintf( opath, "%s/../file/%s.%d", tpath, tname, (int)getpid() );
-	sprintf( npath, "%s/../file/%s", tpath, tname );
+	if ( snprintf( opath, MAXPATHLEN, "%s/../file/%s.%d", tpath,
+		tname, (int)getpid()) > MAXPATHLEN - 1 ) {
+	    fprintf( stderr, "%s/../file/%s.%d: path too long\n",
+		tpath, tname, (int)getpid());
+	    exit( 1 );
+	}
+	if ( snprintf( npath, MAXPATHLEN, "%s/../file/%s", tpath, tname )
+		> MAXPATHLEN - 1 ) {
+	    fprintf( stderr, "%s/../file/%s: path too long\n", tpath, tname );
+	    exit( 1 );
+	}
 	if ( rename( opath, npath ) != 0 ) {
 	    perror( npath );
 	    exit( 1 );
 	}
     }
-    sprintf( opath, "%s/%s.%d", tpath, tname, (int)getpid() );
-    sprintf( npath, "%s/%s", tpath, tname );
+    if ( snprintf( opath, MAXPATHLEN, "%s/%s.%d", tpath, tname, (int)getpid())
+	    > MAXPATHLEN - 1 ) {
+	fprintf( stderr, "%s/%s.%d: path too long\n", tpath, tname,
+	    (int)getpid());
+	exit( 1 );
+    }
+    if ( snprintf( npath, MAXPATHLEN, "%s/%s", tpath, tname )
+	    > MAXPATHLEN - 1 ) {
+	fprintf( stderr, "%s/%s: path too long\n", tpath, tname );
+	exit( 1 );
+    }
+
     if ( rename( opath, npath ) != 0 ) {
 	perror( npath );
 	exit ( 1 );
