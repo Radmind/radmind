@@ -153,7 +153,6 @@ DISTDIR=../radmind-${VERSION}
 dist   : clean
 	mkdir ${DISTDIR}
 	tar chfFFX - EXCLUDE . | ( cd ${DISTDIR}; tar xvf - )
-	chmod +w ${DISTDIR}/Makefile
 	echo ${VERSION} > ${DISTDIR}/VERSION
 
 .PHONY : man
