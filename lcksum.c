@@ -328,7 +328,7 @@ done:
 	free( line );
     }
 
-    if ( !prefixfound ) {
+    if ( !prefixfound && prefix != NULL ) {
 	if ( verbose ) printf( "warning: prefix \"%s\" not found\n", prefix );
     }
 
