@@ -605,8 +605,8 @@ command_k( char *path_config )
 	    continue;
 	}
 
-	if (( strcasecmp( av[ 0 ], remote_host ) == 0 )
-		|| ( strcasecmp( av[ 0 ], remote_addr ) == 0 )) {
+	if ( wildcard( av[ 0 ], remote_host )
+		|| wildcard( av[ 0 ], remote_addr )) {
 	    sprintf( command_file, "command/%s", av[ 1 ] );
 
 	    /* Create list of transcripts */
