@@ -34,6 +34,7 @@ int		linenum = 0;
 int		chksum = 0;
 int		verbose = 0;
 int		special = 0;
+int		safe = 0;
 char		transcript[ 2 * MAXPATHLEN ];
 
 int apply( FILE *f, char *parent, SNET *sn );
@@ -183,7 +184,7 @@ apply( FILE *f, char *parent, SNET *sn )
 		perror( "download" );
 		return( 1 );
 	    }
-	    if ( st.st_nlink > 0 ) {
+	    if ( !safe && ( st.st_nlink > 1 )) {
 		if ( copyover( temppath, path ) != 0 ) {
 		    fprintf( stderr, "%s\n", temppath );
 		    return( 1 );
@@ -236,7 +237,7 @@ main( int argc, char **argv )
     char		*version = "1.0";
     SNET		*sn;
 
-    while ( ( c = getopt ( argc, argv, "c:h:np:Vv" ) ) != EOF ) {
+    while ( ( c = getopt ( argc, argv, "c:h:np:sVv" ) ) != EOF ) {
 	switch( c ) {
 	case 'c':
 	    if ( strcasecmp( optarg, "sha1" ) != 0 ) {
@@ -261,6 +262,9 @@ main( int argc, char **argv )
 		port = se->s_port;
 	    }
 	    break;
+	case 's':
+	    safe = 1;
+	    break;
 	case 'V':
 	    printf( "%s\n", version );
 	    exit( 0 );
@@ -278,7 +282,7 @@ main( int argc, char **argv )
     }
 
     if ( err || ( argc - optind != 1 ) ) {
-	fprintf( stderr, "usage: lapply [ -nv ] " );
+	fprintf( stderr, "usage: lapply [ -nsv ] " );
 	fprintf( stderr, "[ -h host ] [ -port ] " );
 	fprintf( stderr, "difference-transcript\n" );
 	exit( 1 );
@@ -287,20 +291,40 @@ main( int argc, char **argv )
     if ( network ) {
 	if( ( sn = connectsn( host, port )  ) == NULL ) {
 	    fprintf( stderr, "%s:%d connection failed.\n", host, port );
-	    exit( 1 );
+	    goto error0;
 	}
     }
 
     if ( ( f = fopen( argv[ optind ], "r" ) ) == NULL ) { 
 	perror( argv[ 1 ] );
-	exit( 1 );
+	goto error1;
     }
 
     if ( apply( f, NULL, sn ) != 0 ) {
-	fclose( f );
+	goto error2;
+    }
+    
+    if ( fclose( f ) != 0 ) {
+	perror( argv[ optind ] );
+	goto error1;
+    }
+
+    if ( network ) {
+	if ( ( closesn( sn ) ) !=0 ) {
+	    fprintf( stderr, "can not close sn\n" );
+	    goto error0;
+	}
+    }
+
+    exit( 0 );
+
+error2:
+    if ( fclose( f ) != 0 ) {
+	perror( argv[ optind ] );
 	exit( 1 );
     }
 
+error1:
     if ( network ) {
 	if ( ( closesn( sn ) ) !=0 ) {
 	    fprintf( stderr, "can not close sn\n" );
@@ -308,5 +332,6 @@ main( int argc, char **argv )
 	}
     }
 
-    exit( 0 );
+error0:
+    exit( 1 );
 }
