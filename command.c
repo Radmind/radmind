@@ -243,7 +243,14 @@ keyword( int ac, char *av[] )
 	    return( -1 );
 	}
 
-	if ( strstr( av[ 3 ], "../" ) != NULL ) {
+	/* Check for leading ../ */
+	if ( strncmp( av[ 3 ], "../", strlen( "../" )) == 0 ) {
+	    syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s", av[ 3 ] );
+	    return( -1 );
+	}
+
+	/* Check for internal /../ */
+	if ( strstr( av[ 3 ], "/../" ) != NULL ) {
 	    syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s", av[ 3 ] );
 	    return( -1 );
 	}
