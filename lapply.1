@@ -1,0 +1,71 @@
+'\" t
+.\" This is a comment. The line above indicates to "man" that "tbl"
+.\" should be run on the input. The 4th section has an example of
+.\" tbl macros used in a man page.
+.TH TEMPLATE "Section" "Date" "Author" "Section Title"
+.SH NAME
+.B lapply 
+\- apply a difference transcript to a filesystem 
+.SH SYNOPSIS
+.B template
+is a template for other man pages. Readers should examine the source
+for the
+.B template
+man page to aid in creating new man pages. A basic outline for man
+pages is given, as are examples for the use of bolded text,
+combinations of bold and roman text, and the use of
+.BR tbl .
+.SH OTHER SECTIONS
+Sections are begun as above. The text immediately following a section
+header is interpreted as paragraph text.
+.LP
+A non-section-beginning paragraph can be started like this.
+.SH USING TBL
+Man pages may be passed through
+.B tbl
+(or
+.BR eqn ,
+.BR refer ,
+.BR vgrind )
+to create nicely formated tables. The following table was created
+with
+.BR tbl .
+You should examine the
+.BR tbl (1)
+man page for more details.
+.\"  This is a tbl-style table. See the man page for tbl.
+.sp 2
+.TS
+center;
+lb   lb   rb
+l    l    r .
+Name	Position	Salary
+=
+Blair, B. S.	Sr Net Op Tech	$24,000
+Craig, W.	Sys Res Programmer I	$30,731
+Johnson, D.	Manage-ITD	$58,182
+Aupperle, E	Assoc Director	$89,335
+Van Houweling, D.	VP Info Tech	$152,004
+.TE
+.LP
+Tables are extremely easy, and add greatly to the organization of
+manual entries.
+.SH OPTIONS
+.TP
+.B \-nothing
+Template has no options, but this is a good example of how options might be
+done.  Really this is an example of the
+.B .TP
+macro.
+.TP 20
+.B \-andanotherthing
+You can also give
+.B .TP
+a tab width.
+.SH SEE ALSO
+.BR man (1),
+.BR eqn (1),
+.BR refer (1),
+.BR tbl (1),
+.BR vgrind (1),
+.BR man (7).
