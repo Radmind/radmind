@@ -417,7 +417,7 @@ main( int argc, char **argv )
 
     if ( err || ( argc - optind != 0 )) {
 	fprintf( stderr,
-		"usage: ktcheck -c checksum [ -nV ] [ -q | -v | -i ] " );
+		"usage: ktcheck -c checksum [ -nrV ] [ -q | -v | -i ] " );
 	fprintf( stderr, "[ -K command file ] " );
 	fprintf( stderr, "[ -h host ] [ -p port ] " );
 	fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );

@@ -215,6 +215,7 @@ main( int argc, char **argv, char **envp )
 
     if ( err || ( argc - optind != 1 )) {
 	fprintf( stderr, "usage: %s ", argv[ 0 ] );
+	fprintf( stderr, "[ -r ] " );
 	fprintf( stderr, "[ -T transcript | -S ] " );
 	fprintf( stderr, "[ -h host ] [ -p port ] [ -vV ] " );
         fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );
