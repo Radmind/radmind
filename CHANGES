@@ -1,4 +1,6 @@
 0.8.0
+    Added access checking to the retr and stat commands on sever based on a
+	clients command file.
     Fixed broken 'make install'.
     Cleaned up example negative transcript.
     Added wild card support for hosts in config file.
