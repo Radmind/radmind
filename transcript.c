@@ -274,8 +274,8 @@ t_compare( struct llist *cur, struct transcript *tran, char *rpath,
 transcript( struct llist *new, char *name, char *rpath, FILE *out )
 {
 
-    int			move = TRUE;
-    int			pos = FALSE;
+    int			move;
+    int			pos = 1;
     int 		count;
     char		buf[ MAXPATHLEN ];
     char		temp[ MAXPATHLEN ];
@@ -299,27 +299,31 @@ printf( "in tran\n" );
     }
 
     if ( S_ISDIR( new->ll_info.stat.st_mode )) {
-	move = MOVE;
+	move = 1;
     } else { 
-	move = NOMOVE;
+	move = 0;
     }
 
     for ( ; ; ) {
     	/* find the correct transcript to start with */
     	if ( tran_head != NULL ) {
-		for ( begin_tran = tran_head, t_cur = tran_head->t_next;
-				t_cur != NULL; t_cur = t_cur->t_next ) {
-			/* compare heads of trans */
-			if ( t_cur->t_flag != T_EOF ) {
-				comp = strcmp( begin_tran->t_info.name, 
-					t_cur->t_info.name );
-				if (( comp > 0 ) || ( comp < 0 )) {
-					begin_tran = t_cur;
-printf( "begin tran is now: %s\n", begin_tran->t_info.name );
-					break;
-   				}
-			}
+	    for ( begin_tran = tran_head, t_cur = tran_head->t_next;
+		    t_cur != NULL; t_cur = t_cur->t_next ) {
+		/* compare heads of trans */
+		if ( begin_tran->t_flag == T_EOF ) {
+		    begin_tran = t_cur;
+printf( "begin_tran is now: %s\n", begin_tran->file_name );
+		    continue;
 		}
+		if ( t_cur->t_flag != T_EOF ) {
+		    comp = strcmp( begin_tran->t_info.name, 
+			    t_cur->t_info.name );
+		    if ( comp > 0 ) {
+			begin_tran = t_cur;
+printf( "begin_tran is now: %s\n", begin_tran->file_name );
+		    }
+		}
+	    }
      	}
 
      	/* move ahead other transcripts that match */
@@ -334,24 +338,32 @@ printf( "begin tran is now: %s\n", begin_tran->t_info.name );
 	}
 
 	ret = t_compare( new, begin_tran, rpath, out );
-	if (( ret != -1 ) && ( begin_tran != NULL )) {
-		t_parse( begin_tran );
-		if (( begin_tran->t_type == NEG ) && ( ret == 0 )) {
-			pos = FALSE;
-        	}
-		break;
-	} else if (( ret == -1 )) {
-		break;
-	}			
+	switch ( ret ) {
+	case -1 :
+printf( "case -1: %d %s %s\n", move, begin_tran->t_info.name, new->ll_info.name );
+	    return( move ? POS : NEG );
 
+	case 0 :
+printf( "case 0: %d %s %s\n", move, begin_tran->t_info.name, new->ll_info.name );
+	    /* t_compare() can't return 0 if begin_tran is NULL */
+	    t_parse( begin_tran );
+	    if ( begin_tran->t_type == NEG ) {
+		return( NEG );
+	    } else {
+		return( move ? POS : NEG );
+	    }
+
+	case 1 :
+printf( "case 1: %d %s %s\n", move, begin_tran->t_info.name, new->ll_info.name );
+	    /* t_compare() can't return -1 if begin_tran is NULL */
+	    t_parse( begin_tran );
+	    break;
+
+	default :
+	    fprintf( stderr, "Oops!\n" );
+	    exit( 1 );
+	}
      }
-
-    if (( move == TRUE ) && ( pos == TRUE )) {
-	return POS;
-    } else {
-printf( "returning neg for: %s\n", new->ll_info.name );
-	return NEG;
-    }
 }
 
     static struct transcript *
