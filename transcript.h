@@ -43,7 +43,7 @@ struct transcript {
 };
  
 int	transcript( struct pathinfo * );
-void	transcript_init( char * );
+void	transcript_init( char *, char * );
 void	transcript_free( void );
 char	*hardlink( struct pathinfo * );
 void	hardlink_free( void );
