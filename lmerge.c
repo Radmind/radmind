@@ -392,10 +392,10 @@ main( int argc, char **argv )
 		goto outputline;
 	    }
 	    /* skip items to be removed or files not uploaded */
-	    if ( ( trans[ candidate ]->remove ) ||
-		    ( ( noupload ) && ( candidate == 0 ) &&
-			( fileloc == 0 ) ) ) {
-		if ( force && ( *trans[ candidate ]->targv[ 0 ] == 'd' ) ) {
+	    if (( trans[ candidate ]->remove ) ||
+		    (( noupload ) && ( candidate == 0 ) && ( fileloc == 0 ))) {
+		if ( match && force &&
+			( *trans[ candidate ]->targv[ 0 ] == 'd' )) {
 		    new_node = create_node( trans[ candidate ]->targv[ 1 ] );
 		    new_node->next = dirlist;
 		    dirlist = new_node;
@@ -547,7 +547,7 @@ outputline:
 		exit( 2 );
 	    }
 skipline:
-	    if (( trans[ candidate ]->remove ) && match ) {
+	    if (( trans[ candidate ]->remove ) && !match ) {
 		/* Recreate unmatched "-" line */
 		if ( fputs( trans[ candidate ]->line, ofs ) == EOF ) {
 		    perror( trans[ candidate ]->line );
@@ -572,16 +572,17 @@ skipline:
 		exit( 2 );
 	    }
 	    if ( rmdir( opath ) != 0 ) {
-		if ( errno == EEXIST ) {
-		    fprintf( stderr, "%s: %s: Not empty, unable to remove.",
+		if (( errno == EEXIST ) || ( errno == ENOTEMPTY )) {
+		    fprintf( stderr, "%s: %s: Not empty, continuing...\n",
 			tname, node->path );
-		    fprintf( stderr, "  Continuing...\n" );
 		} else if ( errno != ENOENT ) {
 		    perror( opath );
 		    exit( 2 );
 		}
+	    } else {
+		if ( verbose ) printf( "%s: %s: unlinked\n", tname,
+		    node->path );
 	    }
-	    if ( verbose ) printf( "%s: %s: unlinked\n", tname, node->path );
 	    free_node( node );
 	}
     }
