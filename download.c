@@ -19,47 +19,18 @@ extern int 		linenum;
 extern int		verbose;
 extern int		chksum;
 
-    int
-retr( SNET *sn, char *pathdesc, char *path, char *file, char *chksumval )
-{
-    char 	*temppath;
-    char	fullpath[ MAXPATHLEN ];
-
-    /* Check for overflow with "/" and trailing "\n" */
-    if ( ( strlen( path ) + strlen( file ) + 2 ) >
-	    MAXPATHLEN ) {
-	fprintf( stderr, "path too long: %s/%s\n", path, file );
-	return( 1 );
-    }
-    sprintf( fullpath, "%s/%s", path, file );
-
-    /* Download file - Must free temppath */
-    if ( ( temppath = download( sn, pathdesc, path, file, chksumval ) )
-	    == NULL ) {
-	fprintf( stderr, "%s: unable to download\n", fullpath );
-	return( 1 );
-    }
-    if ( rename( temppath, fullpath ) != 0 ) {
-	perror( temppath );
-	return( 1 );
-    }
-    free( temppath );
-
-    return( 0 );
-}
-
 /*
  * Download requests path from sn and writes it to disk.  The path to
- * this new file is returned upon success and must be freed by the caller.
- * NULL is returned otherwise.
+ * this new file is returned upon success.  This function is not
+ * reentrant.
  */
 
     char *
-download( SNET *sn, char *pathdesc, char *path, char *file, char *chksumval ) 
+retr( SNET *sn, char *pathdesc, char *path, char *chksumval ) 
 {
     struct timeval      tv;
     char 		*line;
-    char                *temppath;
+    static char          temppath[ MAXPATHLEN ];
     unsigned int	rr;
     int			fd;
     size_t              size;
@@ -89,24 +60,11 @@ download( SNET *sn, char *pathdesc, char *path, char *file, char *chksumval )
     }
 
     /*Create temp file name*/
-    temppath = (char *)malloc( MAXPATHLEN );
-    if ( temppath == NULL ) { perror( "malloc" );
-	return ( NULL );
-    }
-    if ( *path == '\0' ) {
-	if ( snprintf( temppath, MAXPATHLEN, "%s.radmind.%i",
-		file, getpid() ) > MAXPATHLEN ) {
-	    fprintf( stderr, "%s.radmind.%i: too long", file,
-		    (int)getpid() );
-	    goto error3;
-	}
-    } else {
-	if ( snprintf( temppath, MAXPATHLEN, "%s/%s.radmind.%i",
-		path, file, getpid() ) > MAXPATHLEN ) {
-	    fprintf( stderr, "%s/%s.radmind.%i: too long", path, file,
-		    (int)getpid() );
-	    goto error3;
-	}
+    if ( snprintf( temppath, MAXPATHLEN, "%s.radmind.%i",
+	    path, getpid() ) > MAXPATHLEN ) {
+	fprintf( stderr, "%s.radmind.%i: too long", path,
+		(int)getpid() );
+	goto error3;
     }
 
     /* Open file */
