@@ -1,0 +1,16 @@
+Title                	Server tutorial files
+Version              	_RADMIND_VERSION
+Description          	This package installs radmind server tutorial files
+
+DefaultLocation      	/private/var/radmind
+Relocatable          	NO
+
+NeedsAuthorization   	YES
+Application          	NO
+InstallOnly          	NO
+DisableStop         	NO
+rootVolumeOnly		YES
+RequiresReboot 		NO
+UseUserMask 		YES
+OverwritePermissions 	NO
+InstallFat 		NO
