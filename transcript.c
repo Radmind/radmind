@@ -50,8 +50,7 @@ t_parse( struct transcript *tran )
     } while ((( ac = argcargv( line, &argv )) == 0 ) || ( *argv[ 0 ] == '#' ));
 
     if ( strlen( argv[ 0 ] ) != 1 ) {
-	fprintf( stderr,
-		"%s: line %d: %s is too long to be a type\n",
+	fprintf( stderr, "%s: line %d: %s is too long to be a type\n",
 		tran->t_fullname, tran->t_linenum, argv[ 0 ] );
 	exit( 1 );
     }
@@ -60,7 +59,7 @@ t_parse( struct transcript *tran )
 
     epath = decode( argv[ 1 ] );
     if ( pathcmp( epath, tran->t_pinfo.pi_name ) < 0 ) {
-	printf( "%s: line %d: bad sort order\n",
+	fprintf( stderr, "%s: line %d: bad sort order\n",
 		tran->t_fullname, tran->t_linenum );
 	exit( 1 );
     }
