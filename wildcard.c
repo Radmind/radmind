@@ -1,52 +1,73 @@
-#include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
+
+#include "wildcard.h"
 
     int
-wildcard( char *key, char *string )
+wildcard( char *wild, char *p )
 {
-    char	*p1, *p2, *star = NULL;
+    int		min, max;
+    int		i;
 
-    p1 = key;
-    p2 = string;
+    for (;;) {
+	switch ( *wild ) {
+	case '*' :
+	    wild++;
 
-    do {
-	switch( *p1 ) {
-	case '*':
-	    while ( *(p1+1) == '*' ) {
-		p1++;
-	    }
-	    if ( *(p1+1) == '\0' ) {
+	    if ( *wild == '\0' ) {
 		return( 1 );
-	    } else {
-		if (( star = strchr( p1+1, '*' )) != NULL ) {
-		    *star = '\0';
-		}
-		if (( p2 = strstr( p2, p1+1 )) == NULL ) {
-		    if ( star != NULL ) {
-			*star = '*';
-		    }
-		    return( 0 );
-		} else {
-		    if ( star != NULL ) {
-			*star = '*';
-		    }
-		    return( wildcard( p1+1, p2 ));
+	    }
+	    for ( i = 0; p[ i ] != '\0'; i++ ) {
+		if ( wildcard( wild, &p[ i ] )) {
+		    return( 1 );
 		}
 	    }
-	    break;
-	default:
-	    if ( *p1 != *p2 ) {
-		return( 0 );
-	    } else {
-		p1++;
-		p2++;
-	    }
-	    break;
-	}
-    } while (( *p1 != '\0' ) && ( *p2 != '\0' )); 
+	    return( 0 );
 
-    if ( *p2 == '\0' ) {
-	return( 1 );
-    } else {
-	return( 0 );
+	case '<' :
+	    wild++;
+
+	    if ( ! isdigit( *p )) {
+		return( 0 );
+	    }
+	    i = atoi( p );
+	    while ( isdigit( *p )) p++;
+
+	    if ( ! isdigit( *wild )) {
+		return( 0 );
+	    }
+	    min = atoi( wild );
+	    while ( isdigit( *wild )) wild++;
+
+	    if ( *wild++ != '-' ) {
+		return( 0 );
+	    }
+
+	    if ( ! isdigit( *wild )) {
+		return( 0 );
+	    }
+	    max = atoi( wild );
+	    while ( isdigit( *wild )) wild++;
+
+	    if ( *wild++ != '>' ) {
+		return( 0 );
+	    }
+
+	    if (( i < min ) || ( i > max )) {
+		return( 0 );
+	    }
+	    break;
+
+	case '\\' :
+	    wild++;
+	default :
+	    if ( *wild != *p ) {
+		return( 0 );
+	    }
+	    if ( *wild == '\0' ) {
+		return( 1 );
+	    }
+	    wild++, p++;
+	}
     }
 }

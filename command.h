@@ -3,11 +3,6 @@
  * All Rights Reserved.  See COPYRIGHT.
  */
 
-/*
- * Copyright (c) 1998 Regents of The University of Michigan.
- * All Rights Reserved.  See COPYRIGHT.
- */
-
 #ifdef __STDC__
 #define ___P(x)		x
 #else /* __STDC__ */
@@ -24,5 +19,3 @@ struct command {
     char	*c_name;
     int		(*c_func) ___P(( SNET *, int, char *[] ));
 };
-
-int wildcard( char *key, char *string );

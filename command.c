@@ -35,6 +35,7 @@
 #include "code.h"
 #include "mkdirs.h"
 #include "list.h"
+#include "wildcard.h"
 
 #ifdef sun
 #define MIN(a,b)	((a)<(b)?(a):(b))
