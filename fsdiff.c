@@ -145,7 +145,7 @@ main( int argc, char **argv )
 
 	case 'V':		
 	    printf( "%s\n", version );
-	    printf( "sha1\n" );
+	    printf( "%s\n", checksumlist\n" );
 	    exit( 0 );
 
 	case '?':
