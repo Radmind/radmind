@@ -55,7 +55,7 @@ decode( char *line )
 {
     /* static */
     static char     buf[ MAXPATHLEN ];
-    char            *temp;
+    char	    *temp;
 
     if ( strlen( line ) > ( 2 * MAXPATHLEN )) {
 	fprintf( stderr, "ERROR:  The path name is too long\n" );

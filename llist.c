@@ -8,7 +8,7 @@
     struct llist *
 ll_allocate( char *name ) 
 {
-    struct llist 	*new;
+    struct llist	*new;
 
     /* allocate space for next item in list */
     if (( new = (struct llist *)malloc( sizeof( struct llist ))) == NULL ) {
@@ -32,8 +32,8 @@ ll_free( struct llist *head )
     struct llist	*next;
     
     for ( ; head != NULL; head = next ) {
-        next = head->ll_next;
-        free( head );
+	next = head->ll_next;
+	free( head );
     }
 }
 
