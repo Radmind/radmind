@@ -376,10 +376,11 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
     } 
 
     /*
-     * after this point, name is in the fs, so if it's 'f', and
-     * checksums are on, get the checksum
+     * after this point, name is in the fs, so if it's 'f' or an 'a', and
+     * checksums are on, get the checksum.
+     * But no need to if its negative - we don't care what's in it.
      */
-    if ( cksum ) {
+    if ( cksum && tran->t_type != T_NEGATIVE ) {
 	if ( fs->pi_type == 'f' ) {
 	    if ( do_cksum( fs->pi_name, fs->pi_cksum_b64 ) < 0 ) {
 		perror( fs->pi_name );
