@@ -128,41 +128,8 @@ hardlink_free( )
     }
 }
 
-    void
-hardlink_set_changed( struct pathinfo *pinfo )
-{
-    struct devlist	*dcur;
-    struct inolist	*icur;
-
-    for ( dcur = dev_head; dcur != NULL; dcur = dcur->d_next ) {
-	if ( pinfo->pi_stat.st_dev <= dcur->d_dev ) {
-	    break;
-	}
-    }
-    
-    if (( dcur == NULL ) || ( pinfo->pi_stat.st_dev != dcur->d_dev )) {
-	fprintf( stderr, "hardlink_set_changed: oops 1!\n" );
-	exit( 1 );
-    }
-
-    for ( icur = dcur->d_ilist; icur != NULL; icur = icur->i_next ) {
-	if ( pinfo->pi_stat.st_ino <= icur->i_ino ) {
-	    break;
-	}
-    }
-
-    if (( icur == NULL ) || ( pinfo->pi_stat.st_ino != icur->i_ino )) {
-	fprintf( stderr, "hardlink_set_changed: oops 2!\n" );
-	exit( 1 );
-    }
-
-    icur->i_flag = 1;
-
-    return;
-}
-
     int
-hardlink_get_changed( struct pathinfo *pinfo )
+hardlink_changed( struct pathinfo *pinfo, int set )
 {
     struct devlist	*dcur;
     struct inolist	*icur;
@@ -174,7 +141,8 @@ hardlink_get_changed( struct pathinfo *pinfo )
     }
     
     if (( dcur == NULL ) || ( pinfo->pi_stat.st_dev != dcur->d_dev )) {
-	fprintf( stderr, "hardlink_set_changed: oops 1!\n" );
+	fprintf( stderr, "hardlink_changed: %s: dev not found\n",
+		pinfo->pi_name );
 	exit( 1 );
     }
 
@@ -185,8 +153,13 @@ hardlink_get_changed( struct pathinfo *pinfo )
     }
 
     if (( icur == NULL ) || ( pinfo->pi_stat.st_ino != icur->i_ino )) {
-	fprintf( stderr, "hardlink_set_changed: oops 2!\n" );
+	fprintf( stderr, "hardlink_changed: %s: ino not found\n",
+		pinfo->pi_name );
 	exit( 1 );
+    }
+
+    if ( set ) {
+	icur->i_flag = 1;
     }
 
     return( icur->i_flag );
