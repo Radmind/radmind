@@ -23,7 +23,7 @@ LIBS=		@LIBS@ -lsnet
 LDFLAGS=	-Llibsnet @LDFLAGS@ ${LIBS}
 INSTALL=	@INSTALL@
 
-CFLAGS=		${CWARN} -Ilibsnet @CFLAGS@
+CFLAGS=		${CWARN} -Ilibsnet @CFLAGS@ -DTLS
 
 BINTARGETS=     fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff twhich
 MAN1TARGETS=    fsdiff.1 ktcheck.1 lapply.1 lcksum.1 lcreate.1 lfdiff.1 \
@@ -42,14 +42,14 @@ FSDIFF_OBJ=     version.o fsdiff.o argcargv.o transcript.o llist.o code.o \
                 connect.o
 
 KTCHECK_OBJ=    version.o ktcheck.o argcargv.o retr.o base64.o code.o \
-                cksum.o list.o connect.o applefile.o
+                cksum.o list.o connect.o applefile.o tls.o
 
 LAPPLY_OBJ=     version.o lapply.o argcargv.o code.o base64.o retr.o \
                 radstat.o update.o cksum.o connect.o pathcmp.o \
-                applefile.o
+                applefile.o tls.o
 
 LCREATE_OBJ=    version.o lcreate.o argcargv.o code.o connect.o \
-                stor.o applefile.o base64.o cksum.o radstat.o
+                stor.o applefile.o base64.o cksum.o radstat.o tls.o
 
 LCKSUM_OBJ=     version.o lcksum.o argcargv.o cksum.o base64.o code.o \
                 pathcmp.o applefile.o connect.o
@@ -57,7 +57,7 @@ LCKSUM_OBJ=     version.o lcksum.o argcargv.o cksum.o base64.o code.o \
 LMERGE_OBJ=     version.o lmerge.o argcargv.o code.o pathcmp.o mkdirs.o
 
 LFDIFF_OBJ=     version.o lfdiff.o argcargv.o connect.o retr.o cksum.o \
-                base64.o applefile.o code.o
+                base64.o applefile.o code.o tls.o
 
 TWHICH_OBJ=     version.o argcargv.o code.o twhich.o pathcmp.o
 
@@ -259,6 +259,7 @@ package : all man info
 	cd ..; tar zvcf radmind-${VERSION}.mpkg.tgz radmind-${VERSION}.mpkg/*
 
 clean :
+	(cd libsnet; ${MAKE} ${MAKEFLAGS} clean)
 	rm -f *.o a.out core
 	rm -f ${TARGETS}
 	rm -rf man tmp
