@@ -100,6 +100,7 @@ main( int argc, char **argv )
     extern int		errno;
 #endif
     char		*cmd = "command.K";
+    char		*prepath = "./";
     int 		c;
     int 		errflag = 0;
 
@@ -125,7 +126,13 @@ main( int argc, char **argv )
 	    break;
 
 	case 'K':
-	    cmd = optarg;
+	    if (( cmd = strrchr( optarg, '/' )) == NULL ) {
+		cmd = optarg;
+	    } else {
+		prepath = optarg;
+		*cmd = (char) '\0';
+		cmd++;
+	    }
 	    break;
 
 	case '1':
@@ -161,7 +168,7 @@ main( int argc, char **argv )
     }
 
     /* initialize the transcripts */
-    transcript_init( cmd );
+    transcript_init( prepath, cmd );
     root = ll_allocate( argv[ optind ] );
 
     fs_walk( root );
