@@ -54,7 +54,7 @@ getstat( SNET *sn, char *description )
     if ( verbose ) printf( ">>> STAT %s\n", description );
 
     tv = timeout;
-    if ( ( line = snet_getline_multi( sn, logger, &tv ) ) == NULL ) {
+    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
 	perror( "snet_getline_multi" );
 	return( NULL );
     }
@@ -64,7 +64,7 @@ getstat( SNET *sn, char *description )
     }
 
     tv = timeout;
-    if ( ( line = snet_getline( sn, &tv ) ) == NULL ) {
+    if (( line = snet_getline( sn, &tv )) == NULL ) {
 	perror( "snet_getline 1" );
 	return( NULL );
     }
@@ -94,18 +94,18 @@ createspecial( SNET *sn, struct node *head )
     memset( fullpath, 0, MAXPATHLEN );
 
     if ( snprintf( fullpath, MAXPATHLEN, "%s/special.T.%i", commandpath,
-	    getpid() ) > MAXPATHLEN - 1 ) {
+	    getpid()) > MAXPATHLEN - 1 ) {
 	fprintf( stderr, "path too long: %s/special.T.%i\n", commandpath,
-		(int)getpid() );
+		(int)getpid());
 	exit( 2 );
     }
 
-    if ( ( fd = open( fullpath, O_WRONLY | O_CREAT | O_TRUNC, 0666 ) )
+    if (( fd = open( fullpath, O_WRONLY | O_CREAT | O_TRUNC, 0666 ))
 	    < 0 ) {
 	perror( fullpath );
 	return( 1 );
     }
-    if ( ( fs = fdopen( fd, "w" ) ) == NULL ) {
+    if (( fs = fdopen( fd, "w" )) == NULL ) {
 	perror( fullpath );
 	return( 1 );
     }
@@ -113,7 +113,7 @@ createspecial( SNET *sn, struct node *head )
     do {
 	sprintf( pathdesc, "SPECIAL %s", head->path);
 
-	if ( ( stats = getstat( sn, (char *)&pathdesc) ) == NULL ) {
+	if (( stats = getstat( sn, (char *)&pathdesc)) == NULL ) {
 	    return( 1 );
 	}
 
@@ -156,6 +156,7 @@ check( SNET *sn, char *type, char *path)
     char 	pathdesc[ 2 * MAXPATHLEN ];
     char        cchksum[ 29 ];
     int		tac;
+    struct stat	st;
 
     if ( path != NULL ) {
 	sprintf( pathdesc, "%s %s", type, path);
@@ -165,7 +166,7 @@ check( SNET *sn, char *type, char *path)
     }
 
     /* create full path */
-    if ( ( strlen( command ) + strlen( commandpath ) + 2 ) >
+    if (( strlen( command ) + strlen( commandpath ) + 2 ) >
 	    MAXPATHLEN ) {
 	fprintf( stderr, "path too long:%s\%s\n", commandpath,
 		path );
@@ -173,7 +174,7 @@ check( SNET *sn, char *type, char *path)
     }
     sprintf( fullpath, "%s/%s", commandpath, path );
 
-    if ( ( stats = getstat( sn, (char *)&pathdesc) ) == NULL ) {
+    if (( stats = getstat( sn, (char *)&pathdesc)) == NULL ) {
 	return( 2 );
     }
 
@@ -184,7 +185,7 @@ check( SNET *sn, char *type, char *path)
 	return( 2 );
     }
 
-    if ( ( schksum = strdup( targv[ 7 ] ) ) == NULL ) {
+    if (( schksum = strdup( targv[ 7 ] )) == NULL ) {
 	perror( "strdup" );
 	return( 2 );
     }
@@ -195,7 +196,7 @@ check( SNET *sn, char *type, char *path)
 	    return( 2 );
 	}
 	if ( update ) {
-	    if ( ( temppath = retr( sn, pathdesc, fullpath, NULL, schksum ) )
+	    if (( temppath = retr( sn, pathdesc, fullpath, NULL, schksum ))
 		    == NULL ) {
 		fprintf( stderr, "retr failed\n" );
 		return( 2 );
@@ -208,13 +209,19 @@ check( SNET *sn, char *type, char *path)
 	return( 1 );
     }
 
-    if ( strcmp( schksum, cchksum) != 0 ) {
+    if ((stat( fullpath, &st )) != 0 ) {
+	perror( fullpath );
+	return( 2 );
+    }
+
+    if (( strcmp( schksum, cchksum ) != 0 )
+	    || ( atoi( targv[ 6 ] ) != (int)st.st_size )) {
 	if ( update ) {
 	    if ( unlink( fullpath ) != 0 ) {
 		perror( fullpath );
 		return( 2 );
 	    }
-	    if ( ( temppath = retr( sn, pathdesc, fullpath, NULL, schksum ) )
+	    if (( temppath = retr( sn, pathdesc, fullpath, NULL, schksum ))
 		    == NULL ) {
 		fprintf( stderr, "retr failed\n" );
 		return( 2 );
@@ -255,7 +262,7 @@ main( int argc, char **argv )
     struct node		*head = NULL;
     struct stat		tst, lst;
 
-    while ( ( c = getopt ( argc, argv, "c:K:nhp:Vv" ) ) != EOF ) {
+    while (( c = getopt ( argc, argv, "c:K:nh:p:Vv" )) != EOF ) {
 	switch( c ) {
 	case 'c':
 	    if ( strcasecmp( optarg, "sha1" ) != 0 ) {
@@ -268,8 +275,8 @@ main( int argc, char **argv )
 	    host = optarg;
 	    break;
 	case 'p':
-	    if ( ( port = htons ( atoi( optarg ) ) ) == 0 ) {
-		if ( ( se = getservbyname( optarg, "tcp" ) ) == NULL ) {
+	    if (( port = htons ( atoi( optarg )) ) == 0 ) {
+		if (( se = getservbyname( optarg, "tcp" )) == NULL ) {
 		    fprintf( stderr, "%s: service unkown\n", optarg );
 		    exit( 2 );
 		}
@@ -277,14 +284,14 @@ main( int argc, char **argv )
 	    }
 	    break;
 	case 'K':
-	    if ( ( command = strrchr( optarg, '/' ) ) == NULL ) {
+	    if (( command = strrchr( optarg, '/' )) == NULL ) {
 		command = optarg;
 	    } else {
 		commandpath = optarg;
 		*command = (char) '\0';
 		command++;
 	    }
-	    if ( ( strlen( command ) + strlen( commandpath ) + 2 ) >
+	    if (( strlen( command ) + strlen( commandpath ) + 2 ) >
 		    MAXPATHLEN ) {
 		fprintf( stderr, "path too long:%s\%s\n", commandpath,
 			command );
@@ -312,20 +319,19 @@ main( int argc, char **argv )
 	}
     }
 
-    if ( err || ( argc - optind != 1 ) ) {
+    if ( err || ( argc - optind != 0 )) {
 	fprintf( stderr, "usage: ktcheck [ -nvV ] " );
 	fprintf( stderr, "[ -c checksum ] [ -K command file ] " );
 	fprintf( stderr, "[ -h host ] [ -p port ]\n" );
 	exit( 2 );
     }
-    host = argv[ optind ];
 
-    if( ( sn = connectsn( host, port )  ) == NULL ) {
+    if(( sn = connectsn( host, port )  ) == NULL ) {
 	fprintf( stderr, "%s:%d connection failed.\n", host, port );
 	exit( 2 );
     }
 
-    switch( check( sn, "COMMAND", NULL ) ) { 
+    switch( check( sn, "COMMAND", NULL )) { 
     case 0:
 	break;
     case 1:
@@ -337,7 +343,7 @@ main( int argc, char **argv )
     case 2:
 	exit( 2 );
     }
-    if ( ( strlen( command ) + strlen( commandpath ) + 2 ) >
+    if (( strlen( command ) + strlen( commandpath ) + 2 ) >
 	    MAXPATHLEN ) {
 	fprintf( stderr, "path too long:%s\%s\n", commandpath,
 		command );
@@ -345,7 +351,7 @@ main( int argc, char **argv )
     }
     sprintf( fullpath, "%s/%s", commandpath, command );
 
-    if ( ( f = fopen( fullpath, "r" ) ) == NULL ) {
+    if (( f = fopen( fullpath, "r" )) == NULL ) {
 	perror( fullpath );
 	exit( 2 );
     }
@@ -361,7 +367,7 @@ main( int argc, char **argv )
 
 	tac = acav_parse( NULL, cline, &targv );
 
-	if ( ( tac == 0 ) || ( *targv[ 0 ] == '#' ) ) {
+	if (( tac == 0 ) || ( *targv[ 0 ] == '#' )) {
 	    continue;
 	}
 
@@ -376,7 +382,7 @@ main( int argc, char **argv )
 	    continue;
 	}
 	    
-	switch( check( sn, "TRANSCRIPT", targv[ tac - 1] ) ) {
+	switch( check( sn, "TRANSCRIPT", targv[ tac - 1] )) {
 	case 0:
 	    break;
 	case 1:
@@ -402,9 +408,9 @@ main( int argc, char **argv )
 	    fprintf( stderr, "path too long: %s/special.T\n", commandpath );
 	}
 	if ( snprintf( temppath, MAXPATHLEN, "%s/special.T.%i", commandpath,
-		getpid() ) > MAXPATHLEN - 1 ) {
+		getpid()) > MAXPATHLEN - 1 ) {
 	    fprintf( stderr, "path too long: %s/special.T.%i\n", commandpath,
-		    (int)getpid() );
+		    (int)getpid());
 	}
 	if ( do_chksum( temppath, tchksum ) != 0 ) {
 	    fprintf( stderr, "do_chksum failed: %s", temppath );
@@ -442,8 +448,8 @@ main( int argc, char **argv )
 	    }
 
 	    /* specal.T exists */
-	    if ( ( tst.st_size != lst.st_size ) ||
-		    ( strcmp( tchksum, lchksum) != 0 ) ) {
+	    if (( tst.st_size != lst.st_size ) ||
+		    ( strcmp( tchksum, lchksum) != 0 )) {
 		/* special.T new from server */
 		if ( update ) {
 		    if ( rename( temppath, path ) != 0 ) {
@@ -471,7 +477,7 @@ main( int argc, char **argv )
 	}
     }
 
-    if ( ( closesn( sn ) ) !=0 ) {
+    if (( closesn( sn )) !=0 ) {
 	fprintf( stderr, "can not close sn\n" );
 	exit( 2 );
     }
