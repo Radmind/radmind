@@ -11,7 +11,7 @@ AC_ARG_VAR(diffpath, [path to diff utility])
 AC_ARG_WITH(server, AC_HELP_STRING([--with-server=SERVER], [default radmind server]), server="$withval", server="radmind" )
 AC_SUBST(server) 
 
-AC_ARG_WITH(server, AC_HELP_STRING([--with-authlevel=AUTHLEVEL], [default TLS authorization level]), server="$withval", authlevel="0" )
+AC_ARG_WITH(server, AC_HELP_STRING([--with-authlevel=AUTHLEVEL], [default TLS authorization level]), authlevel="$withval", authlevel="0" )
 AC_SUBST(authlevel) 
 
 AC_ARG_WITH(radminddir, AC_HELP_STRING([--with-radminddir=DIR], [default radmind server storage]), radminddir="$withval", radminddir="/var/radmind" )
