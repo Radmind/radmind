@@ -1,3 +1,13 @@
+0.8.0
+    Fixed broken 'make install' on OS X.
+    Cleaned up example negative transcript.
+    Added wild card support for hosts in config file.
+    Added support for directory finder information.
+    Fixed broken lmerge -f bug.
+    Stor function now checks file size and checksum before sending server
+	any information to prevent haning.
+    Added README file.
+
 0.7.2
     Removed -Wconversion as a compiler option
     Corrected spelling mistakes in Readme.rtf
