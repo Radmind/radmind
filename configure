@@ -2336,7 +2336,6 @@ fi;
 echo "$as_me: error: cannot find pam headers" >&2;}
    { (exit 1); exit 1; }; }
     else
-	LIBS="$LIBS -lpam";
 	HAVE_PAM=yes
     fi
 

@@ -43,7 +43,6 @@ AC_DEFUN([CHECK_PAM],
     if test x_$found_pam != x_yes; then
 	AC_MSG_ERROR(cannot find pam headers)
     else
-	LIBS="$LIBS -lpam";
 	HAVE_PAM=yes
     fi
     AC_SUBST(HAVE_PAM)
