@@ -181,18 +181,22 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
 	    return( 1 );
 	}
 	/* Update temp file*/
-	if ( update( temppath, path, present, 1, st, tac, targv, &afinfo )
-		!= 0 ) {
+	switch( update( temppath, path, present, 1, st, tac, targv, &afinfo )) {
+	case 0:
+	    /* rename doesn't mangle forked files */
+	    if ( rename( temppath, path ) != 0 ) {
+		perror( temppath );
+		return( 1 );
+	    }
+	    break;
+
+	case 2:
+	    break;
+
+	default:
 	    return( 1 );
 	}
 
-	 /*
-	  * rename doesn't mangle forked files
-	  */
-	if ( rename( temppath, path ) != 0 ) {
-	    perror( temppath );
-	    return( 1 );
-	}
     } else { 
 	/* UPDATE */
 	if ( present ) {
