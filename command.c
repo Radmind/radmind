@@ -24,6 +24,7 @@
 #include "command.h"
 #include "auth.h"
 #include "code.h"
+#include "chksum.h"
 
 #define	DEFAULT_MODE 0444
 #define DEFAULT_UID     0
@@ -324,7 +325,11 @@ f_stat( SNET *sn, int ac, char *av[] )
     }
 
     /* chksums here */
-    do_chksum( path, chksum_b64 );
+    if ( do_chksum( path, chksum_b64 ) < 0 ) {
+	snet_writef( sn, "%d Checksum Error: %s: %m\r\n", 500, path );
+	syslog( LOG_ERR, "do_chksum: %s: %m", path );
+	return( 1 );
+    }
 
     snet_writef( sn, "%d Returning STAT information\r\n", 230 );
     switch ( key ) {
@@ -559,13 +564,13 @@ command_k( path_config )
     int		ac;
 
     if (( sn = snet_open( path_config, O_RDONLY, 0, 0 )) == NULL ) {
-        syslog( LOG_ERR, "command_k: snet_open: %s", path_config );
+        syslog( LOG_ERR, "command_k: snet_open: %s: %m", path_config );
 	return( -1 );
     }
 
     while (( line = snet_getline( sn, NULL )) != NULL ) {
         if (( ac = argcargv( line, &av )) < 0 ) {
-	    perror( "argcargv" );
+	    syslog( LOG_ERR, "argvargc: %m" );
 	    return( -1 );
 	}
 
