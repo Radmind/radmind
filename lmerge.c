@@ -562,7 +562,11 @@ skipline:
 		exit( 2 );
 	    }
 	    if ( rmdir( opath ) != 0 ) {
-		if ( errno != ENOENT ) {
+		if ( errno == EEXIST ) {
+		    fprintf( stderr, "%s: %s: Not empty, unable to remove.",
+			tname, node->path );
+		    fprintf( stderr, "  Continuing...\n" );
+		} else if ( errno != ENOENT ) {
 		    perror( opath );
 		    exit( 2 );
 		}
