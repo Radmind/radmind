@@ -315,9 +315,9 @@ main( int argc, char **argv )
     FILE		*f;
     struct node		*head = NULL;
     struct stat		tst, lst;
-    char                *ca = "ca.pem";
-    char                *cert = "cert.pem";
-    char                *privatekey = "cert.pem";
+    char                *ca = _RADMIND_TLS_CA;
+    char                *cert = _RADMIND_TLS_CERT;
+    char                *privatekey = _RADMIND_TLS_CERT;
 
     while (( c = getopt ( argc, argv, "c:h:K:np:qvVw:x:y:z:" )) != EOF ) {
 	switch( c ) {

@@ -247,9 +247,9 @@ main( int argc, char **argv )
     SNET		*sn = NULL;
     int			authlevel = 0;
     int			use_randfile = 0;
-    char                *ca = "ca.pem";
-    char                *cert = "cert.pem";
-    char                *privatekey = "cert.pem";
+    char                *ca = _RADMIND_TLS_CA;
+    char                *cert = _RADMIND_TLS_CERT;
+    char                *privatekey = _RADMIND_TLS_CERT;
 
     while (( c = getopt ( argc, argv, "c:h:np:qVvw:x:y:z:" )) != EOF ) {
 	switch( c ) {
