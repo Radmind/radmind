@@ -34,36 +34,39 @@ t_parse( struct transcript *tran )
 	    tran->t_eof = 1;
 	    return;
 	}
+	tran->t_linenum++;
 
 	/* check to see if line contains the whole line */
 	length = strlen( line );
 	if ( line[ length - 1 ] != '\n' ) {
-	    fprintf( stderr, "ERROR: didn't get the whole line\n" );
+	    fprintf( stderr, "%s: line %d: line too long\n",
+		    tran->t_name, tran->t_linenum );
 	    exit( 1 );
 	} 
-
     } while ((( ac = argcargv( line, &argv )) == 0 ) || ( *argv[ 0 ] == '#' ));
 
     if ( strlen( argv[ 0 ] ) != 1 ) {
 	fprintf( stderr,
-		"ERROR: First argument is too long: %s\n", argv[ 0 ]);
+		"%s: line %d: first argument is too long\n",
+		tran->t_name, tran->t_linenum );
 	exit( 1 );
     }
 
-    tran->t_info.i_type = argv[ 0 ][ 0 ];
+    tran->t_pinfo.pi_type = argv[ 0 ][ 0 ];
 
     /* reading and parsing the line */
     switch( *argv[ 0 ] ) {
     case 'd':				    /* dir */
 	if ( ac != 5 ) {
-	    fprintf( stderr, "Incorrect number of arguments in transcript\n" );
+	    fprintf( stderr, "%s: line %d: expected 5 arguments, got %d\n",
+		    tran->t_name, tran->t_linenum, ac );
 	    exit( 1 );
 	}
-	tran->t_info.i_stat.st_mode = strtol( argv[ 1 ], NULL, 8 );
-	tran->t_info.i_stat.st_uid = atoi( argv[ 2 ] );
-	tran->t_info.i_stat.st_gid = atoi( argv[ 3 ] );
+	tran->t_pinfo.pi_stat.st_mode = strtol( argv[ 1 ], NULL, 8 );
+	tran->t_pinfo.pi_stat.st_uid = atoi( argv[ 2 ] );
+	tran->t_pinfo.pi_stat.st_gid = atoi( argv[ 3 ] );
 	buf = decode( argv[ 4 ] );
-	strcpy( tran->t_info.i_name, buf );
+	strcpy( tran->t_pinfo.pi_name, buf );
 	break;
 
     case 'b':				    /* block or char */
@@ -72,56 +75,61 @@ t_parse( struct transcript *tran )
     case 'D':
     case 's':
 	if ( ac != 7 ) {
-	    fprintf( stderr, "Incorrect number of arguments in transcript\n" );
+	    fprintf( stderr, "%s: line %d: expected 7 arguments, got %d\n",
+		    tran->t_name, tran->t_linenum, ac );
 	    exit( 1 );
 	}
-	tran->t_info.i_stat.st_mode = strtol( argv[ 1 ], NULL, 8 );
-	tran->t_info.i_stat.st_uid = atoi( argv[ 2 ] );
-	tran->t_info.i_stat.st_gid = atoi( argv[ 3 ] );
-	tran->t_info.i_dev = makedev( ( unsigned )( atoi( argv[ 4 ] )), 
+	tran->t_pinfo.pi_stat.st_mode = strtol( argv[ 1 ], NULL, 8 );
+	tran->t_pinfo.pi_stat.st_uid = atoi( argv[ 2 ] );
+	tran->t_pinfo.pi_stat.st_gid = atoi( argv[ 3 ] );
+	tran->t_pinfo.pi_dev = makedev( ( unsigned )( atoi( argv[ 4 ] )), 
 		( unsigned )( atoi( argv[ 5 ] )));
 	buf = decode( argv[ 6 ] );
-	strcpy( tran->t_info.i_name, buf );
+	strcpy( tran->t_pinfo.pi_name, buf );
 	break;
 
     case 'l':				    /* link */
     case 'h':				    /* hard */
 	if ( ac != 3 ) {
-	    fprintf( stderr, "Incorrect number of arguments in transcript\n" );
+	    fprintf( stderr, "%s: line %d: expected 3 arguments, got %d\n",
+		    tran->t_name, tran->t_linenum, ac );
 	    exit( 1 );
 	}
 	buf = decode( argv[ 1 ] );
-	strcpy( tran->t_info.i_link, buf );
+	strcpy( tran->t_pinfo.pi_link, buf );
 	buf = decode( argv[ 2 ] );
-	strcpy( tran->t_info.i_name, buf );
+	strcpy( tran->t_pinfo.pi_name, buf );
 	break;
 
     case 'f':				    /* file */
 	if ( ac != 8 ) {
-	    fprintf( stderr, "Incorrect number of arguments in transcript\n" );
+	    fprintf( stderr, "%s: line %d: expected 8 arguments, got %d\n",
+		    tran->t_name, tran->t_linenum, ac );
 	    exit( 1 );
 	}
-	tran->t_info.i_stat.st_mode = strtol( argv[ 1 ], NULL, 8 );
-	tran->t_info.i_stat.st_uid = atoi( argv[ 2 ] );
-	tran->t_info.i_stat.st_gid = atoi( argv[ 3 ] );
-	tran->t_info.i_stat.st_mtime = atoi( argv[ 4 ] );
-	tran->t_info.i_stat.st_size = atoi( argv[ 5 ] );
-	tran->t_info.i_chksum = atoi( argv[ 6 ] );
+	tran->t_pinfo.pi_stat.st_mode = strtol( argv[ 1 ], NULL, 8 );
+	tran->t_pinfo.pi_stat.st_uid = atoi( argv[ 2 ] );
+	tran->t_pinfo.pi_stat.st_gid = atoi( argv[ 3 ] );
+	tran->t_pinfo.pi_stat.st_mtime = atoi( argv[ 4 ] );
+	tran->t_pinfo.pi_stat.st_size = atoi( argv[ 5 ] );
+	tran->t_pinfo.pi_chksum = atoi( argv[ 6 ] );
 	buf = decode( argv[ 7 ] );
-	strcpy( tran->t_info.i_name, buf );
+	strcpy( tran->t_pinfo.pi_name, buf );
 	break;
 
     case '-':
-	fprintf( stderr, "ERROR: Leading -'s are not allowed: %s\n", line );
+	fprintf( stderr, "%s: line %d: leading '-' not allowed\n",
+		tran->t_name, tran->t_linenum );
 	exit( 1 );		
 
     default:
 	fprintf( stderr,
-	    "ERROR: Unknown file type: %c\n", *argv[ 0 ] );
-	break;
+	    "%s: line %d: unknown file type '%c'\n",
+	    tran->t_name, tran->t_linenum, *argv[ 0 ] );
+	exit( 1 );
     }
 
-    tran->t_info.i_chksum = 0;
+    tran->t_pinfo.pi_chksum = 0;
     return;
 }
 
@@ -148,20 +156,20 @@ t_convert( int type )
     case S_IFSOCK:
 	return ( 's' );
     default:
-	fprintf( stderr, "ERROR: Unknown file type %c\n", type );
+	fprintf( stderr, "ERROR: unknown file type '%c'\n", type );
 	return ( '0' );
     }
 }
 
 
     static void
-t_print( struct info *fs, struct transcript *tran, int change ) 
+t_print( struct pathinfo *fs, struct transcript *tran, int change ) 
 {
-    struct info	*cur;
-    char	*buf;
-    char	*link;
-    dev_t	dev;
-    extern int	edit_path;
+    struct pathinfo	*cur;
+    char		*buf;
+    char		*link;
+    dev_t		dev;
+    extern int		edit_path;
 
     /*
      * Compare the current transcript with the previous one.  If they are 
@@ -170,7 +178,7 @@ t_print( struct info *fs, struct transcript *tran, int change )
      * transcript and set prev_tran 
      */
     if ( edit_path == FS2TRAN ) {
-	cur = &tran->t_info;
+	cur = &tran->t_pinfo;
 
 	if ( prev_tran != tran ) {
 	    fprintf( outtran, "%s:\n", tran->t_name );
@@ -189,35 +197,35 @@ t_print( struct info *fs, struct transcript *tran, int change )
 	cur = fs;
     } else if (( edit_path ==  TRAN2FS ) && ( change == T_MOVE_TRAN )) {
 	fprintf( outtran, "- " );
-	cur = &tran->t_info;
+	cur = &tran->t_pinfo;
     } else {
 	fprintf( outtran, "  " );
     }
 
-    buf = encode( cur->i_name );
+    buf = encode( cur->pi_name );
 
     /* print out info to file based on type */
-    switch( cur->i_type ) {
+    switch( cur->pi_type ) {
     case 'd':
 	fprintf( outtran, "d %4lo %5d %5d %s\n", 
-		(unsigned long )( T_MODE & cur->i_stat.st_mode ), 
-		(int)cur->i_stat.st_uid, (int)cur->i_stat.st_gid, buf );
+		(unsigned long )( T_MODE & cur->pi_stat.st_mode ), 
+		(int)cur->pi_stat.st_uid, (int)cur->pi_stat.st_gid, buf );
 	break;
 
     case 'l':
     case 'h':
-	link = encode( cur->i_link );
-	fprintf( outtran, "%c %s", cur->i_type, link );
-	buf = encode( cur->i_name );
+	link = encode( cur->pi_link );
+	fprintf( outtran, "%c %s", cur->pi_type, link );
+	buf = encode( cur->pi_name );
 	fprintf( outtran, " %s\n", buf );
 	break;
 
     case 'f':
 	fprintf( outtran, "f %4lo %5d %5d %9d %7d %3d %s\n", 
-		(unsigned long)( T_MODE & cur->i_stat.st_mode ), 
-		(int)cur->i_stat.st_uid,
-		(int)cur->i_stat.st_gid, (int)cur->i_stat.st_mtime,
-		(int)cur->i_stat.st_size, cur->i_chksum, buf );
+		(unsigned long)( T_MODE & cur->pi_stat.st_mode ), 
+		(int)cur->pi_stat.st_uid,
+		(int)cur->pi_stat.st_gid, (int)cur->pi_stat.st_mtime,
+		(int)cur->pi_stat.st_size, cur->pi_chksum, buf );
 	break;
 
     case 'c':
@@ -225,12 +233,12 @@ t_print( struct info *fs, struct transcript *tran, int change )
     case 's':
     case 'D':
     case 'p':
-	dev = cur->i_stat.st_rdev;
+	dev = cur->pi_stat.st_rdev;
 	fprintf( outtran, "%c %4lo %4d %5d %5d %5d %s\n", 
-		cur->i_type, 
-		(unsigned long )( T_MODE & cur->i_stat.st_mode ), 
-		(int)cur->i_stat.st_uid,
-		(int)cur->i_stat.st_gid, (int)major(dev), (int)minor(dev), 
+		cur->pi_type, 
+		(unsigned long )( T_MODE & cur->pi_stat.st_mode ), 
+		(int)cur->pi_stat.st_uid,
+		(int)cur->pi_stat.st_gid, (int)major(dev), (int)minor(dev), 
 		buf );
 	break;
 
@@ -242,7 +250,7 @@ t_print( struct info *fs, struct transcript *tran, int change )
 
      
    static int 
-t_compare( struct info *cur, struct transcript *tran )
+t_compare( struct pathinfo *cur, struct transcript *tran )
 {
     int				ret = -1;
     mode_t			mode;
@@ -252,7 +260,7 @@ t_compare( struct info *cur, struct transcript *tran )
     if ( tran->t_eof ) {
 	ret = -1;
     } else {
-	ret = strcmp( cur->i_name, tran->t_info.i_name );
+	ret = strcmp( cur->pi_name, tran->t_pinfo.pi_name );
     }
 
     if ( ret > 0 ) {
@@ -267,31 +275,31 @@ t_compare( struct info *cur, struct transcript *tran )
     } 
 
     /* convert the modes */
-    mode = ( T_MODE & cur->i_stat.st_mode );
-    tran_mode = ( T_MODE & tran->t_info.i_stat.st_mode );
+    mode = ( T_MODE & cur->pi_stat.st_mode );
+    tran_mode = ( T_MODE & tran->t_pinfo.pi_stat.st_mode );
 
     /* the names match so check types */
-    if ( cur->i_type != tran->t_info.i_type ) {
+    if ( cur->pi_type != tran->t_pinfo.pi_type ) {
 	t_print( cur, tran, T_MOVE_BOTH );
 	return T_MOVE_BOTH;
     }
 
     /* compare the other components for each file type */
-    switch( cur->i_type ) {
+    switch( cur->pi_type ) {
     case 'f':			    /* file */
-	if (( cur->i_stat.st_uid != tran->t_info.i_stat.st_uid ) || 
-		( cur->i_stat.st_gid != tran->t_info.i_stat.st_gid ) ||
+	if (( cur->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) || 
+		( cur->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) ||
 		( mode != tran_mode )) {
 			t_print( cur, tran, T_MOVE_BOTH );
 			break;
 	}
 	/* If the file is not negative, check the other components. */
 	if ( tran->t_type != T_NEGATIVE ) {
-		if (( cur->i_stat.st_mtime != 
-				tran->t_info.i_stat.st_mtime ) ||
-		    ( cur->i_stat.st_size != 
-				tran->t_info.i_stat.st_size ) || 
-		    ( cur->i_chksum != tran->t_info.i_chksum ) ||
+		if (( cur->pi_stat.st_mtime != 
+				tran->t_pinfo.pi_stat.st_mtime ) ||
+		    ( cur->pi_stat.st_size != 
+				tran->t_pinfo.pi_stat.st_size ) || 
+		    ( cur->pi_chksum != tran->t_pinfo.pi_chksum ) ||
 		    ( mode != tran_mode )) {
 			t_print( cur, tran, T_MOVE_BOTH );
 		}
@@ -299,8 +307,8 @@ t_compare( struct info *cur, struct transcript *tran )
 	break;
 
     case 'd':				/* dir */
-	if (( cur->i_stat.st_uid != tran->t_info.i_stat.st_uid ) ||
-		( cur->i_stat.st_gid != tran->t_info.i_stat.st_gid ) ||
+	if (( cur->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
+		( cur->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) ||
 		( mode != tran_mode )) {
 			t_print( cur, tran, T_MOVE_BOTH );
 	}
@@ -308,7 +316,7 @@ t_compare( struct info *cur, struct transcript *tran )
 
     case 'l':			    /* link */
     case 'h':			    /* hard */
-	if ( strcmp( cur->i_link, tran->t_info.i_link ) != 0 ) {
+	if ( strcmp( cur->pi_link, tran->t_pinfo.pi_link ) != 0 ) {
 	    t_print( cur, tran, T_MOVE_BOTH );
 	} 
 	break;
@@ -318,10 +326,10 @@ t_compare( struct info *cur, struct transcript *tran )
     case 'D':
     case 'p':
     case 's':
-	dev = cur->i_stat.st_rdev;
-	if (( cur->i_stat.st_uid != tran->t_info.i_stat.st_uid ) ||
-		( cur->i_stat.st_gid != tran->t_info.i_stat.st_gid ) || 
-		( dev != tran->t_info.i_dev ) ||
+	dev = cur->pi_stat.st_rdev;
+	if (( cur->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
+		( cur->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) || 
+		( dev != tran->t_pinfo.pi_dev ) ||
 		( mode != tran_mode )) {
 			t_print( cur, tran, T_MOVE_BOTH );
 	}	
@@ -336,7 +344,7 @@ t_compare( struct info *cur, struct transcript *tran )
 }
 
     int
-transcript( struct info *new, char *name )
+transcript( struct pathinfo *new, char *name )
 {
 
     int			move;
@@ -348,31 +356,31 @@ transcript( struct info *new, char *name )
     struct transcript	*next_tran = NULL;
     struct transcript	*begin_tran = NULL;
 
-    if ( lstat( name, &new->i_stat ) != 0 ) {
+    if ( lstat( name, &new->pi_stat ) != 0 ) {
 	perror( name );
 	exit( 1 );
     }
 
-    type = ( S_IFMT & new->i_stat.st_mode );
-    new->i_type = t_convert( type );
+    type = ( S_IFMT & new->pi_stat.st_mode );
+    new->pi_type = t_convert( type );
 
     /* if it's multiply referenced, check if it's a hardlink */
-    if ( !S_ISDIR( new->i_stat.st_mode ) &&
-	    ( new->i_stat.st_nlink > 1 ) &&
+    if ( !S_ISDIR( new->pi_stat.st_mode ) &&
+	    ( new->pi_stat.st_nlink > 1 ) &&
 	    (( path = hardlink( new )) != NULL )) {
-	new->i_type = 'h';
-	strcpy( new->i_link, path );
+	new->pi_type = 'h';
+	strcpy( new->pi_link, path );
     }
 
     /* check to see if a link, then read it in */
-    if ( S_ISLNK( new->i_stat.st_mode )) {
-	len = readlink( new->i_name, buf, MAXPATHLEN );
+    if ( S_ISLNK( new->pi_stat.st_mode )) {
+	len = readlink( new->pi_name, buf, MAXPATHLEN );
 	buf[ len ] = '\0';
-	strcpy( new->i_link, buf );
+	strcpy( new->pi_link, buf );
     }
 
     /* only go into the file if it is a directory */
-    if ( S_ISDIR( new->i_stat.st_mode )) {
+    if ( S_ISDIR( new->pi_stat.st_mode )) {
 	move = 1;
     } else { 
 	move = 0;
@@ -391,8 +399,8 @@ transcript( struct info *new, char *name )
 		continue;
 	    }
 	    if ( ! next_tran->t_eof ) {
-		if ( strcmp( next_tran->t_info.i_name,
-			begin_tran->t_info.i_name ) < 0 ) {
+		if ( strcmp( next_tran->t_pinfo.pi_name,
+			begin_tran->t_pinfo.pi_name ) < 0 ) {
 		    begin_tran = next_tran;
 		}
 	    }
@@ -401,8 +409,8 @@ transcript( struct info *new, char *name )
 	/* move ahead other transcripts that match */
 	for ( next_tran = begin_tran->t_next; next_tran != NULL;
 		next_tran = next_tran->t_next ) {
-	    if ( strcmp( begin_tran->t_info.i_name,
-		    next_tran->t_info.i_name ) == 0 ) {
+	    if ( strcmp( begin_tran->t_pinfo.pi_name,
+		    next_tran->t_pinfo.pi_name ) == 0 ) {
 		t_parse( next_tran );
 	    }
 	}
@@ -461,6 +469,7 @@ t_new( int type, char *name )
 
     } else {
 	new->t_eof = 0; 
+	new->t_linenum = 0;
 	strcpy( new->t_name, name );
 	if (( new->t_in = fopen( name, "r" )) == NULL ) {
 	    perror( name );
@@ -477,7 +486,7 @@ t_new( int type, char *name )
 }
 
     void
-transcript_init( int flag )
+transcript_init( int flag, char *cmd )
 {
     char	**av;
     char	line[ MAXPATHLEN ];
@@ -491,9 +500,9 @@ transcript_init( int flag )
 	return;
     }
 
-    if (( fp = fopen( "command", "r" )) == NULL ) {
+    if (( fp = fopen( cmd, "r" )) == NULL ) {
 	if ( edit_path == FS2TRAN ) {
-	    perror( "command" );
+	    perror( cmd );
 	    exit( 1 );
 	}
 	t_new( T_NULL, NULL );
