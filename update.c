@@ -262,41 +262,6 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 	}
 	break;
     case 's':
-	if ( tac != 5 ) { 
-	    fprintf( stderr,
-		"%d: incorrect number of arguments\n", linenum );
-	    return( 1 );
-	}
-	mode = strtol( targv[ 2 ], (char **)NULL, 8 );
-	uid = atoi( targv[ 3 ] );
-	gid = atoi( targv[ 4 ] );
-	if ( !present ) {
-	    fprintf( stderr, "Socket %s not present\n", path );
-	    break;
-	}
-	/* check mode */
-	if ( verbose ) printf( "%s: updating", path );
-	if( mode != st.st_mode ) {
-	    if ( chmod( path, mode ) != 0 ) {
-		perror( path );
-		return( 1 );
-	    }
-	    if ( verbose ) printf( " mode" );
-	}
-	/* check uid & gid */
-	if( uid != st.st_uid  || gid != st.st_gid ) {
-	    if ( lchown( path, uid, gid ) != 0 ) {
-		perror( path );
-		return( 1 );
-	    }
-	    if ( uid != st.st_uid ) {
-		if ( verbose ) printf( " uid" );
-	    }
-	    if ( gid != st.st_gid ) {
-		if ( verbose ) printf( " gid" );
-	    }
-	}
-	break;
     case 'D':
 	if ( tac != 5 ) { 
 	    fprintf( stderr,
@@ -307,7 +272,8 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 	uid = atoi( targv[ 3 ] );
 	gid = atoi( targv[ 4 ] );
 	if ( !present ) {
-	    fprintf( stderr, "Door %s not present\n", path );
+	    fprintf( stderr, "%d: Warning: %c %s not created...continuing\n",
+		    linenum, *targv[ 0 ], path );
 	    break;
 	}
 	/* check mode */
