@@ -429,22 +429,20 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 
     case 'd':				/* dir */
 #ifdef __APPLE__
-	if ( tran->t_type != T_NEGATIVE ) {
-	    if (( fs->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
-		    ( fs->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) ||
-		    ( memcmp( fs->pi_afinfo.ai.ai_data,
-		    tran->t_pinfo.pi_afinfo.ai.ai_data, FINFOLEN ) != 0 ) ||
-		    ( mode != tran_mode )) {
-		t_print( fs, tran, PR_STATUS );
-	    }
+	if (( fs->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
+		( fs->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) ||
+		( memcmp( fs->pi_afinfo.ai.ai_data,
+		tran->t_pinfo.pi_afinfo.ai.ai_data, FINFOLEN ) != 0 ) ||
+		( mode != tran_mode )) {
+	    t_print( fs, tran, PR_STATUS );
 	}
-	break;
-#endif /* __APPLE__ */
+#else /* !__APPLE__ */
 	if (( fs->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
 		( fs->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) ||
 		( mode != tran_mode )) {
 	    t_print( fs, tran, PR_STATUS );
 	}
+#endif /* __APPLE__ */
 	break;
 
     case 'D':
