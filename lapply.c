@@ -34,6 +34,7 @@ int		chksum = 0;
 int		verbose = 0;
 int		special = 0;
 int		safe = 0;
+int		network = 1;
 char		transcript[ 2 * MAXPATHLEN ];
 extern char	*version;
 
@@ -125,6 +126,10 @@ apply( FILE *f, char *parent, SNET *sn )
 	    command = targv[ 0 ];
 	    targv++;
 	    tac--;
+	}
+
+	if ( ( *command == '+' ) && ( !network ) ) {
+	    goto linedone;
 	}
 
 	strcpy( path, decode( targv[ 1 ] ) );
@@ -229,7 +234,7 @@ done:
     int
 main( int argc, char **argv )
 {
-    int			c, port = htons( 6662 ), err = 0, network = 1;
+    int			c, port = htons( 6662 ), err = 0;
     extern int          optind;
     FILE		*f; 
     char		*host = "rearwindow.rsug.itd.umich.edu";
@@ -281,8 +286,8 @@ main( int argc, char **argv )
     }
 
     if ( err || ( argc - optind != 1 ) ) {
-	fprintf( stderr, "usage: lapply [ -nsv ] " );
-	fprintf( stderr, "[ -h host ] [ -port ] " );
+	fprintf( stderr, "usage: lapply [ -nsvV ] " );
+	fprintf( stderr, "[ -c checksum ] [ -h host ] [ -p port ] " );
 	fprintf( stderr, "difference-transcript\n" );
 	exit( 1 );
     }
