@@ -313,7 +313,7 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
     } 
     if ( ret < 0 ) {
 	/* name is in the fs, but not in the tran */
-	if ( cur->pi_type == 'f' ) {
+	if ( chksum && ( cur->pi_type == 'f' )) {
 	    do_chksum( cur );
 	}
 	t_print( cur, tran, PR_FS_ONLY );
@@ -334,15 +334,25 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
     switch( cur->pi_type ) {
     case 'f':			    /* file */
 	if ( tran->t_type != T_NEGATIVE ) {
-	    do_chksum( cur );
-	    if (( chksum ) && 
-	strcmp( cur->pi_chksum_b64, tran->t_pinfo.pi_chksum_b64 ) != 0 ) {
+	    if ( cur->pi_stat.st_size != tran->t_pinfo.pi_stat.st_size ) {
 		t_print( cur, tran, PR_DOWNLOAD );
 		break;
 	    }
 
-	    if (( cur->pi_stat.st_mtime != tran->t_pinfo.pi_stat.st_mtime ) ||
-		    ( cur->pi_stat.st_size != tran->t_pinfo.pi_stat.st_size )) {
+	    if ( chksum ) {
+		do_chksum( cur );
+		if ( strcmp( cur->pi_chksum_b64,
+			tran->t_pinfo.pi_chksum_b64 ) != 0 ) {
+		    t_print( cur, tran, PR_DOWNLOAD );
+		    break;
+		}
+
+		if ( cur->pi_stat.st_mtime != tran->t_pinfo.pi_stat.st_mtime ) {
+		    t_print( cur, tran, PR_STATUS );
+		    break;
+		}
+	    } else if ( cur->pi_stat.st_mtime !=
+		    tran->t_pinfo.pi_stat.st_mtime ) {
 		t_print( cur, tran, PR_DOWNLOAD );
 		break;
 	    }
@@ -457,6 +467,9 @@ transcript( struct pathinfo *new )
 	} else { 
 	    move = 0;
 	}
+
+	/* initialize chksum field. */
+	strcpy( new->pi_chksum_b64, "-" );
     }
 
     for (;;) {
