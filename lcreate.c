@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -228,6 +229,17 @@ main( int argc, char **argv )
 
     if ( network ) {
 
+	/*
+	 * Pipelining creates an annoying problem: the server might
+	 * have closed our connection a long time before we get around
+	 * to reading an error.  In the meantime, we will do a lot
+	 * of writing, which may cause us to be killed.
+	 */
+	if ( signal( SIGPIPE, SIG_IGN ) == SIG_ERR ) {
+	    perror( "signal" );
+	    exit( 2 );
+	}
+
 	if ( authlevel != 0 ) {
 	    if ( tls_client_setup( use_randfile, authlevel, ca, cert, 
 		    privatekey ) != 0 ) {
@@ -235,8 +247,6 @@ main( int argc, char **argv )
 		exit( 2 );
 	    }
 	}
-
-
 
 	/* no name given on command line, so make a "default" name */
 	if ( tname == NULL ) {
@@ -305,7 +315,7 @@ main( int argc, char **argv )
 	    }
 	}
 
-	if ( snprintf( pathdesc, MAXPATHLEN * 2, "STOR TRANSCRIPT %s\r\n",
+	if ( snprintf( pathdesc, MAXPATHLEN * 2, "STOR TRANSCRIPT %s",
 		tname ) > ( MAXPATHLEN * 2 ) - 1 ) {
 	    fprintf( stderr, "STOR TRANSCRIPT %s: path description too long\n",
 		tname );
@@ -317,11 +327,11 @@ main( int argc, char **argv )
 	    exit( 2 );
 	}
 
+	respcount += 2;
 	if (( rc = stor_file( sn, pathdesc, argv[ optind ], st.st_size,
 		cksumval )) <  0 ) {
-	    exit( 2 );
+	    goto stor_failed;
 	}
-	respcount += 2;
 
 	if ( tran_only ) {	/* don't upload files */
 	    goto done;
@@ -408,7 +418,7 @@ main( int argc, char **argv )
 		    exit( 2 );
 		}
 	    } else {
-		if ( snprintf( pathdesc, MAXPATHLEN * 2, "STOR FILE %s %s\r\n", 
+		if ( snprintf( pathdesc, MAXPATHLEN * 2, "STOR FILE %s %s", 
 			tname, targv[ 1 ] ) > ( MAXPATHLEN * 2 ) - 1 ) {
 		    fprintf( stderr, "STOR FILE %s %s: path description too \
 			long\n", tname, dpath );
@@ -422,12 +432,10 @@ main( int argc, char **argv )
 		    } else {
 			rc = n_stor_file( sn, pathdesc, decode( targv[ 1 ] ));
 		    }
-		    if ( rc < 0 ) {
-			fprintf( stderr, "failed to store file %s\n",
-			    dpath );
-			exit( 2 );
-		    }
 		    respcount += 2;
+		    if ( rc < 0 ) {
+			goto stor_failed;
+		    }
 
 		} else {
 		    if ( *targv[ 0 ] == 'a' ) {
@@ -438,11 +446,11 @@ main( int argc, char **argv )
 			rc = stor_file( sn, pathdesc, decode( targv[ 1 ] ), 
 			    strtoofft( targv[ 6 ], NULL, 10 ), targv[ 7 ]); 
 		    }
+		    respcount += 2;
 		    if ( rc < 0 ) {
 			if ( dodots ) { putchar( (char)'\n' ); }
-			exit( 2 );
+			goto stor_failed;
 		    }
-		    respcount += 2;
 		}
 	    }
 	}
@@ -462,4 +470,12 @@ done:
     }
 
     exit( 0 );
+
+stor_failed:
+    while ( respcount > 0 ) {
+	if ( stor_response( sn, &respcount, NULL ) < 0 ) {
+	    exit( 2 );
+	}
+    }
+    exit( 2 );
 }

@@ -96,18 +96,18 @@ stor_response( SNET *sn, int *respcount, struct timeval *tv )
 n_stor_file( SNET *sn, char *pathdesc, char *path )
 {
     /* tell server what it is getting */
-    if ( snet_writef( sn, "%s", pathdesc ) < 0 ) {
-	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+    if ( snet_writef( sn, "%s\r\n", pathdesc ) < 0 ) {
+	fprintf( stderr, "n_store_file %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	goto sn_error;
+	return( -1 );
     }
-    if ( verbose ) printf( ">>> %s", pathdesc );
+    if ( verbose ) printf( ">>> %s\n", pathdesc );
 
     /* tell server how much data to expect and send '.' */
     if ( snet_writef( sn, "0\r\n.\r\n" ) < 0 ) {
-	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	fprintf( stderr, "n_store_file %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	goto sn_error;
+	return( -1 );
     }
     if ( verbose ) fputs( ">>> 0\n\n>>> .\n", stdout );
 
@@ -115,10 +115,6 @@ n_stor_file( SNET *sn, char *pathdesc, char *path )
         printf( "%s: stored as zero length file\n", path );
     }
     return( 0 );
-
-sn_error:
-    snet_close( sn );
-    exit( 2 );
 }
 
     int 
@@ -172,18 +168,18 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
     size = st.st_size;
 
     /* tell server what it is getting */
-    if ( snet_writef( sn, "%s", pathdesc ) < 0 ) {
-	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+    if ( snet_writef( sn, "%s\r\n", pathdesc ) < 0 ) {
+	fprintf( stderr, "stor_file %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	goto sn_error;
+	return( -1 );
     }
-    if ( verbose ) printf( ">>> %s", pathdesc );
+    if ( verbose ) printf( ">>> %s\n", pathdesc );
 
     /* tell server how much data to expect */
     if ( snet_writef( sn, "%" PRIofft "d\r\n", st.st_size ) < 0 ) {
-	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	fprintf( stderr, "stor_file %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	goto sn_error;
+	return( -1 );
     }
     if ( verbose ) printf( ">>> %" PRIofft "d\n", st.st_size );
 
@@ -191,9 +187,9 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
     while (( rr = read( fd, buf, sizeof( buf ))) > 0 ) {
 	tv = timeout;
 	if ( snet_write( sn, buf, rr, &tv ) != rr ) {
-	    fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    fprintf( stderr, "stor_file %s failed: %s\n", pathdesc,
 		strerror( errno ));
-	    goto sn_error;
+	    return( -1 );
 	}
 	size -= rr;
 	if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
@@ -203,22 +199,22 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
     }
     if ( rr < 0 ) {
 	perror( path );
-	goto sn_error;
+	return( -1 );
     }
 
     /* Check number of bytes sent to server */
     if ( size != 0 ) {
 	fprintf( stderr,
-	    "store %s failed: Sent wrong number of bytes to server\n",
+	    "stor_file %s failed: Sent wrong number of bytes to server\n",
 	    pathdesc );
-	goto sn_error;
+	return( -1 );
     }
 
     /* End transaction with server */
     if ( snet_writef( sn, ".\r\n" ) < 0 ) {
-	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	fprintf( stderr, "stor_file %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	goto sn_error;
+	return( -1 );
     }
     if ( verbose ) fputs( "\n>>> .\n", stdout );
 
@@ -241,10 +237,6 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
 
     if ( !quiet && !verbose ) printf( "%s: stored\n", path );
     return( 0 );
-
-sn_error:
-    snet_close( sn );
-    exit( 2 );
 }
 
 #ifdef __APPLE__
@@ -295,21 +287,21 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 	    return( -1 );
 	}
     }
-    if ( snet_writef( sn, "%s",	pathdesc ) < 0 ) {
-	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+    if ( snet_writef( sn, "%s\r\n", pathdesc ) < 0 ) {
+	fprintf( stderr, "stor_applefile %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	goto sn_error;
+	return( -1 );
     }
     if ( verbose ) {
-	printf( ">>> %s", pathdesc );
+	printf( ">>> %s\n", pathdesc );
     }
 
     /* tell server how much data to expect */
     tv = timeout;
     if ( snet_writef( sn, "%" PRIofft "d\r\n", afinfo->as_size ) < 0 ) {
-	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	fprintf( stderr, "stor_applefile %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-        goto sn_error;
+	return( -1 );
     }
     if ( verbose ) printf( ">>> %" PRIofft "d\n", afinfo->as_size );
 
@@ -317,9 +309,9 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     tv = timeout;
     if ( snet_write( sn, ( char * )&as_header, AS_HEADERLEN, &tv ) !=
 		AS_HEADERLEN  ) {
-	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	fprintf( stderr, "stor_applefile %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	goto sn_error;
+	return( -1 );
     }
     size -= AS_HEADERLEN;
     if ( cksum ) {
@@ -332,9 +324,9 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     if ( snet_write( sn, ( char * )&afinfo->as_ents,
 		( 3 * sizeof( struct as_entry )), &tv )
 		!= ( 3 * sizeof( struct as_entry ))) {
-	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	fprintf( stderr, "stor_applefile %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	goto sn_error;
+	return( -1 );
     }
     size -= ( 3 * sizeof( struct as_entry ));
     if ( cksum ) {
@@ -346,9 +338,9 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     /* write finder info data to server */
     tv = timeout;
     if ( snet_write( sn, afinfo->ai.ai_data, FINFOLEN, &tv ) != FINFOLEN ) {
-	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	fprintf( stderr, "stor_applefile %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	goto sn_error;
+	return( -1 );
     }
     size -= FINFOLEN;
     if ( cksum ) {
@@ -361,9 +353,9 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 	while (( rc = read( rfd, buf, sizeof( buf ))) > 0 ) {
 	    tv = timeout;
 	    if ( snet_write( sn, buf, rc, &tv ) != rc ) {
-		fprintf( stderr, "store %s failed: %s\n", pathdesc,
+		fprintf( stderr, "stor_applefile %s failed: %s\n", pathdesc,
 		    strerror( errno ));
-		goto sn_error;
+		return( -1 );
 	    }
 	    size -= rc;
 	    if ( cksum ) {
@@ -372,9 +364,9 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 	    if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 	}
 	if ( rc < 0 ) {
-	    fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    fprintf( stderr, "stor_applefile %s failed: %s\n", pathdesc,
 		strerror( errno ));
-	    goto sn_error;
+	    return( -1 );
 	}
     }
 
@@ -382,9 +374,9 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     while (( rc = read( dfd, buf, sizeof( buf ))) > 0 ) {
 	tv = timeout;
 	if ( snet_write( sn, buf, rc, &tv ) != rc ) {
-	    fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    fprintf( stderr, "stor_applefile %s failed: %s\n", pathdesc,
 		strerror( errno ));
-	    goto sn_error;
+	    return( -1 );
 	}
 	size -= rc;
 	if ( cksum ) {
@@ -393,24 +385,24 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     	if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
     }
     if ( rc < 0 ) {
-	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	fprintf( stderr, "stor_applefile %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	goto sn_error;
+	return( -1 );
     }
 
     /* Check number of bytes sent to server */
     if ( size != 0 ) {
         fprintf( stderr,
-            "store %s failed: Sent wrong number of bytes to server\n",
+            "stor_applefile %s failed: Sent wrong number of bytes to server\n",
             pathdesc );
-        goto sn_error;
+	return( -1 );
     }
 
     /* End transaction with server */
     if ( snet_writef( sn, ".\r\n" ) < 0 ) {
-	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	fprintf( stderr, "stor_applefile %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	goto sn_error;
+	return( -1 );
     }
     if ( verbose ) fputs( "\n>>> .\n", stdout );
 
@@ -442,10 +434,6 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 
     if ( !quiet && !verbose ) printf( "%s: stored\n", decode( path ));
     return( 0 );
-
-sn_error:
-    snet_close( sn );
-    exit( 2 );
 }
 
     int
@@ -484,18 +472,18 @@ n_stor_applefile( SNET *sn, char *pathdesc, char *path )
     size = afinfo.as_size;
 
     /* tell server what it is getting */
-    if ( snet_writef( sn, "%s", pathdesc ) < 0 ) {
-	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+    if ( snet_writef( sn, "%s\r\n", pathdesc ) < 0 ) {
+	fprintf( stderr, "n_stor_applefile %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	goto sn_error;
+	return( -1 );
     }
-    if ( verbose ) printf( ">>> %s", pathdesc );
+    if ( verbose ) printf( ">>> %s\n", pathdesc );
 
     /* tell server how much data to expect and send '.' */
     if ( snet_writef( sn, "%" PRIofft "d\r\n", afinfo.as_size ) < 0 ) {
-	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	fprintf( stderr, "n_stor_applefile %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	goto sn_error;
+	return( -1 );
     }
     if ( verbose ) printf( ">>> %" PRIofft "d\n", afinfo.as_size );
 
@@ -503,9 +491,9 @@ n_stor_applefile( SNET *sn, char *pathdesc, char *path )
     tv = timeout;
     if ( snet_write( sn, (char *)&as_header, AS_HEADERLEN, &tv )
 	    != AS_HEADERLEN ) {
-	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	fprintf( stderr, "n_stor_applefile %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	goto sn_error;
+	return( -1 );
     }
     size -= AS_HEADERLEN;
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
@@ -515,9 +503,9 @@ n_stor_applefile( SNET *sn, char *pathdesc, char *path )
     if ( snet_write( sn, ( char * )&afinfo.as_ents,
 		( 3 * sizeof( struct as_entry )), &tv )
 		!= ( 3 * sizeof( struct as_entry ))) {
-	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	fprintf( stderr, "n_stor_applefile %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	goto sn_error;
+	return( -1 );
     }
     size -= ( 3 * sizeof( struct as_entry ));
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
@@ -525,26 +513,26 @@ n_stor_applefile( SNET *sn, char *pathdesc, char *path )
     /* write finder info data to server */
     tv = timeout;
     if ( snet_write( sn, afinfo.ai.ai_data, FINFOLEN, &tv ) != FINFOLEN ) {
-	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	fprintf( stderr, "n_stor_applefile %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	goto sn_error;
+	return( -1 );
     }
     size -= FINFOLEN;
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 
     /* Check number of bytes sent to server */
     if ( size != 0 ) {
-        fprintf( stderr,
-            "store %s failed: Sent wrong number of bytes to server\n",
+        fprintf( stderr, "n_stor_applefile %s failed:"
+	    " Sent wrong number of bytes to server\n",
             pathdesc );
-        goto sn_error;
+	return( -1 );
     }
 
     /* End transaction with server */
     if ( snet_writef( sn, ".\r\n" ) < 0 ) {
-	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	fprintf( stderr, "n_stor_applefile %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	goto sn_error;
+	return( -1 );
     }
     if ( verbose ) fputs( "\n>>> .\n", stdout );
 
@@ -552,10 +540,6 @@ n_stor_applefile( SNET *sn, char *pathdesc, char *path )
         printf( "%s: stored as zero length applefile\n", path );
     }
     return( 0 );
-
-sn_error:
-    snet_close( sn );
-    exit( 2 );
 }
 
 #else /* __APPLE__ */
