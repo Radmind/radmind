@@ -30,6 +30,7 @@ fs_walk( struct llist *path  )
     struct llist	*head = NULL;
     struct llist	*new;
     struct llist	*cur;
+    int			len;
     char		temp[ MAXPATHLEN ];
 
     /* call the transcript code */
@@ -52,14 +53,19 @@ fs_walk( struct llist *path  )
 	    continue;
 	}
 
-	/* construct relative pathname to put in list */
-	if (( strlen( path->ll_pinfo.pi_name ) +
-		strlen( de->d_name + 2 )) > MAXPATHLEN ) {
-	    fprintf( stderr, "ERROR: Illegal length of path\n" );
+	len = strlen( path->ll_pinfo.pi_name );
+
+	/* absolute pathname. add 2 for / and NULL termination.  */
+	if (( len + strlen( de->d_name ) + 2 ) > MAXPATHLEN ) {
+	    fprintf( stderr, "Absolute pathname too long\n" );
 	    exit( 1 );
 	}
 
-	sprintf( temp, "%s/%s", path->ll_pinfo.pi_name, de->d_name );
+	if ( path->ll_pinfo.pi_name[ len - 1 ] == '/' ) {
+	    sprintf( temp, "%s%s", path->ll_pinfo.pi_name, de->d_name );
+	} else {
+	    sprintf( temp, "%s/%s", path->ll_pinfo.pi_name, de->d_name );
+	}
 
 	/* allocate new node for newly created relative pathname */
 	new = ll_allocate( temp );
