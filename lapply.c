@@ -65,6 +65,7 @@ create_node( char *path, char *tline )
     } else {
 	new_node->doline = 0;
     }
+    new_node->next = NULL;
 
     return( new_node );
 }
