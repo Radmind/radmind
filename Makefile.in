@@ -162,8 +162,7 @@ dist   : distclean
 	tar chfFFX - EXCLUDE . | ( cd ${DISTDIR}; tar xvf - )
 	echo ${VERSION} > ${DISTDIR}/VERSION
 
-.PHONY : man
-man :
+man : FRC
 	-mkdir tmp
 	-mkdir tmp/man
 	pwd
