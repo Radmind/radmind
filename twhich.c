@@ -267,7 +267,11 @@ main( int argc, char **argv )
 	    cmp = strcmp( decode( av[ 1 ] ), pattern );
 	    if ( cmp == 0 ) {
 		match++;
-		printf( "%s:\n%s", tran, tline );
+		if (( *av[ 0 ] == 'f' ) || ( *av[ 0 ] == 'a' )) {
+		    printf( "%s:\n+ %s", tran, tline );
+		} else {
+		    printf( "%s:\n%s", tran, tline );
+		}
 		if ( !displayall ) {
 		    break;
 		}
