@@ -242,7 +242,7 @@ main( ac, av )
     }
 
     if ( err || optind != ac ) {
-	fprintf( stderr, "Usage: radmind [ -dUV ] [ -b backlog ] " );
+	fprintf( stderr, "Usage: radmind [ -dRUV ] [ -b backlog ] " );
 	fprintf( stderr, "[ -D path ] [ -L syslog-facility ] " );
 	fprintf( stderr, "[ -m max-connections ] " );
 	fprintf( stderr, "[ -p port ] [ -u umask ] " );
