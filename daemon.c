@@ -103,7 +103,7 @@ main( ac, av )
 	prog++;
     }
 
-    while (( c = getopt( ac, av, "Vcdp:b:g:" )) != -1 ) {
+    while (( c = getopt( ac, av, "Vcdp:b:u:" )) != EOF ) {
 	switch ( c ) {
 	case 'V' :		/* virgin */
 	    printf( "%s\n", version );
@@ -125,7 +125,7 @@ main( ac, av )
 	    backlog = atoi( optarg );
 	    break;
 
-	case 'g' :		/* umask */
+	case 'u' :		/* umask */
 	    defumask = strtol( optarg, (char **)NULL, 0 );
 	    break;
 
@@ -148,9 +148,8 @@ main( ac, av )
     }
 
     if ( err || optind != ac ) {
-	fprintf( stderr,
-		"Usage:\t%s [ -d ] [ -c ] [ -p port ] [ -b backlog ]\n",
-		prog );
+	fprintf( stderr, "Usage: radmind [ -d ] [ -c ] [ -p port ]" );
+	fprintf( stderr, "[ -b backlog ] [ -u umask\n" );
 	exit( 1 );
     }
 
