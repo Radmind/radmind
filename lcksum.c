@@ -339,12 +339,14 @@ done:
 		exit( 2 );
 	    }
 	    if ( verbose ) printf( "%s: updated\n", transcript );
+	    exit( 1 );
 	} else {
 	    if ( unlink( upath ) != 0 ) {
 		perror( upath );
 		exit( 2 );
 	    }
 	    if ( verbose ) printf( "%s: verified\n", transcript );
+	    exit( 0 );
 	}
     } else {
 	if ( ucount ) {
