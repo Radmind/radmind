@@ -41,6 +41,58 @@ t_convert( int type )
     }
 }
 
+    static int
+pathcmp( const char *dir, const char *file )
+{
+    return strncmp(dir, file, strlen( dir ) );
+}
+
+    void
+rm_dir( char* dir, FILE *fdiff )
+{
+    char		tline[ 2 * MAXPATHLEN ];
+    int			tac;
+    char		**targv;
+
+    printf( "with rm_dir\n" );
+
+    /* Look at next line to see if there is a file in dir */
+
+    printf( "  Checking for files\n" );
+
+    if ( fgets( tline, MAXPATHLEN, fdiff ) == NULL ) {
+	printf( "  End of File\n" );
+	return;
+    }
+
+    tac = argcargv( tline, &targv );
+
+    /* Next line a '-' ? */
+
+    if ( *targv[ 0 ] != '-' ) {
+	printf( "End of -'s.  Removing %s\n", dir );
+    
+	if ( rmdir( dir ) != 0 ) {
+	    perror( dir );
+	    exit( 1 );
+	}
+	printf( "Success!\n" );
+    }
+
+    printf( "  Found a - %s\n", targv[ 1 ] );
+    printf( "  is %s in %s?\n", targv[ 2 ], dir );
+
+    if ( pathcmp( dir, targv[ 2 ] ) == 0 ) {
+	printf( "    Yes\n" );
+	rm_file( targv[ 2 ] );
+    } else {
+	printf( "    No\n" );
+    }
+
+    return;
+
+}
+
     int
 main( int argc, char **argv )
 {
@@ -86,11 +138,7 @@ main( int argc, char **argv )
 		    goto done;
 		}
 		if ( S_ISDIR( st.st_mode ) ) {
-		    printf( "using rmdir\n" );
-		    if ( rmdir( targv[ 2 ] ) != 0 ) {
-			perror( "rmdir" );
-			goto done;
-		    }
+		    rm_dir( targv[ 2 ], fdiff );
 		} else {
 		    printf( "using unlink\n" );
 		    if ( unlink( targv[ 2 ] ) != 0 ) {
@@ -98,6 +146,7 @@ main( int argc, char **argv )
 			goto done;
 		    }
 		}
+		
 		break;
 	    default:
 
