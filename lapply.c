@@ -275,10 +275,7 @@ main( int argc, char **argv )
     }
 
     if ( argc - optind == 0 ) {
-	if ( ( f = fdopen( 0, "r" ) ) == NULL ) { 
-	    perror( argv[ 1 ] );
-	    goto error0;
-	}
+	f = stdin; 
     } else if ( argc - optind == 1 ) {
 	if ( ( f = fopen( argv[ optind ], "r" ) ) == NULL ) { 
 	    perror( argv[ 1 ] );
@@ -291,7 +288,7 @@ main( int argc, char **argv )
     if ( err ) {
 	fprintf( stderr, "usage: lapply [ -nsvV ] " );
 	fprintf( stderr, "[ -c checksum ] [ -h host ] [ -p port ] " );
-	fprintf( stderr, "difference-transcript\n" );
+	fprintf( stderr, "[ appliable-transcript ]\n" );
 	exit( 1 );
     }
 
