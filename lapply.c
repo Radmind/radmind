@@ -159,15 +159,14 @@ apply( FILE *f, char *parent, SNET *sn )
 		    perror( path );
 		    return( 1 );	
 		}
-		present = 0;
 	    } else {
 		if ( unlink( path ) != 0 ) {
 		    perror( path );
 		    return( 1 );
 		}
-		present = 0;
 	    }
 	    if ( verbose ) printf( "%s deleted\n", path );
+	    present = 0;
 
 	    if ( *command == '-' ) {
 		goto linedone;
@@ -184,17 +183,17 @@ apply( FILE *f, char *parent, SNET *sn )
 		sprintf( pathdesc, "FILE %s %s", transcript, path );
 	    }
 
-	    if ( ( temppath = download( sn, pathdesc, "", path, chksum_b64 ) )
+	    if ( ( temppath = download( sn, pathdesc, "", path, chksum_b64 ))
 		    == NULL ) {
 		perror( "download" );
 		return( 1 );
 	    }
-	    if ( !safe && ( st.st_nlink > 1 )) {
+	    if ( present && !safe && ( st.st_nlink > 1 )) {
 		if ( copyover( temppath, path ) != 0 ) {
-		    fprintf( stderr, "%s\n", temppath );
+		    fprintf( stderr, "copyover: %s %s\n", temppath, path );
 		    return( 1 );
 		}
-		if ( unlink ( temppath ) != 0 ) {
+		if ( unlink( temppath ) != 0 ) {
 		    perror( temppath );
 		    return( 1 );
 		}
@@ -211,7 +210,7 @@ apply( FILE *f, char *parent, SNET *sn )
 		perror( "path" );
 		return( 1 );
 	    }
-	    fstype = t_convert ( (int)( S_IFMT & st.st_mode ) );
+	    fstype = t_convert( (int)( S_IFMT & st.st_mode ));
 	    present = 1;
 	}
 
@@ -222,7 +221,7 @@ apply( FILE *f, char *parent, SNET *sn )
 	}
 
 linedone:
-	if ( !ischild( parent, path ) ) {
+	if ( !ischild( parent, path )) {
 	    goto done;
 	}
     }
