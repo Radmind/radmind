@@ -542,7 +542,7 @@ transcript_select( void )
      * If the highest precedence transcript line has a leading '-',
      * then just pretend it's not there.
      */
-    } while ( begin_tran->i_pinfo.pi_minus );
+    } while ( begin_tran->t_pinfo.pi_minus );
 
     return( begin_tran );
 }
