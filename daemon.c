@@ -174,6 +174,12 @@ main( ac, av )
 	    exit( 1 );
 	}
     }
+    if ( mkdir( "special", 0750 ) != 0 ) {
+	if ( errno != EEXIST ) {
+	    perror( "file" );
+	    exit( 1 );
+	}
+    }
     if ( mkdir( "tmp", 0750 ) != 0 ) {
 	if ( errno != EEXIST ) {
 	    perror( "tmp" );
