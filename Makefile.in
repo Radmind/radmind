@@ -21,6 +21,7 @@ TLS_CERT=${CERTDIR}/cert.pem
 GNU_DIFF=@diffpath@
 RADMIND_HOST=@server@
 RADMIND_AUTHLEVEL=@authlevel@
+RADMIND_MAXCONNECTIONS=@maxconnections@
 
 RADMINDSYSLOG=LOG_LOCAL7
 
@@ -82,6 +83,7 @@ daemon.o : daemon.c
 		-D_RADMIND_AUTHLEVEL=${RADMIND_AUTHLEVEL} \
 		-D_RADMIND_PATH=\"${RADMINDDIR}\" \
 		-D_RADMIND_LOG=${RADMINDSYSLOG} \
+		-D_RADMIND_MAXCONNECTIONS=${RADMIND_MAXCONNECTIONS} \
 		-c daemon.c
 
 command.o : command.c
@@ -182,6 +184,7 @@ man : FRC
 		-e 's@_RADMIND_AUTHLEVEL@${RADMIND_AUTHLEVEL}@g' \
 		-e 's@_RADMIND_TLS_CA@${TLS_CA}@g' \
 		-e 's@_RADMIND_TLS_CERT@${TLS_CERT}@g' \
+		-e 's@_RADMIND_MAXCONNECTIONS@${RADMIND_MAXCONNECTIONS}@g' \
 		man/$$i > tmp/man/$$i; \
 	done
 

@@ -13,6 +13,8 @@
 ] [
 .BI \-L\  syslog-facility
 ] [
+.BI \-m\  max-connections 
+] [
 .BI \-p\  port
 ] [
 .BI \-u\  umask 
@@ -181,6 +183,10 @@ debug mode. Does not disassociate from controlling tty.
 .TP 19
 .BI \-L\  syslog-facility
 specifies which syslog-facilty to log messages to.
+.TP 19
+.BI \-m\  max-connections 
+specifies the maximum number of simultaneous connections, by
+default _RADMIND_MAXCONNECTIONS.
 .TP 19
 .BI \-p\  port 
 specifies the port of the radmind server, by default

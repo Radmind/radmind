@@ -792,10 +792,12 @@ if test -n "$ac_init_help"; then
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-server=server    default radmind server
-  --with-authlevel=authlevel
+  --with-server=SERVER    default radmind server
+  --with-authlevel=AUTHLEVEL
                           default TLS authorization level
   --with-radminddir=DIR   default radmind server storage
+  --with-max-connections=MAX
+                          maximum number of simultaneous connections
   --with-ssl=DIR          path to ssl
   --with-pam=DIR          path to pam
 
@@ -1176,6 +1178,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 # Set up variables
 
 
+
 # Check whether --with-server or --without-server was given.
 if test "${with_server+set}" = set; then
   withval="$with_server"
@@ -1183,6 +1186,7 @@ if test "${with_server+set}" = set; then
 else
   server="radmind"
 fi;
+
 
 
 # Check whether --with-server or --without-server was given.
@@ -1194,6 +1198,7 @@ else
 fi;
 
 
+
 # Check whether --with-radminddir or --without-radminddir was given.
 if test "${with_radminddir+set}" = set; then
   withval="$with_radminddir"
@@ -1201,6 +1206,17 @@ if test "${with_radminddir+set}" = set; then
 else
   radminddir="/var/radmind"
 fi;
+
+
+
+# Check whether --with-maxconnections or --without-maxconnections was given.
+if test "${with_maxconnections+set}" = set; then
+  withval="$with_maxconnections"
+  maxconnections="$withval"
+else
+  maxconnections=30
+fi;
+
 
 #AC_ARG_WITH(certdir, AC_HELP_STRING([--cert=DIR], [default certificate location]), certdir="$withval", certdir="/var/radmind/cert" )
 #AC_SUBST(certdir)
@@ -2954,6 +2970,7 @@ s,@diffpath@,$diffpath,;t t
 s,@server@,$server,;t t
 s,@authlevel@,$authlevel,;t t
 s,@radminddir@,$radminddir,;t t
+s,@maxconnections@,$maxconnections,;t t
 s,@AWK@,$AWK,;t t
 s,@CC@,$CC,;t t
 s,@CFLAGS@,$CFLAGS,;t t

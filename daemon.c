@@ -39,6 +39,8 @@ int		dodots = 0;
 int		cksum = 0;
 int		authlevel = _RADMIND_AUTHLEVEL;
 int		checkuser = 0;
+int		connections = 0;
+int		maxconnections = _RADMIND_MAXCONNECTIONS; /* 0 = no limit */
 char		*radmind_path = _RADMIND_PATH;
 SSL_CTX         *ctx = NULL;
 
@@ -70,6 +72,7 @@ chld( sig )
 		syslog( LOG_ERR, "child %d exited with %d", pid,
 			WEXITSTATUS( status ));
 	    } else {
+		connections--;
 		syslog( LOG_INFO, "child %d done", pid );
 	    }
 	} else if ( WIFSIGNALED( status )) {
@@ -114,7 +117,7 @@ main( ac, av )
 	prog++;
     }
 
-    while (( c = getopt( ac, av, "b:dD:L:p:u:UVw:x:y:z:" )) != EOF ) {
+    while (( c = getopt( ac, av, "b:dD:L:m:p:u:UVw:x:y:z:" )) != EOF ) {
 	switch ( c ) {
 	case 'b' :		/* listen backlog */
 	    backlog = atoi( optarg );
@@ -134,6 +137,10 @@ main( ac, av )
 			prog, optarg );
 		exit( 1 );
 	    }
+	    break;
+
+	case 'm':
+	    maxconnections = atoi( optarg );	/* Set max connections */
 	    break;
 
 	case 'p' :		/* TCP port */
@@ -181,6 +188,7 @@ main( ac, av )
     if ( err || optind != ac ) {
 	fprintf( stderr, "Usage: radmind [ -dUV ] [ -b backlog ] " );
 	fprintf( stderr, "[ -D path ] [ -L syslog-facility ] " );
+	fprintf( stderr, "[ -m max-connections ] " );
 	fprintf( stderr, "[ -p port ] [ -u umask ] " );
 	fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );
 	fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ]\n" );
@@ -391,6 +399,8 @@ main( ac, av )
 	    }
 	    continue;
 	}
+
+	connections++;
 
 	/* start child */
 	switch ( c = fork()) {

@@ -1033,6 +1033,8 @@ cmdloop( int fd, struct sockaddr_in *sin )
     char		**av, *line;
     struct timeval	tv;
     extern char		*version;
+    extern int		connections;
+    extern int		maxconnections;
 
     ncommands = sizeof( noauth ) / sizeof( noauth[ 0 ] );
 
@@ -1055,11 +1057,22 @@ cmdloop( int fd, struct sockaddr_in *sin )
 
     syslog( LOG_INFO, "child for [%s] %s",
 	    inet_ntoa( sin->sin_addr ), remote_host );
+
+    if ( maxconnections != 0 ) {
+	if ( connections > maxconnections ) {
+	    snet_writef( sn, "%d Server busy\r\n", 420 );
+	    syslog( LOG_INFO, "%s: connection refused: server busy\r\n",
+		    remote_host );
+	    exit( 1 );
+	}
+    }
     
     if ( authlevel == 0 ) {
-	/* lookup proper command file based on the hostname */
+	/* lookup proper command file based on the hostname, IP or CN */
 	if ( command_k( "config" ) < 0 ) {
 	    snet_writef( sn, "%d No access for %s\r\n", 500, remote_host );
+	    syslog( LOG_INFO, "%s: Access denied: Not in command file\r\n",
+		    remote_host );
 	    exit( 1 );
 	} else {
 	    if ( list_transcripts( sn ) != 0 ) {
