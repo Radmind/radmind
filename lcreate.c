@@ -54,6 +54,7 @@ int		quiet = 0;
 int		linenum = 0;
 int		force = 0;
 extern off_t	lsize;
+extern int	showprogress;
 extern char	*version;
 extern char	*checksumlist;
 extern struct timeval   timeout;   
@@ -97,9 +98,13 @@ main( int argc, char **argv )
     char                *user = NULL;
     char                *password = NULL;
 
-    while (( c = getopt( argc, argv, "c:Fh:ilnNp:qrt:TU:vVw:x:y:z:" ))
+    while (( c = getopt( argc, argv, "%c:Fh:ilnNp:qrt:TU:vVw:x:y:z:" ))
 	    != EOF ) {
 	switch( c ) {
+	case '%':
+	    showprogress = 1;
+	    break;
+
         case 'c':
             OpenSSL_add_all_digests();
             md = EVP_get_digestbyname( optarg );
@@ -148,6 +153,7 @@ main( int argc, char **argv )
 	case 'q':
 	    quiet = 1;
 	    break;
+
 	case 'r':
 	    use_randfile = 1;
 	    break;
@@ -165,11 +171,10 @@ main( int argc, char **argv )
             break;
 
 	case 'v':
-	    if ( ++verbose >= 2 ) {
-		logger = v_logger;
-		if ( isatty( fileno( stdout ))) {
-		    dodots = 1;
-		}
+	    verbose = 1;
+	    logger = v_logger;
+	    if ( isatty( fileno( stdout ))) {
+		dodots = 1;
 	    }
 
 	    break;
@@ -209,7 +214,10 @@ main( int argc, char **argv )
 	}
     }
 
-    if ( verbose && quiet ) {
+    if ( quiet && ( showprogress || verbose )) {
+	err++;
+    }
+    if ( showprogress && verbose ) {
 	err++;
     }
     if ( verbose && lnbf ) {
@@ -217,7 +225,7 @@ main( int argc, char **argv )
     }
 
     if ( err || ( argc - optind != 1 ))   {
-	fprintf( stderr, "usage: lcreate [ -FlnNrTV ] [ -q | -v | -i ] " );
+	fprintf( stderr, "usage: lcreate [ -%%FlnNrTV ] [ -q | -v | -i ] " );
 	fprintf( stderr, "[ -c checksum ] " );
 	fprintf( stderr, "[ -h host ] [ -p port ] " );
 	fprintf( stderr, "[ -t stored-name ] [ -U user ] " );
@@ -297,7 +305,7 @@ main( int argc, char **argv )
 		/* get the length of the password so we can zero it later */
 		len = strlen( password );
             }
-            if ( verbose == 2 ) printf( ">>> LOGIN %s %s\n", user, password );
+            if ( verbose ) printf( ">>> LOGIN %s %s\n", user, password );
             if ( snet_writef( sn, "LOGIN %s %s\n", user, password ) < 0 ) {
                 fprintf( stderr, "login %s failed: 1-%s\n", user, 
                     strerror( errno ));
