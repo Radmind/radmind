@@ -175,7 +175,7 @@ man :
 		$$i > man/$$i; \
 	done
 
-install	: all
+install	: all man
 	-mkdir -p ${DESTDIR}
 	-mkdir -p ${SBINDIR}
 	${INSTALL} -m 0755 -c radmind ${SBINDIR}/
@@ -186,11 +186,11 @@ install	: all
 	-mkdir -p ${MANDIR}
 	-mkdir ${MANDIR}/man1
 	for i in ${MAN1TARGETS}; do \
-	    ${INSTALL} -m 0644 -c $$i ${MANDIR}/man1/; \
+	    ${INSTALL} -m 0644 -c man/$$i ${MANDIR}/man1/; \
 	done
 	-mkdir ${MANDIR}/man8
 	 for i in ${MAN8TARGETS}; do \
-	    ${INSTALL} -m 0644 -c $$i ${MANDIR}/man8/; \
+	    ${INSTALL} -m 0644 -c man/$$i ${MANDIR}/man8/; \
 	done
 
 CLIENTBINPKGDIR=${DISTDIR}/client-bin
@@ -211,7 +211,7 @@ package : all man
 	    ${SERVERSTARTUPPKGDIR}
 	mkdir -p -m 0755 ${SERVERMANPKGDIR}/man8
 	for i in ${MAN8TARGETS}; do \
-	    ${INSTALL} -o root -g wheel -m 0444 -c $$i \
+	    ${INSTALL} -o root -g wheel -m 0444 -c man/$$i \
 		${SERVERMANPKGDIR}/man8/; \
 	done
 
@@ -223,7 +223,7 @@ package : all man
 	done
 	mkdir -p -m 0755 ${CLIENTMANPKGDIR}/man1
 	for i in ${MAN1TARGETS}; do \
-	    ${INSTALL} -o root -g wheel -m 0444 -c $$i \
+	    ${INSTALL} -o root -g wheel -m 0444 -c man/$$i \
 		${CLIENTMANPKGDIR}/man1/; \
 	done 
 	mkdir -p -m 0755 ${CLIENTVARPKGDIR}
