@@ -1,4 +1,4 @@
-.TH lcreate "1" "June 2003" "RSUG" "User Commands"
+.TH lcreate "1" "August 2003" "RSUG" "User Commands"
 .SH NAME
 .B lcreate
 \-  upload transcripts and their corresponding files
@@ -31,13 +31,18 @@
 .SH DESCRIPTION
 .B lcreate
 reads a transcript and uploads all corresponding files to the radmind server.
+.sp
 If the -n option is given, no files or transcripts are uploaded.  Instead,
 .B lcreate
-uses access(2) to verify all files in the transcript exist in the filesystem and are readable by the user.  If the -N option is
+uses access(2) to verify that all files in the transcript exist in the filesystem and are readable by the user.
+.sp
+If the -N option is
 given, indicating the transcript specified for upload is
 .B negative,
 .B lcreate
-will upload all corresponding files as zero length.  If the -T option is
+will upload all corresponding files as zero length.
+.sp
+If the -T option is
 given,
 .B lcreate
 will upload the transcript only. No corresponding files will be
@@ -51,7 +56,9 @@ radmind server when the -v option is given.
 .B lcreate
 stores a Macintosh HFS+ file's data and corresponding metadata in a single
 .B applefile(5)
-on the server. Systems running Mac OS X on UFS-formatted drives do not need
+on the server.  With the -N option, applefiles are stored with a zero length
+resource fork, zero length data fork and a creator type of RDMD.
+Systems running Mac OS X on UFS-formatted drives do not need
 this special support.
 .sp
 .SH OPTIONS
