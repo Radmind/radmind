@@ -89,7 +89,7 @@ main( int argc, char **argv )
     char                *user = NULL;
     char                *password = NULL;
 
-    while (( c = getopt( argc, argv, "c:h:ilnNp:P:qt:TU:vVw:x:y:z:" ))
+    while (( c = getopt( argc, argv, "c:h:ilnNp:P:qrt:TU:vVw:x:y:z:" ))
 	    != EOF ) {
 	switch( c ) {
         case 'c':
@@ -139,6 +139,9 @@ main( int argc, char **argv )
 
 	case 'q':
 	    quiet = 1;
+	    break;
+	case 'r':
+	    use_randfile = 1;
 	    break;
 
 	case 't':

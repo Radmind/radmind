@@ -84,7 +84,7 @@ main( int argc, char **argv, char **envp )
     diffargc = 0;
     diffargv[ diffargc++ ] = diff;
 
-    while (( c = getopt ( argc, argv, "h:p:ST:Vvw:x:y:z:bitcefnC:D:sX:" ))
+    while (( c = getopt ( argc, argv, "h:p:rST:Vvw:x:y:z:bitcefnC:D:sX:" ))
 	    != EOF ) {
 	switch( c ) {
 	case 'h':
@@ -99,6 +99,10 @@ main( int argc, char **argv, char **envp )
 		}
 		port = se->s_port;
 	    }
+	    break;
+
+	case 'r':
+	    use_randfile = 1;
 	    break;
 
 	case 'S':

@@ -251,7 +251,7 @@ main( int argc, char **argv )
     int			force = 0;
     int			use_randfile = 0;
 
-    while (( c = getopt ( argc, argv, "c:Fh:inp:qVvw:x:y:z:" )) != EOF ) {
+    while (( c = getopt ( argc, argv, "c:Fh:inp:qrVvw:x:y:z:" )) != EOF ) {
 	switch( c ) {
 	case 'c':
             OpenSSL_add_all_digests();
@@ -292,6 +292,10 @@ main( int argc, char **argv )
 
 	case 'q':
 	    quiet = 1;
+	    break;
+
+	case 'r':
+	    use_randfile = 1;
 	    break;
 
 	case 'V':

@@ -319,7 +319,7 @@ main( int argc, char **argv )
     struct node		*head = NULL;
     struct stat		tst, lst;
 
-    while (( c = getopt ( argc, argv, "c:h:iK:np:qvVw:x:y:z:" )) != EOF ) {
+    while (( c = getopt ( argc, argv, "c:h:iK:np:qrvVw:x:y:z:" )) != EOF ) {
 	switch( c ) {
 	case 'c':
             OpenSSL_add_all_digests();
@@ -360,6 +360,10 @@ main( int argc, char **argv )
 
 	case 'q':
 	    quiet = 1;
+	    break;
+
+	case 'r':
+	    use_randfile = 1;
 	    break;
 
 	case 'v':
