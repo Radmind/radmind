@@ -71,7 +71,7 @@ v_logger( char *line )
 main( int argc, char **argv )
 {
     int			c, err = 0, port = htons(6662), tac; 
-    int			network = 1, len, rc, lnbf = 0;
+    int			network = 1, len = 0, rc, lnbf = 0;
     int			negative = 0, tran_only = 0;
     int			respcount = 0;
     extern int		optind;
