@@ -153,12 +153,6 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
     char		*epath;
     dev_t		dev;
 
-    /*
-     * Compare the current transcript with the previous one.  If they are 
-     * different, print the name of the new transcript to the output file.
-     * If the previous transcript has not been set, print out the current
-     * transcript and set prev_tran 
-     */
     if ( edit_path == FS2TRAN ) {
 	cur = &tran->t_pinfo;
     } else {
@@ -206,11 +200,18 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 	    }
 	    fprintf( outtran, "+ " );
 	}
+
+	/*
+	 * PR_STATUS_NEG means we've had a permission change on a file,
+	 * but the corresponding transcript is negative, hence, retain
+	 * the file system's mtime.  Woof!
+	 */
 	fprintf( outtran, "f %-37s\t%.4lo %5d %5d %9d %7d %s\n", epath,
 		(unsigned long)( T_MODE & cur->pi_stat.st_mode ), 
 		(int)cur->pi_stat.st_uid, (int)cur->pi_stat.st_gid,
-		(int)cur->pi_stat.st_mtime, (int)cur->pi_stat.st_size,
-		cur->pi_chksum_b64 );
+		( flag == PR_STATUS_NEG ) ?
+			(int)fs->pi_stat.st_mtime : (int)cur->pi_stat.st_mtime,
+		(int)cur->pi_stat.st_size, cur->pi_chksum_b64 );
 	break;
 
     case 'c':
@@ -314,7 +315,11 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 	if (( fs->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) || 
 		( fs->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) ||
 		( mode != tran_mode )) {
-	    t_print( fs, tran, PR_STATUS );
+	    if (( tran->t_type == T_NEGATIVE ) && ( edit_path == FS2TRAN )) {
+		t_print( fs, tran, PR_STATUS_NEG );
+	    } else {
+		t_print( fs, tran, PR_STATUS );
+	    }
 	}
 	break;
 
