@@ -12,10 +12,10 @@
 #include "connect.h"
 #include "argcargv.h"
 #include "code.h"
-#ifdef DARWIN
+#ifdef __APPLE__
 #include "afile.h"
 #include "send_afile.h"
-#endif
+#endif __APPLE__
 
 /*
  * STOR
@@ -148,14 +148,14 @@ store_file( int fd, SNET *sn, char *filename, char *transcript, char *filetype )
     }
 
     switch( *filetype ) {
-#ifdef DARWIN
+#ifdef __APPLE__
     case 'a':
 	if ( send_afile( filename, fd, sn, dodots ) != 0 ) {
 	    perror( "send_afile" );
 	    return( -1 );
 	}
 	break;
-#endif
+#endif __APPLE_
     case 'f':
 	while (( rr = read( fd, buf, sizeof( buf ))) > 0 ) {
 	    if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
