@@ -514,7 +514,7 @@ transcript_select( void )
     struct transcript	*next_tran = NULL;
     struct transcript	*begin_tran = NULL;
 
-    do {
+    for (;;) {
 	for ( begin_tran = tran_head, next_tran = tran_head->t_next;
 		next_tran != NULL; next_tran = next_tran->t_next ) {
 	    if ( begin_tran->t_eof ) {
@@ -538,13 +538,15 @@ transcript_select( void )
 	    }
 	}
 
-    /*
-     * If the highest precedence transcript line has a leading '-',
-     * then just pretend it's not there.
-     */
-    } while ( begin_tran->t_pinfo.pi_minus );
-
-    return( begin_tran );
+	if ( !begin_tran->t_pinfo.pi_minus ) {
+	    return( begin_tran );
+	}
+	/*
+	 * If the highest precedence transcript line has a leading '-',
+	 * then just pretend it's not there.
+	 */
+	transcript_parse( begin_tran );
+    }
 }
 
     int
