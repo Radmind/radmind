@@ -231,15 +231,15 @@ main( int argc, char **argv )
 		    fileloc = j;
 		}
 	    }
-	    /* output non-files */
-	    if ( *trans[ candidate ]->targv[ 0 ] != 'f' ) {
-		goto outputline;
-	    }
 	    /* skip items to be removed or files not uploaded */
 	    if ( ( trans[ candidate ]->remove ) ||
 		    ( ( noupload ) && ( candidate == 0 ) &&
 		    ( fileloc == 0 ) ) ) {
 		goto skipline;
+	    }
+	    /* output non-files */
+	    if ( *trans[ candidate ]->targv[ 0 ] != 'f' ) {
+		goto outputline;
 	    }
 
 	    /* Link file */
