@@ -300,7 +300,7 @@ check( SNET *sn, char *type, char *file )
 main( int argc, char **argv )
 {
     int			c, port = htons( 6662 ), err = 0;
-    int			len, tac, change = 0;
+    int			len, tac, change = 0, lnbf = 0;
     int			authlevel = 0;
     int			use_randfile = 0;
     extern int          optind;
@@ -317,7 +317,7 @@ main( int argc, char **argv )
     struct node		*head = NULL;
     struct stat		tst, lst;
 
-    while (( c = getopt ( argc, argv, "c:h:K:np:qvVw:x:y:z:" )) != EOF ) {
+    while (( c = getopt ( argc, argv, "c:h:iK:np:qvVw:x:y:z:" )) != EOF ) {
 	switch( c ) {
 	case 'c':
             OpenSSL_add_all_digests();
@@ -331,6 +331,11 @@ main( int argc, char **argv )
 
 	case 'h':
 	    host = optarg;
+	    break;
+
+	case 'i':
+	    setvbuf( stdout, ( char * )NULL, _IOLBF, 0 );
+	    lnbf = 1;
 	    break;
 
 	case 'K':
@@ -401,9 +406,13 @@ main( int argc, char **argv )
     if ( verbose && quiet ) {
 	err++;
     }
+    if ( verbose && lnbf ) {
+	err++;
+    }
 
     if ( err || ( argc - optind != 0 )) {
-	fprintf( stderr, "usage: ktcheck -c checksum [ -nV ] [ -q | -v ] " );
+	fprintf( stderr,
+		"usage: ktcheck -c checksum [ -nV ] [ -q | -v | -i ] " );
 	fprintf( stderr, "[ -K command file ] " );
 	fprintf( stderr, "[ -h host ] [ -p port ] " );
 	fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );
