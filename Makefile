@@ -42,8 +42,9 @@ LDFLAGS=	-L${OPENSSL}/lib -Llibsnet ${ADDLIBS} -lsnet -lcrypto
 BINTARGETS=     fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff twhich
 MAN1TARGETS=    fsdiff.1 ktcheck.1 lapply.1 lcksum.1 lcreate.1 lfdiff.1 \
                 lmerge.1 twhich.1
+MAN5TARGETS= 	applefile.5
 MAN8TARGETS=	radmind.8
-MANTARGETS=	${MAN1TARGETS} ${MAN8TARGETS}
+MANTARGETS=	${MAN1TARGETS} ${MAN5TARGETS} ${MAN8TARGETS}
 TARGETS=        radmind ${BINTARGETS}
 
 RADMIND_OBJ=    version.o daemon.o command.o argcargv.o code.o \
@@ -190,6 +191,10 @@ install	: all man
 	for i in ${MAN1TARGETS}; do \
 	    ${INSTALL} -m 0644 -c man/$$i ${MANDIR}/man1/; \
 	done
+	-mkdir ${MANDIR}/man5
+	for i in ${MAN5TARGETS}; do \
+	    ${INSTALL} -m 0644 -c man/$$i ${MANDIR}/man5/; \
+	done
 	-mkdir ${MANDIR}/man8
 	 for i in ${MAN8TARGETS}; do \
 	    ${INSTALL} -m 0644 -c tmp/man/$$i ${MANDIR}/man8/; \
@@ -236,6 +241,11 @@ package : all man info
 	for i in ${MAN1TARGETS}; do \
 	    ${INSTALL} -o root -g wheel -m 0444 -c tmp/man/$$i \
 		${CLIENTMANPKGDIR}/man1/; \
+	done 
+	mkdir -p -m 0755 ${CLIENTMANPKGDIR}/man5
+	for i in ${MAN5TARGETS}; do \
+	    ${INSTALL} -o root -g wheel -m 0444 -c tmp/man/$$i \
+		${CLIENTMANPKGDIR}/man5/; \
 	done 
 	mkdir -p -m 0755 ${CLIENTVARPKGDIR}
 	${INSTALL} -o root -g staff -m 0755 -c OS_X/command.K \
