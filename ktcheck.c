@@ -16,7 +16,6 @@
 
 #include "snet.h"
 #include "argcargv.h"
-#include "getstat.h"
 #include "download.h"
 #include "chksum.h"
 #include "list.h"
@@ -27,6 +26,7 @@
 void output( char* string);
 int check( SNET *sn, char *type, char *path); 
 int createspecial( SNET *sn, struct node *head );
+char * getstat( SNET *sn, char *description );
 
 void		(*logger)( char * ) = NULL;
 struct timeval 	timeout = { 10 * 60, 0 };
