@@ -105,14 +105,14 @@ main( int argc, char **argv )
     char		*kfile = _RADMIND_COMMANDFILE;
     char		*kdir = "";
     char		*p;
-    int 		c, len;
+    int 		c, len, edit_path_change = 0;
     int 		errflag = 0;
 
-    edit_path = TRAN2FS;
+    edit_path = CREATABLE;
     cksum = 0;
     outtran = stdout;
 
-    while (( c = getopt( argc, argv, "c:o:K:T1V" )) != EOF ) {
+    while (( c = getopt( argc, argv, "Ac:Co:K:T1V" )) != EOF ) {
 	switch( c ) {
 	case 'c':
 	    if ( strcasecmp( optarg, "sha1" ) != 0 ) {
@@ -135,10 +135,15 @@ main( int argc, char **argv )
 
 	case '1':
 	    skip = 1;
+	case 'C':
+	    edit_path_change++;
+	    edit_path = CREATABLE;
 	    break;	
 
+	case 'A':
 	case 'T':		/* want to record differences from tran */
-	    edit_path = FS2TRAN;
+	    edit_path_change++;
+	    edit_path = APPLICABLE;
 	    break;
 
 	case 'V':		
@@ -155,7 +160,10 @@ main( int argc, char **argv )
 	}
     }
 
-    if (( edit_path == FS2TRAN ) && ( skip )) {
+    if (( edit_path == APPLICABLE ) && ( skip )) {
+	errflag++;
+    }
+    if ( edit_path_change > 1 ) {
 	errflag++;
     }
 
@@ -166,7 +174,8 @@ main( int argc, char **argv )
     }
 
     if ( errflag || ( argc - optind != 1 )) {
-	fprintf( stderr, "usage: fsdiff [ -T | -1 ] [ -K command ] " );
+	fprintf( stderr, "usage: %s [ -C | { -T | -A } | -1 ] ", argv[ 0 ] );
+	fprintf( stderr, "[ -K command ] " );
 	fprintf( stderr, "[ -c cksumtype ] [ -o file ] path\n" );
 	exit ( 1 );
     }

@@ -151,7 +151,7 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
     char		*epath;
     dev_t		dev;
 
-    if ( edit_path == FS2TRAN ) {
+    if ( edit_path == APPLICABLE ) {
 	cur = &tran->t_pinfo;
     } else {
 	cur = fs;	/* What if this is NULL? */
@@ -161,10 +161,10 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
      * If a file is missing from the edit_path that was chosen, a - is 
      * printed and then the file name that is missing is printed.
      */
-    if (( edit_path == FS2TRAN ) && ( flag == PR_FS_ONLY )) {
+    if (( edit_path == APPLICABLE ) && ( flag == PR_FS_ONLY )) {
 	fprintf( outtran, "- " );
 	cur = fs;
-    } else if (( edit_path ==  TRAN2FS ) && ( flag == PR_TRAN_ONLY )) {
+    } else if (( edit_path ==  CREATABLE ) && ( flag == PR_TRAN_ONLY )) {
 	fprintf( outtran, "- " );
 	cur = &tran->t_pinfo;
     }
@@ -191,7 +191,7 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 
     case 'a':		/* hfs applesingle file */
     case 'f':
-	if (( edit_path == FS2TRAN ) && (( flag == PR_TRAN_ONLY ) || 
+	if (( edit_path == APPLICABLE ) && (( flag == PR_TRAN_ONLY ) || 
 		( flag == PR_DOWNLOAD ))) {
 	    if ( prev_tran != tran ) {
 		fprintf( outtran, "%s:\n", tran->t_shortname );
@@ -309,7 +309,7 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 (( !cksum ) ? ( fs->pi_stat.st_mtime != tran->t_pinfo.pi_stat.st_mtime ) :
 ( strcmp( fs->pi_cksum_b64, tran->t_pinfo.pi_cksum_b64 ) != 0 ))) {
 		t_print( fs, tran, PR_DOWNLOAD );
-		if (( edit_path == FS2TRAN ) && ( fs->pi_stat.st_nlink > 1 )) {
+		if (( edit_path == APPLICABLE ) && ( fs->pi_stat.st_nlink > 1 )) {
 		    hardlink_changed( fs, 1 );
 		}
 		break;
@@ -324,7 +324,7 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 	if (( fs->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) || 
 		( fs->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) ||
 		( mode != tran_mode )) {
-	    if (( tran->t_type == T_NEGATIVE ) && ( edit_path == FS2TRAN )) {
+	    if (( tran->t_type == T_NEGATIVE ) && ( edit_path == APPLICABLE )) {
 		t_print( fs, tran, PR_STATUS_NEG );
 	    } else {
 		t_print( fs, tran, PR_STATUS );
@@ -554,7 +554,7 @@ transcript_init( char *kdir, char *kfile)
     }
 
     if (( fp = fopen( kfile, "r" )) == NULL ) {
-	if ( edit_path == FS2TRAN ) {
+	if ( edit_path == APPLICABLE ) {
 	    perror( kfile );
 	    exit( 1 );
 	}
@@ -619,7 +619,7 @@ transcript_init( char *kdir, char *kfile)
 	t_new( T_SPECIAL, fullpath, special );
     }
 
-    if ( tran_head->t_type == T_NULL  && edit_path == FS2TRAN ) {
+    if ( tran_head->t_type == T_NULL  && edit_path == APPLICABLE ) {
 	fprintf( stderr, "-T option requires a non-NULL transcript\n" );
 	exit( 1 );
     }

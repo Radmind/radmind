@@ -5,7 +5,13 @@
 .SH SYNOPSIS
 .B fsdiff
 [
+.B -C
+|
+{
 .B -T
+|
+.B -A
+}
 |
 .B -1
 ] [
@@ -56,7 +62,7 @@ and it contains references to files that are host specific, eg.
 Any discrepancies are printed on the standard output or, with the -o option,
 to a file. The default is to print the differences as edits to the
 transcript to make it match the filesystem. If the edit direction
-chosen is -T, the differences are printed as edits to the file system
+chosen is -T or -A, the differences are printed as edits to the file system
 to make it match the transcript. A "+" at the beginning of a line
 indicates a file must be downloaded. A "-" indicates the given object (
 file, directory, link etc ) must be removed.
@@ -204,9 +210,15 @@ used to build
 .B negative
 transcripts.
 .TP 19
+.B \-A
+produces an applicable transcript.
+.TP 19
+.B \-C
+produces a creatable transcript.
+.TP 19
 .B \-T
 prints out the difference transcript as edits to the file system to make
-it match the transcript. 
+it match the transcript.  To be replaced with -A. 
 .TP 19
 .B \-V
 prints out the fsdiff version number and a list of supported checksumming
