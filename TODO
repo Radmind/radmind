@@ -2,6 +2,7 @@ For 1.0:
     TLS
     users file
     wild card support in hosts file
+    create CHANGES file
 
 For after 1.0:
     pipe-line lapply
