@@ -110,6 +110,7 @@ apply( FILE *f, char *parent, SNET *sn )
     char		temppath[ 2 * MAXPATHLEN ];
     char		pathdesc[ 2 * MAXPATHLEN ];
     char		chksum_b64[ 29 ];
+    unsigned char	finfo[ 32 ];
     int			tac, present, len;
     char		**targv;
     char		*command = "";
@@ -179,7 +180,7 @@ apply( FILE *f, char *parent, SNET *sn )
 	}
 
 	/* Do type check on local file */
-	switch ( getfsoinfo( path, &st, &fstype, NULL )) {
+	switch ( getfsoinfo( path, &st, &fstype, finfo )) {
 	case 0:
 	    present = 1;
 	    break;
@@ -305,7 +306,7 @@ filechecklist:
 	    }
 #endif __APPLE__
 
-	    if ( getfsoinfo( path, &st, &fstype, NULL ) < 0 ) {
+	    if ( getfsoinfo( path, &st, &fstype, finfo ) < 0 ) {
 		perror( path );
 		return( 1 );
 	    }
