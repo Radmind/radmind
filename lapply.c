@@ -189,9 +189,9 @@ apply( FILE *f, char *parent, SNET *sn )
 	    strcpy( chksum_b64, targv[ 7 ] );
 
 	    if ( special ) {
-		sprintf( pathdesc, "SPECIAL %s", path );
+		sprintf( pathdesc, "SPECIAL %s", encode( path ));
 	    } else {
-		sprintf( pathdesc, "FILE %s %s", transcript, path );
+		sprintf( pathdesc, "FILE %s %s", transcript, encode( path ));
 	    }
 
 	    if (( temppath = retr( sn, pathdesc, path, NULL, chksum_b64 ))
