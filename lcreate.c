@@ -335,7 +335,14 @@ main( int argc, char **argv )
 	    exitcode = 2;
 	    break;
 	}
-	if ( tac >= 2 && ( *targv[ 0 ] == 'f' || *targv[ 0 ] == 'a' )) {
+	if ( *targv[ 0 ] == 'f' || *targv[ 0 ] == 'a' ) {
+	    if ( tac != 8 ) {
+		fprintf( stderr, "line %d: invalid transcript line\n",
+			linenum );
+		exitcode = 2;
+		break;
+	    }
+
 	    dpath = decode( targv[ 1 ] );
 
 	    /* Verify transcript line is correct */
