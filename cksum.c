@@ -162,6 +162,7 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
     ssize_t 
 do_acksum( char *path, char *cksum_b64, struct applefileinfo *afino )
 {
+    errno = EOPNOTSUPP;
     return( -1 );
 }
 #endif __APPLE__
