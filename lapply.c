@@ -145,6 +145,11 @@ main( int argc, char **argv )
 
     while ( fgets( tline, MAXPATHLEN, fdiff ) != NULL ) {
 	tac = argcargv( tline, &targv );
+	switch( *targv[ 0 ] )
+	{
+	    case 'f':
+	    case 'd'
+	    case 'ZZ
 	if ( *targv[ 0 ] == 'f' && tac >= 2 ) {
 	    fprintf( stderr, "%s is a file!\n", targv[ 1 ] );
 	    if ( !network ) {
