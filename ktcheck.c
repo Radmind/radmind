@@ -16,6 +16,14 @@
 #include <unistd.h>
 #include <utime.h>
 
+#ifdef TLS
+#include <openssl/ssl.h>
+#include <openssl/rand.h>
+#include <openssl/err.h>
+
+SSL_CTX  *ctx;
+#endif TLS
+
 #include <openssl/evp.h>
 #include <snet.h>
 
@@ -294,6 +302,8 @@ main( int argc, char **argv )
 {
     int			c, port = htons( 6662 ), err = 0;
     int			len, tac, change = 0;
+    int			authlevel = 0;
+    int			use_randfile = 0;
     extern int          optind;
     char		*host = _RADMIND_HOST, *p;
     char                **targv;
@@ -307,8 +317,11 @@ main( int argc, char **argv )
     FILE		*f;
     struct node		*head = NULL;
     struct stat		tst, lst;
+    char                *ca = "ca.pem";
+    char                *cert = "cert.pem";
+    char                *privatekey = "cert.pem";
 
-    while (( c = getopt ( argc, argv, "c:K:nh:p:qVv" )) != EOF ) {
+    while (( c = getopt ( argc, argv, "c:h:K:np:qvVw:x:y:z:" )) != EOF ) {
 	switch( c ) {
 	case 'c':
             OpenSSL_add_all_digests();
@@ -319,9 +332,19 @@ main( int argc, char **argv )
             }
             cksum = 1;
             break;
+
 	case 'h':
 	    host = optarg;
 	    break;
+
+	case 'K':
+	    kfile = optarg;
+	    break;
+
+	case 'n':
+	    update = 0;
+	    break;
+
 	case 'p':
 	    if (( port = htons ( atoi( optarg )) ) == 0 ) {
 		if (( se = getservbyname( optarg, "tcp" )) == NULL ) {
@@ -331,19 +354,11 @@ main( int argc, char **argv )
 		port = se->s_port;
 	    }
 	    break;
-	case 'K':
-	    kfile = optarg;
-	    break;
-	case 'n':
-	    update = 0;
-	    break;
+
 	case 'q':
 	    quiet = 1;
 	    break;
-	case 'V':
-	    printf( "%s\n", version );
-	    printf( "%s\n", checksumlist );
-	    exit( 0 );
+
 	case 'v':
 	    verbose = 1;
 	    logger = output;
@@ -351,6 +366,28 @@ main( int argc, char **argv )
 		dodots = 1;
 	    }
 	    break;
+
+	case 'V':
+	    printf( "%s\n", version );
+	    printf( "%s\n", checksumlist );
+	    exit( 0 );
+
+        case 'w' :              /* authlevel 0:none, 1:serv, 2:client & serv */
+            authlevel = atoi( optarg );
+            break;
+
+        case 'x' :              /* ca file */
+            ca = optarg;
+            break;
+
+        case 'y' :              /* cert file */
+            cert = optarg;
+            break;
+
+        case 'z' :              /* private key */
+            privatekey = optarg;
+            break;
+
 	case '?':
 	    err++;
 	    break;
@@ -371,6 +408,67 @@ main( int argc, char **argv )
 	exit( 2 );
     }
 
+    if ( authlevel != 0 ) {
+        /* Setup SSL */
+
+        SSL_load_error_strings();
+        SSL_library_init();
+
+        if ( use_randfile ) {
+            char        randfile[ MAXPATHLEN ];
+
+            if ( RAND_file_name( randfile, sizeof( randfile )) == NULL ) {
+                fprintf( stderr, "RAND_file_name: %s\n",
+                        ERR_error_string( ERR_get_error(), NULL ));
+                exit( 1 );
+            }     
+            if ( RAND_load_file( randfile, -1 ) <= 0 ) {
+                fprintf( stderr, "RAND_load_file: %s: %s\n", randfile,
+                        ERR_error_string( ERR_get_error(), NULL ));
+                exit( 1 );
+            }
+            if ( RAND_write_file( randfile ) < 0 ) {
+                fprintf( stderr, "RAND_write_file: %s: %s\n", randfile,
+                        ERR_error_string( ERR_get_error(), NULL ));
+                exit( 1 );
+            }
+        }
+
+        if (( ctx = SSL_CTX_new( SSLv23_client_method())) == NULL ) {
+            fprintf( stderr, "SSL_CTX_new: %s\n",
+                    ERR_error_string( ERR_get_error(), NULL ));
+            exit( 1 );
+        }
+
+        /* Use cert.pem to set private key */
+        if ( SSL_CTX_use_PrivateKey_file( ctx, privatekey, SSL_FILETYPE_PEM )
+                != 1 ) {
+            fprintf( stderr, "SSL_CTX_use_PrivateKey_file: %s: %s\n",
+                    privatekey, ERR_error_string( ERR_get_error(), NULL ));
+            exit( 1 );
+        }
+        if ( SSL_CTX_use_certificate_chain_file( ctx, cert ) != 1 ) {
+            fprintf( stderr, "SSL_CTX_use_certificate_chain_file: %s: %s\n",
+                    cert, ERR_error_string( ERR_get_error(), NULL ));
+            exit( 1 );
+        }
+        /* Verify that private key matches cert */
+        if ( SSL_CTX_check_private_key( ctx ) != 1 ) {
+            fprintf( stderr, "SSL_CTX_check_private_key: %s\n",
+                    ERR_error_string( ERR_get_error(), NULL ));
+            exit( 1 );
+        }
+
+        /* Load CA */
+        if ( SSL_CTX_load_verify_locations( ctx, ca, NULL ) != 1 ) {
+            fprintf( stderr, "SSL_CTX_load_verify_locations: %s: %s\n",
+                    ca, ERR_error_string( ERR_get_error(), NULL ));
+            exit( 1 );
+        }
+        /* Set level of security expecations */
+        SSL_CTX_set_verify( ctx, SSL_VERIFY_PEER, NULL );
+    }
+
     if (( kdir = strdup( kfile )) == NULL ) {
         perror( "strdup failed" );
         exit( 2 );
@@ -389,6 +487,50 @@ main( int argc, char **argv )
 
     if (( sn = connectsn( host, port )) == NULL ) {
 	exit( 2 );
+    }
+
+    if ( authlevel != 0 ) {
+	X509        	*peer;
+	char       	 buf[ 1024 ];
+	struct timeval	tv;
+	char		*line;
+
+	if( snet_writef( sn, "STARTTLS\n" ) < 0 ) {
+	    perror( "snet_writef" );
+	    return( -1 );
+	}
+	if ( verbose ) printf( ">>> STARTTLS\n" );
+
+	tv = timeout;
+	if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
+	    perror( "snet_getline_multi" );
+	    return( -1 );
+	}
+	if ( *line != '2' ) {
+	    fprintf( stderr, "%s\n",  line );
+	    return( -1 );
+	}
+
+	/*
+	 * Begin TLS
+	 */
+	/* This is where the TLS start */
+	/* At this point the server is also staring TLS */
+
+	if ( snet_starttls( sn, ctx, 0 ) != 1 ) {
+	    fprintf( stderr, "snet_starttls: %s\n",
+		    ERR_error_string( ERR_get_error(), NULL ) );
+	    return( -1 );
+	}
+	if (( peer = SSL_get_peer_certificate( sn->sn_ssl ))
+		== NULL ) {
+	    fprintf( stderr, "no certificate\n" );
+	    return( -1 );
+	}
+	X509_NAME_get_text_by_NID( X509_get_subject_name( peer ),
+	    NID_commonName, buf, sizeof( buf ));
+	fprintf( stderr, "CERT Subject: %s\n", buf );
+	X509_free( peer );
     }
 
     switch( check( sn, "COMMAND", NULL )) { 

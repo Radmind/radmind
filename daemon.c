@@ -3,11 +3,6 @@
  * All Rights Reserved.  See COPYRIGHT.
  */
 
-/*
- * Copyright (c) 2000 Regents of The University of Michigan.
- * All Rights Reserved.  See COPYRIGHT.
- */
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -25,6 +20,12 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef TLS
+#include <openssl/ssl.h>
+#include <openssl/rand.h>
+#include <openssl/err.h>
+#endif /* TLS */
+
 #include <snet.h>
 
 #include "command.h"
@@ -38,6 +39,7 @@ int		verbose = 0;
 int		dodots = 0;
 int		cksum = 0;
 char		*radmind_path = _RADMIND_PATH;
+SSL_CTX         *ctx = NULL;
 
 extern char	*version;
 
@@ -94,11 +96,16 @@ main( ac, av )
     struct servent	*se;
     int			c, s, err = 0, fd, sinlen, trueint;
     int			dontrun = 0;
+    int			authlevel = 0;
+    int			use_randfile = 0;
     char		*prog;
     unsigned short	port = 0;
     int			facility = _RADMIND_LOG;
     extern int		optind;
     extern char		*optarg;
+    char		*ca = "ca.pem";
+    char		*cert = "cert.pem";
+    char		*privatekey = "cert.pem";
 
 
     if (( prog = strrchr( av[ 0 ], '/' )) == NULL ) {
@@ -107,11 +114,15 @@ main( ac, av )
 	prog++;
     }
 
-    while (( c = getopt( ac, av, "VD:L:dp:b:u:" )) != EOF ) {
+    while (( c = getopt( ac, av, "b:d:D:Lp:u:Vw:x:y:z:" )) != EOF ) {
 	switch ( c ) {
-	case 'V' :		/* version */
-	    printf( "%s\n", version );
-	    exit( 0 );
+	case 'b' :		/* listen backlog */
+	    backlog = atoi( optarg );
+	    break;
+
+	case 'd' :		/* debug */
+	    debug++;
+	    break;
 
 	case 'D':		/* Set radmind path */
 	    radmind_path = optarg;
@@ -125,20 +136,32 @@ main( ac, av )
 	    }
 	    break;
 
-	case 'd' :		/* debug */
-	    debug++;
-	    break;
-
 	case 'p' :		/* TCP port */
 	    port = htons( atoi( optarg ));
 	    break;
 
-	case 'b' :		/* listen backlog */
-	    backlog = atoi( optarg );
-	    break;
-
 	case 'u' :		/* umask */
 	    umask( (mode_t)strtol( optarg, (char **)NULL, 0 ));
+	    break;
+
+	case 'V' :		/* version */
+	    printf( "%s\n", version );
+	    exit( 0 );
+
+	case 'w' :		/* authlevel 0:none, 1:serv, 2:client & serv */
+	    authlevel = atoi( optarg );
+	    break;
+
+	case 'x' :		/* ca file */
+	    ca = optarg;
+	    break;
+
+	case 'y' :		/* cert file */
+	    cert = optarg;
+	    break;
+
+	case 'z' :		/* private key */
+	    privatekey = optarg;
 	    break;
 
 	default :
@@ -153,13 +176,75 @@ main( ac, av )
 	exit( 1 );
     }
 
-    if ( chdir( radmind_path ) < 0 ) {
-	perror( radmind_path );
-	exit( 1 );
+    if ( authlevel != 0 ) {
+	/* Setup SSL */
+
+        SSL_load_error_strings();
+        SSL_library_init();    
+
+        if ( use_randfile ) {
+            char        randfile[ MAXPATHLEN ];      
+
+            if ( RAND_file_name( randfile, sizeof( randfile )) == NULL ) {
+                fprintf( stderr, "RAND_file_name: %s\n",
+                        ERR_error_string( ERR_get_error(), NULL ));
+                exit( 1 );
+            }
+            if ( RAND_load_file( randfile, -1 ) <= 0 ) {
+                fprintf( stderr, "RAND_load_file: %s: %s\n", randfile,
+                        ERR_error_string( ERR_get_error(), NULL ));
+                exit( 1 );
+            }
+            if ( RAND_write_file( randfile ) < 0 ) {
+                fprintf( stderr, "RAND_write_file: %s: %s\n", randfile,
+                        ERR_error_string( ERR_get_error(), NULL ));
+                exit( 1 );
+            }
+        }
+
+        if (( ctx = SSL_CTX_new( SSLv23_server_method())) == NULL ) {
+            fprintf( stderr, "SSL_CTX_new: %s\n",
+                    ERR_error_string( ERR_get_error(), NULL ));
+            exit( 1 );
+        }
+
+        /* Use cert.pem to set private key */
+        if ( SSL_CTX_use_PrivateKey_file( ctx, privatekey, SSL_FILETYPE_PEM )
+                != 1 ) {
+            fprintf( stderr, "SSL_CTX_use_PrivateKey_file: %s: %s\n",
+                    privatekey, ERR_error_string( ERR_get_error(), NULL ));
+            exit( 1 );
+        }
+        if ( SSL_CTX_use_certificate_chain_file( ctx, cert ) != 1 ) {
+            fprintf( stderr, "SSL_CTX_use_certificate_chain_file: %s: %s\n",
+                    cert, ERR_error_string( ERR_get_error(), NULL ));
+            exit( 1 );
+        }
+        /* Verify that private key matches cert */
+        if ( SSL_CTX_check_private_key( ctx ) != 1 ) {
+            fprintf( stderr, "SSL_CTX_check_private_key: %s\n",
+                    ERR_error_string( ERR_get_error(), NULL ));
+            exit( 1 );
+        }
+
+        /* Load CA */
+        if ( SSL_CTX_load_verify_locations( ctx, ca, NULL ) != 1 ) {
+            fprintf( stderr, "SSL_CTX_load_verify_locations: %s: %s\n",
+                    ca, ERR_error_string( ERR_get_error(), NULL ));
+            exit( 1 );
+        }
+        /* Set level of security expecations */
+        SSL_CTX_set_verify( ctx,
+                SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL );
     }
 
     if ( dontrun ) {
 	exit( 0 );
+    }
+
+    if ( chdir( radmind_path ) < 0 ) {
+	perror( radmind_path );
+	exit( 1 );
     }
 
     /* Create directory structure */

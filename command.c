@@ -24,6 +24,13 @@
 #include <unistd.h>
 #include <ctype.h>
 
+#ifdef TLS
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+
+extern SSL_CTX  *ctx;
+#endif TLS
+
 #include <openssl/evp.h>
 #include <snet.h>
 
@@ -58,6 +65,9 @@ int		f_help ___P(( SNET *, int, char *[] ));
 int		f_stat ___P(( SNET *, int, char *[] ));
 int		f_retr ___P(( SNET *, int, char *[] ));
 int		f_stor ___P(( SNET *, int, char *[] ));
+#ifdef TLS
+int		f_starttls ___P(( SNET *, int, char *[] ));
+#endif /* TLS */
 
 char		*remote_host;
 char		*remote_addr;
@@ -609,6 +619,68 @@ f_stor( SNET *sn, int ac, char *av[] )
     return( 0 );
 }
 
+#ifdef TLS
+    int
+f_starttls( snet, ac, av )
+    SNET                        *snet;
+    int                         ac;    
+    char                        *av[];
+{
+    int                         rc;
+    X509                        *peer;
+    char                        buf[ 1024 ];
+
+    /* We get here when the client asks for TLS with the STARTTLS verb */
+    /*
+     * Client MUST NOT attempt to start a TLS session if a TLS     
+     * session is already active.  No mention of what to do if it does...
+     */
+/* We don't have a way of doing this!
+    if ( env->e_flags & E_TLS ) {
+        syslog( LOG_ERR, "f_starttls: called twice" );
+        return( -1 );
+    }
+*/
+
+    if ( ac != 1 ) {  
+        snet_writef( snet, "%d Syntax error\r\n", 501 );
+        return( 1 );
+    }
+
+    /* Tell client that is cool */
+    snet_writef( snet, "%d Ready to start TLS\r\n", 220 );
+
+    /*
+     * Begin TLS
+     */
+    /* This is where the TLS start */
+    /* At this point the client is also staring TLS */
+    /* 1 is for server, 0 is client */
+    if (( rc = snet_starttls( snet, ctx, 1 )) != 1 ) {
+        syslog( LOG_ERR, "f_starttls: snet_starttls: %s",
+                ERR_error_string( ERR_get_error(), NULL ) );
+        snet_writef( snet, "%d SSL didn't work error! XXX\r\n", 501 );
+        return( 1 );
+    }
+    if (( peer = SSL_get_peer_certificate( snet->sn_ssl ))
+            == NULL ) {
+        syslog( LOG_ERR, "no peer certificate" );
+        return( -1 );
+    }
+
+    syslog( LOG_INFO, "CERT Subject: %s\n", X509_NAME_oneline( X509_get_subject_name( peer ), buf, sizeof( buf )));
+    X509_free( peer );
+
+/* More env crap we don't have 
+    env_reset( env );
+    env->e_flags = E_TLS;
+*/
+
+    return( 0 );
+}
+#endif TLS
+
+
 /* sets command file for connected host */
     int
 command_k( char *path_config )
@@ -662,6 +734,9 @@ struct command	commands[] = {
     { "STATus",		f_stat },
     { "RETRieve",	f_retr },
     { "STORe",		f_stor },
+#ifdef TLS
+    { "STARTTLS",       f_starttls },
+#endif TLS
 };
 
 int		ncommands = sizeof( commands ) / sizeof( commands[ 0 ] );
