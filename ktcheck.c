@@ -35,6 +35,8 @@ int		chksum = 1;
 int		verbose = 0;
 int		update = 1;
 char		*command = "command.K";
+char		*commandpath = ".";
+char		fullpath[ MAXPATHLEN ];
 
     char * 
 getstat( SNET *sn, char *description ) 
@@ -89,7 +91,14 @@ createspecial( SNET *sn, struct node *head )
     if ( verbose ) printf( "\n*** Creating special.T\n" );
 
     /* Open file */
-    if ( ( fd = open( "special.T", O_WRONLY | O_CREAT | O_TRUNC, 0666 ) )
+    if ( ( strlen( "special.T" ) + strlen( commandpath ) + 2 ) >
+	    MAXPATHLEN ) {
+	fprintf( stderr, "path too long: %s/special.T\n", commandpath );
+	exit( 2 );
+    }
+    sprintf( fullpath, "%s/special.T", commandpath );
+
+    if ( ( fd = open( fullpath, O_WRONLY | O_CREAT | O_TRUNC, 0666 ) )
 	    < 0 ) {
 	perror( "special.T" );
 	return( 1 );
@@ -142,7 +151,7 @@ createspecial( SNET *sn, struct node *head )
     int
 check( SNET *sn, char *type, char *path)
 {
-    char	*schksum, *stats;
+    char	*schksum, *stats, *temppath = NULL;
     char	**targv;
     char 	pathdesc[ 2 * MAXPATHLEN ];
     char        cchksum[ 29 ];
@@ -174,8 +183,15 @@ check( SNET *sn, char *type, char *path)
 	perror( "strdup" );
 	return( 2 );
     }
+    if ( ( strlen( command ) + strlen( commandpath ) + 2 ) >
+	    MAXPATHLEN ) {
+	fprintf( stderr, "path too long:%s\%s\n", commandpath,
+		path );
+	exit( 2 );
+    }
+    sprintf( fullpath, "%s/%s", commandpath, path );
 
-    switch( do_chksum( path, cchksum ) ) {
+    switch( do_chksum( fullpath, cchksum ) ) {
     case 0:
 	break;
     case 1:
@@ -185,10 +201,16 @@ check( SNET *sn, char *type, char *path)
 	if ( update ) {
 	    if ( verbose ) printf( "*** Downloading missing file: %s\n",
 		    path ); 
-	    if ( get( sn, pathdesc, path, schksum ) != 0 ) {
-		perror( "download" );
+	    if ( ( temppath = download( sn, pathdesc, path, schksum ) )
+		    == NULL ) {
+		perror( "get" );
 		return( 2 );
 	    }
+	    if ( rename( temppath, fullpath ) != 0 ) {
+		perror( temppath );
+		return( 1 );
+	    }
+	    free( temppath );
 	}
 	return( 1 );
     }
@@ -204,10 +226,16 @@ check( SNET *sn, char *type, char *path)
 	    }
 	    if ( verbose ) printf( "*** %s deleted\n", path );
 	    if ( verbose ) printf( "*** Downloading %s\n", path ); 
-	    if ( get( sn, pathdesc, path, schksum ) != 0 ) {
+	    if ( ( temppath = download( sn, pathdesc, path, schksum ) )
+		    == NULL ) {
 		perror( "download" );
 		return( 2 );
 	    }
+	    if ( rename( temppath, fullpath ) != 0 ) {
+		perror( temppath );
+		return( 1 );
+	    }
+	    free( temppath );
 	}
 	return( 1 );
     } else {
@@ -258,7 +286,20 @@ main( int argc, char **argv )
 	    }
 	    break;
 	case 'K':
-	    command = optarg;
+	    if ( ( command = strrchr( optarg, '/' ) ) == NULL ) {
+		command = optarg;
+	    } else {
+		commandpath = optarg;
+		*command = (char) '\0';
+		command++;
+	    }
+	    if ( ( strlen( command ) + strlen( commandpath ) + 2 ) >
+		    MAXPATHLEN ) {
+		fprintf( stderr, "path too long:%s\%s\n", commandpath,
+			command );
+		exit( 2 );
+	    }
+	    sprintf( fullpath, "%s/%s", commandpath, command );
 	    break;
 	case 'n':
 	    update = 0;
@@ -308,9 +349,16 @@ main( int argc, char **argv )
     case 2:
 	exit( 2 );
     }
+    if ( ( strlen( command ) + strlen( commandpath ) + 2 ) >
+	    MAXPATHLEN ) {
+	fprintf( stderr, "path too long:%s\%s\n", commandpath,
+		command );
+	exit( 2 );
+    }
+    sprintf( fullpath, "%s/%s", commandpath, command );
 
-    if ( ( f = fopen( command, "r" ) ) == NULL ) {
-	perror( argv[ 1 ] );
+    if ( ( f = fopen( fullpath, "r" ) ) == NULL ) {
+	perror( fullpath );
 	exit( 2 );
     }
 
