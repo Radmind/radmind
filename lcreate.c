@@ -13,10 +13,8 @@
 #include "connect.h"
 #include "argcargv.h"
 #include "code.h"
-#ifdef __APPLE__
 #include "applefile.h"
 #include "store_applefile.h"
-#endif __APPLE__
 
 /*
  * STOR
@@ -144,14 +142,12 @@ store_file( int fd, SNET *sn, char *filename, char *transcript, char *filetype )
     }
 
     switch( *filetype ) {
-#ifdef __APPLE__
     case 'a':
 	if ( store_applefile( decode( filename ), fd, sn, dodots ) != 0 ) {
 	    perror( "store_applefile" );
 	    return( -1 );
 	}
 	break;
-#endif __APPLE__
     case 'f':
 	if ( snet_writef( sn, "%d\r\n", (int)st.st_size ) == NULL ) {
 	    perror( "snet_writef" );
@@ -333,11 +329,7 @@ main( int argc, char **argv )
 	    exitcode = 1;
 	    break;
 	}
-#ifdef __APPLE__
 	if ( tac >= 2 && ( *targv[ 0 ] == 'f' || *targv[ 0 ] == 'a' )) {
-#else !__APPLE__
-	if ( tac >= 2 && *targv[ 0 ] == 'f' ) {
-#endif __APPLE__
 	    dpath = decode( targv[ 1 ] );
 	    if ( !network ) {
 		if ( access( dpath,  R_OK ) < 0 ) {
