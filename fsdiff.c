@@ -11,13 +11,15 @@
 #include <sys/param.h>
 #include <unistd.h>
 #include <errno.h>
- 
+
 #include "transcript.h"
 #include "llist.h"
 #include "code.h"
 
-int main( int, char ** );
-void fs_walk( struct llist *, int );
+char    *version = VERSION;
+
+int	main( int, char ** );
+void	fs_walk( struct llist *, int );
 
     void
 fs_walk( struct llist *path, int flag ) 
@@ -30,9 +32,9 @@ fs_walk( struct llist *path, int flag )
     char 		temp[ MAXPATHLEN ];
 
     /* call the transcript code */
-    if (( transcript( &path->ll_info, path->ll_info.i_name, outtran ) 
-		== 0 ) || ( flag & FLAG_SKIP )) {
-	return;
+    if (( transcript( &path->ll_info, path->ll_info.i_name ) == 0 ) ||
+	    ( flag & FLAG_SKIP )) {
+	return;				
     }
 
     /* open directory */
@@ -96,36 +98,44 @@ main( int argc, char **argv )
 #endif
     int    		c;
     int    		errflag = 0;
-    int			flag = 0;
+    int			flag = 0;	/* XXX do we need a flag  */  
 
     flag |= FLAG_INIT;
     edit_path = TRAN2FS;
     outtran = stdout;
 
-    while (( c = getopt( argc, argv, "o:t1" )) != EOF ) {
+    while (( c = getopt( argc, argv, "o:t1V" )) != EOF ) {
 	switch( c ) {
 	case 'o':
-		  if (( outtran = fopen( optarg, "w" )) == NULL ) {
-			perror( optarg );
-			exit( 1 );
-		  }
-		  break;
+	    if (( outtran = fopen( optarg, "w" )) == NULL ) {
+		perror( optarg );
+		exit( 1 );
+	    }
+	    break;
+
 	case '1':
-		  flag |= FLAG_SKIP;
-		  break;	
+	    flag |= FLAG_SKIP;
+	    break;	
+
 	case 't': 		/* want to record differences from tran */
-		  edit_path = FS2TRAN;
-		  break;
+	    edit_path = FS2TRAN;
+	    break;
+
+	case 'V':		
+	    printf( "%s\n", version );
+	    exit( 0 );
+
 	case '?':
-		errflag++;
-		break;
+	    errflag++;
+	    break;
+
 	default: 
-		break;
+	    break;
 	}
     }
 
     if ( errflag ) {
-	fprintf( stderr, "usage: fsdiff [ -t | -1 | -o <file> ]\n" );
+	fprintf( stderr, "usage: fsdiff [ -t | -1 | -V | -o <file> ]\n" );
     }
 
     if ( argv[ optind ] == NULL ) {
@@ -133,13 +143,21 @@ main( int argc, char **argv )
 	exit( 1 );
     }
 
+    if ( argc - optind > 1 ) {
+	fprintf( stderr,
+	    "ERROR: One and only one valid path name is allowed!\n" );
+	exit ( 1 );
+    }
+
     /* initialize the transcripts */
     transcript_init( flag );
 
-    if ( chdir( argv[ optind ] ) != 0 ) {
+    if ( flag & FLAG_SKIP ) {
+    	root = ll_allocate( argv[ optind ] );
+    } else if ( chdir( argv[ optind ] ) != 0 ) {
 	if ( errno != ENOTDIR ) {
-		perror( argv[ optind ] );
-		exit( 1 );
+	    perror( argv[ optind ] );
+	    exit( 1 );
 	}
     	root = ll_allocate( argv[ optind ] );
     } else {
@@ -149,9 +167,10 @@ main( int argc, char **argv )
 
     /* free the transcripts */
     transcript_free( );
+    d_free( );
 	    
     /* close the output file */     
     fclose( outtran );
 
-    exit(0);	
+    exit( 0 );	
 }
