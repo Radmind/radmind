@@ -25,6 +25,13 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 
+/*
+ * for zeroconf, currently only available on Mac OS X
+ */
+#ifdef __APPLE__
+#include <DNSServiceDiscovery/DNSServiceDiscovery.h>
+#endif /* __APPLE__ */
+
 #include <snet.h>
 
 #include "command.h"
@@ -90,6 +97,41 @@ chld( sig )
     return;
 }
 
+/*
+ * Callback with return value of zeroconf name registration attempt
+ */
+#ifdef __APPLE__
+    static void
+dnsreg_reply( DNSServiceRegistrationReplyErrorType rc, void *context )
+{
+    switch ( rc ) {
+    case kDNSServiceDiscoveryNoError:
+	syslog( LOG_INFO, "Rendezvous name now registered and active.\n" );
+	break;
+    case kDNSServiceDiscoveryNameConflict:
+	syslog( LOG_ERR, "Rendezvous name in use, please choose another.\n" );
+	break;
+    default:
+	syslog( LOG_ERR, "An error occurred registering the name.\n" );
+	break;
+    }
+}
+
+/*
+ * Register as a zeroconf service
+ */
+    static dns_service_discovery_ref
+register_service( unsigned int port, DNSServiceRegistrationReply callback )
+{
+    dns_service_discovery_ref	dsdref = NULL;
+
+    dsdref = DNSServiceRegistrationCreate( "", "_radmind._tcp", "",
+					    port, "", callback, NULL );
+
+    return( dsdref );
+}
+#endif /* __APPLE__ */
+
     int
 main( ac, av )
     int		ac;
@@ -99,7 +141,7 @@ main( ac, av )
     struct sockaddr_in	sin;
     struct servent	*se;
     int			c, s, err = 0, fd, sinlen, trueint;
-    int			dontrun = 0;
+    int			dontrun = 0, regservice = 0;
     int			ssl_mode = 0;
     char		*prog;
     unsigned short	port = 0;
@@ -109,6 +151,9 @@ main( ac, av )
     char		*ca = "cert/ca.pem";
     char		*cert = "cert/cert.pem";
     char		*privatekey = "cert/cert.pem";
+#ifdef __APPLE__
+    dns_service_discovery_ref	mdnsref = NULL;
+#endif /* __APPLE */
 
 
     if (( prog = strrchr( av[ 0 ], '/' )) == NULL ) {
@@ -117,7 +162,7 @@ main( ac, av )
 	prog++;
     }
 
-    while (( c = getopt( ac, av, "b:dD:L:m:p:u:UVw:x:y:z:" )) != EOF ) {
+    while (( c = getopt( ac, av, "b:dD:L:m:p:Ru:UVw:x:y:z:" )) != EOF ) {
 	switch ( c ) {
 	case 'b' :		/* listen backlog */
 	    backlog = atoi( optarg );
@@ -146,6 +191,12 @@ main( ac, av )
 	case 'p' :		/* TCP port */
 	    port = htons( atoi( optarg ));
 	    break;
+
+#ifdef __APPLE__
+	case 'R' :		/* register as Rendezvous service */
+	    regservice = 1;
+	    break;
+#endif /* __APPLE */
 
 	case 'u' :		/* umask */
 	    umask( (mode_t)strtol( optarg, (char **)NULL, 0 ));
@@ -394,6 +445,20 @@ main( ac, av )
     syslog( LOG_INFO, "restart %s", version );
 
     /*
+     * Register as rendezvous service, if requested.
+     * We have to wait till we've started 
+     * listening for this registration to work.
+     */
+#ifdef __APPLE__ 
+    if ( regservice ) {
+	mdnsref = register_service( sin.sin_port, dnsreg_reply );
+	if ( ! mdnsref ) {
+	    syslog( LOG_ERR, "Failed to register as rendezvous service." );
+	}
+    }
+#endif /* __APPLE__ */
+
+    /*
      * Begin accepting connections.
      */
     for (;;) {
@@ -437,4 +502,8 @@ main( ac, av )
 	    break;
 	}
     }
+    
+#ifdef __APPLE__
+    DNSServiceDiscoveryDeallocate( mdnsref );
+#endif /* __APPLE__ */
 }
