@@ -71,6 +71,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, ssize_t transize,
     if ( cksum ) {
 	if ( strcmp( trancksum, "-" ) == 0 ) {
 	    fprintf( stderr, "line %d: No checksum\n", linenum);
+	    fprintf( stderr, "%s\n", pathdesc );
 	    return( 1 );
 	}
 	EVP_DigestInit( &mdctx, md );
@@ -107,6 +108,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, ssize_t transize,
     if ( transize >= 0 && size != transize ) {
 	fprintf( stderr, "line %d: size in transcript does not match size "
 	    "from server\n", linenum );
+	fprintf( stderr, "%s\n", pathdesc );
 	return( -1 );
     }
     if ( verbose ) printf( "<<< " );
@@ -161,6 +163,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, ssize_t transize,
     }
     if ( strcmp( line, "." ) != 0 ) {
 	fprintf( stderr, "%s", line );
+	fprintf( stderr, "%s\n", pathdesc );
 	returnval = -1;
 	goto error1;
     }
@@ -173,6 +176,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, ssize_t transize,
 	if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
 	    fprintf( stderr, "line %d: checksum in transcript does not match "
 		"checksum from server\n", linenum );
+	    fprintf( stderr, "%s\n", pathdesc );
 	    returnval = 1;
 	    goto error1;
 	}
@@ -220,6 +224,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     if ( cksum ) {
         if ( strcmp( trancksum, "-" ) == 0 ) {
 	    fprintf( stderr, "line %d: No checksum\n", linenum);
+	    fprintf( stderr, "%s\n", pathdesc );
             return( 1 );
         }
         EVP_DigestInit( &mdctx, md );
@@ -256,6 +261,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     if ( transize >= 0 && size != transize ) {
 	fprintf( stderr, "line %d: size in transcript does not match size"
 	    "from server\n", linenum );
+	fprintf( stderr, "%s\n", pathdesc );
 	return( -1 );
     }  
     if ( verbose ) printf( "<<< " );
@@ -436,6 +442,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     }
     if ( strcmp( line, "." ) != 0 ) {
         fprintf( stderr, "%s", line );
+	fprintf( stderr, "%s\n", pathdesc );
 	returnval = -1;
 	goto error1;
     }
@@ -447,6 +454,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
         if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
 	    fprintf( stderr, "line %d: checksum in transcript does not match "
 		"checksum from server\n", linenum );
+	fprintf( stderr, "%s\n", pathdesc );
             returnval = 1;
 	    goto error1;
         }
