@@ -1,6 +1,6 @@
-Title                	Radmind client binaries
+Title                	Client binaries
 Version              	_RADMIND_VERSION
-Description          	This package installs radmind client binaries for Mac OS X
+Description          	This package installs radmind client binaries
 
 DefaultLocation      	/usr/local/bin
 Relocatable          	NO

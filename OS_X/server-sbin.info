@@ -1,6 +1,6 @@
 Title                	Radmind server
 Version              	_RADMIND_VERSION
-Description          	This package installs radmind server for Mac OS X
+Description          	This package installs radmind server
 
 DefaultLocation      	/usr/local/sbin
 Relocatable          	NO

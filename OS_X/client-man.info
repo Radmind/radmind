@@ -1,6 +1,6 @@
-Title                	Radmind client man pages
+Title                	Client man pages
 Version              	_RADMIND_VERSION
-Description          	This package installs radmind client man pages for Mac OS X
+Description          	This package installs radmind client man pages
 
 DefaultLocation         /usr/local/share/man
 Relocatable          	NO
