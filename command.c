@@ -301,7 +301,8 @@ f_retr( sn, ac, av )
 
     switch ( keyword( ac, av )) {
     case K_COMMAND:
-        sprintf( path, "%s", command_file );
+	/* command_file length checked in command_K */
+        strcpy( path, command_file );
 	break;
 
     case K_TRANSCRIPT:
@@ -318,7 +319,12 @@ f_retr( sn, ac, av )
 	    return( 1 );
 	}
 
-	sprintf( path, "transcript/%s", d_tran );
+	if ( snprintf( path, MAXPATHLEN, "transcript/%s", d_tran )
+		>= MAXPATHLEN ) {
+	    syslog( LOG_ERR, "f_retr: transcript path too long" );
+	    snet_writef( sn, "%d Path too long\r\n", 540 );
+	    return( 1 );
+	}
 	break;
 
     case K_SPECIAL:
@@ -328,7 +334,13 @@ f_retr( sn, ac, av )
 	    return( 1 );
 	} 
 
-	sprintf( path, "%s/%s", special_dir, d_path );
+	if ( snprintf( path, MAXPATHLEN, "%s/%s", special_dir, d_path )
+		>= MAXPATHLEN ) {
+	    syslog( LOG_ERR, "f_retr: special path too long" );
+	    snet_writef( sn, "%d Path too long\r\n", 540 );
+	    return( 1 );
+	}
+
 	break;
 
     case K_FILE:
@@ -355,7 +367,12 @@ f_retr( sn, ac, av )
 	    return( 1 );
 	}
 
-	sprintf( path, "file/%s/%s", d_tran, d_path );
+	if ( snprintf( path, MAXPATHLEN, "file/%s/%s", d_tran, d_path )
+		>= MAXPATHLEN ) {
+	    syslog( LOG_ERR, "f_retr: file path too long" );
+	    snet_writef( sn, "%d Path too long\r\n", 540 );
+	    return( 1 );
+	}
 	free( d_path );
 	break;
 
@@ -466,7 +483,8 @@ f_stat( SNET *sn, int ac, char *av[] )
 
     switch ( key = keyword( ac, av )) {
     case K_COMMAND:
-        sprintf( path, "%s", command_file );
+	/* command_file length checked in command_K */
+        strcpy( path, command_file );
 	break;
 
     case K_TRANSCRIPT:
@@ -483,7 +501,12 @@ f_stat( SNET *sn, int ac, char *av[] )
 	    return( 1 );
 	}
 
-	sprintf( path, "transcript/%s", d_tran );
+	if ( snprintf( path, MAXPATHLEN, "transcript/%s", d_tran )
+		>= MAXPATHLEN ) {
+	    syslog( LOG_ERR, "f_stat: transcript path too long" );
+	    snet_writef( sn, "%d Path too long\r\n", 540 );
+	    return( 1 );
+	}
 	break;
 
     case K_SPECIAL:
@@ -493,7 +516,12 @@ f_stat( SNET *sn, int ac, char *av[] )
 	    return( 1 );
 	} 
 
-	sprintf( path, "%s/%s", special_dir, d_path);
+	if ( snprintf( path, MAXPATHLEN, "%s/%s", special_dir, d_path) 
+		>= MAXPATHLEN ) {
+	    syslog( LOG_ERR, "f_stat: special path too long" );
+	    snet_writef( sn, "%d Path too long\r\n", 540 );
+	    return( 1 );
+	}
 	break;
 
     default:
@@ -630,12 +658,27 @@ f_stor( SNET *sn, int ac, char *av[] )
     switch ( keyword( ac, av )) {
 
     case K_TRANSCRIPT:
-        sprintf( xscriptdir, "tmp/file/%s", d_tran );
-        sprintf( upload, "tmp/transcript/%s", d_tran );
+        if ( snprintf( xscriptdir, MAXPATHLEN, "tmp/file/%s", d_tran )
+		>= MAXPATHLEN ) {
+	    syslog( LOG_ERR, "f_stor: xscriptdir path too long" );
+	    snet_writef( sn, "%d Path too long\r\n", 540 );
+	    return( 1 );
+	}
+        if ( snprintf( upload, MAXPATHLEN, "tmp/transcript/%s", d_tran )
+		>= MAXPATHLEN ) {
+	    syslog( LOG_ERR, "f_stor: upload path too long" );
+	    snet_writef( sn, "%d Path too long\r\n", 540 );
+	    return( 1 );
+	}
 
 	/* keep encoded transcript name, since it will just be
 	 * used later to compare in a stor file.
 	 */
+	if ( strlen( av[ 2 ] ) >= MAXPATHLEN ) {
+	    syslog( LOG_ERR, "f_stor: uplaod_xscript path too long" );
+	    snet_writef( sn, "%d Path too long\r\n", 540 );
+	    return( 1 );
+	}
 	strcpy( upload_xscript, av[ 2 ] );
 
 	/* make the directory for the files of this xscript to live in. */
@@ -671,9 +714,19 @@ f_stor( SNET *sn, int ac, char *av[] )
 	}
 
 	if ( d_path[ 0 ] == '/' ) {
-	    sprintf( upload, "tmp/file/%s%s", d_tran, d_path );
+	    if ( snprintf( upload, MAXPATHLEN, "tmp/file/%s%s", d_tran,
+		    d_path ) >= MAXPATHLEN ) {
+		syslog( LOG_ERR, "f_stor: upload path too long" );
+		snet_writef( sn, "%d Path too long\r\n", 540 );
+		return( 1 );
+	    }
 	} else {
-	    sprintf( upload, "tmp/file/%s/%s", d_tran, d_path );
+	    if ( snprintf( upload, MAXPATHLEN, "tmp/file/%s/%s", d_tran,
+		    d_path ) >= MAXPATHLEN ) {
+		syslog( LOG_ERR, "f_stor: upload path too long" );
+		snet_writef( sn, "%d Path too long\r\n", 540 );
+		return( 1 );
+	    }
 	}
 	free( d_path );
 	free( d_tran );
@@ -1041,7 +1094,12 @@ command_k( char *path_config )
 	}
 
 	if (( remote_cn != NULL ) && wildcard( av[ 0 ], remote_cn )) {
-	    sprintf( command_file, "command/%s", av[ 1 ] );
+	    if ( snprintf( command_file, MAXPATHLEN, "command/%s", av[ 1 ] )
+		    >= MAXPATHLEN ) {
+		syslog( LOG_ERR,
+		    "config file: line %d: command file too long\n", linenum );
+		continue;
+	    }
 	    if ( snprintf( temp, MAXPATHLEN, "%s/%s", special_dir,
 		    remote_cn ) >= MAXPATHLEN ) {
 		syslog( LOG_ERR, "config file: line %d: special dir too long\n",
@@ -1052,7 +1110,12 @@ command_k( char *path_config )
 	    return( 0 );
 	}
 	if ( wildcard( av[ 0 ], remote_host )) {
-	    sprintf( command_file, "command/%s", av[ 1 ] );
+	    if ( snprintf( command_file, MAXPATHLEN, "command/%s", av[ 1 ] )
+		    >= MAXPATHLEN ) {
+		syslog( LOG_ERR,
+		    "config file: line %d: command file too long\n", linenum );
+		continue;
+	    }
 	    if ( snprintf( temp, MAXPATHLEN, "%s/%s", special_dir,
 		    remote_host ) >= MAXPATHLEN ) {
 		syslog( LOG_ERR, "config file: line %d: special dir too long\n",
@@ -1063,7 +1126,12 @@ command_k( char *path_config )
 	    return( 0 );
 	} 
 	if ( wildcard( av[ 0 ], remote_addr )) {
-	    sprintf( command_file, "command/%s", av[ 1 ] );
+	    if ( snprintf( command_file, MAXPATHLEN, "command/%s", av[ 1 ] )
+		    >= MAXPATHLEN ) {
+		syslog( LOG_ERR,
+		    "config file: line %d: command file too long\n", linenum );
+		continue;
+	    }
 	    if ( snprintf( temp, MAXPATHLEN, "%s/%s", special_dir,
 		    remote_addr ) >= MAXPATHLEN ) {
 		syslog( LOG_ERR, "config file: line %d: special dir too long\n",
