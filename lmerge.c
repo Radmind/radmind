@@ -308,6 +308,17 @@ main( int argc, char **argv )
 	    exit( 2 );
 	}
     } else {
+	/* Create tran if missing */
+	if (( ofd = open( argv[ argc - 1 ], O_WRONLY | O_CREAT, 0666 ) ) < 0 ) {
+	    perror( argv[ argc - 1 ] );
+	    exit( 2 );
+	}
+	if ( close( ofd ) != 0 ) {
+	    perror( argv[ argc - 1 ] );
+	    exit( 2 );
+	}
+
+	/* Get paths */
 	if ( *argv[ argc - 1 ] == '/' ) {
 	    if ( snprintf( cwd, MAXPATHLEN, "%s", argv[ argc - 1 ] )
 		    > MAXPATHLEN - 1 ) {
@@ -325,9 +336,7 @@ main( int argc, char **argv )
 	if ( get_root( cwd, file_root, tran_root, tran_name ) != 0 ) {
 	    exit( 2 );
 	}
-    }
 
-    if ( !force ) {
 	/* Create file/tname dir */
 	if ( snprintf( npath, MAXPATHLEN, "%s/%s.%d", file_root, tran_name,
 		(int)getpid()) > MAXPATHLEN -1 ) {
@@ -348,7 +357,7 @@ main( int argc, char **argv )
 	    (int)getpid());
 	exit( 2 );
     }
-    if ( ( ofd = open( opath, O_WRONLY | O_CREAT | O_EXCL,
+    if (( ofd = open( opath, O_WRONLY | O_CREAT | O_EXCL,
 	    0666 ) ) < 0 ) {
 	perror( opath );
 	exit( 2 );
@@ -357,7 +366,7 @@ main( int argc, char **argv )
 	perror( opath );
 	exit( 2 );
     }
-    
+
     /* merge */
     for ( i = 0; i < tcount; i++ ) {
 	while ( !(trans[ i ]->t_eof)) {
