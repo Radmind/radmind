@@ -23,6 +23,7 @@
 #include "download.h"
 #include "update.h"
 #include "connect.h"
+#include "pathcmp.h"
 
 #define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
 
@@ -34,6 +35,7 @@ int		special = 0;
 int		safe = 0;
 int		network = 1;
 char		transcript[ 2 * MAXPATHLEN ];
+char		*prepath = NULL;
 extern char	*version, *checksumlist;
 
 int apply( FILE *f, char *parent, SNET *sn );
@@ -130,6 +132,22 @@ apply( FILE *f, char *parent, SNET *sn )
 	}
 
 	strcpy( path, decode( targv[ 1 ] ));
+
+	/* Check transcript order */
+	if ( prepath != NULL ) {
+	    if ( pathcmp( path, prepath ) < 0 ) {
+		fprintf( stderr, "%s: line %d: bad sort order\n",
+			    transcript, linenum );
+		return( 1 );
+	    }
+	    free( prepath );
+	}
+	if (( prepath = strdup( path )) == NULL ) {
+	    fprintf( stderr, "strdup failed!\n" );
+	    return( 1 );
+	}
+	    
+
 
 	/* Do type check on local file */
 	if ( lstat( path, &st ) ==  0 ) {

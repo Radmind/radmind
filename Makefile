@@ -42,7 +42,7 @@ KTCHECK_OBJ=	version.o ktcheck.o argcargv.o download.o base64.o code.o \
 		chksum.o list.o connect.o
 
 LAPPLY_OBJ=	version.o lapply.o argcargv.o code.o base64.o download.o \
-		convert.o update.o chksum.o copy.o connect.o
+		convert.o update.o chksum.o copy.o connect.o pathcmp.o
 
 LCREATE_OBJ=	version.o lcreate.o argcargv.o code.o connect.o
 
