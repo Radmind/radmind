@@ -10,6 +10,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -25,68 +26,85 @@ extern int              verbose;
 struct timeval          timeout = { 10 * 60, 0 };
 extern int		errno;
 
+    static SNET *
+connectsn2( struct sockaddr_in *sin )
+{
+    int			s;
+    char		*line;
+    struct timeval      tv;
+    SNET                *sn = NULL; 
+
+    if (( s = socket( PF_INET, SOCK_STREAM, NULL )) < 0 ) {
+	perror( "socket" );
+	exit( 1 );
+    }
+    if ( verbose ) printf( "trying %s... ", inet_ntoa( sin->sin_addr ));
+    if ( connect( s, ( struct sockaddr *)sin,
+	    sizeof( struct sockaddr_in ) ) != 0 ) {
+	if ( verbose ) printf( "failed: %s\n", strerror( errno ));
+	(void)close( s );
+	return( NULL );
+    }
+    if ( verbose ) printf( "success!\n" );
+    if ( ( sn = snet_attach( s, 1024 * 1024 ) ) == NULL ) {
+	perror( "snet_attach" );
+	exit( 1 );
+    }
+    tv = timeout;
+    if ( ( line = snet_getline_multi( sn, logger, &tv) ) == NULL ) {
+	fprintf( stderr, "connection to %s failed: %s\n",
+		inet_ntoa( sin->sin_addr ), strerror( errno ));
+	snet_close( sn );
+	return( NULL );
+    }
+    if ( *line !='2' ) {
+	fprintf( stderr, "%s\n", line);
+	snet_close( sn );
+	return( NULL );
+    }
+
+    return( sn );
+}
+
     SNET *
 connectsn( char *host, int port )
 {
-    int			i, s;
-    char		*line;
-    struct timeval      tv;
+    int			i;
     struct hostent      *he;
     struct sockaddr_in  sin;
     SNET                *sn = NULL; 
 
+    memset( &sin, 0, sizeof( struct sockaddr_in ) );
+    sin.sin_family = AF_INET;
+    sin.sin_port = port;
 
-    /* Make network connection */
+    /*
+     * this code should be enabled only to deal with bugs in
+     * the gethostbyname() routine
+     */
+    if (( sin.sin_addr.s_addr = inet_addr( host )) != -1 ) {
+	if (( sn = connectsn2( &sin )) != NULL ) {
+	    return( sn );
+	}
+	fprintf( stderr, "%s: connection failed\n", host );
+	exit( 1 );
+    }
+
     if (( he = gethostbyname( host )) == NULL ) {
-	fprintf( stderr, "%s: Unkown host\n", host );
+	fprintf( stderr, "%s: Unknown host\n", host );
 	exit( 1 );
     }
     
     for ( i = 0; he->h_addr_list[ i ] != NULL; i++ ) {
-	if (( s = socket( PF_INET, SOCK_STREAM, NULL )) < 0 ) {
-	    perror( host );
-	    exit( 1 );
-	}
-	memset( &sin, 0, sizeof( struct sockaddr_in ) );
-	sin.sin_family = AF_INET;
-	sin.sin_port = port;
 	memcpy( &sin.sin_addr.s_addr, he->h_addr_list[ i ],
-	    ( unsigned int)he->h_length );
-	if ( verbose ) printf( "trying %s... ",
-		inet_ntoa( *( struct in_addr *)he->h_addr_list[ i ] ) );
-	if ( connect( s, ( struct sockaddr *)&sin,
-		sizeof( struct sockaddr_in ) ) != 0 ) {
-	    if ( verbose ) printf( "failed: %s\n", strerror( errno ));
-	    (void)close( s );
-	    continue;
+		( unsigned int)he->h_length );
+	if (( sn = connectsn2( &sin )) != NULL ) {
+	    return( sn );
 	}
-	if ( verbose ) printf( "success!\n" );
-	if ( ( sn = snet_attach( s, 1024 * 1024 ) ) == NULL ) {
-	    fprintf( stderr, "connection to %s failed: %s\n", host,
-		strerror( errno ));
-	    continue;
-	}
-	tv = timeout;
-	if ( ( line = snet_getline_multi( sn, logger, &tv) ) == NULL ) {
-	    fprintf( stderr, "connection to %s failed: %s\n", host,
-		strerror( errno ));
-	    snet_close( sn );
-	    continue;
-	}
-	if ( *line !='2' ) {
-	    fprintf( stderr, "%s\n", line);
-	    snet_close( sn );
-	    continue;
-	}
-	break;
     }
-    if ( he->h_addr_list[ i ] == NULL ) {
-	fprintf( stderr, "%s: connection failed\n", host );
-	exit( 1 );
-    }
-    return( sn );
+    fprintf( stderr, "%s: connection failed\n", host );
+    exit( 1 );
 }
-
 
     int
 closesn( SNET *sn )
