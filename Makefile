@@ -107,7 +107,7 @@ install	: all
 	    ${INSTALL} -m 0755 -c $$i ${BINDIR}/; \
 	done
 	-mkdir -p ${MANDIR}
-	-mkdir ${MANDIR)/man1
+	-mkdir ${MANDIR}/man1
 	for i in ${MAN1TARGETS}; do \
 	    ${INSTALL} -m 0644 -c $$i ${MANDIR}/man1/; \
 	done
