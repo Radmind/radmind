@@ -37,7 +37,7 @@ struct pathinfo {
     char			pi_link[ MAXPATHLEN ];
     struct stat			pi_stat;
     char			pi_cksum_b64[ MAXPATHLEN ];
-    struct applefileinfo	afinfo;
+    struct applefileinfo	pi_afinfo;
 };
 
 struct transcript {
