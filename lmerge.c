@@ -18,6 +18,8 @@
 #include "lmerge.h"
 #include "pathcmp.h"
 #include "mkdirs.h"
+#include "copy.h"
+#include "list.h"
 
 int		chksum = 1;
 int		verbose = 0;
@@ -75,16 +77,20 @@ getnextline( struct tran *tran )
 main( int argc, char **argv )
 {
     int			c, i, j, cmpval, err = 0, tcount = 0, candidate = NULL;
-    int			ofd, fileloc = 0;
+    int			force = 0, ofd, fileloc = 0;
     char		*tname = NULL, *file = NULL;
     char		*tpath = NULL;
     char		npath[ 2 * MAXPATHLEN ];
     char		opath[ 2 * MAXPATHLEN ];
     struct tran		**trans = NULL;
+    struct node		*dirlist = NULL;
     FILE		*ofs;
 
-    while ( ( c = getopt( argc, argv, "nVv" ) ) != EOF ) {
+    while ( ( c = getopt( argc, argv, "fnVv" ) ) != EOF ) {
 	switch( c ) {
+	case 'f':
+	    force = 1;
+	    break;
 	case 'n':
 	    noupload = 1;
 	    break;
@@ -103,18 +109,25 @@ main( int argc, char **argv )
     tcount = argc - ( optind + 1 );	/* "+ 1" accounts for dest tran */
 
     if ( noupload && ( tcount > 2 ) ) {
-	fprintf( stderr, "usage: lmerge [ -nvV ] " );
-	fprintf( stderr, "transcript1, transcript2, dest\n" );
-	exit( 2 );
+	err++;
+    }
+    if ( force && ( tcount > 1 ) ) {
+	err++;
+    }
+    if ( (argc - optind ) < 2 ) {
+	err++;
     }
 
-    if ( err || ( ( argc - optind ) < 2 ) ) {
-	fprintf( stderr, "usage: lmerge [ -nvV ] " );
+    if ( err ) {
+	fprintf( stderr, "usage: %s [ -fnvV ] ", argv[ 0 ] );
 	fprintf( stderr, "transcript1, transcript2, ..., dest\n" );
 	exit( 2 );
     }
 
     tpath = argv[ argc - 1 ];
+    if ( force ) {
+	tcount++;			/* add dest to tran merge list */
+    }
 
     /* Create array of transcripts */
     if ( ( trans = (struct tran**)malloc(
@@ -170,14 +183,16 @@ main( int argc, char **argv )
 	tname++;
     }
 
-    /* Create file/tname dir */
-    sprintf( npath, "%s/../file/%s.%d", tpath, tname, (int)getpid() );
-    if ( mkdir( npath, 0777 ) != 0 ) {
-	perror( npath );
-	exit( 1 );
+    if ( !force ) {
+	/* Create file/tname dir */
+	sprintf( npath, "%s/../file/%s.%d", tpath, tname, (int)getpid() );
+	if ( mkdir( npath, 0777 ) != 0 ) {
+	    perror( npath );
+	    exit( 1 );
+	}
     }
 
-    /* Create transcript/tname file */
+    /* Create temp transcript/tname file */
     sprintf( opath, "%s/%s.%d", tpath, tname, (int)getpid() );
     if ( ( ofd = open( opath, O_WRONLY | O_CREAT | O_EXCL,
 	    0666 ) ) < 0 ) {
@@ -188,12 +203,16 @@ main( int argc, char **argv )
 	perror( opath );
 	exit( 1 );
     }
-
-    /* Merge transcripts */
+    
+    /* merge */
     for ( i = 0; i < tcount; i++ ) {
 	while ( !(trans[ i ]->eof) ) {
 	    candidate = i;
 	    fileloc = i;
+
+	    if ( force && ( candidate == ( tcount -1 ) ) ) {
+		goto outputline;
+	    }
 
 	    /* Compare candidate to other transcripts */
 	    for ( j = i + 1; j < tcount; j++ ) {
@@ -221,6 +240,18 @@ main( int argc, char **argv )
 			    goto skipline;
 			}
 		    }
+		    if ( ( force ) && ( *trans[ j ]->targv[ 0 ] == 'f' ) ) {
+			/* Remove file from lower precedence transcript */
+			sprintf( opath,"%s/../file/%s/%s",
+			    trans[ j ]->path,
+			    trans[ j ]->name,
+			    trans[ j ]->targv[ 1 ] );
+			if ( unlink( opath ) != 0 ) {
+			    perror( opath );
+			    exit( 2 );
+			}
+			if ( verbose ) printf( "unlinked %s\n", opath );
+		    }
 		    /* Advance lower precedence transcript */
 		    if ( getnextline( trans[ j ] ) < 0 ) {
 			fprintf( stderr, "getnextline\n" );
@@ -231,23 +262,53 @@ main( int argc, char **argv )
 		    fileloc = j;
 		}
 	    }
+	    if ( force && ( candidate == 1 ) ) {
+		goto outputline;
+	    }
 	    /* skip items to be removed or files not uploaded */
 	    if ( ( trans[ candidate ]->remove ) ||
 		    ( ( noupload ) && ( candidate == 0 ) &&
-		    ( fileloc == 0 ) ) ) {
+			( fileloc == 0 ) ) ) {
+		if ( force && ( *trans[ candidate ]->targv[ 0 ] == 'd' ) ) {
+		    insert_node( trans[ candidate ]->targv[ 1 ], &dirlist );
+		}
 		goto skipline;
 	    }
 	    /* output non-files */
+	    if ( force && ( *trans[ candidate ]->targv[ 0 ] == 'd' ) ) {
+		sprintf( npath, "%s/../file/%s/%s", tpath, tname,
+		    trans[ candidate ]->targv[ 1 ] );
+		if ( mkdirs( npath ) != 0 ) {
+		    perror( npath );
+		    exit( 2 );
+		}
+		sprintf( npath, "%s/../file/%s/%s", tpath, tname,
+		    trans[ candidate ]->targv[ 1 ] );
+		if ( mkdir( npath, 0777 ) != 0 ) {
+		    perror( npath );
+		    exit( 2 );
+		}
+		if ( verbose ) printf( "created %s\n", npath );
+	    }
 	    if ( *trans[ candidate ]->targv[ 0 ] != 'f' ) {
 		goto outputline;
 	    }
 
-	    /* Link file */
-	    sprintf( npath, "%s/../file/%s.%d/%s", tpath, tname,
-		(int)getpid(), trans[ candidate ]->targv[ 1 ] );
 	    sprintf( opath,"%s/../file/%s/%s", trans[ candidate ]->path,
 		trans[ fileloc ]->name, trans[ candidate ]->targv[ 1 ] );
 
+	    if ( force ) {
+		sprintf( npath, "%s/../file/%s/%s", tpath, tname,
+		    trans[ candidate ]->targv[ 1 ] );
+		if ( copy( opath, npath ) != 0 ) {
+		    exit( 2 );
+		}
+		if ( verbose ) printf( "copied %s to %s\n", opath, npath );
+		goto outputline;
+	    }
+
+	    sprintf( npath, "%s/../file/%s.%d/%s", tpath, tname,
+		(int)getpid(), trans[ candidate ]->targv[ 1 ] );
 	    /*
 	     * Assume that directory structure is present so the entire path
 	     * is not recreated for every file.  Only if link fails is
@@ -292,12 +353,26 @@ skipline:
 	}
     }
 
+    if ( force && ( dirlist != NULL ) ) {
+	while ( dirlist != NULL ) {
+	    sprintf( opath, "%s/../file/%s/%s", tpath, tname, dirlist->path );
+	    if ( unlink( opath ) != 0 ) {
+		perror( opath );
+		exit( 2 );
+	    }
+	    if ( verbose ) printf( "unlinked %s\n", opath );
+	    dirlist = dirlist->next;
+	}
+    }
+
     /* Rename temp transcript and file structure */
-    sprintf( opath, "%s/../file/%s.%d", tpath, tname, (int)getpid() );
-    sprintf( npath, "%s/../file/%s", tpath, tname );
-    if ( rename( opath, npath ) != 0 ) {
-	perror( npath );
-	exit( 1 );
+    if ( !force ) {
+	sprintf( opath, "%s/../file/%s.%d", tpath, tname, (int)getpid() );
+	sprintf( npath, "%s/../file/%s", tpath, tname );
+	if ( rename( opath, npath ) != 0 ) {
+	    perror( npath );
+	    exit( 1 );
+	}
     }
     sprintf( opath, "%s/%s.%d", tpath, tname, (int)getpid() );
     sprintf( npath, "%s/%s", tpath, tname );
