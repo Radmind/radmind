@@ -28,6 +28,7 @@ FSDIFFROOT="."
 FLAG="_RADMIND_DIR/client/.RadmindRunning"
 CHECKEDOUT="_RADMIND_DIR/client/.CheckedOut"
 MAILDOMAIN="_RADMIND_MAIL_DOMAIN"
+VERSION=_RADMIND_VERSION
 
 PREAPPLY="_RADMIND_PREAPPLY"
 POSTAPPLY="_RADMIND_POSTAPPLY"
@@ -74,7 +75,7 @@ checkedout() {
 }
 
 usage() {
-    echo "Usage:	$0 [ -ct | -h server | -w authlevel ] { trip | update | create | auto | force | checkout | checkin }" >&2
+    echo "Usage:	$0 [ -ctV ] [ -h server ] [ -w authlevel ] { trip | update | create | auto | force | checkout | checkin }" >&2
     exit 1
 }
 
@@ -218,7 +219,7 @@ if [ -f "${DEFAULTS}" ]; then
     . "${DEFAULTS}"
 fi
 
-while getopts %ch:ltw: opt; do
+while getopts %ch:ltVw: opt; do
     case $opt in
     %)  PROGRESS="-%"
 	;;
@@ -234,6 +235,11 @@ while getopts %ch:ltw: opt; do
 
     t)	TEMPFILES="TRUE"
     	;;
+
+    V)	echo ${VERSION}
+	exit 0
+	;;
+	
 
     w)	TLSLEVEL="$OPTARG"
     	;;

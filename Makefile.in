@@ -222,6 +222,7 @@ rash : FRC
 	    -e 's@_RADMIND_MKTEMP@${MKTEMP}@g' \
 	    -e 's@_RADMIND_DIR@${RADMINDDIR}@g' \
 	    -e 's@_RADMIND_MAIL_DOMAIN@${RADMIND_MAIL_DOMAIN}@g' \
+	    -e 's@_RADMIND_VERSION@${VERSION}@g' \
 	    ${srcdir}/ra.sh > tmp/ra.sh; 
 
 man : FRC
