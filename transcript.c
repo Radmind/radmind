@@ -54,6 +54,9 @@ t_parse( struct transcript *tran )
 
     tran->t_pinfo.pi_type = argv[ 0 ][ 0 ];
 
+    buf = decode( argv[ 1 ] );
+    strcpy( tran->t_pinfo.pi_name, buf );
+
     /* reading and parsing the line */
     switch( *argv[ 0 ] ) {
     case 'd':				    /* dir */
@@ -62,11 +65,9 @@ t_parse( struct transcript *tran )
 		    tran->t_name, tran->t_linenum, ac );
 	    exit( 1 );
 	}
-	tran->t_pinfo.pi_stat.st_mode = strtol( argv[ 1 ], NULL, 8 );
-	tran->t_pinfo.pi_stat.st_uid = atoi( argv[ 2 ] );
-	tran->t_pinfo.pi_stat.st_gid = atoi( argv[ 3 ] );
-	buf = decode( argv[ 4 ] );
-	strcpy( tran->t_pinfo.pi_name, buf );
+	tran->t_pinfo.pi_stat.st_mode = strtol( argv[ 2 ], NULL, 8 );
+	tran->t_pinfo.pi_stat.st_uid = atoi( argv[ 3 ] );
+	tran->t_pinfo.pi_stat.st_gid = atoi( argv[ 4 ] );
 	break;
 
     case 'b':				    /* block or char */
@@ -79,13 +80,11 @@ t_parse( struct transcript *tran )
 		    tran->t_name, tran->t_linenum, ac );
 	    exit( 1 );
 	}
-	tran->t_pinfo.pi_stat.st_mode = strtol( argv[ 1 ], NULL, 8 );
-	tran->t_pinfo.pi_stat.st_uid = atoi( argv[ 2 ] );
-	tran->t_pinfo.pi_stat.st_gid = atoi( argv[ 3 ] );
-	tran->t_pinfo.pi_dev = makedev( ( unsigned )( atoi( argv[ 4 ] )), 
-		( unsigned )( atoi( argv[ 5 ] )));
-	buf = decode( argv[ 6 ] );
-	strcpy( tran->t_pinfo.pi_name, buf );
+	tran->t_pinfo.pi_stat.st_mode = strtol( argv[ 2 ], NULL, 8 );
+	tran->t_pinfo.pi_stat.st_uid = atoi( argv[ 3 ] );
+	tran->t_pinfo.pi_stat.st_gid = atoi( argv[ 4 ] );
+	tran->t_pinfo.pi_dev = makedev( ( unsigned )( atoi( argv[ 5 ] )), 
+		( unsigned )( atoi( argv[ 6 ] )));
 	break;
 
     case 'l':				    /* link */
@@ -95,10 +94,8 @@ t_parse( struct transcript *tran )
 		    tran->t_name, tran->t_linenum, ac );
 	    exit( 1 );
 	}
-	buf = decode( argv[ 1 ] );
-	strcpy( tran->t_pinfo.pi_link, buf );
 	buf = decode( argv[ 2 ] );
-	strcpy( tran->t_pinfo.pi_name, buf );
+	strcpy( tran->t_pinfo.pi_link, buf );
 	break;
 
     case 'f':				    /* file */
@@ -107,14 +104,12 @@ t_parse( struct transcript *tran )
 		    tran->t_name, tran->t_linenum, ac );
 	    exit( 1 );
 	}
-	tran->t_pinfo.pi_stat.st_mode = strtol( argv[ 1 ], NULL, 8 );
-	tran->t_pinfo.pi_stat.st_uid = atoi( argv[ 2 ] );
-	tran->t_pinfo.pi_stat.st_gid = atoi( argv[ 3 ] );
-	tran->t_pinfo.pi_stat.st_mtime = atoi( argv[ 4 ] );
-	tran->t_pinfo.pi_stat.st_size = atoi( argv[ 5 ] );
-	tran->t_pinfo.pi_chksum = atoi( argv[ 6 ] );
-	buf = decode( argv[ 7 ] );
-	strcpy( tran->t_pinfo.pi_name, buf );
+	tran->t_pinfo.pi_stat.st_mode = strtol( argv[ 2 ], NULL, 8 );
+	tran->t_pinfo.pi_stat.st_uid = atoi( argv[ 3 ] );
+	tran->t_pinfo.pi_stat.st_gid = atoi( argv[ 4 ] );
+	tran->t_pinfo.pi_stat.st_mtime = atoi( argv[ 5 ] );
+	tran->t_pinfo.pi_stat.st_size = atoi( argv[ 6 ] );
+	tran->t_pinfo.pi_chksum = atoi( argv[ 7 ] );
 	break;
 
     case '-':
@@ -166,7 +161,6 @@ t_print( struct pathinfo *fs, struct transcript *tran, int change )
 {
     struct pathinfo	*cur;
     char		*buf;
-    char		*link;
     dev_t		dev;
     extern int		edit_path;
 
@@ -197,8 +191,6 @@ t_print( struct pathinfo *fs, struct transcript *tran, int change )
     } else if (( edit_path ==  TRAN2FS ) && ( change == T_MOVE_TRAN )) {
 	fprintf( outtran, "- " );
 	cur = &tran->t_pinfo;
-    } else {
-	fprintf( outtran, "  " );
     }
 
     buf = encode( cur->pi_name );
@@ -206,25 +198,24 @@ t_print( struct pathinfo *fs, struct transcript *tran, int change )
     /* print out info to file based on type */
     switch( cur->pi_type ) {
     case 'd':
-	fprintf( outtran, "d %4lo %5d %5d %s\n", 
+	fprintf( outtran, "d %-37s\t%.4lo %5d %5d\n", buf, 
 		(unsigned long )( T_MODE & cur->pi_stat.st_mode ), 
-		(int)cur->pi_stat.st_uid, (int)cur->pi_stat.st_gid, buf );
+		(int)cur->pi_stat.st_uid, (int)cur->pi_stat.st_gid );
 	break;
 
     case 'l':
     case 'h':
-	link = encode( cur->pi_link );
-	fprintf( outtran, "%c %s", cur->pi_type, link );
-	buf = encode( cur->pi_name );
-	fprintf( outtran, " %s\n", buf );
+	fprintf( outtran, "%c %-37s\t", cur->pi_type, buf );
+	buf = encode( cur->pi_link );
+	fprintf( outtran, "%s\n", buf );
 	break;
 
     case 'f':
-	fprintf( outtran, "f %4lo %5d %5d %9d %7d %3d %s\n", 
+	fprintf( outtran, "f %-37s\t%.4lo %5d %5d %9d %7d %d\n", buf,
 		(unsigned long)( T_MODE & cur->pi_stat.st_mode ), 
-		(int)cur->pi_stat.st_uid,
-		(int)cur->pi_stat.st_gid, (int)cur->pi_stat.st_mtime,
-		(int)cur->pi_stat.st_size, cur->pi_chksum, buf );
+		(int)cur->pi_stat.st_uid, (int)cur->pi_stat.st_gid,
+		(int)cur->pi_stat.st_mtime, (int)cur->pi_stat.st_size,
+		cur->pi_chksum );
 	break;
 
     case 'c':
@@ -233,12 +224,11 @@ t_print( struct pathinfo *fs, struct transcript *tran, int change )
     case 'D':
     case 'p':
 	dev = cur->pi_stat.st_rdev;
-	fprintf( outtran, "%c %4lo %4d %5d %5d %5d %s\n", 
-		cur->pi_type, 
+	fprintf( outtran, "%c %-37s\t%.4lo %5d %5d %5d %5d\n",
+		cur->pi_type, buf,
 		(unsigned long )( T_MODE & cur->pi_stat.st_mode ), 
-		(int)cur->pi_stat.st_uid,
-		(int)cur->pi_stat.st_gid, (int)major(dev), (int)minor(dev), 
-		buf );
+		(int)cur->pi_stat.st_uid, (int)cur->pi_stat.st_gid,
+		(int)major(dev), (int)minor(dev) );
 	break;
 
     default:
