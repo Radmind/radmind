@@ -1,5 +1,6 @@
 0.8.1
     Commented out "extra tokens" on #endif for linux compiling.
+    Fixed wildcard compiling issue on linux.
     Added wildcard and directory finder-info to man pages.
     Added numeric range ( <min-max> ) support for config file.
 
