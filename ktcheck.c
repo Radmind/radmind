@@ -224,6 +224,7 @@ check( SNET *sn, char *type, char *file )
 	} else {
 	    /* Local file is missing */
 	    if ( update ) {
+		if ( !quiet ) { printf( "%s:", path ); fflush( stdout ); }
 		if ( retr( sn, pathdesc, path, (char *)&tempfile,
 			strtoofft( targv[ 6 ], NULL, 10 ), targv[ 7 ] ) != 0 ) {
 		    return( 2 );
@@ -236,7 +237,7 @@ check( SNET *sn, char *type, char *file )
 		    perror( tempfile );
 		    return( 2 );
 		}
-		if ( !quiet ) printf( "%s: updated\n", path );
+		if ( !quiet ) printf( " updated\n" );
 	    } else {
 		if ( !quiet ) printf ( "%s: missing\n", path );
 	    }
@@ -267,6 +268,7 @@ check( SNET *sn, char *type, char *file )
     }
     if ( needupdate ) {
 	if ( update ) {
+	    if ( !quiet ) { printf( "%s:", path ); fflush( stdout ); }
 	    if ( unlink( path ) != 0 ) {
 		perror( path );
 		return( 2 );
@@ -283,7 +285,7 @@ check( SNET *sn, char *type, char *file )
 		perror( path );
 		return( 2 );
 	    }
-	    if ( !quiet ) printf( "%s: updated\n", path );
+	    if ( !quiet ) printf( " updated\n" );
 	} else {
 	    if ( !quiet ) printf( "%s: out of date\n", path );
 	}
