@@ -153,8 +153,7 @@ main( int argc, char **argv )
 		decode( targv[ 1 ] ) );
 
 	if ( do_chksum( path, lchksum ) != 0 ) {
-	    fprintf( stderr, "checksum failed on %s: ", path );
-	    perror( NULL );
+	    perror( path );
 	    exit( 2 );
 	}
 

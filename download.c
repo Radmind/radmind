@@ -37,19 +37,19 @@ retr( SNET *sn, char *pathdesc, char *path, char *location, char *chksumval,
     int			dodots = 0;
 
     if ( chksum && ( strcmp( chksumval, "-" ) == 0 ) ) {
-	fprintf( stderr, "Chksum not in transcript" );
+	fprintf( stderr, "Chksum not in transcript\n" );
 	return( -1 );
     }
 
     if( snet_writef( sn, "RETR %s\n", pathdesc ) == NULL ) {
-	fprintf( stderr, "snet_writef" );
+	fprintf( stderr, "snet_writef failed\n" );
 	return( -1 );
     }
     if ( verbose ) printf( ">>> RETR %s\n", pathdesc );
 
     tv = timeout;
     if ( ( line = snet_getline_multi( sn, logger, &tv ) ) == NULL ) {
-	fprintf( stderr, "snet_getline_multi" );
+	fprintf( stderr, "snet_getline_multi failed\n" );
 	return( -1 );
     }
 
@@ -135,7 +135,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *location, char *chksumval,
 	}
 
 	if( do_chksum_fd( fd, chksumcalc ) != 0 ) {
-	    fprintf( stderr, "do_chksum_fd failed" );
+	    perror( temppath );
 	    goto error;
 	}
 

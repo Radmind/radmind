@@ -187,13 +187,13 @@ check( SNET *sn, char *type, char *path)
 
     if ( do_chksum( fullpath, cchksum ) != 0 ) {
 	if ( errno != ENOENT ) {
-	    fprintf( stderr, "do_chksum" );
+	    perror( fullpath );
 	    return( 2 );
 	}
 	if ( update ) {
 	    if ( retr( sn, pathdesc, fullpath, NULL, schksum,
 		    (char *)&temppath ) != 0 ) {
-		fprintf( stderr, "retr failed\n" );
+		fprintf( stderr, "%s: retr failed\n", fullpath );
 		return( 2 );
 	    }
 	    if ( rename( temppath, fullpath ) != 0 ) {
@@ -409,12 +409,12 @@ main( int argc, char **argv )
 		    (int)getpid());
 	}
 	if ( do_chksum( temppath, tchksum ) != 0 ) {
-	    fprintf( stderr, "do_chksum failed: %s", temppath );
+	    perror( temppath );
 	    exit( 2 );
 	}
 	if ( do_chksum( path, lchksum ) != 0 ) {
 	    if ( errno != ENOENT ) {
-		fprintf( stderr, "do_chksum failed: %s\n", path );
+		perror( path );
 		exit( 2 );
 	    }
 
