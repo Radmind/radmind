@@ -1,0 +1,106 @@
+.TH radmind "8" "March 2002" "RSUG" "System Manager's Manual"
+.SH NAME
+.B radmind
+\- Starts the radmind daemon
+.SH SYNOPSIS
+.B radmind
+[
+.B \-d
+] [
+.B \-V
+] [
+.BI \-b\  backlog
+] [
+.BI \-p\  port
+] [
+.BI \-u\  umask 
+]
+.sp
+.SH DESCRIPTION
+Radmind uses the radmind access protocal to communicate with radmind
+clients.
+
+On startup, radmind changes directory to _PATH_RADMIND, creates
+_PATH_RADMIND/command, _PATH_RADMIND/file, _PATH_RADMIND/tmp,
+_PATH_RADMIND/tmp/file, _PATH_RADMIND/tmp/transcript and
+_PATH_RADMIND/transcript ( with permissions 02750 ) if they do not
+exist, and begins listening on the radmind port ( by default 6662 ) for
+incoming connections.  Radmind forks a child for each connection.
+
+The file _PATH_RADMIND/config contains the list of known clients that
+can connect to radmind, one per line.  Each line contains the fully
+qualified domain name and command file of the client.  Lines that are
+blank or begin with '#' are ignored.
+
+Radmind currently supports the following radmind access protocal
+requests:
+.TP 9
+QUIT
+terminate session
+.TP 9
+NOOP
+do nothing
+.TP 9
+STAT
+return information on a transcript, command or special file
+.TP 9
+RETR
+retrieve a file
+.TP 9
+STOR
+store a file
+.sp
+.SH OPTIONS
+.TP 19
+.B \-d
+debug mode. Does not disassociate from controlling tty.
+.TP 19
+.B \-V
+displays the version of 
+.B  radmind
+.TP 19
+.BI \-b\  backlog
+Defines the maximum queue of pending connections to
+.BR listen (2),
+by default five.
+.TP 19
+.BI \-p\  port 
+specifies the port of the radmind server, by default 6662.
+and exits.
+.TP 19
+.BI \-h\  host
+specifies the radmind server, by default _RADMIND_HOST. 
+.sp
+.SH EXAMPLES
+The following example of _PATH_RADMIND/config defines four known clients,
+each using one of three different command files.
+.sp
+.RS
+.nf
+#
+# Client               command file
+#
+amber.umich.edu        apple
+josh.umich.edu         apple
+ben.umich.edu          apple.test
+oreo.umich.edu         solaris.8
+.fi
+.RE
+.LP
+.sp
+.SH FILES
+_PATH_RADMIND/config
+.sp
+.SH EXIT STATUS 
+The following exit values are returned: What should go here?
+.sp
+.SH SEE ALSO
+.BR diff (1),
+.BR fsdiff (1),
+.BR ktcheck (1),
+.BR lapply (1),
+.BR lcksum (1),
+.BR lcreate (1),
+.BR lfdiff (1),
+.BR lmerge (1),
+.BR twhich (1).

@@ -42,6 +42,7 @@ LDFLAGS=	-L${OPENSSL}/lib -Llibsnet ${ADDLIBS} -lsnet -lcrypto
 BINTARGETS=     fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff twhich
 MAN1TARGETS=    fsdiff.1 ktcheck.1 lapply.1 lcksum.1 lcreate.1 lfdiff.1 \
                 lmerge.1 twhich.1
+MAN8TARGETS=	radmind.8
 TARGETS=        radmind ${BINTARGETS}
 
 RADMIND_OBJ=    version.o daemon.o command.o argcargv.o code.o \
@@ -176,12 +177,17 @@ install	: all
 	for i in ${MAN1TARGETS}; do \
 	    ${INSTALL} -m 0644 -c $$i ${MANDIR}/man1/; \
 	done
+	-mkdir ${MANDIR}/man8
+	 for i in ${MAN8TARGETS}; do \
+	    ${INSTALL} -m 0644 -c $$i ${MANDIR}/man8/; \
+	done
 
 CLIENTBINPKGDIR=${DISTDIR}/client-bin
 CLIENTMANPKGDIR=${DISTDIR}/client-man
 CLIENTVARPKGDIR=${DISTDIR}/client-var
 SERVERSTARTUPPKGDIR=${DISTDIR}/server-startup
 SERVERSBINPKGDIR=${DISTDIR}/server-sbin
+SERVERMANPKGDIR=${DISTDIR}/server-man
 
 package : all
 	# Create server package #
@@ -192,6 +198,11 @@ package : all
 	    ${SERVERSTARTUPPKGDIR}
 	${INSTALL} -o root -g wheel -m 0644 -c OS_X/StartupParameters.plist \
 	    ${SERVERSTARTUPPKGDIR}
+	mkdir -p -m 0755 ${SERVERMANPKGDIR}/man8
+	for i in ${MAN8TARGETS}; do \
+	    ${INSTALL} -o root -g wheel -m 0444 -c $$i \
+		${SERVERMANPKGDIR}/man8/; \
+	done
 
 	# Create client package #
 	mkdir -p -m 0755 ${CLIENTBINPKGDIR}
@@ -214,11 +225,15 @@ package : all
 	package ${CLIENTVARPKGDIR} OS_X/client-var.info -d ${DISTDIR}
 	package ${SERVERSTARTUPPKGDIR} OS_X/server-startup.info -d ${DISTDIR}
 	package ${SERVERSBINPKGDIR} OS_X/server-sbin.info -d ${DISTDIR}
-	rm -rf ${CLIENTBINPKGDIR} ${CLIENTMANPKGDIR} ${CLIENTVARPKGDIR} ${SERVERSTARTUPPKGDIR} ${SERVERSBINPKGDIR}
+	package ${SERVERMANPKGDIR} OS_X/server-man.info -d ${DISTDIR}
+	rm -rf ${CLIENTBINPKGDIR} ${CLIENTMANPKGDIR} ${CLIENTVARPKGDIR} ${SERVERSTARTUPPKGDIR} ${SERVERSBINPKGDIR} ${SERVERMANPKGDIR}
 	cp OS_X/radmind.info ${DISTDIR}
 	cp OS_X/radmind.list ${DISTDIR}
+	cp OS_X/License.rtf ${DISTDIR}
+	cp OS_X/ReadMe.rtf ${DISTDIR}
+	cp OS_X/Welcome.rtf ${DISTDIR}
 	mv ${DISTDIR} ../radmind.mpkg
-	#cd ..; tar zvcf radmind.mpkg.tgz radmind.mpkg/*
+	cd ..; tar zvcf radmind.mpkg.tgz radmind.mpkg/*
 
 clean :
 	rm -f *.o a.out core

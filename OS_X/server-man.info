@@ -1,8 +1,8 @@
-Title                	Radmind server startup items
+Title                	Radmind server man pages
 Version              	0.6.0
-Description          	This package installs radmind server for Mac OS X
+Description          	This package installs radmind server man pages for Mac OS X
 
-DefaultLocation      	/Library/StartupItems/RadmindServer
+DefaultLocation         /usr/local/share/man
 Relocatable          	NO
 
 NeedsAuthorization   	YES
