@@ -1,1 +1,1 @@
-n apple-neg.T
+n negative.T
