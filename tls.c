@@ -8,12 +8,24 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
+
+#include <netinet/in.h>			/* For inet_aton */		
+#include <arpa/inet.h>
+
 #include <openssl/ssl.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
+
+#include <openssl/x509v3.h>		/* For x509 v3 extensions */
+#include <openssl/safestack.h>
+
 #include <string.h>
 
 #include <snet.h>
+
+/* what kind of hostname were we given? */
+#define IS_DNS  0
+#define IS_IP4  1
 
 #include "tls.h"
     
@@ -180,6 +192,15 @@ tls_client_start( SNET *sn, char *host, int authlevel )
     char             buf[ 1024 ];
     struct timeval  tv;
     char            *line;
+    int             ntype;
+    struct in_addr  addr;
+
+    if ( inet_aton( host, &addr )) {
+	ntype = IS_IP4;
+    } else {
+	/* Assume the host argument is a DNS name */
+	ntype = IS_DNS;
+    }
 
     if( snet_writef( sn, "STARTTLS\r\n" ) < 0 ) {
 	perror( "snet_writef" );
@@ -214,12 +235,113 @@ tls_client_start( SNET *sn, char *host, int authlevel )
 	fprintf( stderr, "no certificate\n" );
 	return( -1 );
     }
+
+    /* This code gratiously borrowed from openldap-2.2.17,
+     * it allows the use of aliases in the certificate.
+     */
+    int alt_ext = X509_get_ext_by_NID( peer, NID_subject_alt_name, -1);
+
+    if ( alt_ext >= 0 ) {
+	X509_EXTENSION			*ex;
+	STACK_OF( GENERAL_NAME )		*alt;
+
+	ex = X509_get_ext( peer, alt_ext );
+	alt = X509V3_EXT_d2i( ex );
+
+	if ( alt ) {
+	    int			i, n, len1 = 0, len2 = 0;
+	    char	 	*domain = NULL;
+	    GENERAL_NAME	*gn;
+
+	    if ( ntype == IS_DNS ) {
+		len1 = strlen( host );
+		domain = strchr( host, '.' );
+		if ( domain ) {
+		    len2 = len1 - ( domain-host );
+		}
+	    }
+
+	    n = sk_GENERAL_NAME_num( alt );
+	    for ( i = 0; i < n; i++ ) {
+		char	*sn;
+		int	 sl;
+
+		gn = sk_GENERAL_NAME_value( alt, i );
+		if ( gn->type == GEN_DNS ) {
+		    if ( ntype != IS_DNS ) {
+			continue;
+		    };
+		    sn = (char *) ASN1_STRING_data( gn->d.ia5 );
+		    sl = ASN1_STRING_length( gn->d.ia5 );
+
+		    /* ignore empty */
+		    if ( sl == 0 ) {
+			continue;
+		    }
+
+		    /* Is this an exact match? */
+		    if (( len1 == sl ) && !strncasecmp( host, sn, len1 )) {
+			/* Found! */
+			if ( verbose ) {
+			    printf( ">>> Certificate accepted: "
+				"subjectAltName exact match %s\n", sn );
+			}
+			break;
+		    }
+
+		    /* Is this a wildcard match? */
+		    if ( domain && ( sn[0] == '*' ) && ( sn[1] == '.' ) &&
+			    ( len2 == sl-1 ) && 
+			    strncasecmp( domain, &sn[1], len2 )) {
+			/* Found! */
+			if ( verbose ) {
+			    printf( ">>> Certificate accepted: subjectAltName "
+			    "wildcard %s host %s\n", sn, host );
+			}
+			break;
+		    }
+
+		} else if ( gn->type == GEN_IPADD ) {
+		    if ( ntype == IS_DNS ) {
+			continue;
+		    }
+
+		    sn = (char *) ASN1_STRING_data( gn->d.ia5 );
+		    sl = ASN1_STRING_length( gn->d.ia5 );
+
+		    if ( ntype == IS_IP4 && sl != sizeof( struct in_addr )) {
+			continue;
+		    }
+
+		    if ( !memcmp( sn, &addr, sl )) {
+			/* Found! */
+			if ( verbose ) {
+			    printf( ">>> Certificate accepted: subjectAltName "
+			    "address %s\n", host );
+			}
+			break;
+		    }
+
+		}
+	    }
+
+	    GENERAL_NAMES_free( alt );
+
+	    if ( i < n ) {
+		/* Found a match */
+		X509_free( peer );
+		return 0;
+	    }
+	}
+    }
+
     X509_NAME_get_text_by_NID( X509_get_subject_name( peer ),
-	NID_commonName, buf, sizeof( buf ));
+	    NID_commonName, buf, sizeof( buf ));
     X509_free( peer );
+
     if ( strcmp( buf, host )) {
 	fprintf( stderr, "Server's name doesn't match supplied hostname\n"
-		"%s != %s\n", buf, host );
+	    "%s != %s\n", buf, host );
 	return( -1 );
     }
 
