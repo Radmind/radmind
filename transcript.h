@@ -14,8 +14,14 @@
 #define FS2TRAN		0
 #define TRAN2FS		1
 
+#define PR_TRAN_ONLY	1  
+#define PR_FS_ONLY	2
+#define PR_DOWNLOAD	3 
+#define PR_STATUS	4 
+
 int			edit_path;
 int			skip;
+int			chksum;
 FILE			*outtran;
 
 struct pathinfo {
