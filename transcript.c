@@ -12,7 +12,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include <snet.h>
 
 #include "applefile.h"
 #include "base64.h"

@@ -12,7 +12,6 @@
 #include <string.h>
 
 #include <openssl/evp.h>
-#include <snet.h>
 
 #include "applefile.h"
 #include "transcript.h"

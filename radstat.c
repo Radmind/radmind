@@ -12,7 +12,6 @@
 #endif /* __APPLE__ */
 #include <sys/uio.h>
 #include <errno.h>
-#include <snet.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>

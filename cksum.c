@@ -16,7 +16,6 @@
 #include <unistd.h>
 
 #include <openssl/evp.h>
-#include <snet.h>
 
 #include "applefile.h"
 #include "cksum.h"
