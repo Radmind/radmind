@@ -25,12 +25,21 @@ AUTHLEVEL="-w _RADMIND_AUTHLEVEL"
 EDITOR=${EDITOR:-vi}
 DEFAULTS="/etc/radmind.defaults"
 FSDIFFROOT="."
+FLAG="/var/radmind/client/.RadmindRunning"
 
 PATH=/usr/local/bin:/usr/bin:/bin; export PATH
 RETRY=10
 
+MKTEMP="/usr/bin/mktemp"
 TEMPFILES=FALSE
 TMPDIR="/tmp/.ra.$$"
+if [ -f "${MKTEMP}" ]; then
+    TMPDIR=`${MKTEMP} -qd /tmp/.ra.$$.XXXXXX`
+    if [ $? -ne 0 ]; then
+	echo "mktemp failed"
+	exit 1
+    fi
+fi
 LTMP="${TMPDIR}/lapply.out"
 FTMP="${TMPDIR}/fsdiff.out"
 
@@ -53,7 +62,7 @@ usage() {
 
 cleanup() {
     if [ "$TEMPFILES" = FALSE ]; then
-	rm -fr $TMPDIR
+	rm -fr "${TMPDIR}"
     fi
 }
 
@@ -67,6 +76,104 @@ dopostapply() {
     for script in ${POSTAPPLY}/*; do
 	${script} "$1"
     done
+}
+
+update() {
+    local opt="$1"
+    local kopt=""
+
+    if [ x"$opt" = x"interactive" ]; then
+	kopt="-n"
+    fi
+
+    ktcheck ${kopt} ${AUTHLEVEL} ${SERVER} -c sha1
+    case "$?" in
+    0)  if [ x"$opt" = x"hook" -a ! -f "${FLAG}" ]; then
+	    cleanup
+	    exit 0
+	fi
+	;;
+
+    1)	if [ x"$opt" = x"interactive" ]; then
+	    Yn "Update command file and/or transcripts?"
+	    if [ $? -eq 1 ]; then
+		ktcheck ${AUTHLEVEL} ${SERVER} -c sha1
+		RC=$?
+		if [ $RC -ne 1 ]; then
+		    echo Nothing to update
+		    cleanup
+		    exit $RC
+		fi
+	    fi
+	fi
+	;;
+
+    *)	cleanup
+    	exit $?
+	;;
+    esac
+
+    fsdiff -A -% ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
+    if [ $? -ne 0 ]; then
+	cleanup
+	exit 1
+    fi
+
+    if [ ! -s ${FTMP} ]; then
+	echo Nothing to apply.
+	cleanup
+	exit 0
+    fi
+    if [ x"$opt" = x"interactive" ]; then
+	Yn "Edit difference transcript?"
+	if [ $? -eq 1 ]; then
+	    ${EDITOR} ${FTMP}
+	fi
+    fi
+    
+    if [ x"$opt" = x"interactive" -a -d "${PREAPPLY}" ]; then
+	Yn "Run pre-apply scripts on difference transcript?"
+        if [ $? -eq 1 ]; then
+            dopreapply ${FTMP}
+        fi
+    elif [ x"$opt" != x"interactive" ]; then
+	dopreapply ${FTMP}
+    fi
+    if [ x"$opt" = x"interactive" ]; then
+	Yn "Apply difference transcript?"
+	if [ $? -ne 1 ]; then
+	    cleanup
+	    exit 0
+	fi
+    fi
+    lapply ${PROGRESS} ${AUTHLEVEL} ${SERVER} ${CHECKSUM} ${FTMP}
+    case "$?" in
+    0)	;;
+
+    *)  if [ x"$opt" = x"hook" ]; then
+	    echo -n "Applying changes failed, trying again "
+	    echo "in ${RETRY} seconds..."
+	    sleep ${RETRY}
+	    RETRY=${RETRY}0
+
+	    echo %OPENDRAWER
+	    echo %BEGINPOLE
+    	else 
+	    cleanup
+	fi
+	return 1
+	;;
+    esac
+    if [ x"$opt" = x"interactive" -a -d "${POSTAPPLY}" ]; then
+	Yn "Run post-apply scripts on difference transcript?"
+        if [ $? -eq 1 ]; then
+            dopostapply ${FMTP}
+        fi
+    elif [ x"$opt" != x"interactive" ]; then
+	dopostapply ${FTMP}
+    fi
+    
+    cleanup
 }
 
 # if a radmind defaults file exists, source it.
@@ -108,9 +215,11 @@ fi
 
 cd /
 
-if ! mkdir -m 700 ${TMPDIR} ; then
-    echo "Cannot create temporary directory $TMPDIR"
-    exit 1
+if [ ! -d ${TMPDIR} ]; then
+    if ! mkdir -m 700 ${TMPDIR} ; then
+	echo "Cannot create temporary directory $TMPDIR"
+	exit 1
+    fi
 fi
 
 # http://www.opengroup.org/onlinepubs/009695399/basedefs/signal.h.html
@@ -124,65 +233,7 @@ trap cleanup SIGABRT SIGALRM SIGBUS SIGCHLD SIGCONT SIGFPE \
 
 case "$1" in
 update)
-    ktcheck ${AUTHLEVEL} ${SERVER} -n -c sha1
-    case "$?" in
-    0)	;;
-
-    1)	Yn "Update command file and/or transcripts?"
-	    if [ $? -eq 1 ]; then
-		ktcheck ${AUTHLEVEL} ${SERVER} -c sha1
-		RC=$?
-		if [ $RC -ne 1 ]; then
-		    echo Nothing to update
-		    cleanup
-		    exit $RC
-		fi
-	    fi
-	;;
-
-    *)	cleanup
-    	exit $?
-	;;
-    esac
-
-    fsdiff -A -% ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
-    if [ $? -ne 0 ]; then
-	cleanup
-	exit 1
-    fi
-
-    if [ ! -s ${FTMP} ]; then
-	echo Nothing to apply.
-	cleanup
-	exit 1
-    fi
-    Yn "Edit difference transcript?"
-    if [ $? -eq 1 ]; then
-	${EDITOR} ${FTMP}
-    fi
-    if [ -d "${PREAPPLY}" ]; then
-	Yn "Run pre-apply scripts on difference transcript?"
-	if [ $? -eq 1 ]; then
-	    dopreapply ${FTMP}
-	fi
-    fi
-    Yn "Apply difference transcript?"
-    if [ $? -eq 1 ]; then
-	lapply ${PROGRESS} ${AUTHLEVEL} ${SERVER} ${CHECKSUM} ${FTMP}
-	case "$?" in
-	0)	;;
-
-	*)	cleanup
-		exit $?
-		;;
-	esac
-    fi
-    if [ -d "${POSTAPPLY}" ]; then
-	Yn "Run post-apply scripts on difference transcript?"
-	if [ $? -eq 1 ]; then
-	    dopostapply ${FMTP}
-	fi
-    fi
+    update interactive
     cleanup
     ;;
 
@@ -361,6 +412,15 @@ force)
     dopostapply ${FTMP}
     
     cleanup
+    ;;
+
+hook)
+    update hook
+    rc=$?
+    while [ $rc -eq 1 ]; do
+	update hook
+	rc=$?
+    done
     ;;
 
 *)
