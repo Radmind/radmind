@@ -306,7 +306,6 @@ f_retr( sn, ac, av )
 
 	if (( d_path = strdup( decode( av[ 3 ] ))) == NULL ) {
 	    syslog( LOG_ERR, "f_retr: strdup: %s: %m", av[ 3 ] );
-	    snet_writef( sn, "%d Can't allocate memory: %s\r\n", 555, av[ 3 ] );
 	    return( -1 );
 	}
 	sprintf( path, "file/%s/%s", decode( av[ 2 ] ), d_path );
@@ -513,7 +512,6 @@ f_stat( SNET *sn, int ac, char *av[] )
 
 	if (( enc_file = strdup( av[ 2 ] )) == NULL ) {
 	    syslog( LOG_ERR, "f_stat: strdup: %s %m", av[ 2 ] );
-	    snet_writef( sn, "%d Can't allocate memory: %s\r\n", 555, av[ 2 ]);
 	    return( -1 );
 	}
 
@@ -589,7 +587,6 @@ f_stor( SNET *sn, int ac, char *av[] )
 	/* decode() uses static mem, so strdup() */
 	if (( d_path = strdup( decode( av[ 3 ] ))) == NULL ) {
 	    syslog( LOG_ERR, "f_stor: strdup: %s: %m", av[ 3 ] );
-	    snet_writef( sn, "%d Can't allocate memory: %s\r\n", 555, av [ 3]);
 	    return( -1 );
 	}
 	if ( d_path[ 0 ] == '/' ) {
@@ -744,8 +741,6 @@ f_starttls( snet, ac, av )
 	    NID_commonName, buf, sizeof( buf ));
 	if (( remote_cn = strdup( buf )) == NULL ) {
 	    syslog( LOG_ERR, "strdup: %m" );
-	    snet_writef( snet, "%d System error: %s\r\n", 501,
-		strerror( errno ));
 	    return( -1 );
 	}
 	X509_free( peer );
@@ -754,7 +749,7 @@ f_starttls( snet, ac, av )
     /* get command file */
     if ( command_k( "config" ) < 0 ) {
 	snet_writef( snet, "%d No access for %s\r\n", 500, remote_host );
-	return( -1 );
+	exit( 1 );
     } else {
 	commands  = auth;
 	ncommands = sizeof( auth ) / sizeof( auth[ 0 ] );
@@ -874,17 +869,13 @@ f_login( snet, ac, av )
 	free( password );
 	password = NULL;
     }
-    user = strdup( av[ 1 ] );
-    if ( user == NULL ) {
+    if (( user = strdup( av[ 1 ] )) == NULL ) {
 	syslog( LOG_ERR, "f_login: strdup: %m" );
-        snet_writef( snet, "%d System error: %s\r\n", 501, strerror( errno ));
 	return( -1 );
     }
 
-    password = strdup( av[ 2 ] );
-    if ( password == NULL ) {
+    if (( password = strdup( av[ 2 ] )) == NULL ) {
 	syslog( LOG_ERR, "f_login: strdup: %m" );
-        snet_writef( snet, "%d System error: %s\r\n", 501, strerror( errno ));
 	return( -1 );
     }
 
@@ -892,13 +883,11 @@ f_login( snet, ac, av )
 	    &pamh )) != PAM_SUCCESS ) {
         syslog( LOG_ERR, "f_login: pam_start: %s\n",
 	    pam_strerror( pamh, retval ));
-	snet_writef( snet, "%d %s\r\n", 501, pam_strerror( pamh, retval ));
 	return( -1 );
     }
     if (( retval =  pam_authenticate( pamh, PAM_SILENT )) != PAM_SUCCESS ) {
         syslog( LOG_ERR, "f_login: pam_authenticate: %s\n",
 	    pam_strerror( pamh, retval ));
-	snet_writef( snet, "%d %s\r\n", 502, pam_strerror( pamh, retval ));
 	return( -1 );
     }
     free( password );
@@ -906,14 +895,12 @@ f_login( snet, ac, av )
     if (( retval = pam_acct_mgmt( pamh, 0 )) != PAM_SUCCESS ) {
         syslog( LOG_ERR, "f_login: pam_acct_mgmt: %s\n",
 	    pam_strerror( pamh, retval ));
-	snet_writef( snet, "%d %s\r\n", 503, pam_strerror( pamh, retval ));
 	return( -1 );
     }
 
     if (( retval = pam_end( pamh, retval )) != PAM_SUCCESS ) {
         syslog( LOG_ERR, "f_login: pam_end: %s\n",
 	    pam_strerror( pamh, retval ));
-	snet_writef( snet, "%d %s\r\n", 504, pam_strerror( pamh, retval ));
 	return( -1 );
     }
     syslog( LOG_INFO, "%s: successfully logged in\n", user );
@@ -990,8 +977,6 @@ list_transcripts( SNET *sn )
     /* Create list of transcripts */
     if (( f = fopen( command_file, "r" )) == NULL ) {
 	syslog( LOG_ERR, "fopen: %s: %m", command_file );
-	snet_writef( sn, "%d %s: %s\r\n", 543, command_file,
-	    strerror( errno ));
 	return( -1 );
     }
     linenum = 0;
@@ -1004,8 +989,6 @@ list_transcripts( SNET *sn )
 	}
 	if ( ac != 2 ) {
 	    syslog( LOG_ERR, "%s: %d: invalid command line\n",
-		    command_file, linenum );
-	    snet_writef( sn, "%d %s: %d:invalid command line\r\n", 543,
 		    command_file, linenum );
 	    return( -1 );
 	}
