@@ -25,6 +25,7 @@
 #include "update.h"
 #include "code.h"
 #include "radstat.h"
+#include "transcript.h"
 
 extern int quiet;
 extern int linenum;
@@ -53,45 +54,14 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    fprintf( stderr, "%d: incorrect number of arguments\n", linenum );
 	    return( 1 );
 	}
-	mode = strtol( targv[ 2 ], (char **)NULL, 8 );
-	uid = atoi( targv[ 3 ] );
-	gid = atoi( targv[ 4 ] );
-	times.modtime = atoi( targv[ 5 ] );
-	if ( !quiet ) {
-	    if ( newfile ) {
-		printf( "%s: created updating", displaypath );
-	    } else {
-		printf( "%s: updating", displaypath );
-	    }
-	}
-	if( mode != st->st_mode ) {
-	    if ( chmod( path, mode ) != 0 ) {
-		perror( path );
-		return( 1 );
-	    }
-	    if ( !quiet ) printf( " mode" );
-	}
-	if( uid != st->st_uid  || gid != st->st_gid ) {
-	    if ( chown( path, uid, gid ) != 0 ) {
-		perror( path );
-		return( 1 );
-	    }
-	    if ( uid != st->st_uid ) {
-		if ( !quiet ) printf( " uid" );
-	    }
-	    if ( gid != st->st_gid ) {
-		if ( !quiet ) printf( " gid" );
-	    }
-	}
 
-	if( times.modtime != st->st_mtime ) {
-	    
+	times.modtime = atoi( targv[ 5 ] );
+	if ( times.modtime != st->st_mtime ) {
 	    times.actime = st->st_atime;
 	    if ( utime( path, &times ) != 0 ) {
 		perror( path );
 		return( 1 );
 	    }
-	    if ( !quiet ) printf( " time" ); 
 	}
 	break;
 
@@ -106,11 +76,8 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    return( 1 );
 	}
 
-	mode = strtol( targv[ 2 ], (char **)NULL, 8 );
-	uid = atoi( targv[ 3 ] );
-	gid = atoi( targv[ 4 ] );
-
 	if ( !present ) {
+	    mode = strtol( targv[ 2 ], (char **)NULL, 8 );
 	    if ( mkdir( path, mode ) != 0 ) {
 		perror( path );
 		return( 1 );
@@ -121,36 +88,6 @@ update( const char *path, char *displaypath, int present, int newfile,
 		return( 1 );
 	    }
 	    present = 1;
-	}
-
-	/* check mode */
-	if ( !quiet ) {
-	    if ( newfile ) {
-		printf( "%s: created updating", displaypath );
-	    } else {
-		printf( "%s: updating", displaypath );
-	    }
-	}
-	if ( mode != st->st_mode ) {
-	    if ( chmod( path, mode ) != 0 ) {
-		perror( path );
-		return( 1 );
-	    }
-	    if ( !quiet ) printf( " mode" );
-	}
-
-	/* check uid & gid */
-	if ( uid != st->st_uid || gid != st->st_gid ) {
-	    if ( chown( path, uid, gid ) != 0 ) {
-		perror( path );
-		return( 1 );
-	    }
-	    if ( uid != st->st_uid ) {
-		if ( !quiet ) printf( " uid" );
-	    }
-	    if ( gid != st->st_gid ) {
-		if ( !quiet ) printf( " gid" );
-	    }
 	}
 
 #ifdef __APPLE__
@@ -168,7 +105,6 @@ update( const char *path, char *displaypath, int present, int newfile,
 		    "retrieve %s failed: Could not set attributes\n", path );
 		return( -1 );
 	    }
-	    if ( !quiet ) printf( " finder-info" );
 	}
 #endif /* __APPLE__ */
 	break;
@@ -188,7 +124,7 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    return( 1 );
 	}
 	if ( !quiet ) printf( "%s: hard linked to %s", displaypath, d_target);
-	break;
+	goto done;
 
     case 'l':
 	if ( tac != 3 ) {
@@ -213,7 +149,7 @@ update( const char *path, char *displaypath, int present, int newfile,
 	}
 	if ( !quiet ) printf( "%s: symbolic linked to %s",
 	    displaypath, d_target );
-	break;
+	goto done;
 
     case 'p':
 	if ( tac != 5 ) { 
@@ -221,11 +157,8 @@ update( const char *path, char *displaypath, int present, int newfile,
 		"%d: incorrect number of arguments\n", linenum );
 	    return( 1 );
 	}
-	mode = strtol( targv[ 2 ], (char **)NULL, 8 );
-	uid = atoi( targv[ 3 ] );
-	gid = atoi( targv[ 4 ] );
 	if ( !present ) {
-	    mode = mode | S_IFIFO;
+	    mode = strtol( targv[ 2 ], (char **)NULL, 8 ) | S_IFIFO;
 	    if ( mkfifo( path, mode ) != 0 ){
 		perror( path );
 		return( 1 );
@@ -237,34 +170,6 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    present = 1;
 	    newfile = 1;
 	}
-	/* check mode */
-	if ( !quiet ) {
-	    if ( newfile ) {
-		printf( "%s: created updating", displaypath );
-	    } else {
-		printf( "%s: updating", displaypath );
-	    }
-	}
-	if( mode != st->st_mode ) {
-	    if ( chmod( path, mode ) != 0 ) {
-		perror( path );
-		return( 1 );
-	    }
-	    if ( !quiet ) printf( " mode" );
-	}
-	/* check uid & gid */
-	if( uid != st->st_uid  || gid != st->st_gid ) {
-	    if ( chown( path, uid, gid ) != 0 ) {
-		perror( path );
-		return( 1 );
-	    }
-	    if ( uid != st->st_uid ) {
-		if ( !quiet ) printf( " uid" );
-	    }
-	    if ( gid != st->st_gid ) {
-		if ( !quiet ) printf( " gid" );
-	    }
-	}
 	break;
 
     case 'b':
@@ -275,9 +180,8 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    return( 1 );
 	}
 
-	if ( present && ( ( minor( st->st_rdev )
-		!= atoi( targv[ 6 ] ) ) || ( major( st->st_rdev )
-		!= atoi( targv[ 5 ] ) ) ) ) {
+	if ( present && (( minor( st->st_rdev ) != atoi( targv[ 6 ] )) ||
+		( major( st->st_rdev ) != atoi( targv[ 5 ] )))) {
 	    if ( unlink( path ) != 0 ) {
 		perror( path );
 		return( 1 );
@@ -285,14 +189,6 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    present = 0;
 	}
 
-	mode = strtol( targv[ 2 ], (char **)NULL, 8 );
-	if( *targv[ 0 ] == 'b' ) {
-	    mode = mode | S_IFBLK;
-	} else {
-	    mode = mode | S_IFCHR;
-	}
-	uid = atoi( targv[ 3 ] );
-	gid = atoi( targv[ 4 ] );
 	if ( !present ) {
 #ifdef sun
 	    if ( ( dev = makedev( (major_t)atoi( targv[ 5 ] ),
@@ -303,6 +199,14 @@ update( const char *path, char *displaypath, int present, int newfile,
 #else /* !sun */
 	    dev = makedev( atoi( targv[ 5 ] ), atoi( targv[ 6 ] ));
 #endif /* sun */
+
+	    mode = strtol( targv[ 2 ], (char **)NULL, 8 );
+	    if( *targv[ 0 ] == 'b' ) {
+		mode |= S_IFBLK;
+	    } else {
+		mode |= S_IFCHR;
+	    }
+
 	    if ( mknod( path, mode, dev ) != 0 ) {
 		perror( path );
 		return( 1 );
@@ -314,29 +218,8 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    present = 1;
 	    newfile = 1;
 	}
-	/* check mode */
-	if ( !quiet ) printf( "%s: updating", path );
-	if( mode != st->st_mode ) {
-	    if ( chmod( path, mode ) != 0 ) {
-		perror( path );
-		return( 1 );
-	    }
-	    if ( !quiet ) printf( " mode" );
-	}
-	/* check uid & gid */
-	if( uid != st->st_uid  || gid != st->st_gid ) {
-	    if ( chown( path, uid, gid ) != 0 ) {
-		perror( path );
-		return( 1 );
-	    }
-	    if ( uid != st->st_uid ) {
-		if ( !quiet ) printf( " uid" );
-	    }
-	    if ( gid != st->st_gid ) {
-		if ( !quiet ) printf( " gid" );
-	    }
-	}
 	break;
+
     case 's':
     case 'D':
 	if ( tac != 5 ) { 
@@ -344,47 +227,52 @@ update( const char *path, char *displaypath, int present, int newfile,
 		"%d: incorrect number of arguments\n", linenum );
 	    return( 1 );
 	}
-	mode = strtol( targv[ 2 ], (char **)NULL, 8 );
-	uid = atoi( targv[ 3 ] );
-	gid = atoi( targv[ 4 ] );
 	if ( !present ) {
 	    fprintf( stderr, "%d: Warning: %c %s not created...continuing\n",
 		    linenum, *targv[ 0 ], path );
 	    break;
 	}
-	/* check mode */
-	if ( !quiet ) {
-	    if ( newfile ) {
-		printf( "%s: created updating", displaypath );
-	    } else {
-		printf( "%s: updating", displaypath );
-	    }
-	}
-	if( mode != st->st_mode ) {
-	    if ( chmod( path, mode ) != 0 ) {
-		perror( path );
-		return( 1 );
-	    }
-	    if ( !quiet ) printf( " mode" );
-	}
-	/* check uid & gid */
-	if( uid != st->st_uid  || gid != st->st_gid ) {
-	    if ( chown( path, uid, gid ) != 0 ) {
-		perror( path );
-		return( 1 );
-	    }
-	    if ( uid != st->st_uid ) {
-		if ( !quiet ) printf( " uid" );
-	    }
-	    if ( gid != st->st_gid ) {
-		if ( !quiet ) printf( " gid" );
-	    }
-	}
+
 	break;
+
     default :
 	fprintf( stderr, "%d: Unkown type %s\n", linenum, targv[ 0 ] );
 	return( 1 );
     }
+
+    if ( !quiet ) {
+	if ( newfile ) {
+	    printf( "%s: created updating", displaypath );
+	} else {
+	    printf( "%s: updating", displaypath );
+	}
+    }
+
+    mode = strtol( targv[ 2 ], (char **)NULL, 8 );
+    uid = atoi( targv[ 3 ] );
+    gid = atoi( targv[ 4 ] );
+    if ( mode != ( T_MODE & st->st_mode )) {
+	if ( chmod( path, mode ) != 0 ) {
+	    perror( path );
+	    return( 1 );
+	}
+	if ( !quiet ) printf( " mode" );
+    }
+    /* check uid & gid */
+    if ( uid != st->st_uid || gid != st->st_gid ) {
+	if ( chown( path, uid, gid ) != 0 ) {
+	    perror( path );
+	    return( 1 );
+	}
+	if ( uid != st->st_uid ) {
+	    if ( !quiet ) printf( " uid" );
+	}
+	if ( gid != st->st_gid ) {
+	    if ( !quiet ) printf( " gid" );
+	}
+    }
+
+done:
 
     if ( !quiet ) printf( "\n" );
 
