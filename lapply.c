@@ -22,7 +22,6 @@
 #include "convert.h"
 #include "download.h"
 #include "update.h"
-#include "copy.h"
 #include "connect.h"
 
 #define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
@@ -183,25 +182,14 @@ apply( FILE *f, char *parent, SNET *sn )
 		sprintf( pathdesc, "FILE %s %s", transcript, path );
 	    }
 
-	    if ( ( temppath = retr( sn, pathdesc, path, chksum_b64 ) )
+	    if ( ( temppath = retr( sn, pathdesc, path, NULL, chksum_b64 ) )
 		    == NULL ) {
 		perror( "download" );
 		return( 1 );
 	    }
-	    if ( present && !safe && ( st.st_nlink > 1 )) {
-		if ( copyover( temppath, path ) != 0 ) {
-		    fprintf( stderr, "copyover: %s %s\n", temppath, path );
-		    return( 1 );
-		}
-		if ( unlink( temppath ) != 0 ) {
-		    perror( temppath );
-		    return( 1 );
-		}
-	    } else {
-		if ( rename( temppath, path ) != 0 ) {
-		    perror( temppath );
-		    return( 1 );
-		}
+	    if ( rename( temppath, path ) != 0 ) {
+		perror( temppath );
+		return( 1 );
 	    }
 	    free( temppath );
 
