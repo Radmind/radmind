@@ -109,7 +109,7 @@ n_stor_file( SNET *sn, char *pathdesc, char *path )
 	    strerror( errno ));
 	return( -1 );
     }
-    if ( verbose ) fputs( ">>> 0\n\n>>> .\n", stdout );
+    if ( verbose ) fputs( ">>> 0\n>>> .\n", stdout );
 
     if ( !quiet && !verbose ) {
         printf( "%s: stored as zero length file\n", path );
