@@ -109,6 +109,15 @@ stor_file( SNET *sn, char *pathdesc, char *path, size_t transize,
 	EVP_DigestInit( &mdctx, md );
     }
 
+    if (( fd = open( path, O_RDONLY, 0 )) < 0 ) {
+	perror( path );
+	return( -1 );
+    }
+    if ( fstat( fd, &st) < 0 ) {
+	perror( path );
+	return( -1 );
+    }
+
     if ( snet_writef( sn, "%s", pathdesc ) == NULL ) {
 	perror( "snet_writef" );
 	return( -1 );
@@ -123,15 +132,6 @@ stor_file( SNET *sn, char *pathdesc, char *path, size_t transize,
     if ( *line != '3' ) {
         fprintf( stderr, "%s\n", line );
         return( -1 );
-    }
-
-    if (( fd = open( path, O_RDONLY, 0 )) < 0 ) {
-	perror( path );
-	return( -1 );
-    }
-    if ( fstat( fd, &st) < 0 ) {
-	perror( path );
-	return( -1 );
     }
 
     /* Check size listed in transcript */

@@ -118,6 +118,8 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
     char		pathdesc[ 2 * MAXPATHLEN ];
     char		cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
 
+    acav = acav_alloc( );
+
     tac = acav_parse( acav, tline, &targv );
     /* Get argument offset */
     if (( *targv[ 0 ] ==  '+' ) || ( *targv[ 0 ] == '-' )) {
@@ -185,6 +187,7 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
 	    return( 1 );
 	}
     }
+    acav_free( acav ); 
     return( 0 );
 }
 
