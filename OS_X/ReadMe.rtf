@@ -1,4 +1,4 @@
-{\rtf1\mac\ansicpg10000\cocoartf100
+{\rtf1\mac\ansicpg10000\cocoartf102
 {\fonttbl\f0\fswiss\fcharset77 Helvetica-Bold;\f1\fswiss\fcharset77 Helvetica;}
 {\colortbl;\red255\green255\blue255;}
 \vieww8640\viewh9000\viewkind0
@@ -20,6 +20,44 @@ This package installs software into standard file locations.  If you have moved 
 \
 You will need administrator privileges to install radmind.  Click on the lock icon in the installer to authenticate as a different user.  The default install includes only the client tools along with some example files.  To install the radmind server, click on customize and select the packages you wish to install.  The client tools are required for all installs.\
 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
+
+\f0\b \cf0 Upgrading Radmind
+\f1\b0 \
+If you are upgrading to version 0.8.1 of the radmind tools, here are the suggested upgrade paths:\
+\
+How to upgrade to 0.8.1 without adding finder information to the load\
+\
+1 - Prepare clients and server for new transcripts\
+	* Install 0.8.1 on the server.\
+	* Add 0.8.1 to the load.\
+	* Have every clients get the 0.8.1 tools.\
+2 - Run the tools as you have in the past.  Since the transcript does not list finder information, the first time the tools are run, any finder information will be removed.  In our testing we have not had any problems with using a set of transcripts that does not include finder information.  It appears that it is not crucial to OS 10.1.5.
+\f0\b \
+
+\f1\b0 \
+How to upgrade to 0.8.1 and add finder information to an existing load\
+\
+1 - Prepare clients and server for new transcripts\
+	* Install 0.8.1 on the server.\
+	* Add 0.8.1 to the load.\
+	* Have every clients get the 0.8.1 tools.\
+2 - Create an overload that includes the finder information\
+	* fsdiff -C -c sha1 -o finderinfo.T /\
+4 - Store the overload on the server\
+	* lcreate finderinfo.T\
+5 - Verify the overload on the server\
+	* lcksum -c sha1 finderinfo.T\
+6 - Merge the overload into the base load\
+	* lmerge -fv finderinfo.T yourbaseload.T\
+\
+Now, the next time the clients run ktcheck, they will get the new transcripts that include directory finder information.\
+\
+If you get stuck with a client trying to use old versions of the tools with a transcript containing finder information you can manually install the 0.8.1 on the client or create a transcript that does include the finder information.  Wes suggested this awk script to remove any finder information listings from a transcript:\
+\
+	awk '\{ if ( $1 == "d" ) print $1, $2, $3, $4, $5 \}' < new.T > temp.T\
+\pard\ql\qnatural
+\cf0 \
 
 \f0\b Known Bugs
 \f1\b0 \
