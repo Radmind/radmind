@@ -269,7 +269,7 @@ main( int argc, char **argv )
 	    perror( path );
 	    exit( 2 );
 	}
-	if ( st.st_size != atoi( targv[ 6 ] ) ) {
+	if ( st.st_size != strtoofft( targv[ 6 ], NULL, 10 )) {
 	    if ( verbose && !updatetran ) printf( "%s: size wrong\n",
 		    decode( targv[ 1 ] ));
 	    ucount++;
