@@ -38,6 +38,8 @@ char			*command = "command.K";
 char			*commandpath = ".";
 char			fullpath[ MAXPATHLEN ];
 
+extern char		*version, *checksumlist;
+
     char * 
 getstat( SNET *sn, char *description ) 
 {
@@ -242,7 +244,6 @@ main( int argc, char **argv )
     int			c, port = htons( 6662 ), err = 0;
     int			len, tac, change = 0;
     extern int          optind;
-    extern char		*version;
     char		*host = _RADMIND_HOST;
     char                **targv;
     char                cline[ 2 * MAXPATHLEN ];

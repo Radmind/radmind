@@ -17,7 +17,7 @@
 #include "llist.h"
 #include "code.h"
 
-extern char	*version;
+extern char	*version, *checksumlist;
 
 int	main( int, char ** );
 void	fs_walk( struct llist * );

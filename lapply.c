@@ -34,7 +34,7 @@ int		special = 0;
 int		safe = 0;
 int		network = 1;
 char		transcript[ 2 * MAXPATHLEN ];
-extern char	*version;
+extern char	*version, *checksumlist;
 
 int apply( FILE *f, char *parent, SNET *sn );
 void output( char *string);

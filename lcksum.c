@@ -21,7 +21,7 @@
 int		linenum = 0;
 int		chksum = 1;
 int		verbose = 0;
-extern char    	*version;
+extern char	*version, *checksumlist;
 
 /*
  * exit codes:
