@@ -41,14 +41,20 @@ connectsn2( struct sockaddr_in *sin )
     char		*line;
     struct timeval      tv;
     SNET                *sn = NULL; 
+    struct protoent	*proto;
 
     if (( s = socket( PF_INET, SOCK_STREAM, 0 )) < 0 ) {
 	perror( "socket" );
 	exit( 2 );
     }
-
-    if ( setsockopt( s, 6, TCP_NODELAY, &one, sizeof( one )) < 0 ) {
-	perror( "setsockopt" );
+    
+    if (( proto = getprotobyname( "tcp" )) == NULL ) {
+	perror( "getprotobyname" );
+	exit( 2 );
+    }
+    if ( setsockopt( s, proto->p_proto, TCP_NODELAY, &one,
+	    sizeof( one )) != 0 ) {
+	perror( "snet_setopt" );
 	exit( 2 );
     }
 
@@ -66,6 +72,7 @@ connectsn2( struct sockaddr_in *sin )
 	perror( "snet_attach" );
 	exit( 2 );
     }
+
     tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
 	fprintf( stderr, "connection to %s failed\n",

@@ -96,6 +96,7 @@ const EVP_MD    *md = NULL;
 struct list	*access_list = NULL;
 int		ncommands = 0;
 int		authorized = 0;
+int		prevstor = 0;
 char		hostname[ MAXHOSTNAMELEN ];
 
 extern int 	authlevel;
@@ -684,9 +685,26 @@ f_stor( SNET *sn, int ac, char *av[] )
     char		*line;
     char		*d_tran, *d_path;
     int			fd;
+    int			zero = 0;
     off_t		len;
     ssize_t		rc;
     struct timeval	tv;
+    struct protoent	*proto;
+
+    if ( !prevstor ) {
+	/* Turn off TCP_NODELAY for stores */
+	if (( proto = getprotobyname( "tcp" )) == NULL ) {
+	    syslog( LOG_ERR, "f_stor: getprotobyname: %m" );
+	    return( -1 );
+	}
+
+	if ( setsockopt( snet_fd( sn ), proto->p_proto, TCP_NODELAY, &zero,
+		sizeof( zero )) != 0 ) {
+	    syslog( LOG_ERR, "f_stor: snet_setopt: %m" );
+	    return( -1 );
+	}
+	prevstor = 1;
+    }
 
     if ( checkuser && ( !authorized )) {
 	snet_writef( sn, "%d Not logged in\r\n", 551 );
