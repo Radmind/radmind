@@ -199,9 +199,10 @@ main( ac, av )
 #ifdef HAVE_ZEROCONF
 	    regservice = 1;
 	    break;
+#else
+	    fprintf( stderr, "Rendezvous not supported.\n" );
+	    exit( 1 );
 #endif /* HAVE_ZEROCONF */
-	    err++;
-	    break;
 
 	case 'u' :		/* umask */
 	    umask( (mode_t)strtol( optarg, (char **)NULL, 0 ));
