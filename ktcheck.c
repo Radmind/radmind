@@ -102,7 +102,10 @@ createspecial( SNET *sn, struct node *head )
     }
 
     do {
-	sprintf( filedesc, "SPECIAL %s", head->path);
+	if ( snprintf( filedesc, MAXPATHLEN * 2, "SPECIAL %s", head->path)) {
+	    fprintf( stderr, "SPECIAL %s: too long\n", head->path );
+	    return( 1 );
+	}
 
 	if (( stats = getstat( sn, (char *)&filedesc)) == NULL ) {
 	    return( 1 );
@@ -152,14 +155,22 @@ check( SNET *sn, char *type, char *file )
     struct stat	st;
 
     if ( file != NULL ) {
-	sprintf( filedesc, "%s %s", type, file );
+	if ( snprintf( filedesc, MAXPATHLEN * 2, "%s %s", type, file  )
+		> MAXPATHLEN * 2 ) {
+	    fprintf( stderr, "%s %s: too long", type, file );
+	    return( 2 );
+	}
 
 	/* create full path */
 	if ( snprintf( path, MAXPATHLEN, "%s%s", kdir, file ) > MAXPATHLEN ) {
 	    fprintf( stderr, "%s%s: path too long\n", kdir, file );
+	    return( 2 );
 	}
     } else {
-	sprintf( filedesc, "%s", type );
+	if ( snprintf( filedesc, MAXPATHLEN, "%s", type ) > MAXPATHLEN * 2 ) {
+	    fprintf( stderr, "%s: too long\n", type );
+	    return( 2 );
+	}
 	file = kfile;
 
 	/* create full path */
@@ -337,7 +348,10 @@ main( int argc, char **argv )
         p++;
         *p = (char)'\0';
     }
-    sprintf( path, "%s", kfile );
+    if ( snprintf( path, MAXPATHLEN, "%s", kfile ) > MAXPATHLEN ) {
+	fprintf( stderr, "%s: path too long\n", kfile );
+	exit( 2 );
+    }
 
     if(( sn = connectsn( host, port )  ) == NULL ) {
 	fprintf( stderr, "%s:%d connection failed.\n", host, port );
