@@ -239,7 +239,10 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 	exit( 2 );
     }
 
-    if ( prev_tran != tran ) {
+    if (( edit_path == APPLICABLE )
+	    && (( flag == PR_TRAN_ONLY ) || ( flag == PR_DOWNLOAD )
+		|| ( flag == PR_STATUS_NEG ))
+	    && ( prev_tran != tran )) {
 	fprintf( outtran, "%s:\n", tran->t_shortname );
 	prev_tran = tran;
     }
