@@ -31,8 +31,7 @@
 int		debug = 0;
 int		backlog = 5;
 char		*path_radmind = _PATH_RADMIND;
-char		chostname[MAXHOSTNAMELEN];
-char		*c_hostname = chostname;
+char		*remote_host;
 
 char		*version = VERSION;
 
@@ -90,10 +89,8 @@ main( ac, av )
     struct servent	*se;
     int			c, s, err = 0, fd, sinlen, trueint;
     int			dontrun = 0;
-    int			restart = 0;
     int			pidfd;
     FILE		*pf;
-    char		*pidfile = _PATH_PIDFILE;
     char		*prog;
     unsigned short	port = 0;
     extern int		optind;
@@ -107,15 +104,11 @@ main( ac, av )
 	prog++;
     }
 
-    while (( c = getopt( ac, av, "Vrcdp:b:g:" )) != -1 ) {
+    while (( c = getopt( ac, av, "Vcdp:b:g:" )) != -1 ) {
 	switch ( c ) {
 	case 'V' :		/* virgin */
 	    printf( "%s\n", version );
 	    exit( 0 );
-
-	case 'r' :		/* restart server */
-	    restart++;
-	    break;
 
 	case 'c' :		/* check config files */
 	    dontrun++;
@@ -150,30 +143,6 @@ main( ac, av )
     }
 
     /* read config files */
-
-    if ( restart ) {		/* do we need restart? */
-	int		pid;
-
-	/* open pid file */
-	if (( pidfd = open( pidfile, O_RDONLY, 0 )) < 0 ) {
-	    perror( pidfile );
-	    exit( 1 );
-	}
-	if (( pf = fdopen( pidfd, "r" )) == NULL ) {
-	    fprintf( stderr, "%s: can't fdopen pidfd!\n", pidfile );
-	    exit( 1 );
-	}
-	fscanf( pf, "%d\n", &pid );
-	if ( pid <= 0 ) {
-	    fprintf( stderr, "%s: bad pid %d!\n", pidfile, pid );
-	    exit( 1 );
-	}
-	if ( kill( pid, SIGHUP ) < 0 ) {
-	    perror( "kill" );
-	    exit( 1 );
-	}
-	exit( 0 );
-    }
 
     if ( dontrun ) {
 	exit( 0 );
@@ -220,16 +189,6 @@ main( ac, av )
     }
     if ( listen( s, backlog ) < 0 ) {
 	perror( "listen" );
-	exit( 1 );
-    }
-
-    /* open and truncate the pid file */
-    if (( pidfd = open( pidfile, O_CREAT | O_WRONLY, 0644 )) < 0 ) {
-	perror( pidfile );
-	exit( 1 );
-    }
-    if ( ftruncate( pidfd, (off_t)0 ) < 0 ) {
-	perror( "ftruncate" );
 	exit( 1 );
     }
 
@@ -334,10 +293,8 @@ main( ac, av )
 		exit( 1 );
 	    }
 
-	    /* set global c_hostname for retr command */
-	    strcpy( c_hostname, hp->h_name );
-printf( "%s\n", c_hostname );
-
+	    /* set global remote_host for retr command */
+	    remote_host = strdup( hp->h_name );
 	    syslog( LOG_INFO, "child for %s %s",
 		    inet_ntoa( sin.sin_addr ), hp->h_name );
 
