@@ -39,7 +39,7 @@ v_logger( char *line )
 store_file( int fd, SNET *sn, char *filename, char *transcript ) 
 {
     struct stat 	st;
-    struct timeval 	tv = { 120, 0 };
+    struct timeval 	tv;
     unsigned char	buf[ 8192 ];
     unsigned int	rr;
     char		*line;
@@ -70,6 +70,8 @@ store_file( int fd, SNET *sn, char *filename, char *transcript )
 	}
     }
 
+    tv.tv_sec = 120;
+    tv.tv_usec = 0;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
 	perror( "snet_getline_multi" );
 	return( -1 );
@@ -320,6 +322,8 @@ done:
 	}
 	if ( verbose ) fputs( ">>> QUIT\n", stderr );
 
+	tv.tv_sec = 120;
+	tv.tv_usec = 0;
 	if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
 	    perror( "snet_getline_multi" );
 	    exit( 1 );
