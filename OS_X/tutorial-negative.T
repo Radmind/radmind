@@ -49,6 +49,7 @@ d /private/tmp                          1777     0     0
 #  to maintain such information.
 f /private/var/backups/local.nidump     0644     0     0 1037607307       0 2jmj7l5rSw0yVb/vlWAYkK/YBwk=
 
+f /private/var/db/SystemEntropyCache    0600     0     0 1040074489       0 2jmj7l5rSw0yVb/vlWAYkK/YBwk=
 d /private/var/log                      0755     0     0
 f /private/var/msgs/bounds              0664     0     0 1037607307       0 2jmj7l5rSw0yVb/vlWAYkK/YBwk=
 d /private/var/radmind/client           0755     0     0
