@@ -14,12 +14,11 @@
 #define ___P(x)		()
 #endif __STDC__
 
-int		cmdloop ___P(( int ));
+int		cmdloop ___P(( int, struct sockaddr_in * ));
 int		command_k ___P(( char * ));
 char		**special_t ___P(( char *, char * ));
 int		keyword ___P(( int, char*[] ));
 extern char	*path_radmind;
-extern char	*remote_host;
 
 struct command {
     char	*c_name;

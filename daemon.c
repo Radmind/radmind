@@ -37,7 +37,6 @@ int		verbose = 0;
 int		dodots = 0;
 int		cksum = 0;
 char		*path_radmind = _PATH_RADMIND;
-char		*remote_host;
 
 extern char	*version;
 
@@ -91,11 +90,10 @@ main( ac, av )
 {
     struct sigaction	sa, osahup, osachld;
     struct sockaddr_in	sin;
-    struct hostent	*hp;
     struct servent	*se;
     int			c, s, err = 0, fd, sinlen, trueint;
     int			dontrun = 0;
-    char		*prog, *p;
+    char		*prog;
     unsigned short	port = 0;
     extern int		optind;
     extern char		*optarg;
@@ -312,23 +310,7 @@ main( ac, av )
 		exit( 1 );
 	    }
 
-	    if (( hp = gethostbyaddr( (char *)&sin.sin_addr,
-		    sizeof( struct in_addr ), AF_INET )) == NULL ) {
-		syslog( LOG_ERR, "gethostbyaddr: %s: %d",
-			inet_ntoa( sin.sin_addr ), h_errno );
-		/* give an error banner */
-		exit( 1 );
-	    }
-
-	    /* set global remote_host for retr command */
-	    remote_host = strdup( hp->h_name );
-	    for ( p = remote_host; *p != '\0'; p++ ) {
-		*p = tolower( *p );
-	    }
-	    syslog( LOG_INFO, "child for %s %s",
-		    inet_ntoa( sin.sin_addr ), hp->h_name );
-
-	    exit( cmdloop( fd ));
+	    exit( cmdloop( fd, &sin ));
 
 	case -1 :
 	    close( fd );

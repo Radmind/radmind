@@ -11,6 +11,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
@@ -19,6 +22,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #include <openssl/evp.h>
 #include <snet.h>
@@ -53,6 +57,7 @@ int		f_stat ___P(( SNET *, int, char *[] ));
 int		f_retr ___P(( SNET *, int, char *[] ));
 int		f_stor ___P(( SNET *, int, char *[] ));
 
+char		*remote_host;
 char		command_file[ MAXPATHLEN ];
 char		upload_xscript[ MAXPATHLEN ];
 const EVP_MD    *md;
@@ -446,7 +451,7 @@ f_stor( SNET *sn, int ac, char *av[] )
 	strcpy( upload_xscript, av[ 2 ] );
 
 	/* make the directory for the files of this xscript to live in. */
-	if ( mkdir ( xscriptdir, 0777 ) < 0 ) {
+	if ( mkdir( xscriptdir, 0777 ) < 0 ) {
 	    if ( errno == EEXIST ) {
 	        snet_writef( sn, "%d Transcript exists\r\n", 551 );
 		return( 1 );
@@ -560,8 +565,7 @@ f_stor( SNET *sn, int ac, char *av[] )
 
 /* sets command file for connected host */
     int
-command_k( path_config )
-    char	*path_config;
+command_k( char *path_config )
 {
     SNET	*sn;
     char	**av, *line;
@@ -608,10 +612,11 @@ int		ncommands = sizeof( commands ) / sizeof( commands[ 0 ] );
 char		hostname[ MAXHOSTNAMELEN ];
 
     int
-cmdloop( fd )
-    int		fd;
+cmdloop( int fd, struct sockaddr_in *sin )
 {
     SNET		*sn;
+    struct hostent	*hp;
+    char		*p;
     int			ac, i;
     unsigned int	n;
     char		**av, *line;
@@ -622,6 +627,20 @@ cmdloop( fd )
 	syslog( LOG_ERR, "snet_attach: %m" );
 	exit( 1 );
     }
+
+    if (( hp = gethostbyaddr( (char *)&sin->sin_addr,
+	    sizeof( struct in_addr ), AF_INET )) == NULL ) {
+	remote_host = strdup( inet_ntoa( sin->sin_addr ));
+    } else {
+	/* set global remote_host for retr command */
+	remote_host = strdup( hp->h_name );
+	for ( p = remote_host; *p != '\0'; p++ ) {
+	    *p = tolower( *p );
+	}
+    }
+
+    syslog( LOG_INFO, "child for [%s] %s",
+	    inet_ntoa( sin->sin_addr ), remote_host );
     
     /* lookup proper command file based on the hostname */
 
