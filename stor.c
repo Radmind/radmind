@@ -43,7 +43,6 @@ extern int		dodots;
 extern int		cksum;
 extern int		linenum;
 extern int		force;
-extern int		progress;
 extern off_t		lsize, total;
 extern void            	(*logger)( char * );
 extern SSL_CTX  	*ctx;
