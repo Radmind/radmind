@@ -18,7 +18,7 @@ RADMINDSYSLOG=LOG_LOCAL7
 # Compiler
 #CC=	cc
 CC=	gcc
-CWARN=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wconversion -Werror
+CWARN=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wconversion
 ADDLIBS=	-lnsl -lsocket
 INSTALL=	/usr/ucb/install
 #INSTALL=	install
@@ -26,7 +26,7 @@ OPENSSL=	/usr/local/openssl
 
 # Should not need to edit anything after here.
 CFLAGS=		${CWARN} ${OSNAME} ${INCPATH}
-INCPATH=	-I${OPENSSL}/include/openssl -Ilibsnet
+INCPATH=	-I${OPENSSL}/include -Ilibsnet
 LDFLAGS=	-L${OPENSSL}/lib -Llibsnet ${ADDLIBS} -lsnet -lcrypto
 
 BINTARGETS=     fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff twhich
@@ -167,6 +167,19 @@ install	: all
 	for i in ${MAN1TARGETS}; do \
 	    ${INSTALL} -m 0644 -c $$i ${MANDIR}/man1/; \
 	done
+
+package :
+        mkdir ${DISTDIR}
+        -mkdir -p ${DISTDIR}${DESTDIR}
+        -mkdir -p ${DISTDIR}${BINDIR}
+        for i in in ${BINTARGETS}; do \
+            ${INSTALL} -m 0755 -c $$i ${DISTDIR}${BINDIR}/; \
+        done
+        -mkdir -p ${DISTDIR}/${MANDIR}
+        -mkdir -p ${DISTDIR}/${MANDIR}/man1
+        for i in ${MAN1TARGETS}; do \
+            ${INSTALL} -m 0644 -c $$i ${DISTDIR}${MANDIR}/man1/; \
+        done 
 
 clean :
 	rm -f *.o a.out core
