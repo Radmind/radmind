@@ -230,14 +230,15 @@ install	: all man
 PKGNAME=RadmindTools
 PKGDIR=tmp/RadmindToolsInstaller
 PKGRSRCDIR=tmp/Resources
+PKGSRCDIR=`pwd`
 
-INFOLIST=	$(wildcard OS_X/*.info)	
+INFOLIST=	$(wildcard OS_X/*.plist)	
 
 info :
 	-mkdir tmp
 	-mkdir tmp/OS_X
 	for i in ${INFOLIST}; do \
-	    sed -e 's@_VERSION_RADMIND@${VERSION}@g'  \
+	    sed -e 's@_RADMIND_VERSION@${VERSION}@g'  \
 		$$i > tmp/$$i; \
 	done
 
@@ -264,15 +265,17 @@ package	: all man info
 	    ${INSTALL} -m 0644 -c tmp/man/$$i ${PKGDIR}/${MANDIR}/man8/; \
 	done
 	-mkdir -p ${PKGDIR}${CERTDIR}
-	PackageMaker -p ../${PKGNAME}.pkg -r ${PKGRSRCDIR} \
-	    -i tmp/OSX_X/RadmindTools.info 
-
-	mkdir -p ${PKGDIR}/${PKGRSRCDIR}/English.lproj
-	cp OS_X/License.rtf ${PKGDIR}/${PKGRSRCDIR}/English.lproj
-	cp OS_X/ReadMe.rtf ${PKGDIR}/${PKGRSRCDIR}/English.lproj
-	cp OS_X/Welcome.rtf ${PKGDIR}/${PKGRSRCDIR}/English.lproj
-	cp OS_X/background.tiff ${PKGDIR}/${PKGRSRCDIR}/English.lproj
-	rm -rf ${PKGROOTDIR} tmp
+	-mkdir ${PKGRSRCDIR}
+	cp OS_X/License.rtf ${PKGRSRCDIR}
+	cp OS_X/ReadMe.rtf ${PKGRSRCDIR}
+	cp OS_X/Welcome.rtf ${PKGRSRCDIR}
+	cp OS_X/background.tiff ${PKGRSRCDIR}
+	/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/packagemaker \
+	   -build -p ${PKGSRCDIR}/../${PKGNAME}.pkg \
+	   -f ${PKGSRCDIR}/${PKGDIR} \
+	   -r ${PKGSRCDIR}/${PKGRSRCDIR} \
+	   -i ${PKGSRCDIR}/tmp/OS_X/Info.plist \
+	   -d ${PKGSRCDIR}/tmp/OS_X/Description.plist
 
 clean :
 	(cd libsnet; ${MAKE} ${MAKEFLAGS} clean)
