@@ -30,7 +30,6 @@
 
 extern int quiet;
 extern int linenum;
-extern int verbose;
 extern int showprogress;
 
     int
@@ -131,7 +130,7 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    perror( path );
 	    return( 1 );
 	}
-	if ( !quiet && verbose ) {
+	if ( !quiet && !showprogress ) {
 	    printf( "%s: hard linked to %s", displaypath, d_target);
 	}
 	goto done;
@@ -157,7 +156,7 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    perror( path );
 	    return( 1 );
 	}
-	if ( !quiet && verbose ) printf( "%s: symbolic linked to %s",
+	if ( !quiet && !showprogress ) printf( "%s: symbolic linked to %s",
 		displaypath, d_target );
 	goto done;
 
@@ -256,7 +255,7 @@ update( const char *path, char *displaypath, int present, int newfile,
 	return( 1 );
     }
 
-    if ( !quiet && verbose ) {
+    if ( !quiet && !showprogress ) {
 	if ( newfile ) {
 	    printf( "%s: created updating", displaypath );
 	} else {
@@ -273,10 +272,10 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    return( 1 );
 	}
 	if ( uid != st->st_uid ) {
-	    if ( !quiet && verbose ) printf( " uid" );
+	    if ( !quiet && !showprogress ) printf( " uid" );
 	}
 	if ( gid != st->st_gid ) {
-	    if ( !quiet && verbose ) printf( " gid" );
+	    if ( !quiet && !showprogress ) printf( " gid" );
 	}
     }
     /* chmod after chown to preserve S_ISUID and S_ISGID mode bits */
@@ -285,16 +284,16 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    perror( path );
 	    return( 1 );
 	}
-	if ( !quiet && verbose ) printf( " mode" );
+	if ( !quiet && !showprogress ) printf( " mode" );
     }
 
-    if ( timeupdated && verbose && !quiet ) {
+    if ( timeupdated && !showprogress && !quiet ) {
 	printf( " time" );
     }
 
 done:
 
-    if ( !quiet && verbose ) printf( "\n" );
+    if ( !quiet && !showprogress ) printf( "\n" );
     if ( showprogress ) {
 	progressupdate( UPDATEUNIT, displaypath );
     }

@@ -240,10 +240,12 @@ main( int argc, char **argv )
     int			force = 0;
     int			use_randfile = 0;
 
-    showprogress = 1;
-
-    while (( c = getopt ( argc, argv, "c:Fh:inp:qrVvw:x:y:z:" )) != EOF ) {
+    while (( c = getopt ( argc, argv, "%c:Fh:inp:qrVvw:x:y:z:" )) != EOF ) {
 	switch( c ) {
+	case '%':
+	    showprogress = 1;
+	    break;
+
 	case 'c':
             OpenSSL_add_all_digests();
             md = EVP_get_digestbyname( optarg );
@@ -282,7 +284,6 @@ main( int argc, char **argv )
 	    break;
 
 	case 'q':
-	    showprogress = 0;
 	    quiet = 1;
 	    break;
 
@@ -296,12 +297,10 @@ main( int argc, char **argv )
 	    exit( 0 );
 
 	case 'v':
-	    showprogress = 0;
-	    if ( ++verbose >= 2 ) {
-		logger = output;
-		if ( isatty( fileno( stdout ))) {
-		    dodots = 1;
-		}
+	    verbose = 1;
+	    logger = output;
+	    if ( isatty( fileno( stdout ))) {
+		dodots = 1;
 	    }
 	    break;
 
@@ -342,14 +341,15 @@ main( int argc, char **argv )
 
     if ( argc - optind == 0 ) {
 	showprogress = 0;
-	verbose = 1;
 	f = stdin; 
     } else if ( argc - optind == 1 ) {
 	if (( f = fopen( argv[ optind ], "r" )) == NULL ) { 
 	    perror( argv[ optind ]);
 	    exit( 2 );
 	}
-	lsize = applyloadsetsize( f );
+	if ( showprogress ) {
+	    lsize = applyloadsetsize( f );
+	}
     } else {
 	err++;
     }
@@ -367,7 +367,8 @@ main( int argc, char **argv )
     }
 
     if ( err ) {
-	fprintf( stderr, "usage: %s [ -nrsV ] [ -q | -v | -i ] ", argv[ 0 ] );
+	fprintf( stderr, "usage: %s [ -%%FnrV ] [ -q | -v | -i ] ",
+	    argv[ 0 ] );
 	fprintf( stderr, "[ -c checksum ] [ -h host ] [ -p port ] " );
 	fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );
 	fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ] " );
@@ -439,7 +440,7 @@ main( int argc, char **argv )
 	    } else {
 		special = 0;
 	    }
-	    if ( verbose >= 2 ) printf( "Transcript: %s\n", transcript );
+	    if ( verbose ) printf( "Transcript: %s\n", transcript );
 	    continue;
 	}
 
@@ -542,7 +543,7 @@ dirchecklist:
 			    perror( head->path );
 			    goto error2;
 			}
-			if ( !quiet && verbose ) {
+			if ( !quiet && !showprogress ) {
 			    printf( "%s: deleted\n", head->path );
 			}
 			if ( showprogress ) {
@@ -567,7 +568,9 @@ filechecklist:
 			perror( path );
 			goto error2;
 		    }
-		    if ( !quiet && verbose ) printf( "%s: deleted\n", path );
+		    if ( !quiet && !showprogress ) {
+			printf( "%s: deleted\n", path );
+		    }
 		    if ( showprogress ) {
 			progressupdate( UPDATEUNIT, path );
 		    }
@@ -577,7 +580,7 @@ filechecklist:
 			    perror( path );
 			    goto error2;
 			}
-			if ( !quiet && verbose ) {
+			if ( !quiet && !showprogress ) {
 			    printf( "%s: deleted\n", path );
 			}
 			if ( showprogress ) {
@@ -589,7 +592,7 @@ filechecklist:
 			    perror( head->path );
 			    goto error2;
 			}
-			if ( !quiet && verbose ) {
+			if ( !quiet && !showprogress ) {
 			    printf( "%s: deleted\n", head->path );
 			}
 			if ( showprogress ) {
@@ -621,7 +624,9 @@ filechecklist:
 		perror( head->path );
 		goto error2;
 	    }
-	    if ( !quiet && verbose ) printf( "%s: deleted\n", head->path );
+	    if ( !quiet && !showprogress ){
+		printf( "%s: deleted\n", head->path );
+	    }
 	    if ( showprogress ) {
 		progressupdate( UPDATEUNIT, head->path );
 	    }
@@ -649,7 +654,7 @@ filechecklist:
 	    perror( head->path );
 	    goto error2;
 	}
-	if ( !quiet && verbose ) printf( "%s: deleted\n", head->path );
+	if ( !quiet && !showprogress ) printf( "%s: deleted\n", head->path );
 	if ( showprogress ) {
 	    progressupdate( UPDATEUNIT, head->path );
 	}

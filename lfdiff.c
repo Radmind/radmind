@@ -122,7 +122,7 @@ main( int argc, char **argv, char **envp )
 	    exit( 0 );
 
 	case 'v':
-	    verbose = 2;
+	    verbose = 1;
 	    logger = output;
 	    if ( isatty( fileno( stdout ))) {
 		dodots = 1;
@@ -219,9 +219,9 @@ main( int argc, char **argv, char **envp )
 
     if ( err || ( argc - optind != 1 )) {
 	fprintf( stderr, "usage: %s ", argv[ 0 ] );
-	fprintf( stderr, "[ -r ] " );
+	fprintf( stderr, "[ -rvV ] " );
 	fprintf( stderr, "[ -T transcript | -S ] " );
-	fprintf( stderr, "[ -h host ] [ -p port ] [ -vV ] " );
+	fprintf( stderr, "[ -h host ] [ -p port ]" );
         fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );
         fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ] " );
 	fprintf( stderr, "[ diff options ] " );
