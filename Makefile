@@ -15,21 +15,20 @@ RADMIND_HOST=radmind
 
 RADMINDSYSLOG=LOG_LOCAL7
 
-# Stock compiler
-#CC=cc
-
-# For gcc
+# Compiler
+#CC=	cc
 CC=	gcc
 CWARN=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wconversion -Werror
-CFLAGS= ${CWARN} ${OSNAME} ${INCPATH}
-
+ADDLIBS=	-lnsl -lsocket
+INSTALL=	/usr/ucb/install
+#INSTALL=	install
 OPENSSL=	/usr/local/openssl
 
-INCPATH=	-I${OPENSSL}/include/openssl -Ilibsnet
-LDFLAGS=	-L${OPENSSL}/lib -Llibsnet -lnsl -lsnet -lcrypto -lsocket
-INSTALL=	/usr/ucb/install
-
 # Should not need to edit anything after here.
+CFLAGS=		${CWARN} ${OSNAME} ${INCPATH}
+INCPATH=	-I${OPENSSL}/include/openssl -Ilibsnet
+LDFLAGS=	-L${OPENSSL}/lib -Llibsnet ${ADDLIBS} -lsnet -lcrypto
+
 BINTARGETS=	fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff twhich
 MAN1TARGETS=	fsdiff.1 ktcheck.1 lapply.1 lcksum.1 lcreate.1 lfdiff.1 \
 		lmerge.1 twhich.1
