@@ -3,6 +3,7 @@ struct tran
     int			num;
     int			eof;
     int			tac;
+    int			remove;
     char		*path;
     char		*name;
     char		*line;
