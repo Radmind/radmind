@@ -5,19 +5,17 @@
 .SH SYNOPSIS
 .B radmind
 [
+.B \-dUV
+] [
 .BI \-b\  backlog
 ] [
 .BI \-D\  path
-] [
-.B \-d
 ] [
 .BI \-L\  syslog-facility
 ] [
 .BI \-p\  port
 ] [
 .BI \-u\  umask 
-] [
-.B \-V
 ] [
 .BI \-w\  auth-level
 ] [
@@ -185,6 +183,9 @@ specifies the port of the radmind server, by default
 .BI \-u\  umask
 specifies the umask the server uses to write files to the disk, defaulting
 to the user's umask.
+.TP 19
+.B \-U
+Turn on PAM user authorization.
 .TP 19
 .B \-V
 displays the version of 

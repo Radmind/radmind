@@ -68,7 +68,7 @@ int 		exchange( int num_msg, const struct pam_message **msgm,
 
 
 char		*user = NULL;
-char		*password;
+char		*password = NULL;
 char		*remote_host = NULL;
 char		*remote_addr = NULL;
 char		*remote_cn = NULL;
@@ -78,9 +78,11 @@ char		upload_xscript[ MAXPATHLEN ];
 const EVP_MD    *md = NULL;
 struct node	*tran_list = NULL;
 int		ncommands = 0;
+int		authorized = 0;
 char		hostname[ MAXHOSTNAMELEN ];
 
 extern int 	authlevel;
+extern int 	checkuser;
 
 struct command	noauth[] = {
     { "QUIT",		f_quit },
@@ -534,6 +536,10 @@ f_stor( SNET *sn, int ac, char *av[] )
     unsigned int	len, rc;
     struct timeval	tv;
 
+    if ( checkuser && ( !authorized )) {
+	snet_writef( sn, "%d Not logged in\r\n", 551 );
+	return( 1 );
+    }
     switch ( keyword( ac, av )) {
 
     case K_TRANSCRIPT:
@@ -829,29 +835,51 @@ f_login( snet, ac, av )
 	NULL
     };
 
+    if ( !checkuser ) {
+	snet_writef( snet, "%d Users not enabled\r\n", 502 );
+	return( -1 );
+    }
+    if ( authlevel < 1 ) {
+	snet_writef( snet, "%d Command requires TLS\r\n", 503 );
+	return( -1 );
+    }
     if ( ac != 3 ) {  
         snet_writef( snet, "%d Syntax error\r\n", 501 );
         return( -1 );
     }
-    if (( retval =  pam_start( "radmind", av[ 3 ], &pam_conv,
+    if ( user != NULL ) {
+	free( user );
+	user = NULL;
+    }
+    if ( password != NULL ) {
+	free( password );
+	password = NULL;
+    }
+    user = strdup( av[ 1 ] );
+    password = strdup( av[ 2 ] );
+
+    if (( retval =  pam_start( "radmind", user, &pam_conv,
 	    &pamh )) != PAM_SUCCESS ) {
-	snet_writef( snet, "%d %s\r\n", 500, pam_strerror( pamh, retval ));
+	snet_writef( snet, "%d %s\r\n", 501, pam_strerror( pamh, retval ));
 	return( -1 );
     }
     if (( retval =  pam_authenticate( pamh, 0 )) != PAM_SUCCESS ) {
-	snet_writef( snet, "%d %s\r\n", 500, pam_strerror( pamh, retval ));
+	snet_writef( snet, "%d %s\r\n", 502, pam_strerror( pamh, retval ));
 	return( -1 );
     }
 
     if (( retval = pam_acct_mgmt( pamh, 0 )) != PAM_SUCCESS ) {
-	snet_writef( snet, "%d %s\r\n", 500, pam_strerror( pamh, retval ));
+	snet_writef( snet, "%d %s\r\n", 503, pam_strerror( pamh, retval ));
 	return( -1 );
     }
 
     if (( retval = pam_end( pamh, retval )) != PAM_SUCCESS ) {
-	snet_writef( snet, "%d %s\r\n", 500, pam_strerror( pamh, retval ));
+	snet_writef( snet, "%d %s\r\n", 504, pam_strerror( pamh, retval ));
 	return( -1 );
     }
+    free( password );
+    snet_writef( snet, "%d %s successfully logged in\r\n", 205, user );
+    authorized = 1;
 
     return( 0 );
 }

@@ -38,6 +38,7 @@ int		verbose = 0;
 int		dodots = 0;
 int		cksum = 0;
 int		authlevel = 0;
+int		checkuser = 0;
 char		*radmind_path = _RADMIND_PATH;
 SSL_CTX         *ctx = NULL;
 
@@ -114,7 +115,7 @@ main( ac, av )
 	prog++;
     }
 
-    while (( c = getopt( ac, av, "b:dD:Lp:u:Vw:x:y:z:" )) != EOF ) {
+    while (( c = getopt( ac, av, "b:dD:Lp:u:UVw:x:y:z:" )) != EOF ) {
 	switch ( c ) {
 	case 'b' :		/* listen backlog */
 	    backlog = atoi( optarg );
@@ -142,6 +143,10 @@ main( ac, av )
 
 	case 'u' :		/* umask */
 	    umask( (mode_t)strtol( optarg, (char **)NULL, 0 ));
+	    break;
+
+	case 'U' :		/* Check User for upload */
+	    checkuser = 1;
 	    break;
 
 	case 'V' :		/* version */
