@@ -124,6 +124,8 @@ main( int argc, char **argv )
 
     /* initialize the transcripts */
     transcript_init( kfile );
+    edit_path = APPLICABLE;
+    outtran = stdout;
 
     for ( tran = tran_head; !tran->t_eof; tran = tran->t_next ) {
 
@@ -161,15 +163,10 @@ main( int argc, char **argv )
 		exit( 2 );
 	    }
 
-	    if (( !tran->t_pinfo.pi_minus ) &&
-		    (( tran->t_pinfo.pi_type == 'f' )
-		    || ( tran->t_pinfo.pi_type  == 'a' ))) {
-		printf( "%s:\n+ %s\n", tran->t_shortname, 
-		    tran->t_pinfo.pi_name );
-	    } else {
-		printf( "%s:\n%s\n", tran->t_shortname, 
-		    tran->t_pinfo.pi_name );
+	    if ( !tran->t_pinfo.pi_minus ) {
+		t_print( NULL, tran, PR_TRAN_ONLY );
 	    }
+
 	    if ( !displayall ) {
 		goto done;
 	    }
