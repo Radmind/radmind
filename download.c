@@ -101,7 +101,10 @@ retr( SNET *sn, char *pathdesc, char *path, char *location, char *chksumval )
 	    perror( temppath );
 	    goto error;
 	}
-	if ( verbose ) printf( "." );
+	if ( verbose ) {
+	    putc( '.', stdout );
+	    fflush( stdout );
+	}
 	size -= rr;
     }
     if ( verbose ) printf( "\n" );
