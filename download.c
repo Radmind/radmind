@@ -142,7 +142,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *location, char *chksumval )
 	}
 
 	if ( strcmp( chksumval, chksumcalc ) != 0 ) {
-	    fprintf( stderr, " mismatch" );
+	    fprintf( stderr, "checksum failed: %s\n", path );
 	    goto error;
 	}
     }
