@@ -426,7 +426,7 @@ main( int argc, char **argv )
 	    break;
 
 	case 'v':
-	    verbose = 2;
+	    verbose = 1;
 	    logger = output;
 	    if ( isatty( fileno( stdout ))) {
 		dodots = 1;
