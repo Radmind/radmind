@@ -207,10 +207,6 @@ main( int argc, char **argv )
 		kfile, linenum );
 	    exit( 2 );
 	}
-
-	if ( specialfile && !displayall ) {
-	    break;
-	}
     }
     /* Close kfile */
     if ( fclose( f ) != 0 ) {
