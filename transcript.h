@@ -15,6 +15,9 @@
 #define FS2TRAN	0
 #define TRAN2FS 1
 
+#define FLAG_SKIP    ( 1<<0 )
+#define FLAG_INIT    ( 1<<1 )
+
 int	edit_path;
 FILE    *outtran;
 
