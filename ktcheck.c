@@ -479,7 +479,7 @@ main( int argc, char **argv )
 		    if ( !quiet ) printf( "%s: created\n", path ); 
 		    change++;
 		} else {
-		    /* specaial.T not updated */
+		    /* special.T not updated */
 		    if ( unlink( tempfile ) !=0 ) {
 			perror( tempfile );
 			exit( 2 );
@@ -506,7 +506,7 @@ main( int argc, char **argv )
 	    }
 	}
 
-	/* specal.T exists */
+	/* special.T exists */
 	if (( tst.st_size != lst.st_size ) ||
 		( strcmp( tcksum, lcksum) != 0 )) {
 	    /* update special.T */
@@ -526,7 +526,7 @@ main( int argc, char **argv )
 		}
 	    }
 	} else {
-	    /* specaial.T not updated */
+	    /* special.T not updated */
 	    if ( unlink( tempfile ) !=0 ) {
 		perror( tempfile );
 		exit( 2 );
