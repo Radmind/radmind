@@ -140,7 +140,7 @@ f_noauth( sn, ac, av )
     int		ac;
     char	*av[];
 {
-    snet_writef( sn, "%d No access for client\r\n", 500 );
+    snet_writef( sn, "%d No access for %s\r\n", 500, remote_host );
     return( 0 );
 }
 
@@ -702,34 +702,38 @@ f_starttls( snet, ac, av )
         snet_writef( snet, "%d SSL didn't work error! XXX\r\n", 501 );
         return( 1 );
     }
-    if (( peer = SSL_get_peer_certificate( snet->sn_ssl ))
-            == NULL ) {
-        syslog( LOG_ERR, "no peer certificate" );
-        return( -1 );
-    }
 
-    syslog( LOG_INFO, "CERT Subject: %s\n",
-	X509_NAME_oneline( X509_get_subject_name( peer ), buf, sizeof( buf )));
-    X509_free( peer );
+    if ( authlevel == 2 ) {
+	if (( peer = SSL_get_peer_certificate( snet->sn_ssl ))
+		== NULL ) {
+	    syslog( LOG_ERR, "no peer certificate" );
+	    return( -1 );
+	}
 
-    X509_NAME_get_text_by_NID( X509_get_subject_name( peer ),
-	NID_commonName, buf, sizeof( buf ));
-    if (( remote_cn = strdup( buf )) == NULL ) {
-	syslog( LOG_ERR, "strdup: %m" );
-	return( -1 );
-    }
-    X509_free( peer );
+	syslog( LOG_INFO, "CERT Subject: %s\n",
+	    X509_NAME_oneline( X509_get_subject_name( peer ), buf,
+	    sizeof( buf )));
+	X509_free( peer );
 
-    /* get command file */
-    if ( command_k( "config" ) < 0 ) {
-	snet_writef( snet, "%d Now access for %s\r\n", 500, remote_host );
-	return( -1 );
-    } else {
-	commands  = auth;
-	ncommands = sizeof( auth ) / sizeof( auth[ 0 ] );
-	if ( list_transcripts( snet ) != 0 ) {
-	    /* error message given in list_transcripts */
-	    exit( 1 );
+	X509_NAME_get_text_by_NID( X509_get_subject_name( peer ),
+	    NID_commonName, buf, sizeof( buf ));
+	if (( remote_cn = strdup( buf )) == NULL ) {
+	    syslog( LOG_ERR, "strdup: %m" );
+	    return( -1 );
+	}
+	X509_free( peer );
+
+	/* get command file */
+	if ( command_k( "config" ) < 0 ) {
+	    snet_writef( snet, "%d Now access for %s\r\n", 500, remote_host );
+	    return( -1 );
+	} else {
+	    commands  = auth;
+	    ncommands = sizeof( auth ) / sizeof( auth[ 0 ] );
+	    if ( list_transcripts( snet ) != 0 ) {
+		/* error message given in list_transcripts */
+		exit( 1 );
+	    }
 	}
     }
 

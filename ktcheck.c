@@ -473,13 +473,7 @@ main( int argc, char **argv )
             exit( 1 );
         }
         /* Set level of security expecations */
-	/* XXX We need to check these for the client */
-        if ( authlevel == 1 ) {
-            ssl_mode = SSL_VERIFY_PEER;
-        } else {
-            /* authlevel == 2 */
-            ssl_mode = SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
-        }
+	ssl_mode = SSL_VERIFY_PEER;
         SSL_CTX_set_verify( ctx, ssl_mode, NULL );
     }
 
@@ -541,10 +535,12 @@ main( int argc, char **argv )
 	    fprintf( stderr, "no certificate\n" );
 	    return( -1 );
 	}
-	X509_NAME_get_text_by_NID( X509_get_subject_name( peer ),
-	    NID_commonName, buf, sizeof( buf ));
-	fprintf( stderr, "CERT Subject: %s\n", buf );
-	X509_free( peer );
+	if ( verbose ) {
+	    X509_NAME_get_text_by_NID( X509_get_subject_name( peer ),
+		NID_commonName, buf, sizeof( buf ));
+	    fprintf( stderr, "Server cert subject name: %s\n", buf );
+	    X509_free( peer );
+	}
     }
 
     switch( check( sn, "COMMAND", NULL )) { 

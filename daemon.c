@@ -214,35 +214,35 @@ main( ac, av )
             exit( 1 );
         }
 
+	if ( SSL_CTX_use_PrivateKey_file( ctx, privatekey,
+		SSL_FILETYPE_PEM ) != 1 ) {
+	    fprintf( stderr, "SSL_CTX_use_PrivateKey_file: %s: %s\n",
+		    privatekey, ERR_error_string( ERR_get_error(), NULL ));
+	    exit( 1 );
+	}
+	if ( SSL_CTX_use_certificate_chain_file( ctx, cert ) != 1 ) {
+	    fprintf( stderr, "SSL_CTX_use_certificate_chain_file: %s: %s\n",
+		    cert, ERR_error_string( ERR_get_error(), NULL ));
+	    exit( 1 );
+	}
+	/* Verify that private key matches cert */
+	if ( SSL_CTX_check_private_key( ctx ) != 1 ) {
+	    fprintf( stderr, "SSL_CTX_check_private_key: %s\n",
+		    ERR_error_string( ERR_get_error(), NULL ));
+	    exit( 1 );
+	}
+
 	if ( authlevel == 2 ) {
-	    if ( SSL_CTX_use_PrivateKey_file( ctx, privatekey,
-		    SSL_FILETYPE_PEM ) != 1 ) {
-		fprintf( stderr, "SSL_CTX_use_PrivateKey_file: %s: %s\n",
-			privatekey, ERR_error_string( ERR_get_error(), NULL ));
-		exit( 1 );
-	    }
-	    if ( SSL_CTX_use_certificate_chain_file( ctx, cert ) != 1 ) {
-		fprintf( stderr, "SSL_CTX_use_certificate_chain_file: %s: %s\n",
-			cert, ERR_error_string( ERR_get_error(), NULL ));
-		exit( 1 );
-	    }
-	    /* Verify that private key matches cert */
-	    if ( SSL_CTX_check_private_key( ctx ) != 1 ) {
-		fprintf( stderr, "SSL_CTX_check_private_key: %s\n",
-			ERR_error_string( ERR_get_error(), NULL ));
+        /* Load CA */
+	    if ( SSL_CTX_load_verify_locations( ctx, ca, NULL ) != 1 ) {
+		fprintf( stderr, "SSL_CTX_load_verify_locations: %s: %s\n",
+			ca, ERR_error_string( ERR_get_error(), NULL ));
 		exit( 1 );
 	    }
 	}
-
-        /* Load CA */
-        if ( SSL_CTX_load_verify_locations( ctx, ca, NULL ) != 1 ) {
-            fprintf( stderr, "SSL_CTX_load_verify_locations: %s: %s\n",
-                    ca, ERR_error_string( ERR_get_error(), NULL ));
-            exit( 1 );
-        }
         /* Set level of security expecations */
 	if ( authlevel == 1 ) {
-	    ssl_mode = SSL_VERIFY_PEER; 
+	    ssl_mode = SSL_VERIFY_NONE; 
 	} else {
 	    /* authlevel == 2 */
 	    ssl_mode = SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
