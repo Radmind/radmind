@@ -280,6 +280,7 @@ main( int argc, char **argv )
 	case 'K':
 	    if (( command = strrchr( optarg, '/' )) == NULL ) {
 		command = optarg;
+		commandpath = "./";
 	    } else {
 		commandpath = optarg;
 		*command = (char) '\0';
