@@ -34,6 +34,7 @@ extern int linenum;
 update( const char *path, char *displaypath, int present, int newfile,
     struct stat *st, int tac, char **targv, struct applefileinfo *afinfo )
 {
+    int			timeupdated = 0;
     mode_t              mode;
     struct utimbuf      times;
     uid_t               uid;
@@ -55,6 +56,8 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    return( 1 );
 	}
 
+	mode = strtol( targv[ 2 ], (char **)NULL, 8 );
+
 	times.modtime = atoi( targv[ 5 ] );
 	if ( times.modtime != st->st_mtime ) {
 	    times.actime = st->st_atime;
@@ -62,6 +65,7 @@ update( const char *path, char *displaypath, int present, int newfile,
 		perror( path );
 		return( 1 );
 	    }
+	    timeupdated = 1;
 	}
 	break;
 
@@ -76,8 +80,9 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    return( 1 );
 	}
 
+	mode = strtol( targv[ 2 ], (char **)NULL, 8 );
+
 	if ( !present ) {
-	    mode = strtol( targv[ 2 ], (char **)NULL, 8 );
 	    if ( mkdir( path, mode ) != 0 ) {
 		perror( path );
 		return( 1 );
@@ -157,8 +162,10 @@ update( const char *path, char *displaypath, int present, int newfile,
 		"%d: incorrect number of arguments\n", linenum );
 	    return( 1 );
 	}
+
+	mode = strtol( targv[ 2 ], (char **)NULL, 8 ) | S_IFIFO;
+
 	if ( !present ) {
-	    mode = strtol( targv[ 2 ], (char **)NULL, 8 ) | S_IFIFO;
 	    if ( mkfifo( path, mode ) != 0 ){
 		perror( path );
 		return( 1 );
@@ -180,6 +187,8 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    return( 1 );
 	}
 
+	mode = strtol( targv[ 2 ], (char **)NULL, 8 );
+
 	if ( present && (( minor( st->st_rdev ) != atoi( targv[ 6 ] )) ||
 		( major( st->st_rdev ) != atoi( targv[ 5 ] )))) {
 	    if ( unlink( path ) != 0 ) {
@@ -200,7 +209,6 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    dev = makedev( atoi( targv[ 5 ] ), atoi( targv[ 6 ] ));
 #endif /* sun */
 
-	    mode = strtol( targv[ 2 ], (char **)NULL, 8 );
 	    if( *targv[ 0 ] == 'b' ) {
 		mode |= S_IFBLK;
 	    } else {
@@ -227,6 +235,9 @@ update( const char *path, char *displaypath, int present, int newfile,
 		"%d: incorrect number of arguments\n", linenum );
 	    return( 1 );
 	}
+
+	mode = strtol( targv[ 2 ], (char **)NULL, 8 );
+
 	if ( !present ) {
 	    fprintf( stderr, "%d: Warning: %c %s not created...continuing\n",
 		    linenum, *targv[ 0 ], path );
@@ -248,7 +259,6 @@ update( const char *path, char *displaypath, int present, int newfile,
 	}
     }
 
-    mode = strtol( targv[ 2 ], (char **)NULL, 8 );
     uid = atoi( targv[ 3 ] );
     gid = atoi( targv[ 4 ] );
     if ( mode != ( T_MODE & st->st_mode )) {
@@ -270,6 +280,10 @@ update( const char *path, char *displaypath, int present, int newfile,
 	if ( gid != st->st_gid ) {
 	    if ( !quiet ) printf( " gid" );
 	}
+    }
+
+    if ( timeupdated & !quiet ) {
+	printf( " time" );
     }
 
 done:
