@@ -220,7 +220,6 @@ SERVERSTARTUPPKGDIR=${MPKGDIR}/server-startup
 SERVERSBINPKGDIR=${MPKGDIR}/server-sbin
 SERVERMANPKGDIR=${MPKGDIR}/server-man
 SERVERVARPKGDIR=${MPKGDIR}/server-var
-SERVERRESOURCES=${MPKGDIR}/server-res
 
 INFOLIST=	$(wildcard OS_X/*.info)	
 
@@ -259,9 +258,9 @@ package : all man info
 	    ${SERVERVARPKGDIR}/command
 	chown -R root:wheel ${SERVERVARPKGDIR}
 	chmod -R 0700 ${SERVERVARPKGDIR}
-	mkdir -p -m 0755 ${SERVERRESOURCES}
+	mkdir -p -m 0755 tmp/server-resources 
 	${INSTALL} -o root -g wheel -m 0755 -c OS_X/preflight \
-	    ${SERVERRESOURCES}
+	    tmp/server-resources
 
 	# Create client package #
 	mkdir -p -m 0755 ${CLIENTBINPKGDIR}
@@ -296,14 +295,15 @@ package : all man info
 	package ${SERVERSBINPKGDIR} tmp/OS_X/server-sbin.info -d ${MPKGDIR}
 	package ${SERVERMANPKGDIR} tmp/OS_X/server-man.info -d ${MPKGDIR}
 	package ${SERVERVARPKGDIR} tmp/OS_X/server-var.info -d ${MPKGDIR} \
-	    -r ${SERVERRESOURCES}
+	    -r tmp/server-resources 
 	cp tmp/OS_X/radmind.info ${MPKGDIR}/radmind-${VERSION}.info
 	cp OS_X/radmind.list ${MPKGDIR}/radmind-${VERSION}.list
 	cp OS_X/License.rtf ${MPKGDIR}
 	cp OS_X/ReadMe.rtf ${MPKGDIR}
 	cp OS_X/Welcome.rtf ${MPKGDIR}
 	rm -rf ${CLIENTBINPKGDIR} ${CLIENTMANPKGDIR} ${CLIENTVARPKGDIR} \
-	    ${SERVERSTARTUPPKGDIR} ${SERVERSBINPKGDIR} ${SERVERMANPKGDIR} tmp
+	    ${SERVERSTARTUPPKGDIR} ${SERVERSBINPKGDIR} ${SERVERMANPKGDIR} \
+	    ${SERVERVARPKGDIR} tmp
 	mv ${MPKGDIR} ../radmind-${VERSION}.mpkg
 	cd ..; tar zvcf radmind-${VERSION}.mpkg.tgz radmind-${VERSION}.mpkg/*
 
