@@ -11,28 +11,28 @@ LDFLAGS=  -L/usr/local/openssl/lib -Llibsnet -lnsl -lsnet -lcrypto -lsocket
 
 VERSION=`date +%Y%m%d`
 
-FSDIFF_OBJ =	fsdiff.o argcargv.o transcript.o llist.o code.o hardlink.o \
+FSDIFF_OBJ =	version.o fsdiff.o argcargv.o transcript.o llist.o code.o hardlink.o \
 		chksum.o base64.o
 
-KTCHECK_OBJ =	ktcheck.o argcargv.o download.o base64.o code.o chksum.o \
-		list.o connect.o
+KTCHECK_OBJ =	version.o ktcheck.o argcargv.o download.o base64.o code.o \
+		chksum.o list.o connect.o
 
-LAPPLY_OBJ =	lapply.o argcargv.o code.o base64.o download.o convert.o \
+LAPPLY_OBJ =	version.o lapply.o argcargv.o code.o base64.o download.o convert.o \
 		update.o chksum.o copy.o connect.o
 
-LCREATE_OBJ =	lcreate.o argcargv.o code.o connect.o
+LCREATE_OBJ =	version.o lcreate.o argcargv.o code.o connect.o
 
-LCKSUM_OBJ =	lcksum.o argcargv.o chksum.o base64.o code.o
+LCKSUM_OBJ =	version.o lcksum.o argcargv.o chksum.o base64.o code.o
 
-LMERGE_OBJ =	lmerge.o argcargv.o pathcmp.o mkdirs.o
+LMERGE_OBJ =	version.o lmerge.o argcargv.o pathcmp.o mkdirs.o
 
 all : fsdiff ktcheck lapply lcreate lcksum lmerge
 
+version.o : version.c
+	${CC} ${CFLAGS} -DVERSION=\"`cat VERSION`\" -c version.c
+
 fsdiff : ${FSDIFF_OBJ}
 	${CC} -o fsdiff ${FSDIFF_OBJ} ${LDFLAGS}
-
-fsdiff.o : fsdiff.c
-	${CC} ${CFLAGS} -DVERSION=\"`cat VERSION`\" -c fsdiff.c
 
 ktcheck: ${KTCHECK_OBJ}
 	${CC} -o ktcheck ${KTCHECK_OBJ} ${LDFLAGS}
@@ -45,9 +45,6 @@ lcksum: ${LCKSUM_OBJ}
 
 lcreate: ${LCREATE_OBJ}
 	${CC} -o lcreate ${LCREATE_OBJ} ${LDFLAGS}
-
-lcreate.o : lcreate.c
-	${CC} ${CFLAGS} -DVERSION=\"`cat VERSION`\" -c lcreate.c
 
 lmerge: ${LMERGE_OBJ}
 	${CC} -o lmerge ${LMERGE_OBJ} ${LDFLAGS}
