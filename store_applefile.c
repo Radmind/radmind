@@ -11,6 +11,7 @@
 #include <string.h>
 #include <snet.h>
 
+#include "chksum.h"
 #include "applefile.h"
 
 extern struct timeval	timeout;
@@ -84,7 +85,6 @@ store_applefile( const char *path, int afd, SNET *sn, int dodots )
 	 */
 	if ( errno == ENOENT ) {
 	    r_size = 0;
-printf( "r_size = 0\n" );
     	} else {
 	    perror( rsrc_path );
 	    exit( 1 );
