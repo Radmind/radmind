@@ -63,8 +63,8 @@ int		f_stor ___P(( SNET *, int, char *[] ));
 int		f_noauth ___P(( SNET *, int, char *[] ));
 int		f_starttls ___P(( SNET *, int, char *[] ));
 int		f_login ___P(( SNET *, int, char *[] ));
-int 		exchange( int num_msg, const struct pam_message **msg,
-		    struct pam_response **resp, void *appdata_ptr);
+int 		exchange( int num_msg, const struct pam_message **msgm,
+		    struct pam_response **response, void *appdata_ptr );
 
 
 char		*user = NULL;
@@ -822,10 +822,10 @@ f_login( snet, ac, av )
     int                         ac;    
     char                        *av[];
 {
-    int				pam_error;
+    int				retval;
     pam_handle_t		*pamh;
     struct pam_conv		pam_conv = {
-	&exchange,
+	exchange,
 	NULL
     };
 
@@ -833,13 +833,23 @@ f_login( snet, ac, av )
         snet_writef( snet, "%d Syntax error\r\n", 501 );
         return( -1 );
     }
-    if (( pam_error =  pam_start( "radmind", av[ 3 ], &pam_conv,
+    if (( retval =  pam_start( "radmind", av[ 3 ], &pam_conv,
 	    &pamh )) != PAM_SUCCESS ) {
-	snet_writef( snet, "%d %s\r\n", 500, pam_strerror( pamh, pam_error ));
+	snet_writef( snet, "%d %s\r\n", 500, pam_strerror( pamh, retval ));
 	return( -1 );
     }
-    if (( pam_error =  pam_authenticate( pamh, 0 )) != PAM_SUCCESS ) {
-	snet_writef( snet, "%d %s\r\n", 500, pam_strerror( pamh, pam_error ));
+    if (( retval =  pam_authenticate( pamh, 0 )) != PAM_SUCCESS ) {
+	snet_writef( snet, "%d %s\r\n", 500, pam_strerror( pamh, retval ));
+	return( -1 );
+    }
+
+    if (( retval = pam_acct_mgmt( pamh, 0 )) != PAM_SUCCESS ) {
+	snet_writef( snet, "%d %s\r\n", 500, pam_strerror( pamh, retval ));
+	return( -1 );
+    }
+
+    if (( retval = pam_end( pamh, retval )) != PAM_SUCCESS ) {
+	snet_writef( snet, "%d %s\r\n", 500, pam_strerror( pamh, retval ));
 	return( -1 );
     }
 
