@@ -8,12 +8,13 @@
 #endif __APPLE__
 #include <fcntl.h>
 #include <unistd.h>
+#include <snet.h>
 
 #include <sha.h>
 
+#include "applefile.h"
 #include "chksum.h"
 #include "base64.h"
-#include "afile.h"
 
 extern struct as_header as_header;
 
@@ -61,7 +62,7 @@ do_achksum( char *path, char *chksum_b64 )
     int		    	rfd, r_cc, d_cc, d_size, r_size, err, has_rsrc = 0;
     unsigned char	md[ SHA_DIGEST_LENGTH ];
     unsigned char	mde[ SZ_BASE64_E( sizeof( md )) ];
-    char		data_buf[ AS_BUFLEN ];
+    char		data_buf[ 8192 ];
     char		finfo_buf[ 32 ];
     char	    	*rsrc_path;
     const char	    	*rsrc_suffix = _PATH_RSRCFORKSPEC; /* sys/paths.h */
@@ -158,7 +159,7 @@ do_achksum( char *path, char *chksum_b64 )
 
     /* checksum rsrc fork data to server */
     if ( has_rsrc ) {
-	while (( r_cc = read( rfd, data_buf, AS_BUFLEN )) > 0 ) {
+	while (( r_cc = read( rfd, data_buf, sizeof( data_buf ))) > 0 ) {
 	    SHA1_Update( &sha_ctx, &data_buf, (size_t)r_cc );
 	}
     }
@@ -168,7 +169,7 @@ do_achksum( char *path, char *chksum_b64 )
     }
 
     /* checksum data fork to server */
-    while (( d_cc = read( afd, data_buf, AS_BUFLEN )) > 0 ) {
+    while (( d_cc = read( afd, data_buf, sizeof( data_buf ))) > 0 ) {
 	SHA1_Update( &sha_ctx, &data_buf, (size_t)d_cc );
     }
 
