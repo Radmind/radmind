@@ -34,7 +34,7 @@ int		verbose = 0;
 int		special = 0;
 int		safe = 0;
 int		network = 1;
-char		transcript[ 2 * MAXPATHLEN ];
+char		transcript[ 2 * MAXPATHLEN ] = { 0 };
 char		*prepath = NULL;
 extern char	*version, *checksumlist;
 
