@@ -238,11 +238,27 @@ main( int argc, char **argv )
 	 * do_acksum( ) creates a cksum for the associated applesingle file.
 	 */
 
+	/* check size */
+	if ( stat( path, &st) != 0 ) {
+	    perror( tpath );
+	    exit( 2 );
+	}
+	if ( st.st_size != atoi( targv[ 6 ] ) ) {
+	    if ( verbose && !updatetran ) printf( "%s: size wrong\n",
+		    decode( targv[ 1 ] ));
+	    ucount++;
+	    if ( updatetran ) {
+		if ( verbose && updatetran ) printf( "%s: size updated\n",
+			decode( targv[ 1 ] ));
+	    }
+	    updateline = 1;
+	}
+
 	if (( cksumsize = do_cksum( path, lcksum )) < 0 ) {
 	    perror( path );
 	    exit( 2 );
 	}
-	if ( cksumsize != atol( targv[ 6 ] )) {
+	if ( cksumsize != st.st_size ) {
 	    fprintf( stderr, "line %d: checksum wrong in transcript\n",
 		linenum );
 	    exit( 2 );
@@ -256,22 +272,6 @@ main( int argc, char **argv )
 	    if ( updatetran ) {
 		if ( verbose && updatetran ) printf( "%s: cksum updated\n",
 		    decode( targv[ 1 ] )); 
-	    }
-	    updateline = 1;
-	}
-
-	/* check size */
-	if ( stat( path, &st) != 0 ) {
-	    perror( tpath );
-	    exit( 2 );
-	}
-	if ( st.st_size != atoi( targv[ 6 ] ) ) {
-	    if ( verbose && !updatetran ) printf( "%s: size wrong\n",
-		    decode( targv[ 1 ] ));
-	    ucount++;
-	    if ( updatetran ) {
-		if ( verbose && updatetran ) printf( "%s: size updated\n",
-			decode( targv[ 1 ] ));
 	    }
 	    updateline = 1;
 	}
