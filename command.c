@@ -65,6 +65,7 @@ int		f_starttls ___P(( SNET *, int, char *[] ));
 char		*remote_host = NULL;
 char		*remote_addr = NULL;
 char		*remote_cn = NULL;
+char		*special_dir = NULL;
 char		command_file[ MAXPATHLEN ];
 char		upload_xscript[ MAXPATHLEN ];
 const EVP_MD    *md = NULL;
@@ -260,7 +261,7 @@ f_retr( sn, ac, av )
 	break;
 
     case K_SPECIAL:
-	sprintf( path, "special/%s/%s", remote_host, decode( av[ 2 ] ));
+	sprintf( path, "special/%s/%s", special_dir, decode( av[ 2 ] ));
 	break;
 
     case K_FILE:
@@ -408,7 +409,7 @@ f_stat( SNET *sn, int ac, char *av[] )
 	break;
 
     case K_SPECIAL:
-	sprintf( path, "special/%s/%s", remote_host, decode( av[ 2 ] ));
+	sprintf( path, "special/%s/%s", special_dir, decode( av[ 2 ] ));
 	break;
 
     default:
@@ -717,6 +718,7 @@ f_starttls( snet, ac, av )
 	    syslog( LOG_ERR, "strdup: %m" );
 	    return( -1 );
 	}
+	special_dir = remote_cn;
 	X509_free( peer );
     }
 
@@ -854,9 +856,11 @@ cmdloop( int fd, struct sockaddr_in *sin )
     if (( hp = gethostbyaddr( (char *)&sin->sin_addr,
 	    sizeof( struct in_addr ), AF_INET )) == NULL ) {
 	remote_host = strdup( remote_addr );
+	special_dir = remote_host;
     } else {
 	/* set global remote_host for retr command */
 	remote_host = strdup( hp->h_name );
+	special_dir = remote_host;
 	for ( p = remote_host; *p != '\0'; p++ ) {
 	    *p = tolower( *p );
 	}

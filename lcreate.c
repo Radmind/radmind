@@ -210,7 +210,7 @@ main( int argc, char **argv )
 	}
 
         if ( authlevel != 0 ) {
-            if ( tls_client_start( sn, authlevel ) != 0 ) {
+            if ( tls_client_start( sn, host, authlevel ) != 0 ) {
                 /* error message printed in tls_cleint_starttls */
                 exit( 2 );
             }

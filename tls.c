@@ -4,6 +4,7 @@
 #include <openssl/ssl.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
+#include <string.h>
 
 #include <snet.h>
 
@@ -90,7 +91,7 @@ tls_client_setup( int use_randfile, int authlevel, char *ca, char *cert, char *p
 }
 
     int
-tls_client_start( SNET *sn, int authlevel )
+tls_client_start( SNET *sn, char *host, int authlevel )
 {
     X509            *peer;
     char             buf[ 1024 ];
@@ -129,12 +130,14 @@ tls_client_start( SNET *sn, int authlevel )
 	fprintf( stderr, "no certificate\n" );
 	return( -1 );
     }
-    if ( verbose ) {
-	X509_NAME_get_text_by_NID( X509_get_subject_name( peer ),
-	    NID_commonName, buf, sizeof( buf ));
-	fprintf( stderr, "Server cert subject name: %s\n", buf );
-	X509_free( peer );
+    X509_NAME_get_text_by_NID( X509_get_subject_name( peer ),
+	NID_commonName, buf, sizeof( buf ));
+    X509_free( peer );
+    if ( !strcmp( buf, host )) {
+	fprintf( stderr, "%s: invalid server CN\n", buf );
+	return( -1 );
     }
+    if ( verbose ) printf( "Server's CN: %s\n", buf );
 
     return( 0 );
 }
