@@ -38,7 +38,7 @@ connectsn2( struct sockaddr_in *sin )
     struct timeval      tv;
     SNET                *sn = NULL; 
 
-    if (( s = socket( PF_INET, SOCK_STREAM, NULL )) < 0 ) {
+    if (( s = socket( PF_INET, SOCK_STREAM, 0 )) < 0 ) {
 	perror( "socket" );
 	exit( 2 );
     }

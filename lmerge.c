@@ -155,7 +155,7 @@ getline:
     int
 main( int argc, char **argv )
 {
-    int			c, i, j, cmpval, err = 0, tcount = 0, candidate = NULL;
+    int			c, i, j, cmpval, err = 0, tcount = 0, candidate = 0;
     int			force = 0, ofd, fileloc = 0, match = 0;
     char		*tname = NULL, *file = NULL;
     char		*tpath = NULL;
