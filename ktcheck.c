@@ -28,9 +28,9 @@ int			linenum = 0;
 int			chksum = 1;
 int			verbose = 0;
 int			update = 1;
-char			*command = _RADMIND_COMMANDFILE;
-char			*commandpath = _RADMIND_COMMANDPATH;
-char			fullpath[ MAXPATHLEN ];
+char			*kfile= _RADMIND_COMMANDFILE;
+char			*kdir= "";
+char			path[ MAXPATHLEN ];
 
 extern char		*version, *checksumlist;
 
@@ -85,22 +85,20 @@ createspecial( SNET *sn, struct node *head )
     char		*stats;
 
     /* Open file */
-    memset( fullpath, 0, MAXPATHLEN );
-
-    if ( snprintf( fullpath, MAXPATHLEN, "%s/special.T.%i", commandpath,
+    if ( snprintf( path, MAXPATHLEN, "%sspecial.T.%i", kdir,
 	    getpid()) > MAXPATHLEN - 1 ) {
-	fprintf( stderr, "path too long: %s/special.T.%i\n", commandpath,
+	fprintf( stderr, "path too long: %sspecial.T.%i\n", kdir,
 		(int)getpid());
 	exit( 2 );
     }
 
-    if (( fd = open( fullpath, O_WRONLY | O_CREAT | O_TRUNC, 0666 ))
+    if (( fd = open( path, O_WRONLY | O_CREAT | O_TRUNC, 0666 ))
 	    < 0 ) {
-	perror( fullpath );
+	perror( path );
 	return( 1 );
     }
     if (( fs = fdopen( fd, "w" )) == NULL ) {
-	perror( fullpath );
+	perror( path );
 	return( 1 );
     }
 
@@ -143,33 +141,53 @@ createspecial( SNET *sn, struct node *head )
  */
 
     int
-check( SNET *sn, char *type, char *path)
+check( SNET *sn, char *type, char *file )
 {
     char	*schksum, *stats;
     char	**targv;
-    char 	pathdesc[ 2 * MAXPATHLEN ];
-    char 	temppath[ 2 * MAXPATHLEN ];
+    char 	filedesc[ 2 * MAXPATHLEN ];
+    char 	tempfile[ 2 * MAXPATHLEN ];
     char        cchksum[ 29 ];
     int		tac;
     struct stat	st;
 
-    if ( path != NULL ) {
-	sprintf( pathdesc, "%s %s", type, path);
+    if ( file != NULL ) {
+	sprintf( filedesc, "%s %s", type, file );
+
+	/* create full path */
+	if ( snprintf( path, MAXPATHLEN, "%s%s", kdir, file ) > MAXPATHLEN ) {
+	    fprintf( stderr, "%s%s: path too long\n", kdir, file );
+	}
     } else {
-	sprintf( pathdesc, "%s", type );
-	path = command;
+	sprintf( filedesc, "%s", type );
+	file = kfile;
+
+	/* create full path */
+	if ( snprintf( path, MAXPATHLEN, "%s", kfile ) > MAXPATHLEN ) {
+	    fprintf( stderr, "%s: path too long\n", kfile );
+	}
     }
 
-    /* create full path */
-    if (( strlen( command ) + strlen( commandpath ) + 2 ) >
-	    MAXPATHLEN ) {
-	fprintf( stderr, "path too long:%s\%s\n", commandpath,
-		path );
-	exit( 2 );
+    /* Check file is a regular file */
+    if ((stat( path, &st )) != 0 ) {
+	if ( errno != ENOENT ) {
+	    perror( path );
+	    return( 2 );
+	}
+    } else {
+	if (( st.st_mode & S_IFMT ) != S_IFREG ) {
+	    fprintf( stderr, "%s: not a file\n", path );
+	    return( 2 );
+	}
     }
-    sprintf( fullpath, "%s/%s", commandpath, path );
 
-    if (( stats = getstat( sn, (char *)&pathdesc)) == NULL ) {
+    if ( access( path, R_OK | W_OK ) != 0 ) {
+	if ( errno != ENOENT ) {
+	    perror( path );
+	}
+    }
+
+    if (( stats = getstat( sn, (char *)&filedesc )) == NULL ) {
 	return( 2 );
     }
 
@@ -184,45 +202,44 @@ check( SNET *sn, char *type, char *path)
 	perror( "strdup" );
 	return( 2 );
     }
-
-    if ( do_chksum( fullpath, cchksum ) != 0 ) {
+    if ( do_chksum( path, cchksum ) != 0 ) {
 	if ( errno != ENOENT ) {
-	    perror( fullpath );
+	    perror( path );
 	    return( 2 );
 	}
 	if ( update ) {
-	    if ( retr( sn, pathdesc, fullpath, NULL, schksum,
-		    (char *)&temppath ) != 0 ) {
-		fprintf( stderr, "%s: retr failed\n", fullpath );
+	    if ( retr( sn, filedesc, path, NULL, schksum,
+		    (char *)&tempfile ) != 0 ) {
+		fprintf( stderr, "%s: retr failed\n", path );
 		return( 2 );
 	    }
-	    if ( rename( temppath, fullpath ) != 0 ) {
-		perror( temppath );
+	    if ( rename( tempfile, path ) != 0 ) {
+		perror( tempfile );
 		return( 2 );
 	    }
 	}
 	return( 1 );
     }
 
-    if ((stat( fullpath, &st )) != 0 ) {
-	perror( fullpath );
+    if ((stat( path, &st )) != 0 ) {
+	perror( path );
 	return( 2 );
     }
 
     if (( strcmp( schksum, cchksum ) != 0 )
 	    || ( atoi( targv[ 6 ] ) != (int)st.st_size )) {
 	if ( update ) {
-	    if ( unlink( fullpath ) != 0 ) {
-		perror( fullpath );
+	    if ( unlink( path ) != 0 ) {
+		perror( path );
 		return( 2 );
 	    }
-	    if ( retr( sn, pathdesc, fullpath, NULL, schksum,
-		    (char *)&temppath ) != 0 ) {
+	    if ( retr( sn, filedesc, path, NULL, schksum,
+		    (char *)&tempfile ) != 0 ) {
 		fprintf( stderr, "retr failed\n" );
 		return( 2 );
 	    }
-	    if ( rename( temppath, fullpath ) != 0 ) {
-		perror( temppath );
+	    if ( rename( tempfile, path ) != 0 ) {
+		perror( path );
 		return( 2 );
 	    }
 	}
@@ -246,10 +263,10 @@ main( int argc, char **argv )
     int			c, port = htons( 6662 ), err = 0;
     int			len, tac, change = 0;
     extern int          optind;
-    char		*host = _RADMIND_HOST;
+    char		*host = _RADMIND_HOST, *p;
     char                **targv;
     char                cline[ 2 * MAXPATHLEN ];
-    char		path[ MAXPATHLEN ], temppath[ MAXPATHLEN ];
+    char		tempfile[ MAXPATHLEN ];
     char		lchksum[ 29 ], tchksum[ 29 ];
     struct servent	*se;
     SNET		*sn;
@@ -279,21 +296,7 @@ main( int argc, char **argv )
 	    }
 	    break;
 	case 'K':
-	    if (( command = strrchr( optarg, '/' )) == NULL ) {
-		command = optarg;
-		commandpath = "./";
-	    } else {
-		commandpath = optarg;
-		*command = (char) '\0';
-		command++;
-	    }
-	    if (( strlen( command ) + strlen( commandpath ) + 2 ) >
-		    MAXPATHLEN ) {
-		fprintf( stderr, "path too long:%s\%s\n", commandpath,
-			command );
-		exit( 2 );
-	    }
-	    sprintf( fullpath, "%s/%s", commandpath, command );
+	    kfile = optarg;
 	    break;
 	case 'n':
 	    update = 0;
@@ -315,12 +318,31 @@ main( int argc, char **argv )
 	}
     }
 
+    /* Check that kfile isn't an abvious directory */
+    len = strlen( kfile );
+    if ( kfile[ len - 1 ] == '/' ) {
+	err++;
+    }
+
     if ( err || ( argc - optind != 0 )) {
 	fprintf( stderr, "usage: ktcheck [ -nvV ] " );
 	fprintf( stderr, "[ -c checksum ] [ -K command file ] " );
 	fprintf( stderr, "[ -h host ] [ -p port ]\n" );
 	exit( 2 );
     }
+
+    if (( kdir = strdup( kfile )) == NULL ) {
+        perror( "strdup failed" );
+        exit( 2 );
+    }
+    if (( p = strrchr( kdir, '/' )) == NULL ) {
+        /* No '/' in kfile - use working directory */
+        kdir = "./";
+    } else {
+        p++;
+        *p = (char)'\0';
+    }
+    sprintf( path, "%s", kfile );
 
     if(( sn = connectsn( host, port )  ) == NULL ) {
 	fprintf( stderr, "%s:%d connection failed.\n", host, port );
@@ -339,16 +361,9 @@ main( int argc, char **argv )
     case 2:
 	exit( 2 );
     }
-    if (( strlen( command ) + strlen( commandpath ) + 2 ) >
-	    MAXPATHLEN ) {
-	fprintf( stderr, "path too long:%s\%s\n", commandpath,
-		command );
-	exit( 2 );
-    }
-    sprintf( fullpath, "%s/%s", commandpath, command );
 
-    if (( f = fopen( fullpath, "r" )) == NULL ) {
-	perror( fullpath );
+    if (( f = fopen( kfile, "r" )) == NULL ) {
+	perror( kfile );
 	exit( 2 );
     }
 
@@ -357,7 +372,7 @@ main( int argc, char **argv )
 
 	len = strlen( cline );
 	if (( cline[ len - 1 ] ) != '\n' ) {
-	    fprintf( stderr, "%s: %d: line too long\n", command, linenum );
+	    fprintf( stderr, "%s: %d: line too long\n", kfile, linenum );
 	    exit( 2 );
 	}
 
@@ -369,7 +384,7 @@ main( int argc, char **argv )
 
 	if ( tac != 2 ) {
 	    fprintf( stderr, "%s: %d: invalid command line\n",
-		    command, linenum );
+		    kfile, linenum );
 	    exit( 2 );
 	}
 
@@ -396,20 +411,18 @@ main( int argc, char **argv )
 	if ( createspecial( sn, head ) != 0 ) {
 	    exit( 2 );
 	}
-	memset( path, 0, MAXPATHLEN );
-	memset( temppath, 0, MAXPATHLEN );
 
-	if ( snprintf( path, MAXPATHLEN, "%s/special.T", commandpath ) >
+	if ( snprintf( path, MAXPATHLEN, "%s/special.T", kdir ) >
 		MAXPATHLEN - 1 ) {
-	    fprintf( stderr, "path too long: %s/special.T\n", commandpath );
+	    fprintf( stderr, "path too long: %s/special.T\n", kdir );
 	}
-	if ( snprintf( temppath, MAXPATHLEN, "%s/special.T.%i", commandpath,
+	if ( snprintf( tempfile, MAXPATHLEN, "%s/special.T.%i", kdir,
 		getpid()) > MAXPATHLEN - 1 ) {
-	    fprintf( stderr, "path too long: %s/special.T.%i\n", commandpath,
+	    fprintf( stderr, "path too long: %s/special.T.%i\n", kdir,
 		    (int)getpid());
 	}
-	if ( do_chksum( temppath, tchksum ) != 0 ) {
-	    perror( temppath );
+	if ( do_chksum( tempfile, tchksum ) != 0 ) {
+	    perror( tempfile );
 	    exit( 2 );
 	}
 	if ( do_chksum( path, lchksum ) != 0 ) {
@@ -420,22 +433,22 @@ main( int argc, char **argv )
 
 	    /* special.T did not exist */
 	    if ( update ) { 
-		if ( rename( temppath, path ) != 0 ) {
-		    fprintf( stderr, "rename failed: %s %s\n", temppath, path );
+		if ( rename( tempfile, path ) != 0 ) {
+		    fprintf( stderr, "rename failed: %s %s\n", tempfile, path );
 		    exit( 2 );
 		}
 	    } else {
 		/* specaial.T not updated */
-		if ( unlink( temppath ) !=0 ) {
-		    perror( temppath );
+		if ( unlink( tempfile ) !=0 ) {
+		    perror( tempfile );
 		    exit( 2 );
 		}
 	    }
 	    change++;
 	} else {
 	    /* get file sizes */
-	    if ( stat( temppath, &tst ) != 0 ) {
-		perror( temppath );
+	    if ( stat( tempfile, &tst ) != 0 ) {
+		perror( tempfile );
 		exit( 2 );
 	    }
 	    if ( stat( path, &lst ) != 0 ) {
@@ -448,15 +461,15 @@ main( int argc, char **argv )
 		    ( strcmp( tchksum, lchksum) != 0 )) {
 		/* special.T new from server */
 		if ( update ) {
-		    if ( rename( temppath, path ) != 0 ) {
-			fprintf( stderr, "rename failed: %s %s\n", temppath,
+		    if ( rename( tempfile, path ) != 0 ) {
+			fprintf( stderr, "rename failed: %s %s\n", tempfile,
 				path );
 			exit( 2 );
 		    }
 		} else {
 		    /* No update */
-		    if ( unlink( temppath ) !=0 ) {
-			perror( temppath );
+		    if ( unlink( tempfile ) !=0 ) {
+			perror( tempfile );
 			exit( 2 );
 		}
 	    }
@@ -465,8 +478,8 @@ main( int argc, char **argv )
 	    } else {
 
 		/* specaial.T not updated */
-		if ( unlink( temppath ) !=0 ) {
-		    perror( temppath );
+		if ( unlink( tempfile ) !=0 ) {
+		    perror( tempfile );
 		    exit( 2 );
 		}
 	    }
