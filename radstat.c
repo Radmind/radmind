@@ -33,6 +33,7 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 #ifdef __APPLE__
     static char			null_buf[ FINFOLEN ] = { 0 };
     extern struct attrlist 	getalist;
+    extern struct attrlist 	getdiralist;
 #endif /* __APPLE__ */
 
     if ( lstat( path, st ) != 0 ) {
@@ -61,7 +62,7 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 #ifdef __APPLE__
 	/* Get any finder info */
 	if ( afinfo != NULL ) {
-	    getattrlist( path, &getalist, &afinfo->ai,
+	    getattrlist( path, &getdiralist, &afinfo->ai,
 		sizeof( struct attr_info ), FSOPT_NOFOLLOW );
 	}
 #endif /* __APPLE__ */
@@ -102,6 +103,12 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
     /* Calculate full size of applefile */
     if ( *type == 'a' ) {
  
+        if ( snprintf( afinfo->rsrc_path, MAXPATHLEN,
+                "%s%s", path, _PATH_RSRCFORKSPEC ) > MAXPATHLEN - 1 ) {
+            errno = ENAMETOOLONG;
+            return( -1 );
+        }
+
 	/* Finder Info */
 	afinfo->as_ents[AS_FIE].ae_id = ASEID_FINFO;
 	afinfo->as_ents[AS_FIE].ae_offset = AS_HEADERLEN +
