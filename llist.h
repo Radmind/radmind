@@ -9,3 +9,5 @@ struct llist {
 };
 
 struct llist * ll_allocate( char * );
+void ll_free( struct llist * );
+void ll_insert( struct llist **, struct llist * );
