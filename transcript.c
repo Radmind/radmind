@@ -522,90 +522,92 @@ transcript_select( void )
 	    }
 	}
     }
+
+    /* move ahead other transcripts that match */
+    for ( next_tran = begin_tran->t_next; next_tran != NULL;
+	    next_tran = next_tran->t_next ) {
+	if ( pathcmp( begin_tran->t_pinfo.pi_name,
+		next_tran->t_pinfo.pi_name ) == 0 ) {
+	    transcript_parse( next_tran );
+	}
+    }
+
     return( begin_tran );
 }
 
     int
-transcript( struct pathinfo *new )
+transcript( char *path )
 {
+    struct pathinfo	pi;
     int			enter = 0;
     int 		len;
     char		epath[ MAXPATHLEN ];
-    char		*path;
-    struct transcript	*next_tran = NULL;
-    struct transcript	*begin_tran = NULL;
+    char		*linkpath;
+    struct transcript	*tran = NULL;
 
     /*
-     * new is NULL when we've been called after the filesystem has been
+     * path is NULL when we've been called after the filesystem has been
      * exhausted, to consume any remaining transcripts.
      */
-    if ( new != NULL ) {
-	switch ( radstat( new->pi_name, &new->pi_stat, &new->pi_type,
-		&new->pi_afinfo )) {
+    if ( path != NULL ) {
+	switch ( radstat( path, &pi.pi_stat, &pi.pi_type,
+		&pi.pi_afinfo )) {
 	case 0:
 	    break;
 	case 1:
-	    fprintf( stderr, "%s is of an unknown type\n", new->pi_name );
+	    fprintf( stderr, "%s is of an unknown type\n", path );
 	    exit( 2 );
 	default:
-	    perror( new->pi_name );
+	    perror( path );
 	    exit( 2 );
 	}
 
+	strcpy( pi.pi_name, path );
+
 	/* if it's multiply referenced, check if it's a hardlink */
-	if ( !S_ISDIR( new->pi_stat.st_mode ) &&
-		( new->pi_stat.st_nlink > 1 ) &&
-		(( path = hardlink( new )) != NULL )) {
-	    new->pi_type = 'h';
-	    strcpy( new->pi_link, path );
-	} else if ( S_ISLNK( new->pi_stat.st_mode )) {
-	    len = readlink( new->pi_name, epath, MAXPATHLEN );
+	if ( !S_ISDIR( pi.pi_stat.st_mode ) && ( pi.pi_stat.st_nlink > 1 ) &&
+		(( linkpath = hardlink( &pi )) != NULL )) {
+	    pi.pi_type = 'h';
+	    strcpy( pi.pi_link, linkpath );
+	} else if ( S_ISLNK( pi.pi_stat.st_mode )) {
+	    len = readlink( pi.pi_name, epath, MAXPATHLEN );
 	    epath[ len ] = '\0';
-	    strcpy( new->pi_link, epath );
+	    strcpy( pi.pi_link, epath );
 	}
 
 	/* By default, go into directories */
-	if ( S_ISDIR( new->pi_stat.st_mode )) {
+	if ( S_ISDIR( pi.pi_stat.st_mode )) {
 	    enter = 1;
 	} else { 
 	    enter = 0;
 	}
 
 	/* initialize cksum field. */
-	strcpy( new->pi_cksum_b64, "-" );
+	strcpy( pi.pi_cksum_b64, "-" );
     }
 
     for (;;) {
-	begin_tran = transcript_select();
+	tran = transcript_select();
 
-	/* move ahead other transcripts that match */
-	for ( next_tran = begin_tran->t_next; next_tran != NULL;
-		next_tran = next_tran->t_next ) {
-	    if ( pathcmp( begin_tran->t_pinfo.pi_name,
-		    next_tran->t_pinfo.pi_name ) == 0 ) {
-		transcript_parse( next_tran );
-	    }
-	}
-
-	switch ( t_compare( new, begin_tran )) {
+	switch ( t_compare(( path ? &pi : NULL ), tran )) {
 	case T_MOVE_FS :
 	    return( enter );
 
 	case T_MOVE_BOTH :
 	    /* But don't go into negative directories */
-	    if (( begin_tran->t_type == T_NEGATIVE ) &&
-		    ( begin_tran->t_pinfo.pi_type == 'd' )) {
+	    if (( tran->t_type == T_NEGATIVE ) &&
+		    ( tran->t_pinfo.pi_type == 'd' )) {
 		enter = 2;
 	    }
-	    transcript_parse( begin_tran );
+	    transcript_parse( tran );
 	    return( enter );
 
 	case T_MOVE_TRAN :
-	    transcript_parse( begin_tran );
+	    transcript_parse( tran );
 	    break;
 
 	default :
-	    fprintf( stderr, "OOPS! XXX FAMINE and DESPAIR!\n" );
+	    fprintf( stderr, "t_compare returned an unexpected value!\n" );
 	    exit( 2 );
 	}
     }

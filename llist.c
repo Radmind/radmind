@@ -27,10 +27,8 @@ ll_allocate( char *name )
     } 
 
     /* copy info into new item */
-    strcpy( new->ll_pinfo.pi_name, name );
-    *new->ll_pinfo.pi_cksum_b64 = '\0';
+    strcpy( new->ll_name, name );
     new->ll_next = NULL;
-    new->ll_flag = 0;
 
     return new;
 }
@@ -56,7 +54,7 @@ ll_insert( struct llist **headp, struct llist *new )
 
     /* find where in the list to put the new entry */
     for ( current = headp; *current != NULL; current = &(*current)->ll_next) {
-	ret = strcmp( new->ll_pinfo.pi_name, (*current)->ll_pinfo.pi_name );
+	ret = strcmp( new->ll_name, (*current)->ll_name );
 	if ( ret <= 0 ) {
 	    break;
 	}
@@ -65,4 +63,4 @@ ll_insert( struct llist **headp, struct llist *new )
     new->ll_next = *current;
     *current = new; 
     return; 
-} 
+}

@@ -24,14 +24,14 @@ void            (*logger)( char * ) = NULL;
 
 extern char	*version, *checksumlist;
 
-void		fs_walk( struct llist *, int, int );
+void		fs_walk( char *, int, int );
 int		verbose = 0;
 int		dodots = 0;
 int		lastpercent = -1;
 const EVP_MD    *md;
 
     void
-fs_walk( struct llist *path, int start, int finish ) 
+fs_walk( char *path, int start, int finish ) 
 {
     DIR			*dir;
     struct dirent	*de;
@@ -43,18 +43,16 @@ fs_walk( struct llist *path, int start, int finish )
     float		chunk, f = start;
     char		temp[ MAXPATHLEN ];
     struct transcript	*tran;
-    struct llist	*blah;
 
     if (( finish > 0 ) && ( start != lastpercent )) {
 	lastpercent = start;
-	printf( "%%%.2d %s\n", start, path->ll_pinfo.pi_name );
+	printf( "%%%.2d %s\n", start, path );
 	fflush( stdout );
     }
 
     /* call the transcript code */
-    switch ( transcript( &path->ll_pinfo )) {
-    case 2 :
-	strcpy( temp, path->ll_pinfo.pi_name );	/* snprintf */
+    switch ( transcript( path )) {
+    case 2 :			/* negative directory */
 	for (;;) {
 	    tran = transcript_select();
 	    if ( tran->t_eof ) {
@@ -62,27 +60,35 @@ fs_walk( struct llist *path, int start, int finish )
 	    }
 
 	    if ( ischild( tran->t_pinfo.pi_name, temp )) {
-		blah = ll_allocate( tran->t_pinfo.pi_name );
-		fs_walk( blah, start, finish );
-		ll_free( blah );
+		/*
+		 * XXX
+		 * This strcpy() is not itself dangerous, because pi_name
+		 * is a MAXPATHLEN-sized buffer.  However, it does not appear
+		 * that copies into pi_name are carefully checked.
+		 */
+		strcpy( temp, tran->t_pinfo.pi_name );
+		fs_walk( temp, start, finish );
 		transcript_parse( tran );
 	    } else {
 		return;
 	    }
 	}
 
-    case 0 :
+    case 0 :			/* not a directory */
 	return;
-    default :
+    case 1 :			/* directory */
 	if ( skip ) {
 	    return;
 	}
 	break;
+    default :
+	fprintf( stderr, "transcript returned an unexpect value!\n" );
+	exit( 2 );
     }
 
     /* open directory */
-    if (( dir = opendir( path->ll_pinfo.pi_name )) == NULL ) {
-	perror( path->ll_pinfo.pi_name );
+    if (( dir = opendir( path )) == NULL ) {
+	perror( path );
 	exit( 2 );	
     }
 
@@ -96,7 +102,7 @@ fs_walk( struct llist *path, int start, int finish )
 	}
 
 	count++;
-	len = strlen( path->ll_pinfo.pi_name );
+	len = strlen( path );
 
 	/* absolute pathname. add 2 for / and NULL termination.  */
 	if (( len + strlen( de->d_name ) + 2 ) > MAXPATHLEN ) {
@@ -104,18 +110,16 @@ fs_walk( struct llist *path, int start, int finish )
 	    exit( 2 );
 	}
 
-	if ( path->ll_pinfo.pi_name[ len - 1 ] == '/' ) {
-	    if ( snprintf( temp, MAXPATHLEN, "%s%s", path->ll_pinfo.pi_name,
-		    de->d_name ) > MAXPATHLEN ) {
-                fprintf( stderr, "%s%s: path too long\n",
-                    path->ll_pinfo.pi_name, de->d_name );
+	if ( path[ len - 1 ] == '/' ) {
+	    if ( snprintf( temp, MAXPATHLEN, "%s%s", path, de->d_name )
+		    > MAXPATHLEN ) {
+                fprintf( stderr, "%s%s: path too long\n", path, de->d_name );
 		exit( 2 );
 	    }
 	} else {
-            if ( snprintf( temp, MAXPATHLEN, "%s/%s", path->ll_pinfo.pi_name,
-                    de->d_name ) > MAXPATHLEN ) {
-                fprintf( stderr, "%s/%s: path too long\n",
-                    path->ll_pinfo.pi_name, de->d_name );
+            if ( snprintf( temp, MAXPATHLEN, "%s/%s", path, de->d_name )
+		    > MAXPATHLEN ) {
+                fprintf( stderr, "%s/%s: path too long\n", path, de->d_name );
                 exit( 2 );
             }
 	}
@@ -136,7 +140,7 @@ fs_walk( struct llist *path, int start, int finish )
 
     /* call fswalk on each element in the sorted list */
     for ( cur = head; cur != NULL; cur = cur->ll_next ) {
-	fs_walk( cur, ( int )f, ( int )( f + chunk ));
+	fs_walk( cur->ll_name, ( int )f, ( int )( f + chunk ));
 	f += chunk;
     }
 
@@ -148,7 +152,6 @@ fs_walk( struct llist *path, int start, int finish )
     int
 main( int argc, char **argv ) 
 {
-    struct llist	*root;
     extern char 	*optarg;
     extern int		optind;
     char		*kfile = _RADMIND_COMMANDFILE;
@@ -241,11 +244,8 @@ main( int argc, char **argv )
 
     /* initialize the transcripts */
     transcript_init( kfile, gotkfile );
-    root = ll_allocate( argv[ optind ] );
 
-    fs_walk( root, 0, finish );
-
-    ll_free( root );
+    fs_walk( argv[ optind ], 0, finish );
 
     if ( finish > 0 ) {
 	printf( "%%%d\n", ( int )finish );

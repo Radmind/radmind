@@ -51,7 +51,7 @@ struct transcript {
     FILE		*t_in;
 };
 
-int			transcript( struct pathinfo * );
+int			transcript( char * );
 void			transcript_init( char *, int );
 struct transcript	*transcript_select( void );
 void			transcript_parse( struct transcript * );

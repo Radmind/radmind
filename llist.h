@@ -4,10 +4,8 @@
  */
 
 struct llist {
-    struct pathinfo	ll_pinfo;
+    char		ll_name[ MAXPATHLEN ];
     struct llist	*ll_next;
-    int			ll_flag;
-    char		type;
 };
 
 struct llist * ll_allocate( char * );

@@ -69,20 +69,20 @@ ischild( const unsigned char *child, const unsigned char *parent )
     size_t parentlen;
 
     if ( parent == NULL ) {
-	return 1;
-    } else {
-	parentlen = strlen( parent );
-	if ( parentlen > strlen( child )) {
-	    return 0;
-	}
-	if (( parentlen == 1 ) && ( *parent == '/' )) {
-	    return( '/' == *child );
-	}
-	if (( strncmp( parent, child, parentlen ) == 0 ) &&
-		child[ parentlen ] == '/' ) {
-	    return 1;
-	} else {
-	    return 0;
-	}
+	return( 1 );
     }
+
+    parentlen = strlen( parent );
+
+    if ( parentlen > strlen( child )) {
+	return( 0 );
+    }
+    if (( 1 == parentlen ) && ( '/' == *parent )) {
+	return( '/' == *child );
+    }
+    if (( strncmp( parent, child, parentlen ) == 0 ) &&
+	    ( '/' == child[ parentlen ] )) {
+	return( 1 );
+    }
+    return( 0 );
 }
