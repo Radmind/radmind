@@ -24,6 +24,7 @@ update( char *path, char *displaypath, int present, int newfile, struct stat st,
 
 
     switch ( *targv[ 0 ] ) {
+    case 'a':
     case 'f':
 	if ( tac != 8 ) {
 	    fprintf( stderr, "%d: incorrect number of arguments\n", linenum );
