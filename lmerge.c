@@ -156,6 +156,11 @@ main( int argc, char **argv )
 
     tpath = argv[ argc - 1 ];
     if ( force ) {
+	/* Check for write access */
+	if ( access( argv[ 3 ], W_OK ) != 0 ) {
+	    perror( argv[ 3 ] );
+	    exit( 1 );
+	}
 	tcount++;			/* add dest to tran merge list */
     }
 
