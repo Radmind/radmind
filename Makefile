@@ -34,18 +34,18 @@ MAN1TARGETS=	fsdiff.1 ktcheck.1 lapply.1 lcksum.1 lcreate.1 lfdiff.1 \
 		lmerge.1 twhich.1
 TARGETS=	radmind ${BINTARGETS}
 
-RADMIND_OBJ=	version.o daemon.o command.o argcargv.o auth.o code.o \
+RADMIND_OBJ=	version.o daemon.o command.o argcargv.o code.o \
 		chksum.o base64.o mkdirs.o
 
 FSDIFF_OBJ=	version.o fsdiff.o argcargv.o transcript.o llist.o code.o \
-		hardlink.o chksum.o base64.o pathcmp.o convert.o
+		hardlink.o chksum.o base64.o pathcmp.o radstat.o
 #afile.o
 
 KTCHECK_OBJ=	version.o ktcheck.o argcargv.o retr.o base64.o code.o \
 		chksum.o list.o connect.o
 
 LAPPLY_OBJ=	version.o lapply.o argcargv.o code.o base64.o retr.o \
-		convert.o update.o chksum.o connect.o pathcmp.o \
+		radstat.o update.o chksum.o connect.o pathcmp.o \
 		applefile.o
 
 LCREATE_OBJ=	version.o lcreate.o argcargv.o code.o connect.o \
