@@ -233,8 +233,11 @@ package : all man info
 	done
 	mkdir -p -m 0755 ${SERVERVARPKGDIR}
 	mkdir -p -m 0755 ${SERVERVARPKGDIR}/file
+	mkdir -p -m 0755 ${SERVERVARPKGDIR}/transcript
 	mkdir -p -m 0755 ${SERVERVARPKGDIR}/command
 	tar xvf OS_X/tutorial-negative.files.tar -C ${SERVERVARPKGDIR}/file
+	${INSTALL} -o root -g wheel -m 0700 -c OS_X/tutorial-negative.T \
+	    ${SERVERVARPKGDIR}/transcript
 	${INSTALL} -o root -g wheel -m 0700 -c OS_X/config \
 	    ${SERVERVARPKGDIR}
 	${INSTALL} -o root -g wheel -m 0700 -c OS_X/tutorial.K \
