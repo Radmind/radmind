@@ -49,6 +49,7 @@ struct transcript {
     int 		t_type;
     char		t_fullname[ MAXPATHLEN ];
     char		t_shortname[ MAXPATHLEN ];
+    char		t_kfile[ MAXPATHLEN ];
     int			t_linenum;
     int			t_eof;
     FILE		*t_in;

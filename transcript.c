@@ -641,7 +641,7 @@ transcript( char *path )
 }
 
     static void
-t_new( int type, char *fullname, char *shortname ) 
+t_new( int type, char *fullname, char *shortname, char *kfile ) 
 {
     struct transcript	 *new;
 
@@ -661,6 +661,7 @@ t_new( int type, char *fullname, char *shortname )
 	new->t_linenum = 0;
 	strcpy( new->t_shortname, shortname );
 	strcpy( new->t_fullname, fullname );
+	strcpy( new->t_kfile, kfile );
 	if (( new->t_in = fopen( fullname, "r" )) == NULL ) {
 	    perror( fullname );
 	    exit( 2 );
@@ -685,7 +686,7 @@ transcript_init( char *kfile, int location )
      * Make sure that there's always a transcript to read, so other code
      * doesn't have to check it.
      */
-    t_new( T_NULL, NULL, NULL );
+    t_new( T_NULL, NULL, NULL, NULL );
 
     if ( skip ) {
 	return;
@@ -726,7 +727,7 @@ transcript_init( char *kfile, int location )
 	    exit( 2 );
 	}
 	sprintf( fullpath, "%s%s", kdir, special );
-	t_new( T_SPECIAL, fullpath, special );
+	t_new( T_SPECIAL, fullpath, special, "special" );
     }
 
     if ( tran_head->t_type == T_NULL  && edit_path == APPLICABLE ) {
@@ -823,11 +824,11 @@ read_kfile( char *kfile, int location )
 	    break;
 
 	case 'n':				/* negative */
-	    t_new( T_NEGATIVE, fullpath, av[ 1 ] );
+	    t_new( T_NEGATIVE, fullpath, av[ 1 ], kfile );
 	    break;
 
 	case 'p':				/* positive */
-	    t_new( T_POSITIVE, fullpath, av[ 1 ] );
+	    t_new( T_POSITIVE, fullpath, av[ 1 ], kfile );
 	    break;
 
 	case 's':				/* special */
