@@ -176,6 +176,8 @@ man :
 	    sed -e 's@_RADMIND_PATH@${RADMINDDIR}@g'  \
 		-e 's@_RADMIND_COMMANDFILE@${COMMANDFILE}@g' \
 		-e 's@_RADMIND_HOST@${RADMIND_HOST}@g' \
+		-e 's@_RADMIND_TLS_CA@${TLS_CA}@g' \
+		-e 's@_RADMIND_TLS_CERT@${TLS_CERT}@g' \
 		man/$$i > tmp/man/$$i; \
 	done
 
