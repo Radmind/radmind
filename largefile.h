@@ -2,6 +2,7 @@
  * Copyright (c) 2003 Regents of The University of Michigan.
  * All Rights Reserved.  See COPYRIGHT.
  */
+#include "config.h"
 
 #ifndef SIZEOF_OFF_T
 #error "sizeof off_t unknown."
