@@ -314,7 +314,10 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
     if ( ret < 0 ) {
 	/* name is in the fs, but not in the tran */
 	if ( chksum && ( cur->pi_type == 'f' )) {
-	    do_chksum( cur->pi_name, cur->pi_chksum_b64 );
+	    if ( do_chksum( cur->pi_name, cur->pi_chksum_b64 ) < 0 ) {
+		perror( cur->pi_name );
+		exit( 1 );
+	    }
 	}
 	t_print( cur, tran, PR_FS_ONLY );
 	return T_MOVE_FS;
@@ -340,13 +343,15 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
 	    }
 
 	    if ( chksum ) {
-		do_chksum( cur->pi_name, cur->pi_chksum_b64 );
+		if ( do_chksum( cur->pi_name, cur->pi_chksum_b64 ) < 0 ) {
+		    perror( cur->pi_name );
+		    exit( 1 );
+		}
 		if ( strcmp( cur->pi_chksum_b64,
 			tran->t_pinfo.pi_chksum_b64 ) != 0 ) {
 		    t_print( cur, tran, PR_DOWNLOAD );
 		    break;
 		}
-
 		if ( cur->pi_stat.st_mtime != tran->t_pinfo.pi_stat.st_mtime ) {
 		    t_print( cur, tran, PR_STATUS );
 		    break;
