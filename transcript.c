@@ -15,9 +15,8 @@
 #include "code.h"
 #include "argcargv.h"
 
-static struct transcript *tran_head;
-static FILE 		 *com = NULL;
-static struct transcript *prev_tran;
+static struct transcript *tran_head = NULL;
+static struct transcript *prev_tran = NULL;
 
     static void 
 t_parse( struct transcript *tran ) 
@@ -28,31 +27,22 @@ t_parse( struct transcript *tran )
     char			**argv;
     int				ac;
 
-    /* read in the next line in the transcript */
-    if (( fgets( line, MAXPATHLEN, tran->t_in )) == NULL ) {
-	tran->t_flag = T_EOF;
-	return;
-    }
+    /* read in the next line in the transcript, loop through blanks and # */
+    do {
+	if (( fgets( line, MAXPATHLEN, tran->t_in )) == NULL ) {
+	    tran->t_eof = 1;
+	    return;
+	}
 
-    /* check to see if line contains the whole line */
-    length = strlen( line );
-    if ( line[ length - 1 ] != '\n' ) {
-	fprintf( stderr, "ERROR: didn't get the whole line\n" );
-	exit( 1 );
-    } 
-    line[ length - 1 ] = '\0';
+	/* check to see if line contains the whole line */
+	length = strlen( line );
+	if ( line[ length - 1 ] != '\n' ) {
+	    fprintf( stderr, "ERROR: didn't get the whole line\n" );
+	    exit( 1 );
+	} 
+	line[ length - 1 ] = '\0';
 
-    /* parse the line that was read in */
-    ac = argcargv( line, &argv );
-
-    /* 
-     * If the line begins with either a - or a string that is more than one
-     * char long, print an error.
-     */
-    if ( strcmp( argv[0], "-" ) == 0 ) {
-	fprintf( stderr, "ERROR: Leading -'s are not allowed: %s\n", line );
-	exit( 1 );
-    }
+    } while ((( ac = argcargv( line, &argv )) == 0 ) || ( *argv[ 0 ] == '#' ));
 
     if ( strlen( argv[ 0 ] ) != 1 ) {
 	fprintf( stderr, "ERROR: First argument in transcript is too long: %s\n"		, argv[ 0 ] );
@@ -124,6 +114,10 @@ t_parse( struct transcript *tran )
 	strcpy( tran->t_info.i_name, buf );
 	break;
 
+    case '-':
+	fprintf( stderr, "ERROR: Leading -'s are not allowed: %s\n", line );
+	exit( 1 );              
+
     default:
 	fprintf( stderr, "ERROR: Unknown file type: %c\n", *argv[ 0 ] );
 	break;
@@ -163,7 +157,7 @@ t_convert( int type )
 
 
     static void
-t_print( struct info *fs, struct transcript *tran, FILE *outtran, int change ) 
+t_print( struct info *fs, struct transcript *tran, int change ) 
 {
     struct info	*cur;
     char 	*buf;
@@ -183,14 +177,11 @@ t_print( struct info *fs, struct transcript *tran, FILE *outtran, int change )
      */
     if ( edit_path == FS2TRAN ) {
 	cur = &tran->t_info;
-    	if ( prev_tran != NULL ) {
-    	  if ( strcmp( prev_tran->t_name, tran->t_name ) != 0 ) {
-		fprintf( outtran, "%s:\n", tran->t_name );
-    	  }
-        } else {
-	  fprintf( outtran, "%s:\n", tran->t_name );
+
+	if ( prev_tran != tran ) {
+	    fprintf( outtran, "%s:\n", tran->t_name );
+	    prev_tran = tran;
         }
-	prev_tran = tran;
     } else {
 	cur = fs;
     }
@@ -255,7 +246,7 @@ t_print( struct info *fs, struct transcript *tran, FILE *outtran, int change )
 
      
    static int 
-t_compare( struct info *cur, struct transcript *tran, FILE *outtran )
+t_compare( struct info *cur, struct transcript *tran )
 {
     int		    		ret = -1;
     mode_t    	    		mode;
@@ -266,8 +257,8 @@ t_compare( struct info *cur, struct transcript *tran, FILE *outtran )
 #endif
     dev_t			dev;
 
-    /* writing */
-    if ( tran->t_flag == T_EOF ) {
+    /* writing XXX what does this comment mean? */
+    if ( tran->t_eof ) {
 	ret = -1;
     } else {
 	ret = strcmp( cur->i_name, tran->t_info.i_name );
@@ -275,12 +266,12 @@ t_compare( struct info *cur, struct transcript *tran, FILE *outtran )
 
     if ( ret > 0 ) {
 	/* name is in the tran, but not the fs */
-	t_print( cur, tran, outtran, T_MOVE_TRAN );
+	t_print( cur, tran, T_MOVE_TRAN );
 	return T_MOVE_TRAN;
     } 
     if ( ret < 0 ) {
 	/* name is in the fs, but not in the tran */
-	t_print( cur, tran, outtran, T_MOVE_FS );
+	t_print( cur, tran, T_MOVE_FS );
 	return T_MOVE_FS;
     } 
 
@@ -290,7 +281,7 @@ t_compare( struct info *cur, struct transcript *tran, FILE *outtran )
 
     /* the names match so check types */
     if ( cur->i_type != tran->t_info.i_type ) {
-	t_print( cur, tran, outtran, T_MOVE_BOTH );
+	t_print( cur, tran, T_MOVE_BOTH );
 	return T_MOVE_BOTH;
     }
 
@@ -300,7 +291,7 @@ t_compare( struct info *cur, struct transcript *tran, FILE *outtran )
         if (( cur->i_stat.st_uid != tran->t_info.i_stat.st_uid ) || 
     		( cur->i_stat.st_gid != tran->t_info.i_stat.st_gid ) ||
 		( mode != tran_mode )) {
-			t_print( cur, tran, outtran, T_MOVE_BOTH );
+			t_print( cur, tran, T_MOVE_BOTH );
 			break;
 	}
 	/* If the file is not negative, check the other components. */
@@ -311,23 +302,23 @@ t_compare( struct info *cur, struct transcript *tran, FILE *outtran )
 				tran->t_info.i_stat.st_size ) || 
     		    ( cur->i_chksum != tran->t_info.i_chksum ) ||
 		    ( mode != tran_mode )) {
-			t_print( cur, tran, outtran, T_MOVE_BOTH );
+			t_print( cur, tran, T_MOVE_BOTH );
 		}
-    	}
+	}
 	break;
 
     case 'd':				/* dir */
         if (( cur->i_stat.st_uid != tran->t_info.i_stat.st_uid ) ||
 	    	( cur->i_stat.st_gid != tran->t_info.i_stat.st_gid ) ||
 		( mode != tran_mode )) {
-			t_print( cur, tran, outtran, T_MOVE_BOTH );
+			t_print( cur, tran, T_MOVE_BOTH );
         }
         break;
 
     case 'l':			    /* link */
     case 'h':			    /* hard */
         if ( strcmp( cur->i_link, tran->t_info.i_link ) != 0 ) {
-	    t_print( cur, tran, outtran, T_MOVE_BOTH );
+	    t_print( cur, tran, T_MOVE_BOTH );
 	} 
 	break;
     case 'c':
@@ -348,9 +339,10 @@ t_compare( struct info *cur, struct transcript *tran, FILE *outtran )
 	    	( min != tran->t_info.i_min ) ||
 #endif
 		( mode != tran_mode )) {
-			t_print( cur, tran, outtran, T_MOVE_BOTH );
+			t_print( cur, tran, T_MOVE_BOTH );
 	}	
 	break;
+
     default:
 	fprintf( stderr, "ERROR: Unknown file type: %c\n", cur->i_type );
 	break;
@@ -360,17 +352,16 @@ t_compare( struct info *cur, struct transcript *tran, FILE *outtran )
 }
 
     int
-transcript( struct info *new, char *name, FILE *outtran )
+transcript( struct info *new, char *name )
 {
 
     int			move;
-    int 		count;
+    int 		len;
     char		buf[ MAXPATHLEN ];
     char		*path;
     int			ret;
-    int			comp;
     int			type;
-    struct transcript	*t_cur = NULL;
+    struct transcript	*next_tran = NULL;
     struct transcript	*begin_tran = NULL;
 
     if ( lstat( name, &new->i_stat ) != 0 ) {
@@ -391,8 +382,8 @@ transcript( struct info *new, char *name, FILE *outtran )
 
     /* check to see if a link, then read it in */
     if ( S_ISLNK( new->i_stat.st_mode )) {
-	count = readlink( new->i_name, buf, MAXPATHLEN );
-	buf[ count ] = '\0';
+	len = readlink( new->i_name, buf, MAXPATHLEN );
+	buf[ len ] = '\0';
 	strcpy( new->i_link, buf );
     }
 
@@ -403,42 +394,40 @@ transcript( struct info *new, char *name, FILE *outtran )
 	move = 0;
     }
 
-    for ( ; ; ) {
+    for (;;) {
 	/* 
 	 * Loop through the list of transcripts and compare each
 	 * to find which transcript to start with. Only switch to the
 	 * transcript if it is not at EOF.
 	 */
-        for ( begin_tran = tran_head, t_cur = tran_head->t_next;
-		    t_cur != NULL; t_cur = t_cur->t_next ) {
-		if ( begin_tran->t_flag == T_EOF ) {
-		    begin_tran = t_cur;
-		    continue;
+        for ( begin_tran = tran_head, next_tran = tran_head->t_next;
+		next_tran != NULL; next_tran = next_tran->t_next ) {
+	    if ( begin_tran->t_eof ) {
+		begin_tran = next_tran;
+		continue;
+	    }
+	    if ( ! next_tran->t_eof ) {
+		if ( strcmp( next_tran->t_info.i_name,
+			begin_tran->t_info.i_name ) < 0 ) {
+		    begin_tran = next_tran;
 		}
-		if ( t_cur->t_flag != T_EOF ) {
-		    /* call strcmp on the two transcripts */
-		    comp = strcmp( begin_tran->t_info.i_name, 
-			    t_cur->t_info.i_name );
-		    if ( comp > 0 ) {
-			begin_tran = t_cur;
-		    }
-		}
-        }
+	    }
+	}
 
-     	/* move ahead other transcripts that match */
-        for( t_cur = begin_tran->t_next; t_cur != NULL; 
-			t_cur = t_cur->t_next ) {
-	     if ( strcmp( begin_tran->t_info.i_name, t_cur->t_info.i_name )
-					== 0 ) {
-			t_parse( t_cur );
-	     }
-     	}
+	/* move ahead other transcripts that match */
+	for ( next_tran = begin_tran->t_next; next_tran != NULL;
+		next_tran = next_tran->t_next ) {
+	    if ( strcmp( begin_tran->t_info.i_name,
+		    next_tran->t_info.i_name ) == 0 ) {
+		t_parse( next_tran );
+	    }
+	}
 
 	/*
 	 * t_compare returns similar values as strcmp depending on
 	 * what the return value of the internal strcmp is.
 	 */
-	ret = t_compare( new, begin_tran, outtran );
+	ret = t_compare( new, begin_tran );
 
 	switch ( ret ) {
 	case T_MOVE_FS :	   /*
@@ -449,7 +438,6 @@ transcript( struct info *new, char *name, FILE *outtran )
 	    return( move );
 
 	case T_MOVE_BOTH :	  /* the two values match. move ahead in both */
-	    /* t_compare() can't return 0 if begin_tran is NULL */
 	    t_parse( begin_tran );
 	    if ( begin_tran->t_type == T_NEGATIVE ) {
 		return( 0 );
@@ -462,7 +450,6 @@ transcript( struct info *new, char *name, FILE *outtran )
 				    * transcript value.  move the transcript
 				    * forward 
 				    */
-	    /* t_compare() can't return -1 if begin_tran is NULL */
 	    t_parse( begin_tran );
 	    break;
 
@@ -470,11 +457,11 @@ transcript( struct info *new, char *name, FILE *outtran )
 	    fprintf( stderr, "Oops!\n" );
 	    exit( 1 );
 	}
-     }
+    }
 }
 
-    static struct transcript *
-t_new( char *name, struct transcript *head ) 
+    static void
+t_new( int type, char *name ) 
 {
     struct transcript    *new;
 
@@ -484,12 +471,25 @@ t_new( char *name, struct transcript *head )
 	exit( 1 );
     }
 
-    strcpy( new->t_info.i_name, name );
-    new->t_next = head;
-    new->t_flag = T_EOF; 
-    new->t_in = NULL;
+    new->t_type = type;
+    if ( new->t_type == T_NULL ) {
+	new->t_eof = 1; 
 
-    return( new );
+    } else {
+	new->t_eof = 0; 
+	strcpy( new->t_name, name );
+	if (( new->t_in = fopen( name, "r" )) == NULL ) {
+	    perror( name );
+	    exit( 1 );
+	}
+
+	t_parse( new );
+    }
+
+    new->t_next = tran_head;
+    tran_head = new;
+
+    return;
 }
 
     void
@@ -500,91 +500,79 @@ transcript_init( int flag )
     int		length;
     int		special = 0;
     extern int	edit_path;
-
-    tran_head = NULL;
+    FILE 	*f;
 
     /*
      * open the command file.  read in each line of the file and determine 
-     *  which type of transcript it is.
+     * which type of transcript it is.
      */
-    if ( !( flag & FLAG_SKIP ) && (( com = fopen( "command", "r" )) != NULL )) {
-	while ( fgets( line, sizeof( line ), com ) != NULL ) {
-    		length = strlen( line );
-    		if ( line[ length - 1 ] != '\n' ) {
-			fprintf( stderr, "ERROR: didn't get the whole line\n" );
-			exit( 1 );
-    		} 
-		argcargv( line, &av );
-		tran_head = t_new( av[ 1 ], tran_head );
-		switch( *av[0] ) {
-		case 'p':				/* positive */
-			tran_head->t_type = T_POSITIVE;
-			break;
-		case 'n':				/* negative */
-			tran_head->t_type = T_NEGATIVE;
-			break;
-		case 's':				/* special */
-			special = 1;
-			continue;
-		default:
-			fprintf( stderr, "Invalid type of transcript\n" );
-			exit( 1 );
-		}
-
-		/* open transcript and parse the first line */
-		if (( tran_head->t_in = fopen( av[ 1 ], "r" )) == NULL ) {
-			perror( av[ 1 ] );
-			exit( 1 );
-    		}
-		if ( strlen( av[ 1 ] ) > MAXPATHLEN ) {
-			fprintf( stderr, "ERROR: tran name is too large: %s\n",
-					av[ 1 ] );
-			exit( 1 );
-		}
-		strcpy( tran_head->t_name, av[ 1 ] );
-		tran_head->t_flag = 1;
-
-		t_parse( tran_head );
-        }
-     } else {
+    if (( flag & FLAG_SKIP ) || (( f = fopen( "command", "r" )) == NULL )) {
 	if ( edit_path == FS2TRAN ) {
-		fprintf( stderr, "ERROR: Target cannot be NULL transcript.\n" );
-		exit( 1 );
+	    fprintf( stderr, "ERROR: Target cannot be NULL transcript.\n" );
+	    exit( 1 );
 	}
-	tran_head = t_new( "NULL", tran_head );
+	t_new( T_NULL, NULL );
+	return;
      }
 
+    while ( fgets( line, sizeof( line ), f ) != NULL ) {
 
-     /* 
-      * open the special transcript if there are any specials and add a
-      * specail transcript node to the beginning of the transcript list  
-      */
-     if ( special == 1 ) {
-	if (( tran_head->t_in = fopen( "special.T", "r" )) == NULL ) {
-		perror( "special" );
-		exit( 1 );
- 	}
-	tran_head = t_new( "special.T", tran_head );
-	tran_head->t_type = T_SPECIAL;
-     }
+	/* count lines for better error */
 
-     return;
+	length = strlen( line );
+	if ( line[ length - 1 ] != '\n' ) {
+	    fprintf( stderr, "ERROR: line too long\n" );
+	    exit( 1 );
+	}
+
+	/* skips blank lines and comments */
+	if (( argcargv( line, &av ) == 0 ) || ( *av[ 0 ] == '#' )) {
+	    continue;
+	}
+
+	if ( strlen( av[ 1 ] ) > MAXPATHLEN ) {
+	    fprintf( stderr, "%s: transcript name too long\n",
+		    av[ 1 ] );
+	    exit( 1 );
+	}
+
+	switch( *av[0] ) {
+	case 'p':				/* positive */
+	    t_new( T_POSITIVE, av[ 1 ] );
+	    break;
+	case 'n':				/* negative */
+	    t_new( T_NEGATIVE, av[ 1 ] );
+	    break;
+	case 's':				/* special */
+	    special = 1;
+	    continue;
+	default:
+	    fprintf( stderr, "Invalid type of transcript\n" );
+	    exit( 1 );
+	}
+    }
+
+    fclose( f );
+
+    /* open the special transcript if there were any special files */
+    if ( special == 1 ) {
+	t_new( T_SPECIAL, "special.T" );
+    }
+
+    return;
 }
-
 
     void
 transcript_free( )
 {
     struct transcript    *next;
 
-    for ( ; tran_head != NULL; tran_head = next ) {
+    while ( tran_head != NULL ) {
 	next = tran_head->t_next;
 	if ( tran_head->t_in != NULL ) {
-		fclose( tran_head->t_in );
+	    fclose( tran_head->t_in );
 	}
 	free( tran_head );
-    }
-    if ( com != NULL ) {
-    	fclose( com );
+	tran_head = next;
     }
 }
