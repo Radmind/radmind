@@ -9,7 +9,7 @@
 
 #include "transcript.h"
 #include "llist.h"
-#include "appplefile.h"
+#include "applefile.h"
 
 extern char	*version, *checksumlist;
 

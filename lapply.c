@@ -288,6 +288,7 @@ filechecklist:
 		}
 	    }
 
+#ifdef __APPLE__
 	    if ( *targv[ 0 ] == 'a' ) {
 		if ( retr_applefile( sn, pathdesc, path, NULL,
 			chksum_b64, temppath, linenum ) != 0 ) {
@@ -297,6 +298,12 @@ filechecklist:
 		    (char *)&temppath ) != 0 ) {
 		return( 1 );
 	    }
+#else !__APPLE__
+	    if ( retr( sn, pathdesc, path, NULL, chksum_b64,
+		    (char *)&temppath ) != 0 ) {
+		return( 1 );
+	    }
+#endif __APPLE__
 
 	    if ( getfsoinfo( path, &st, &fstype, NULL ) < 0 ) {
 		perror( path );
