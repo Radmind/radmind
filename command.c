@@ -67,17 +67,17 @@ extern SSL_CTX  *ctx;
 
 int 		list_transcripts( SNET *sn );
 
-int		f_quit ___P(( SNET *, int, char *[] ));
-int		f_noop ___P(( SNET *, int, char *[] ));
-int		f_help ___P(( SNET *, int, char *[] ));
-int		f_stat ___P(( SNET *, int, char *[] ));
-int		f_retr ___P(( SNET *, int, char *[] ));
-int		f_stor ___P(( SNET *, int, char *[] ));
-int		f_noauth ___P(( SNET *, int, char *[] ));
-int		f_notls ___P(( SNET *, int, char *[] ));
-int		f_starttls ___P(( SNET *, int, char *[] ));
+int		f_quit( SNET *, int, char *[] );
+int		f_noop( SNET *, int, char *[] );
+int		f_help( SNET *, int, char *[] );
+int		f_stat( SNET *, int, char *[] );
+int		f_retr( SNET *, int, char *[] );
+int		f_stor( SNET *, int, char *[] );
+int		f_noauth( SNET *, int, char *[] );
+int		f_notls( SNET *, int, char *[] );
+int		f_starttls( SNET *, int, char *[] );
 #ifdef HAVE_LIBPAM
-int		f_login ___P(( SNET *, int, char *[] ));
+int		f_login( SNET *, int, char *[] );
 int 		exchange( int num_msg, struct pam_message **msgm,
 		    struct pam_response **response, void *appdata_ptr );
 #endif /* HAVE_LIBPAM */

@@ -3,19 +3,13 @@
  * All Rights Reserved.  See COPYRIGHT.
  */
 
-#ifdef __STDC__
-#define ___P(x)		x
-#else /* __STDC__ */
-#define ___P(x)		()
-#endif /* __STDC__ */
-
-int		cmdloop ___P(( int, struct sockaddr_in * ));
-int		command_k ___P(( char * ));
-char		**special_t ___P(( char *, char * ));
-int		keyword ___P(( int, char*[] ));
+int		cmdloop( int, struct sockaddr_in * );
+int		command_k( char * );
+char		**special_t( char *, char * );
+int		keyword( int, char*[] );
 extern char	*path_radmind;
 
 struct command {
     char	*c_name;
-    int		(*c_func) ___P(( SNET *, int, char *[] ));
+    int		(*c_func)( SNET *, int, char *[] );
 };

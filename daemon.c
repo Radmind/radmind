@@ -55,9 +55,9 @@ SSL_CTX         *ctx = NULL;
 
 extern char	*version;
 
-void		hup ___P(( int ));
-void		chld ___P(( int ));
-int		main ___P(( int, char *av[] ));
+void		hup( int );
+void		chld( int );
+int		main( int, char *av[] );
 
     void
 hup( sig )
