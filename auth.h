@@ -3,4 +3,4 @@
  * All Rights Reserved.  See COPYRIGHT.
  */
 
-extern int	f_auth ___P(( NET *, int, char *[] ));
+extern int	f_auth ___P(( SNET *, int, char *[] ));
