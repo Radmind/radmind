@@ -3,6 +3,8 @@
  * All Rights Reserved.  See COPYRIGHT.
  */
 
+#include "config.h"
+
 #include <sys/param.h>
 #include <stdio.h>
 #include <stdlib.h>

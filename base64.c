@@ -3,6 +3,8 @@
  * All Rights Reserved.  See COPYRIGHT.
  */
 
+#include "config.h"
+
 #include "base64.h"
 
 static char	etab_high6[ 256 ] = {

@@ -4,13 +4,10 @@
  */
 
 /*
- * Copyright (c) 1998 Regents of The University of Michigan.
- * All Rights Reserved.  See COPYRIGHT.
- */
-
-/*
  * Return parsed argc/argv from the net.
  */
+
+#include "config.h"
 
 #include <stdlib.h>
 

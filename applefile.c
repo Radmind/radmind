@@ -3,6 +3,8 @@
  * All Rights Reserved.  See COPYRIGHT.
  */
 
+#include "config.h"
+
 #ifdef __APPLE__
 #include <sys/attr.h>
 
