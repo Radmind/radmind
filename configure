@@ -1214,7 +1214,7 @@ if test "${with_maxconnections+set}" = set; then
   withval="$with_maxconnections"
   maxconnections="$withval"
 else
-  maxconnections=30
+  maxconnections=0
 fi;
 
 

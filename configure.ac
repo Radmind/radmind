@@ -17,7 +17,7 @@ AC_SUBST(authlevel)
 AC_ARG_WITH(radminddir, AC_HELP_STRING([--with-radminddir=DIR], [default radmind server storage]), radminddir="$withval", radminddir="/var/radmind" )
 AC_SUBST(radminddir) 
 
-AC_ARG_WITH(maxconnections, AC_HELP_STRING([--with-max-connections=MAX], [maximum number of simultaneous connections]), maxconnections="$withval", maxconnections=30 )
+AC_ARG_WITH(maxconnections, AC_HELP_STRING([--with-max-connections=MAX], [maximum number of simultaneous connections]), maxconnections="$withval", maxconnections=0 )
 AC_SUBST(maxconnections) 
 
 #AC_ARG_WITH(certdir, AC_HELP_STRING([--cert=DIR], [default certificate location]), certdir="$withval", certdir="/var/radmind/cert" )
