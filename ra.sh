@@ -23,6 +23,8 @@
 SERVER="-h _RADMIND_HOST"
 AUTHLEVEL="-w _RADMIND_AUTHLEVEL"
 EDITOR=${EDITOR:-vi}
+DEFAULTS="/etc/radmind.defaults"
+FSDIFFPATH="."
 
 PATH=/usr/local/bin:/usr/bin:/bin; export PATH
 RETRY=10
@@ -67,13 +69,26 @@ dopostapply() {
     done
 }
 
-while getopts ch:tw: opt; do
+# if a radmind defaults file exists, source it.
+# options in the defaults file can be overridden
+# with the options below.
+if [ -f "${DEFAULTS}" ]; then
+    . "${DEFAULTS}"
+fi
+
+while getopts %ch:ltw: opt; do
     case $opt in
+    %)  PROGRESS="-%"
+	;;
+
     c)	CHECKSUM="-csha1"
 	;;
 
     h)	SERVER="-h $OPTARG"
     	;;
+
+    l)  USERAUTH="-l"
+	;;
 
     t)	TEMPFILES="TRUE"
     	;;
@@ -81,7 +96,7 @@ while getopts ch:tw: opt; do
     w)	AUTHLEVEL="-w $OPTARG"
     	;;
 
-    *)   usage
+    *)  usage
 	;;
     esac
 done
@@ -130,7 +145,7 @@ update)
 	;;
     esac
 
-    fsdiff -A -v ${CHECKSUM} -o ${FTMP} .
+    fsdiff -A -% ${CHECKSUM} -o ${FTMP} ${FSDIFFPATH}
     if [ $? -ne 0 ]; then
 	cleanup
 	exit 1
@@ -153,7 +168,7 @@ update)
     fi
     Yn "Apply difference transcript?"
     if [ $? -eq 1 ]; then
-	lapply ${AUTHLEVEL} ${SERVER} ${CHECKSUM} ${FTMP}
+	lapply ${PROGRESS} ${AUTHLEVEL} ${SERVER} ${CHECKSUM} ${FTMP}
 	case "$?" in
 	0)	;;
 
@@ -199,7 +214,7 @@ create)
 	exit 1
     fi
     FTMP="${TMPDIR}/${TNAME}"
-    fsdiff -C -v ${CHECKSUM} -o ${FTMP} .
+    fsdiff -C -% ${CHECKSUM} -o ${FTMP} ${FSDIFFPATH}
     if [ $? -ne 0 ]; then
 	cleanup
 	exit 1;
@@ -213,9 +228,15 @@ create)
     if [ $? -eq 1 ]; then
 	${EDITOR} ${FTMP}
     fi
-    Yn "Store difference transcript?"
+    Yn "Store loadset ${TNAME}?"
     if [ $? -eq 1 ]; then
-	lcreate ${CHECKSUM} ${FTMP}
+	if [ -n "${USERAUTH}" ]; then
+	    echo -n "username: "
+	    read USERNAME
+	    USERNAME="-U ${USERNAME}"
+	fi
+	lcreate ${PROGRESS} ${AUTHLEVEL} ${USERAUTH} ${USERNAME} \
+			${CHECKSUM} ${SERVER} ${FTMP}
 	if [ $? -ne 0 ]; then
 	    cleanup
 	    exit 1
@@ -238,7 +259,7 @@ trip)
 	;;
     esac
 
-    fsdiff -C ${CHECKSUM} -o ${FTMP} .
+    fsdiff -C ${CHECKSUM} -o ${FTMP} ${FSDIFFPATH}
     if [ $? -ne 0 ]; then
 	cleanup
 	exit 1
@@ -252,7 +273,7 @@ trip)
     ;;
 
 auto)
-    fsdiff -C ${CHECKSUM} -o ${FTMP} .
+    fsdiff -C ${CHECKSUM} -o ${FTMP} ${FSDIFFPATH}
     if [ $? -ne 0 ]; then
 	echo Auto failure: `hostname` fsdiff
 	cleanup
@@ -265,18 +286,19 @@ auto)
 	exit 1
     fi
 
-    # XXX - if this fails, do we loop, or justs report error?
+    # XXX - if this fails, do we loop, or just report error?
     ktcheck ${AUTHLEVEL} ${SERVER} -q -c sha1
     if [ $? -eq 1 ]; then
 	while true; do
-	    fsdiff -A ${CHECKSUM} -o ${FTMP} .
+	    fsdiff -A ${CHECKSUM} -o ${FTMP} ${FSDIFFPATH}
 	    if [ $? -ne 0 ]; then
 		echo Auto failure: `hostname`: fsdiff
 		cleanup
 		exit 1
 	    fi
 	    if [ -s ${FTMP} ]; then
-		lapply ${AUTHLEVEL} ${SERVER} -q ${CHECKSUM} ${FTMP} 2>&1 > ${LTMP}
+		lapply ${AUTHLEVEL} ${SERVER} -q ${CHECKSUM} \
+			${FTMP} 2>&1 > ${LTMP}
 		case $? in
 		0)
 		    echo Auto update: `hostname`
@@ -315,7 +337,7 @@ force)
 	;;
     esac
 
-    fsdiff -A -v ${CHECKSUM} -o ${FTMP} .
+    fsdiff -A -% ${CHECKSUM} -o ${FTMP} ${FSDIFFPATH}
     if [ $? -ne 0 ]; then
 	cleanup
 	exit 1
@@ -324,9 +346,11 @@ force)
     if [ ! -s ${FTMP} ]; then
 	echo Nothing to apply.
 	cleanup
-	exit 1
+	exit 0
     fi
-    lapply ${AUTHLEVEL} ${SERVER} ${CHECKSUM} ${FTMP}
+    
+    dopreapply ${FTMP}
+    lapply ${PROGRESS} ${AUTHLEVEL} ${SERVER} ${CHECKSUM} ${FTMP}
     case "$?" in
     0)	;;
 
@@ -334,7 +358,8 @@ force)
 	    exit $?
 	    ;;
     esac
-
+    dopostapply ${FTMP}
+    
     cleanup
     ;;
 
