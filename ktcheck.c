@@ -467,22 +467,36 @@ main( int argc, char **argv )
 	    exit( 2 );
 	}
 	/* get file sizes */
-	if ( stat( tempfile, &tst ) != 0 ) {
-	    perror( tempfile );
-	    exit( 2 );
-	}
 	if ( stat( path, &lst ) != 0 ) {
 	    if ( errno == ENOENT ) {
-		goto nolocalspecial;
+		/* special.T did not exist */
+		if ( update ) { 
+		    if ( rename( tempfile, path ) != 0 ) {
+			fprintf( stderr, "rename failed: %s %s\n", tempfile,
+			    path );
+			exit( 2 );
+		    }
+		    if ( !quiet ) printf( "%s: created\n", path ); 
+		    change++;
+		} else {
+		    /* specaial.T not updated */
+		    if ( unlink( tempfile ) !=0 ) {
+			perror( tempfile );
+			exit( 2 );
+		    }
+		}
+		goto done;
 	    }
 	    perror( path );
 	    exit( 2 );
 	}
+	if ( stat( tempfile, &tst ) != 0 ) {
+	    perror( tempfile );
+	    exit( 2 );
+	}
+	/* get checksums */
 	if ( cksum ) {
 	    if ( do_cksum( path, lcksum ) < 0 ) {
-		if ( errno == ENOENT ) {
-		    goto nolocalspecial;
-		}
 		perror( path );
 		exit( 2 );
 	    }
@@ -502,6 +516,8 @@ main( int argc, char **argv )
 			    path );
 		    exit( 2 );
 		}
+		if ( !quiet ) printf( "%s: updated\n", path ); 
+		change++;
 	    } else {
 		/* No update */
 		if ( unlink( tempfile ) !=0 ) {
@@ -509,7 +525,6 @@ main( int argc, char **argv )
 		    exit( 2 );
 		}
 	    }
-	    change++;
 	} else {
 	    /* specaial.T not updated */
 	    if ( unlink( tempfile ) !=0 ) {
@@ -517,23 +532,6 @@ main( int argc, char **argv )
 		exit( 2 );
 	    }
 	}
-	goto done;
-
-nolocalspecial:
-	/* special.T did not exist */
-	if ( update ) { 
-	    if ( rename( tempfile, path ) != 0 ) {
-		fprintf( stderr, "rename failed: %s %s\n", tempfile, path );
-		exit( 2 );
-	    }
-	} else {
-	    /* specaial.T not updated */
-	    if ( unlink( tempfile ) !=0 ) {
-		perror( tempfile );
-		exit( 2 );
-	    }
-	}
-	change++;
     }
 
 done:
