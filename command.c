@@ -1006,6 +1006,8 @@ list_transcripts( SNET *sn )
 
     /* Create list of transcripts */
     if (( f = fopen( command_file, "r" )) == NULL ) {
+	snet_writef( sn,
+	    "%d Service not available, closing transmission channel\r\n", 421 );
 	syslog( LOG_ERR, "fopen: %s: %m", command_file );
 	return( -1 );
     }
@@ -1018,6 +1020,9 @@ list_transcripts( SNET *sn )
 	    continue;
 	}
 	if ( ac != 2 ) {
+	    snet_writef( sn,
+		"%d Service not available, closing transmission channel\r\n",
+		421 );
 	    syslog( LOG_ERR, "%s: %d: invalid command line\n",
 		    command_file, linenum );
 	    return( -1 );
@@ -1025,10 +1030,14 @@ list_transcripts( SNET *sn )
 	insert_node( av[ 1 ], &tran_list );
     }
     if ( ferror( f )) {
+	snet_writef( sn,
+	    "%d Service not available, closing transmission channel\r\n", 421 );
 	syslog( LOG_ERR, "fgets: %m" );
 	return( -1 );
     }
     if ( fclose( f ) < 0 ) {
+	snet_writef( sn,
+	    "%d Service not available, closing transmission channel\r\n", 421 );
 	syslog( LOG_ERR, "fclose: %m" );
 	return( -1 );
     }
@@ -1091,7 +1100,7 @@ cmdloop( int fd, struct sockaddr_in *sin )
 	/* lookup proper command file based on the hostname, IP or CN */
 	if ( command_k( "config" ) < 0 ) {
 	    snet_writef( sn, "%d No access for %s\r\n", 500, remote_host );
-	    syslog( LOG_INFO, "%s: Access denied: Not in command file\r\n",
+	    syslog( LOG_INFO, "%s: Access denied: Not in command file",
 		    remote_host );
 	    exit( 1 );
 	} else {
