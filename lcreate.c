@@ -221,7 +221,7 @@ main( int argc, char **argv )
     }
 
     if ( err || ( argc - optind != 1 ))   {
-	fprintf( stderr, "usage: lcreate [ -FilnNrTV ] [ -% | -q | -v ] " );
+	fprintf( stderr, "usage: lcreate [ -FilnNrTV ] [ -%% | -q | -v ] " );
 	fprintf( stderr, "[ -c checksum ] " );
 	fprintf( stderr, "[ -h host ] [ -p port ] " );
 	fprintf( stderr, "[ -t stored-name ] [ -U user ] " );
