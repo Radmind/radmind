@@ -61,14 +61,14 @@ rmdirs( char *path )
 	
 	    if ( path[ len - 1 ] == '/' ) {
 		if ( snprintf( temp, MAXPATHLEN, "%s%s", path, dirent->d_name )
-			> MAXPATHLEN ) {
+			>= MAXPATHLEN ) {
 		    fprintf( stderr, "%s%s: path too long\n", path,
 			dirent->d_name );
 		    goto error;
 		}           
 	    } else {
 		if ( snprintf( temp, MAXPATHLEN, "%s/%s", path, dirent->d_name )
-			> MAXPATHLEN ) {
+			>= MAXPATHLEN ) {
 		    fprintf( stderr, "%s/%s: path too long\n", path,
 			dirent->d_name );
 		    goto error;
