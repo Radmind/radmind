@@ -8,6 +8,7 @@
 [
 .BI \-P\  prefix 
 ]
+.BI \-c\ checksum
 .I transcript 
 .sp
 .SH DESCRIPTION
@@ -52,6 +53,10 @@ will only verify transcript lines with paths starting with
 .sp
 .SH OPTIONS
 .TP 19
+.BI \-c\  checksum
+enables checksuming. sha1 is the only currently supported checksuming
+algorithm.
+.TP 19
 .BI \-P\  prefix 
 only verify transcript lines that begin with 
 .IR prefix .
@@ -65,7 +70,7 @@ displays update information to the standard output.
 .B \-V
 displays the version of 
 .BR lcksum ,
-a list  of supported checksumming algorithims in descending
+a list  of supported checksumming algorithms in descending
 order of preference and then exits.
 .sp
 .SH EXIT STATUS
