@@ -14,7 +14,7 @@
 #include "convert.h"
 #include "chksum.h"
 #include "pathcmp.h"
-#include "afile.h"
+#include "applefile.h"
 
 static struct transcript	*tran_head = NULL;
 static struct transcript	*prev_tran = NULL;
