@@ -1,5 +1,5 @@
 '\" t
-.TH lapply "1" "20 Aug. 2001" "RSUG" "User Commands"
+.TH lapply "1" "6 November 2001" "RSUG" "User Commands"
 .SH NAME
 .B lapply 
 \- edit file system to match difference-transcript 
@@ -8,34 +8,30 @@
 [
 .B -n
 ] [
-.B -s
-] [
 .B -v
 ] [
 .B -V
 ] [
-.B -c checksum
+.BI \-c\  checksum
 ] [
-.B -h host
+.BI \-h\  host
 ] [
-.B -p port
+.BI \-p\  port
 ]
-.I difference-transcript
+.I appliable-transcript
 .sp
 .SH DESCRIPTION
 .B lapply
-edits the file system to make it match the difference-transcript.  The
-difference-transcript must be created with fsdiff using the -T option.
+edits the file system to make it match the 
+.I appliable-transcript.  
+The 
+.I appliable-transcript 
+must be created with fsdiff using the -T option.
 Lapply downloads missing files, indicated by a "+" in the
-difference-transcript, removes file system objects marked with a "-" and
+.I appliable-transcript, 
+removes file system objects marked with a "-" and
 updates objects without a "+" or "-".  Given the -n option, lapply will
-only remove and update files as described by the difference-transcript.
-.sp
-Downloaded files that are hard linked will be copied over to retain existing
-hard links to that file.  
-If the -s option is given, these files will be unlinked,
-breaking any preexisting hard links.  When the -s option is used, fsdiff
-and lapply should be run a second time to correct these broken links.
+only remove and update files as described by the appliable-transcript.
 .sp
 .SH OPTIONS
 .TP 19
@@ -43,10 +39,6 @@ and lapply should be run a second time to correct these broken links.
 no network connection will be made, causing only file system removals and
 updates to be applied.
 .TP 19
-.B \-s
-forces downloaded files that are multiple referenced to be unlinked, breaking
-any preexisting hard links.  Default is to preserve hard links by copying
-downloaded file over the existing file.
 .TP 19
 .B \-v
 causes lapply to be more verbose.
@@ -65,6 +57,11 @@ specifies the radmind server.
 specifies the port of the radmind server, by default 6662.
 .sp
 .SH SEE ALSO
+.BR ktcheck(1),
 .BR fsdiff(1),
+.BR lapply(1),
 .BR lcreate(1),
-.BR ktcheck(1).
+.BR lcksum(1),
+.BR lfdiff(1),
+.BR lmerge(1),
+.BR radmind(8).
