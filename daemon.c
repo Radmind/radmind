@@ -180,6 +180,58 @@ main( ac, av )
 	exit( 1 );
     }
 
+    if ( dontrun ) {
+	exit( 0 );
+    }
+
+    if ( chdir( radmind_path ) < 0 ) {
+	perror( radmind_path );
+	exit( 1 );
+    }
+    /* Create directory structure */
+    if ( mkdir( "command", 0750 ) != 0 ) {
+	if ( errno != EEXIST ) {
+	    perror( "command" );
+	    exit( 1 );
+	}
+    }
+    if ( mkdir( "file", 0750 ) != 0 ) {
+	if ( errno != EEXIST ) {
+	    perror( "file" );
+	    exit( 1 );
+	}
+    }
+    if ( mkdir( "special", 0750 ) != 0 ) {
+	if ( errno != EEXIST ) {
+	    perror( "file" );
+	    exit( 1 );
+	}
+    }
+    if ( mkdir( "tmp", 0750 ) != 0 ) {
+	if ( errno != EEXIST ) {
+	    perror( "tmp" );
+	    exit( 1 );
+	}
+    }
+    if ( mkdir( "tmp/file", 0750 ) != 0 ) {
+	if ( errno != EEXIST ) {
+	    perror( "tmp/file" );
+	    exit( 1 );
+	}
+    }
+    if ( mkdir( "tmp/transcript", 0750 ) != 0 ) {
+	if ( errno != EEXIST ) {
+	    perror( "tmp/transcript" );
+	    exit( 1 );
+	}
+    }
+    if ( mkdir( "transcript", 0750 ) != 0 ) {
+	if ( errno != EEXIST ) {
+	    perror( "transcript" );
+	    exit( 1 );
+	}
+    }
+
     if ( authlevel != 0 ) {
 	/* Setup SSL */
 
@@ -246,59 +298,6 @@ main( ac, av )
 	    ssl_mode = SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
 	}
         SSL_CTX_set_verify( ctx, ssl_mode, NULL );
-    }
-
-    if ( dontrun ) {
-	exit( 0 );
-    }
-
-    if ( chdir( radmind_path ) < 0 ) {
-	perror( radmind_path );
-	exit( 1 );
-    }
-
-    /* Create directory structure */
-    if ( mkdir( "command", 0750 ) != 0 ) {
-	if ( errno != EEXIST ) {
-	    perror( "command" );
-	    exit( 1 );
-	}
-    }
-    if ( mkdir( "file", 0750 ) != 0 ) {
-	if ( errno != EEXIST ) {
-	    perror( "file" );
-	    exit( 1 );
-	}
-    }
-    if ( mkdir( "special", 0750 ) != 0 ) {
-	if ( errno != EEXIST ) {
-	    perror( "file" );
-	    exit( 1 );
-	}
-    }
-    if ( mkdir( "tmp", 0750 ) != 0 ) {
-	if ( errno != EEXIST ) {
-	    perror( "tmp" );
-	    exit( 1 );
-	}
-    }
-    if ( mkdir( "tmp/file", 0750 ) != 0 ) {
-	if ( errno != EEXIST ) {
-	    perror( "tmp/file" );
-	    exit( 1 );
-	}
-    }
-    if ( mkdir( "tmp/transcript", 0750 ) != 0 ) {
-	if ( errno != EEXIST ) {
-	    perror( "tmp/transcript" );
-	    exit( 1 );
-	}
-    }
-    if ( mkdir( "transcript", 0750 ) != 0 ) {
-	if ( errno != EEXIST ) {
-	    perror( "transcript" );
-	    exit( 1 );
-	}
     }
 
     if ( port == 0 ) {
