@@ -25,8 +25,6 @@ rmdirs( char *path )
     struct dirent	*dirent;
     struct stat		st;
 
-    printf( "rmdir on: %s\n", path );
-
     if (( dir = opendir( path )) == NULL ) {
 	return( -1 );
     }
@@ -73,18 +71,18 @@ rmdirs( char *path )
 		fprintf( stderr, "%s: %s\n", temp, strerror( errno ));
 		goto error;
 	    }
+	} else {
+	    if ( unlink( temp ) != 0 ) {
+		fprintf( stderr, "%s: %s\n", temp, strerror( errno ));
+		goto error;
+	    }
 	}
-	if ( unlink( temp ) != 0 ) {
-	    fprintf( stderr, "%s: %s\n", temp, strerror( errno ));
-	    goto error;
-	}
-	printf( "unlinking %s\n", temp );
     }
 
     if ( closedir( dir ) != 0 ) {
 	return( -1 );
     }
-    if ( unlink( path ) != 0 ) {
+    if ( rmdir( path ) != 0 ) {
 	return( -1 );
     }
 

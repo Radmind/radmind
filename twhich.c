@@ -175,7 +175,11 @@ main( int argc, char **argv )
 
 	switch( *av[ 0 ] ) {
 	case 's':
+	    /* special transcript should always be searched first */
 	    specialfile++;
+	    new_node = head;
+	    head = create_node( "special.T" );
+	    head->next = new_node;
 	    if (( d_path = decode( av[ 1 ] )) == NULL ) {
 		fprintf( stderr, "line %d: path too long\n", linenum );
 		exit( 2 );
@@ -188,6 +192,7 @@ main( int argc, char **argv )
 		}
 	    } 
 	    break;
+
 	case 'n':
 	case 'p':
 	    new_node = create_node( av[ 1 ] );
@@ -199,6 +204,10 @@ main( int argc, char **argv )
 		"%s: line %d: Invalid command line - unknown type\n",
 		kfile, linenum );
 	    exit( 2 );
+	}
+
+	if ( specialfile && !displayall ) {
+	    break;
 	}
     }
     /* Close kfile */
