@@ -743,6 +743,7 @@ read_kfile( char *kfile, int location )
     int		length, ac, linenum = 0;
     char	line[ MAXPATHLEN ];
     char	fullpath[ MAXPATHLEN ];
+    char	*subpath;
     char	**av;
     FILE	*fp;
 
@@ -783,9 +784,13 @@ read_kfile( char *kfile, int location )
 	    break;
 
 	case K_SERVER:
-	    if ( snprintf( fullpath, MAXPATHLEN,
-		    "%s/transcript/%s", _RADMIND_PATH,
-		    av[ 1 ] ) >= MAXPATHLEN ) {
+	    if ( *av[ 0 ] == 'k' ) {
+		subpath = "command";
+	    } else {
+		subpath = "transcript";
+	    }
+	    if ( snprintf( fullpath, MAXPATHLEN, "%s/%s/%s", _RADMIND_PATH,
+			subpath, av[ 1 ] ) >= MAXPATHLEN ) {
 		fprintf( stderr, "command: line %d: path too long\n",
 			linenum );
 		fprintf( stderr, "command: line %d: %s%s\n",
