@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -318,7 +319,8 @@ done:
 	    }
 
 	    if ( rename( upath, tpath ) != 0 ) {
-		fprintf( stderr, "rename: %s %s\n", upath, tpath );
+		fprintf( stderr, "rename %s to %s failed: %s\n", upath, tpath,
+		    strerror( errno ));
 		exit( 2 );
 	    }
 	    if ( verbose ) printf( "%s: updated\n", transcript );
