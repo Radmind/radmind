@@ -44,7 +44,7 @@ extern int		errno;
  */
 
     int 
-retr( SNET *sn, char *pathdesc, char *path, char *temppath, size_t transize,
+retr( SNET *sn, char *pathdesc, char *path, char *temppath, ssize_t transize,
     char *trancksum )
 {
     struct timeval      tv;
@@ -108,7 +108,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, size_t transize,
     }
     size = atoi( line );
     if ( verbose ) printf( "<<< %ld\n<<< ", (long)size );
-    if ( transize != 0 && size != transize ) {
+    if ( transize >= 0 && size != transize ) {
 	fprintf( stderr, "line %d: size in transcript does not match size"
 	    "from server\n", linenum );
 	return( -1 );
@@ -176,7 +176,7 @@ error3:
 
     int
 retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
-    size_t transize, char *trancksum )
+    ssize_t transize, char *trancksum )
 {
     int				dfd, rfd, rc, md_len;
     size_t			size, rsize;
@@ -230,7 +230,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     }
     size = atol( line );
     if ( verbose ) printf( "<<< %ld\n<<< ", size );
-    if ( transize != 0 && size != transize ) {
+    if ( transize >= 0 && size != transize ) {
 	fprintf( stderr, "line %d: size in transcript does not match size"
 	    "from server\n", linenum );
 	return( -1 );
@@ -429,7 +429,7 @@ error1:
 
     int
 retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
-    size_t transize, char *trancksum )
+    ssize_t transize, char *trancksum )
 {
     errno = ENOTSUP;
     return( -1 );

@@ -7,9 +7,9 @@ SNET * connectsn( char *host, int port );
 int closesn( SNET *sn );
 
 int retr( SNET *sn, char *pathdesc, char *path, char *temppath,
-    size_t transize, char *trancksum );
+    ssize_t transize, char *trancksum );
 int retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
-    size_t transize, char *trancksum );
+    ssize_t transize, char *trancksum );
 
 int n_stor_file( SNET *sn, char *pathdesc, char *path );
 int stor_file( SNET *sn, char *pathdesc, char *path, size_t transize,
