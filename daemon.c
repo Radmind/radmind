@@ -25,6 +25,8 @@
 
 int		debug = 0;
 int		backlog = 5;
+int		verbose = 0;
+int		chksum = 0;
 char		*path_radmind = _PATH_RADMIND;
 char		*remote_host;
 
