@@ -1,43 +1,36 @@
-# Do not use sym links when creating packages for OS X
+SHELL = /bin/sh
 
-DESTDIR=/usr/local
-MANDIR=${DESTDIR}/man
-BINDIR=${DESTDIR}/bin
-SBINDIR=${DESTDIR}/sbin
+
+prefix=/usr/local
+exec_prefix=${prefix}
+MANDIR=${prefix}/man
+BINDIR=${exec_prefix}/bin
+SBINDIR=${exec_prefix}/sbin
+
+# For radmind tools
+VARDIR=/var/radmind
 
 # For server
-VARDIR=/var/radmind
 CONFIGFILE=${VARDIR}/config
 TRANSCRIPTDIR=${VARDIR}/transcript
 
 # For client
 COMMANDFILE=${VARDIR}/client/command.K
-GNU_DIFF=/usr/bin/diff
+GNU_DIFF=/usr/local/gnu/bin/diff
 RADMIND_HOST=radmind
 
 RADMINDSYSLOG=LOG_LOCAL7
 
-# Solaris
-CC=	gcc
-CWARN=	-Wall -Wmissing-prototypes -Wconversion
-ADDLIBS=	-lnsl -lsocket
-INSTALL=	/usr/ucb/install
+CWARN=	-Wall -Wmissing-prototypes -Wconversion -Werror
 OPENSSL=	/usr/local/openssl
+CC = gcc
+LDFLAGS = 
+LIBS = -lsocket -lnsl 
+INSTALL = ./install-sh -c
 
-# MacOSX
-#CC=	cc
-#CWARN=	-Wall -Wmissing-prototypes -Wconversion
-#ADDLIBS=
-#INSTALL=	install
-#OPENSSL=
-
-#
-# Should not need to edit anything after here.
-#
-
-CFLAGS=		${CWARN} ${OSNAME} ${INCPATH}
 INCPATH=	-I${OPENSSL}/include -Ilibsnet
-LDFLAGS=	-L${OPENSSL}/lib -Llibsnet ${ADDLIBS} -lsnet -lcrypto
+CFLAGS=		${CWARN} ${INCPATH} -g -O2
+LDFLAGS=	-L${OPENSSL}/lib -Llibsnet ${LIBS} -lsnet -lcrypto
 
 BINTARGETS=     fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff twhich
 MAN1TARGETS=    fsdiff.1 ktcheck.1 lapply.1 lcksum.1 lcreate.1 lfdiff.1 \

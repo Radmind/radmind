@@ -31,7 +31,7 @@ connectsn( char *host, int port )
     struct timeval      tv;
     struct hostent      *he;
     struct sockaddr_in  sin;
-    SNET                *sn;
+    SNET                *sn = NULL; 
 
 
     /* Make network connection */

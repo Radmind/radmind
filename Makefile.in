@@ -7,9 +7,10 @@ MANDIR=@mandir@
 BINDIR=@bindir@
 SBINDIR=@sbindir@
 
-# For server
+# For radmind tools
 VARDIR=/var/radmind
 
+# For server
 CONFIGFILE=${VARDIR}/config
 TRANSCRIPTDIR=${VARDIR}/transcript
 
@@ -20,18 +21,16 @@ RADMIND_HOST=radmind
 
 RADMINDSYSLOG=LOG_LOCAL7
 
-CWARN=	-Wall -Wmissing-prototypes -Wconversion
+CWARN=	-Wall -Wmissing-prototypes -Wconversion -Werror
 OPENSSL=	/usr/local/openssl
 CC = @CC@
-CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 INSTALL = @INSTALL@
 
-CFLAGS=		${CWARN} ${OSNAME} ${INCPATH} @CFLAGS@
 INCPATH=	-I${OPENSSL}/include -Ilibsnet
-#LDFLAGS=	-L${OPENSSL}/lib -Llibsnet ${ADDLIBS} -lsnet -lcrypto
-LDFLAGS=	${LIBS}
+CFLAGS=		${CWARN} ${INCPATH} @CFLAGS@
+LDFLAGS=	-L${OPENSSL}/lib -Llibsnet ${LIBS} -lsnet -lcrypto
 
 BINTARGETS=     fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff twhich
 MAN1TARGETS=    fsdiff.1 ktcheck.1 lapply.1 lcksum.1 lcreate.1 lfdiff.1 \

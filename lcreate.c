@@ -60,10 +60,10 @@ main( int argc, char **argv )
     int			negative = 0, tran_only = 0;
     extern int		optind;
     struct servent	*se;
-    SNET          	*sn;
+    SNET          	*sn = NULL;
     char		type;
     char		*tname = NULL, *host = _RADMIND_HOST; 
-    char		*p,*dpath, tline[ 2 * MAXPATHLEN ];
+    char		*p,*dpath = NULL, tline[ 2 * MAXPATHLEN ];
     char		pathdesc[ 2 * MAXPATHLEN ];
     char		**targv;
     char                cksumval[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];

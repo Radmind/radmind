@@ -196,7 +196,7 @@ main( int argc, char **argv )
 {
     int			c, port = htons( 6662 ), err = 0;
     extern int          optind;
-    FILE		*f; 
+    FILE		*f = NULL; 
     char		*host = _RADMIND_HOST;
     struct servent	*se;
 
@@ -211,7 +211,7 @@ main( int argc, char **argv )
     struct stat		st;
     struct node		*head= NULL, *new_node, *node;
     ACAV		*acav;
-    SNET		*sn;
+    SNET		*sn = NULL;
 
     while (( c = getopt ( argc, argv, "c:h:np:qVv" )) != EOF ) {
 	switch( c ) {

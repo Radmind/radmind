@@ -52,7 +52,7 @@ main( int argc, char **argv )
     char		path[ 2 * MAXPATHLEN ];
     char		upath[ 2 * MAXPATHLEN ];
     char		lcksum[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
-    FILE		*f, *ufs;
+    FILE		*f, *ufs = NULL;
     struct stat		st;
     ssize_t		cksumsize;
 

@@ -404,7 +404,7 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 transcript( struct pathinfo *new )
 {
 
-    int			move;
+    int			move = -1; 
     int 		len;
     char		epath[ MAXPATHLEN ];
     char		*path;
