@@ -69,14 +69,14 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, ssize_t transize,
 
     if ( verbose ) printf( ">>> RETR %s\n", pathdesc );
     if ( snet_writef( sn, "RETR %s\n", pathdesc ) < 0 ) {
-	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+	fprintf( stderr, "retrieve %s failed: 1-%s\n", pathdesc,
 	    strerror( errno ));
 	return( 1 );
     }
 
     tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+	fprintf( stderr, "retrieve %s failed: 2-%s\n", pathdesc,
 	    strerror( errno ));
 	return( 1 );
     }
@@ -103,7 +103,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, ssize_t transize,
     /* Get file size from server */
     tv = timeout;
     if (( line = snet_getline( sn, &tv )) == NULL ) {
-	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+	fprintf( stderr, "retrieve %s failed: 3-%s\n", pathdesc,
 	    strerror( errno ));
 	returnval = 1;
 	goto error;
@@ -121,7 +121,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, ssize_t transize,
 	tv = timeout;
 	if (( rr = snet_read( sn, buf, (int)MIN( sizeof( buf ), size ),
 		&tv )) <= 0 ) {
-	    fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+	    fprintf( stderr, "retrieve %s failed: 4-%s\n", pathdesc,
 		strerror( errno ));
 	    returnval = 1;
 	    goto error;
@@ -140,7 +140,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, ssize_t transize,
 
     tv = timeout;
     if (( line = snet_getline( sn, &tv )) == NULL ) {
-	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+	fprintf( stderr, "retrieve %s failed: 5-%s\n", pathdesc,
 	    strerror( errno ));
 	returnval = 1;
 	goto error;
@@ -210,14 +210,14 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 
     if ( verbose ) printf( ">>> RETR %s\n", pathdesc );
     if ( snet_writef( sn, "RETR %s\n", pathdesc ) < 0 ) {
-	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+	fprintf( stderr, "retrieve applefile %s failed: 1-%s\n", pathdesc,
 	    strerror( errno ));
 	return( 1 );
     }
 
     tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+	fprintf( stderr, "retrieve applefile %s failed: 2-%s\n", pathdesc,
 	    strerror( errno ));
 	return( 1 );
     }
@@ -230,7 +230,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     /* Get file size from server */
     tv = timeout;
     if (( line = snet_getline( sn, &tv )) == NULL ) {
-	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+	fprintf( stderr, "retrieve applefile %s failed: 3-%s\n", pathdesc,
 	    strerror( errno ));
 	return( 1 );
     }
@@ -244,21 +244,21 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     if ( size < ( AS_HEADERLEN + ( 3 * sizeof( struct as_entry )) +
 	    sizeof( finfo ))) {
 	fprintf( stderr,
-	    "retrieve %s failed: AppleSingle-encoded file too short\n", path );
+	    "retrieve applefile %s failed: AppleSingle-encoded file too short\n", path );
 	return( 1 );
     }
 
     /* read header to determine if file is encoded in applesingle */
     tv = timeout;
     if (( rc = snet_read( sn, ( char * )&ah, AS_HEADERLEN, &tv )) <= 0 ) {
-	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+	fprintf( stderr, "retrieve applefile %s failed: 4-%s\n", pathdesc,
 	    strerror( errno ));
 	return( 1 );
     }
     if (( rc != AS_HEADERLEN ) ||
 	    ( memcmp( &as_header, &ah, AS_HEADERLEN ) != 0 )) {
 	fprintf( stderr,
-	    "retrieve %s failed: corrupt AppleSingle-encoded file\n", path );
+	    "retrieve applefile %s failed: corrupt AppleSingle-encoded file\n", path );
 	return( 1 );
     }
     if ( cksum ) {
@@ -271,13 +271,13 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     tv = timeout;
     if (( rc = snet_read( sn, ( char * )&ae_ents,
 	    ( 3 * sizeof( struct as_entry )), &tv )) <= 0 ) {
-	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+	fprintf( stderr, "retrieve applefile %s failed: 5-%s\n", pathdesc,
 	    strerror( errno ));
 	return( 1 );
     }
     if ( rc != ( 3 * sizeof( struct as_entry ))) {
 	fprintf( stderr,
-	    "retrieve %s failed: corrupt AppleSingle-encoded file\n", path );
+	    "retrieve applefile %s failed: corrupt AppleSingle-encoded file\n", path );
 	return( 1 );
     }
 
@@ -293,13 +293,13 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     /* read finder info */
     tv = timeout;
     if (( rc = snet_read( sn, finfo, sizeof( finfo ), &tv )) <= 0 ) {
-	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+	fprintf( stderr, "retrieve applefile %s failed: 6-%s\n", pathdesc,
 	    strerror( errno ));
 	return( 1 );
     }
     if ( rc != sizeof( finfo )) {
 	fprintf( stderr,
-	    "retrieve %s failed: corrupt AppleSingle-encoded file\n", path );
+	    "retrieve applefile %s failed: corrupt AppleSingle-encoded file\n", path );
 	return( 1 );
     }
     if ( cksum ) {
@@ -340,7 +340,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	    tv = timeout;
 	    if (( rc = snet_read( sn, buf, ( int )MIN( sizeof( buf ), rsize ),
 		    &tv )) <= 0 ) {
-		fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+		fprintf( stderr, "retrieve applefile %s failed: 7-%s\n", pathdesc,
 		    strerror( errno ));
 		returnval = 1;
 		goto error2;
@@ -368,7 +368,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     	tv = timeout;
     	if (( rc = snet_read( sn, buf, (int)MIN( sizeof( buf ), size ),
 		&tv )) <= 0 ) {
-	    fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+	    fprintf( stderr, "retrieve applefile %s failed: 8-%s\n", pathdesc,
 		strerror( errno ));
 	    returnval = 1;
 	    goto error1;
@@ -395,13 +395,13 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     if ( setattrlist( temppath, &alist, finfo, sizeof( finfo ),
 	    FSOPT_NOFOLLOW ) != 0 ) {
 	fprintf( stderr,
-	    "retrieve %s failed: Could not set attributes\n", pathdesc );
+	    "retrieve applefile %s failed: Could not set attributes\n", pathdesc );
 	return( -1 );
     }
 
     tv = timeout;
     if (( line = snet_getline( sn, &tv )) == NULL ) {
-	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
+	fprintf( stderr, "retrieve applefile %s failed: 9-%s\n", pathdesc,
 	    strerror( errno ));
         return( 1 );
     }
