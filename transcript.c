@@ -11,7 +11,7 @@
 #include "transcript.h"
 #include "argcargv.h"
 #include "code.h"
-#include "convert.h"
+#include "radstat.h"
 #include "chksum.h"
 #include "pathcmp.h"
 #include "applefile.h"
@@ -409,7 +409,7 @@ transcript( struct pathinfo *new )
      * exhausted, to consume any remaining transcripts.
      */
     if ( new != NULL ) {
-	switch ( getfsoinfo( new->pi_name, &new->pi_stat, &new->pi_type,
+	switch ( radstat( new->pi_name, &new->pi_stat, &new->pi_type,
 		new->pi_hfs_finfo )) {
 	case 0:
 	    break;
