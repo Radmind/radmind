@@ -413,12 +413,11 @@ f_retr( SNET *sn, int ac, char **av )
 	return( 1 );
     }
 
-    snet_writef( sn, "%d Retrieving file\r\n", 240 );
     /*
      * Here's a problem.  Do we need to add long long support to
      * snet_writef?
      */
-    snet_writef( sn, "%" PRIofft "d\r\n", st.st_size );
+    snet_writef( sn, "240 Retrieving file\r\n%" PRIofft "d\r\n", st.st_size );
 
     /* dump file */
 
