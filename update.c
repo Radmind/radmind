@@ -218,7 +218,7 @@ update( const char *path, char *displaypath, int present, int newfile,
 	gid = atoi( targv[ 4 ] );
 	if ( !present ) {
 	    mode = mode | S_IFIFO;
-	    if ( mknod( path, mode, 0 ) != 0 ){
+	    if ( mkfifo( path, mode ) != 0 ){
 		perror( path );
 		return( 1 );
 	    }
