@@ -106,9 +106,7 @@ t_parse( struct transcript *tran )
 	strcpy( tran->t_pinfo.pi_link, epath );
 	break;
 
-#ifdef __APPLE__
     case 'a':				    /* hfs applefile */
-#endif __APPLE__
     case 'f':				    /* file */
 	if ( ac != 8 ) {
 	    fprintf( stderr, "%s: line %d: expected 8 arguments, got %d\n",
@@ -191,9 +189,7 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 	fprintf( outtran, "%s\n", epath );
 	break;
 
-#ifdef __APPLE__
     case 'a':		/* hfs applesingle file */
-#endif __APPLE__
     case 'f':
 	if (( edit_path == FS2TRAN ) && (( flag == PR_TRAN_ONLY ) || 
 		( flag == PR_DOWNLOAD ))) {
@@ -273,15 +269,7 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
      * after this point, name is in the fs, so if it's 'f', and
      * checksums are on, get the checksum
      */
-#ifdef __APPLE__
-    if ( chksum && fs->pi_type == 'a' ) {
-	if ( do_achksum( fs->pi_name, fs->pi_chksum_b64 ) < 0 ) {
-	    perror( fs->pi_name );
-	    exit( 1 );
-	}
-    }
-#endif __APPLE__
-    if ( chksum && fs->pi_type == 'f' ) {
+    if ( chksum && ( fs->pi_type == 'f' || fs->pi_type == 'a' )) {
 	if ( do_chksum( fs->pi_name, fs->pi_chksum_b64 ) < 0 ) {
 	    perror( fs->pi_name );
 	    exit( 1 );
@@ -306,9 +294,7 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 
     /* compare the other components for each file type */
     switch( fs->pi_type ) {
-#ifdef __APPLE__
     case 'a':			    /* hfs applefile */
-#endif __APPLE__
     case 'f':			    /* file */
 	if ( tran->t_type != T_NEGATIVE ) {
 	    if (( fs->pi_stat.st_size != tran->t_pinfo.pi_stat.st_size ) ||
