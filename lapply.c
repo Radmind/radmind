@@ -88,8 +88,6 @@ apply( FILE *f, char *parent, SNET *sn )
     while ( fgets( tline, MAXPATHLEN, f ) != NULL ) {
 	linenum++;
 
-	if ( verbose ) printf( "\n%d %s", linenum, tline );
-
 	len = strlen( tline );
         if (( tline[ len - 1 ] ) != '\n' ) {
 	    fprintf( stderr, "%s: line too long\n", tline );
@@ -179,7 +177,7 @@ apply( FILE *f, char *parent, SNET *sn )
 	}
 
 	/* UPDATE */
-	if ( update( path, present, st, tac, acav->acv_argv ) != 0 ) {
+	if ( update( path, present, st, tac, targv ) != 0 ) {
 	    perror( "update" );
 	    return( 1 );
 	}

@@ -20,6 +20,8 @@ update( char *path, int present, struct stat st, int tac, char **targv )
     gid_t               gid;
     dev_t               dev;
 
+    if ( verbose ) printf( " Updating:" );
+
     switch ( *targv[ 0 ] ) {
     case 'f':
 	if ( tac != 8 ) {
@@ -36,7 +38,7 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 		perror( path );
 		return( 1 );
 	    }
-	    if ( verbose ) printf( "    Updating %s mode\n", path );
+	    if ( verbose ) printf( " mode" );
 	}
 	if( uid != st.st_uid  || gid != st.st_gid ) {
 	    if ( lchown( path, uid, gid ) != 0 ) {
@@ -44,23 +46,21 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 		return( 1 );
 	    }
 	    if ( uid != st.st_uid ) {
-		if ( verbose ) printf( "    Updating %s uid\n", path );
+		if ( verbose ) printf( " uid" );
 	    }
 	    if ( gid != st.st_gid ) {
-		if ( verbose ) printf( "    Updating %s gid\n", path );
+		if ( verbose ) printf( " gid" );
 	    }
 	}
 
 	if( times.modtime != st.st_mtime ) {
 	    
-	    /*Is this what I should to for access time? */
-
 	    times.actime = st.st_atime;
 	    if ( utime( path, &times ) != 0 ) {
 		perror( path );
 		return( 1 );
 	    }
-	    if ( verbose ) printf( "    Updating %s time\n", path ); 
+	    if ( verbose ) printf( " time" ); 
 	}
 	break;
 
@@ -87,7 +87,7 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 		return( 1 );
 	    }
 	    present = 1;
-	    if ( verbose ) printf( "    %s created\n", path );
+	    if ( verbose ) printf( " (%s created)", path );
 	}
 
 	/* check mode */
@@ -96,7 +96,7 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 		perror( path );
 		return( 1 );
 	    }
-	    if ( verbose ) printf( "    Updating %s mode\n", path );
+	    if ( verbose ) printf( " mode" );
 	}
 
 	/* check uid & gid */
@@ -106,10 +106,10 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 		return( 1 );
 	    }
 	    if ( uid != st.st_uid ) {
-		if ( verbose ) printf( "    Updating %s uid\n", path );
+		if ( verbose ) printf( " uid" );
 	    }
 	    if ( gid != st.st_gid ) {
-		if ( verbose ) printf( "    Updating %s gid\n", path );
+		if ( verbose ) printf( " gid" );
 	    }
 	}
 	break;
@@ -124,7 +124,7 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 	    perror( path );
 	    return( 1 );
 	}
-	if ( verbose ) printf( "    %s hard link to %s created\n",
+	if ( verbose ) printf( " (%s hard link to %s created)",
 	    path, targv[ 2 ] );
 	break;
 
@@ -145,7 +145,7 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 	    perror( path );
 	    return( 1 );
 	}
-	if ( verbose ) printf( "%s symbolic link to %s created\n",
+	if ( verbose ) printf( " (%s symbolic link to %s created)",
 	    path, targv[ 2 ] );
 	break;
 
@@ -169,7 +169,7 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 		return( 1 );
 	    }
 	    present = 1;
-	    if ( verbose ) printf( "%s created\n", path );
+	    if ( verbose ) printf( " (%s created)", path );
 	}
 	/* check mode */
 	if( mode != st.st_mode ) {
@@ -177,7 +177,7 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 		perror( path );
 		return( 1 );
 	    }
-	    if ( verbose ) printf( "    Updating %s mode\n", path );
+	    if ( verbose ) printf( " mode" );
 	}
 	/* check uid & gid */
 	if( uid != st.st_uid  || gid != st.st_gid ) {
@@ -186,10 +186,10 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 		return( 1 );
 	    }
 	    if ( uid != st.st_uid ) {
-		if ( verbose ) printf( "    Updating %s uid\n", path );
+		if ( verbose ) printf( " uid" );
 	    }
 	    if ( gid != st.st_gid ) {
-		if ( verbose ) printf( "    Updating %s gid\n", path );
+		if ( verbose ) printf( " gid" );
 	    }
 	}
 	break;
@@ -235,7 +235,7 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 		return( 1 );
 	    }
 	    present = 1;
-	    if ( verbose ) printf( "%s created\n", path );
+	    if ( verbose ) printf( " (%s created)", path );
 	}
 	/* check mode */
 	if( mode != st.st_mode ) {
@@ -243,7 +243,7 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 		perror( path );
 		return( 1 );
 	    }
-	    if ( verbose ) printf( "Updating %s mode\n", path );
+	    if ( verbose ) printf( " mode" );
 	}
 	/* check uid & gid */
 	if( uid != st.st_uid  || gid != st.st_gid ) {
@@ -252,10 +252,10 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 		return( 1 );
 	    }
 	    if ( uid != st.st_uid ) {
-		if ( verbose ) printf( "Updating %s uid\n", path );
+		if ( verbose ) printf( " uid" );
 	    }
 	    if ( gid != st.st_gid ) {
-		if ( verbose ) printf( "Updating %s gid\n", path );
+		if ( verbose ) printf( " gid" );
 	    }
 	}
 	break;
@@ -278,7 +278,7 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 		perror( path );
 		return( 1 );
 	    }
-	    if ( verbose ) printf( "    Updating %s mode\n", path );
+	    if ( verbose ) printf( " mode" );
 	}
 	/* check uid & gid */
 	if( uid != st.st_uid  || gid != st.st_gid ) {
@@ -287,10 +287,10 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 		return( 1 );
 	    }
 	    if ( uid != st.st_uid ) {
-		if ( verbose ) printf( "    Updating %s uid\n", path );
+		if ( verbose ) printf( " uid" );
 	    }
 	    if ( gid != st.st_gid ) {
-		if ( verbose ) printf( "    Updating %s gid\n", path );
+		if ( verbose ) printf( " gid" );
 	    }
 	}
 	break;
@@ -313,7 +313,7 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 		perror( path );
 		return( 1 );
 	    }
-	    if ( verbose ) printf( "    Updating %s mode\n", path );
+	    if ( verbose ) printf( " mode" );
 	}
 	/* check uid & gid */
 	if( uid != st.st_uid  || gid != st.st_gid ) {
@@ -322,10 +322,10 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 		return( 1 );
 	    }
 	    if ( uid != st.st_uid ) {
-		if ( verbose ) printf( "    Updating %s uid\n", path );
+		if ( verbose ) printf( " uid" );
 	    }
 	    if ( gid != st.st_gid ) {
-		if ( verbose ) printf( "    Updating %s gid\n", path );
+		if ( verbose ) printf( " gid" );
 	    }
 	}
 	break;
@@ -333,5 +333,7 @@ update( char *path, int present, struct stat st, int tac, char **targv )
 	printf( "%d: Unkown type %s\n", linenum, targv[ 0 ] );
 	return( 1 );
     }
+
+    if ( verbose ) printf( "\n" );
     return( 0 );
 }

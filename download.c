@@ -102,8 +102,6 @@ download( SNET *sn, char *transcript, char *path, char *chksumval )
 	size -= rr;
     }
 
-    if ( verbose ) printf( "\n" );
-
     if ( close( fd ) != 0 ) {
 	perror( temppath );
 	goto error;
