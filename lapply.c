@@ -253,11 +253,11 @@ filechecklist:
 
 	/* DOWNLOAD */
 	if ( *command == '+' ) {
-#ifdef DARWIN
+#ifdef __APPLE__
 	    if (( *targv[ 0 ] != 'f' ) || ( *targv[ 0 ] != 'a' )) {
-#else !DARWIN
+#else !__APPLE__
 	    if ( *targv[ 0 ] != 'f' ) {
-#endif DARWIN
+#endif __APPLE__
 		fprintf( stderr, "line %d: \"%c\" invalid download type\n",
 			linenum, *targv[ 0 ] );
 		return( 1 );
@@ -298,9 +298,9 @@ filechecklist:
 		perror( "update" );
 		return( 1 );
 	    }
-#ifdef DARWIN
+#ifdef __APPLE__
 	    // Convert apple single -> apple file here
-#endif
+#endif __APPLE__
 	    if ( rename( temppath, path ) != 0 ) {
 		perror( temppath );
 		return( 1 );

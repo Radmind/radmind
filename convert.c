@@ -9,15 +9,15 @@ t_convert( const char *path, char *finfo, int type  )
 {
     int nothfs = 0;
 
-#ifdef DARWIN
+#ifdef __APPLE__
     if ( type == S_IFDIR ) {
 	nothfs++;
     } else {
     	nothfs = chk_for_finfo( path, finfo );
     }
-#else
+#else !__APPLE__
     nothfs++;
-#endif
+#endif __APPLE__
 
     if ( nothfs ) {
 	switch( type ) {
@@ -31,10 +31,10 @@ t_convert( const char *path, char *finfo, int type  )
 	    return ( 'c' );
 	case S_IFBLK:
 	    return ( 'b' );
-#ifdef SOLARIS
+#ifdef sun
 	case S_IFDOOR:
 	    return ( 'D' );
-#endif SOLARIS
+#endif sun
 	case S_IFIFO:
 	    return ( 'p' );
 	case S_IFSOCK:
