@@ -102,7 +102,7 @@ main( int argc, char **argv )
     tpath = argv[ optind ];
 
     if ( err || ( argc - optind != 1 ) ) {
-	fprintf( stderr, "usage: %s [ -nqvV ] [ -P prefix ] ", argv[ 0 ] );
+	fprintf( stderr, "usage: %s [ -nqV ] [ -P prefix ] ", argv[ 0 ] );
 	fprintf( stderr, "-c checksum transcript\n" );
 	exit( 2 );
     }
