@@ -308,7 +308,7 @@ f_stat( SNET *sn, int ac, char *av[] )
 	break;
 
     case K_SPECIAL:
-	sprintf( path, "%s/%s-%s", "special", decode( av[ 2 ] ), remote_host );
+	sprintf( path, "%s/%s/%s", "special", remote_host, decode( av[ 2 ] ));
 	break;
 
     default:
@@ -427,14 +427,6 @@ f_stor( SNET *sn, int ac, char *av[] )
     struct timeval	tv;
 
     switch ( keyword( ac, av )) {
-    case K_COMMAND:
-	sprintf( upload, "tmp/%s", command_file );
-	break;
-
-    case K_SPECIAL:
-	sprintf( upload, "%s/%s-%s", "special",
-		decode( av[ 2 ] ), remote_host );
-	break;
 
     case K_TRANSCRIPT:
         sprintf( xscriptdir, "tmp/file/%s", decode( av[ 2 ] ));
