@@ -579,7 +579,8 @@ main( int argc, char **argv )
 	if ( !cksum ||
 		(( tst.st_size != lst.st_size ) ||
 		( strcmp( tcksum, lcksum) != 0 ))) {
-	    /* update special.T */
+	    change++;
+
 	    if ( update ) {
 		if ( rename( tempfile, path ) != 0 ) {
 		    fprintf( stderr, "rename failed: %s %s\n", tempfile,
@@ -587,9 +588,7 @@ main( int argc, char **argv )
 		    exit( 2 );
 		}
 		if ( !quiet ) printf( "%s: updated\n", path ); 
-		change++;
 	    } else {
-		/* No update */
 		if ( unlink( tempfile ) !=0 ) {
 		    perror( tempfile );
 		    exit( 2 );
