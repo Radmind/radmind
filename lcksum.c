@@ -247,7 +247,7 @@ main( int argc, char **argv )
 
 	/* check size */
 	if ( stat( path, &st) != 0 ) {
-	    perror( tpath );
+	    perror( path );
 	    exit( 2 );
 	}
 	if ( st.st_size != atoi( targv[ 6 ] ) ) {
