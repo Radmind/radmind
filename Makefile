@@ -1,12 +1,12 @@
 # Do not use sym links when creating packages for OS X
 
 DESTDIR=/usr/local
-MANDIR=${DESTDIR}/share/man
+MANDIR=${DESTDIR}/man
 BINDIR=${DESTDIR}/bin
 SBINDIR=${DESTDIR}/sbin
 
 # For server
-VARDIR=/private/var/radmind
+VARDIR=/var/radmind
 CONFIGFILE=${VARDIR}/config
 TRANSCRIPTDIR=${VARDIR}/transcript
 
@@ -18,18 +18,18 @@ RADMIND_HOST=radmind
 RADMINDSYSLOG=LOG_LOCAL7
 
 # Solaris
-#CC=	gcc
-#CWARN=	-Wall -Wmissing-prototypes -Wconversion
-#ADDLIBS=	-lnsl -lsocket
-#INSTALL=	/usr/ucb/install
-#OPENSSL=	/usr/local/openssl
+CC=	gcc
+CWARN=	-Wall -Wmissing-prototypes -Wconversion
+ADDLIBS=	-lnsl -lsocket
+INSTALL=	/usr/ucb/install
+OPENSSL=	/usr/local/openssl
 
 # MacOSX
-CC=	cc
-CWARN=	-Wall -Wmissing-prototypes -Wconversion
-ADDLIBS=
-INSTALL=	install
-OPENSSL=
+#CC=	cc
+#CWARN=	-Wall -Wmissing-prototypes -Wconversion
+#ADDLIBS=
+#INSTALL=	install
+#OPENSSL=
 
 #
 # Should not need to edit anything after here.
