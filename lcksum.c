@@ -63,7 +63,7 @@ main( int argc, char **argv )
 	    md = EVP_get_digestbyname( optarg );
 	    if ( !md ) {
 		fprintf( stderr, "%s: unsupported checksum\n", optarg );
-		exit( 1 );
+		exit( 2 );
 	    }
 	    cksum = 1;  
 	    break; 
@@ -191,20 +191,20 @@ main( int argc, char **argv )
 	if ( snprintf( path, MAXPATHLEN, "%s", decode( targv[ 1 ] ))
 		> MAXPATHLEN - 1) {
 	    fprintf( stderr, "line %d: path too long\n", linenum );
-	    exit( 1 );
+	    exit( 2 );
 	}
 	    
 	/* Check transcript order */
 	if ( prepath != 0 ) {
 	    if ( pathcmp( path, prepath ) < 0 ) {
 		fprintf( stderr, "line %d: bad sort order\n", linenum );
-		exit( 1 );
+		exit( 2 );
 	    }
 	}
 	len = strlen( targv[ 1 ] );
 	if ( snprintf( prepath, MAXPATHLEN, "%s", path) > MAXPATHLEN ) {
 	    fprintf( stderr, "line %d: path too long\n", linenum );
-	    exit( 1 );
+	    exit( 2 );
 	}
 
 	if (( tac != 8 )

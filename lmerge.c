@@ -149,7 +149,7 @@ getline:
 /*
  * exit codes:
  *	0  	okay	
- *	1	System error
+ *	2	System error
  */
 
     int
@@ -216,7 +216,7 @@ main( int argc, char **argv )
 	fprintf( stderr, "transcript1 transcript2\n" );
 	fprintf( stderr, "       %s -n [-vV] [ -u umask ] ", argv[ 0 ] );
 	fprintf( stderr, "transcript1 transcript2 dest\n" );
-	exit( 1 );
+	exit( 2 );
     }
 
     tpath = argv[ argc - 1 ];
@@ -224,7 +224,7 @@ main( int argc, char **argv )
 	/* Check for write access */
 	if ( access( argv[ argc - 1 ], W_OK ) != 0 ) {
 	    perror( argv[ argc - 1 ] );
-	    exit( 1 );
+	    exit( 2 );
 	}
 	tcount++;			/* add dest to tran merge list */
     }
@@ -233,7 +233,7 @@ main( int argc, char **argv )
     if ( ( trans = (struct tran**)malloc(
 	    sizeof( struct tran* ) * ( tcount ) ) ) == NULL ) {
 	perror( "malloc" );
-	exit( 1 );
+	exit( 2 );
     }
 
     /* loop over array of trans */
@@ -271,7 +271,7 @@ main( int argc, char **argv )
 	}
 	trans[ i ]->line = NULL;
 	if ( getnextline( trans[ i ] ) < 0 ) {
-	    exit( 1 );
+	    exit( 2 );
 	}
     }
 
@@ -295,11 +295,11 @@ main( int argc, char **argv )
 		(int)getpid()) > MAXPATHLEN -1 ) {
 	    fprintf( stderr, "%s/../file/%s.%d: path too long\n", tpath, tname,
 		(int)getpid());
-	    exit( 1 );
+	    exit( 2 );
 	}
 	if ( mkdir( npath, (mode_t)0777 ) != 0 ) {
 	    perror( npath );
-	    exit( 1 );
+	    exit( 2 );
 	}
     }
 
@@ -308,16 +308,16 @@ main( int argc, char **argv )
 	    > MAXPATHLEN - 1 ) {
 	fprintf( stderr, "%s/%s.%d: path too long\n", tpath, tname,
 	    (int)getpid());
-	exit( 1 );
+	exit( 2 );
     }
     if ( ( ofd = open( opath, O_WRONLY | O_CREAT | O_EXCL,
 	    0666 ) ) < 0 ) {
 	perror( opath );
-	exit( 1 );
+	exit( 2 );
     }
     if ( ( ofs = fdopen( ofd, "w" ) ) == NULL ) {
 	perror( opath );
-	exit( 1 );
+	exit( 2 );
     }
     
     /* merge */
@@ -368,18 +368,18 @@ main( int argc, char **argv )
 				"%s/../file/%s/%s: path too long\n",
 				trans[ j ]->path, trans[ j ]->name,
 				trans[ j ]->filepath );
-			    exit( 1 );
+			    exit( 2 );
 			}
 			if ( unlink( opath ) != 0 ) {
 			    perror( opath );
-			    exit( 1 );
+			    exit( 2 );
 			}
 			if ( verbose ) printf( "%s: %s: unlinked\n",
 			    trans[ j ]->name, trans[ j ]->filepath);
 		    }
 		    /* Advance lower precedence transcript */
 		    if ( getnextline( trans[ j ] ) < 0 ) {
-			exit( 1 );
+			exit( 2 );
 		    }
 		} else if ( cmpval > 0 ) {
 		    candidate = j;
@@ -417,7 +417,7 @@ main( int argc, char **argv )
 		fprintf( stderr, "%s/../file/%s/%s: path too long\n",
 		    trans[ candidate ]->path, trans[ fileloc ]->name,
 		    trans[ candidate ]->filepath );
-		exit( 1 );
+		exit( 2 );
 	    }
 
 	    if ( !force ) {
@@ -427,7 +427,7 @@ main( int argc, char **argv )
 		    fprintf( stderr, "%s/../file/%s.%d/%s: path too long\n",
 			tpath, tname, (int)getpid(),
 			trans[ candidate ]->filepath );
-		    exit( 1 );
+		    exit( 2 );
 		}
 	    } else {
 		if ( snprintf( npath, MAXPATHLEN, "%s/../file/%s/%s", tpath,
@@ -435,7 +435,7 @@ main( int argc, char **argv )
 			> MAXPATHLEN - 1 ) {
 		    fprintf( stderr, "%s/../file/%s/%s: path too long\n", 
 			tpath, tname, trans[ candidate ]->filepath );
-		    exit( 1 );
+		    exit( 2 );
 		}
 	    }
 
@@ -454,7 +454,7 @@ main( int argc, char **argv )
 				"%s/../file/%s.%d/%s: path too long\n",
 				tpath, tname, (int)getpid(),
 				trans[ candidate ]->filepath );
-			    exit( 1 );
+			    exit( 2 );
 			}
 		    } else {
 			if ( snprintf( npath, MAXPATHLEN, "%s/../file/%s/%s",
@@ -463,13 +463,13 @@ main( int argc, char **argv )
 			    fprintf( stderr,
 				"%s/../file/%s/%s: path too long\n",
 				tpath, tname, trans[ candidate ]->filepath );
-			    exit( 1 );
+			    exit( 2 );
 			}
 
 		    }
 		    if ( mkdirs( npath ) != 0 ) {
 			fprintf( stderr, "%s: mkdirs failed\n", npath );
-			exit( 1 );
+			exit( 2 );
 		    }
 		} 
 
@@ -478,7 +478,7 @@ main( int argc, char **argv )
 		    fprintf( stderr, "linking %s -> %s: ",
 			opath, npath );
 		    perror( "" );
-		    exit( 1 );
+		    exit( 2 );
 		}
 	    }
 	    if ( verbose ) printf( "%s: %s: merged into: %s\n",
@@ -489,11 +489,11 @@ outputline:
 	    /* Output line */
 	    if ( fputs( trans[ candidate ]->line, ofs ) == EOF ) {
 		perror( trans[ candidate ]->line );
-		exit( 1 );
+		exit( 2 );
 	    }
 skipline:
 	    if ( getnextline( trans[ candidate ] ) != 0 ) {
-		exit( 1 );
+		exit( 2 );
 	    }
 	}
     }
@@ -506,11 +506,11 @@ skipline:
 		    tname, node->path ) >= MAXPATHLEN ) {
 		fprintf( stderr, "%s/../file/%s/%s: path too long\n", 
 		    tpath, tname, node->path );
-		exit( 1 );
+		exit( 2 );
 	    }
 	    if ( rmdir( opath ) != 0 ) {
 		perror( opath );
-		exit( 1 );
+		exit( 2 );
 	    }
 	    if ( verbose ) printf( "%s: %s: unlinked\n", tname, node->path );
 	    free_node( node );
@@ -523,33 +523,33 @@ skipline:
 		tname, (int)getpid()) > MAXPATHLEN - 1 ) {
 	    fprintf( stderr, "%s/../file/%s.%d: path too long\n",
 		tpath, tname, (int)getpid());
-	    exit( 1 );
+	    exit( 2 );
 	}
 	if ( snprintf( npath, MAXPATHLEN, "%s/../file/%s", tpath, tname )
 		> MAXPATHLEN - 1 ) {
 	    fprintf( stderr, "%s/../file/%s: path too long\n", tpath, tname );
-	    exit( 1 );
+	    exit( 2 );
 	}
 	if ( rename( opath, npath ) != 0 ) {
 	    perror( npath );
-	    exit( 1 );
+	    exit( 2 );
 	}
     }
     if ( snprintf( opath, MAXPATHLEN, "%s/%s.%d", tpath, tname, (int)getpid())
 	    > MAXPATHLEN - 1 ) {
 	fprintf( stderr, "%s/%s.%d: path too long\n", tpath, tname,
 	    (int)getpid());
-	exit( 1 );
+	exit( 2 );
     }
     if ( snprintf( npath, MAXPATHLEN, "%s/%s", tpath, tname )
 	    > MAXPATHLEN - 1 ) {
 	fprintf( stderr, "%s/%s: path too long\n", tpath, tname );
-	exit( 1 );
+	exit( 2 );
     }
 
     if ( rename( opath, npath ) != 0 ) {
 	perror( npath );
-	exit ( 1 );
+	exit( 2 );
     }
 
     exit( 0 );

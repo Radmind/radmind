@@ -36,7 +36,7 @@ connectsn2( struct sockaddr_in *sin )
 
     if (( s = socket( PF_INET, SOCK_STREAM, NULL )) < 0 ) {
 	perror( "socket" );
-	exit( 1 );
+	exit( 2 );
     }
     if ( verbose ) printf( "trying %s... ", inet_ntoa( sin->sin_addr ));
     if ( connect( s, ( struct sockaddr *)sin,
@@ -48,7 +48,7 @@ connectsn2( struct sockaddr_in *sin )
     if ( verbose ) printf( "success!\n" );
     if ( ( sn = snet_attach( s, 1024 * 1024 ) ) == NULL ) {
 	perror( "snet_attach" );
-	exit( 1 );
+	exit( 2 );
     }
     tv = timeout;
     if ( ( line = snet_getline_multi( sn, logger, &tv) ) == NULL ) {
@@ -87,12 +87,12 @@ connectsn( char *host, int port )
 	    return( sn );
 	}
 	fprintf( stderr, "%s: connection failed\n", host );
-	exit( 1 );
+	exit( 2 );
     }
 
     if (( he = gethostbyname( host )) == NULL ) {
 	fprintf( stderr, "%s: Unknown host\n", host );
-	exit( 1 );
+	exit( 2 );
     }
     
     for ( i = 0; he->h_addr_list[ i ] != NULL; i++ ) {
@@ -103,7 +103,7 @@ connectsn( char *host, int port )
 	}
     }
     fprintf( stderr, "%s: connection failed\n", host );
-    exit( 1 );
+    exit( 2 );
 }
 
     int
@@ -115,12 +115,12 @@ closesn( SNET *sn )
     /* Close network connection */
     if ( snet_writef( sn, "QUIT\r\n" ) < 0 ) {
 	fprintf( stderr, "close failed: %s\n", strerror( errno ));
-	exit( 1 );
+	exit( 2 );
     }
     tv = timeout;
     if ( ( line = snet_getline_multi( sn, logger, &tv ) ) == NULL ) {
 	fprintf( stderr, "close failed: %s\n", strerror( errno ));
-	exit( 1 );
+	exit( 2 );
     }
     if ( *line != '2' ) {
 	perror( line );
@@ -128,7 +128,7 @@ closesn( SNET *sn )
     }
     if ( snet_close( sn ) != 0 ) {
 	fprintf( stderr, "close failed: %s\n", strerror( errno ));
-	exit( 1 );
+	exit( 2 );
     }
     return( 0 );
 }

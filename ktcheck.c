@@ -315,7 +315,7 @@ main( int argc, char **argv )
             md = EVP_get_digestbyname( optarg );
             if ( !md ) {
                 fprintf( stderr, "%s: unsupported checksum\n", optarg );
-                exit( 1 );
+                exit( 2 );
             }
             cksum = 1;
             break;

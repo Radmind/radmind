@@ -50,14 +50,14 @@ t_parse( struct transcript *tran )
 	if ( line[ length - 1 ] != '\n' ) {
 	    fprintf( stderr, "%s: line %d: line too long\n",
 		    tran->t_fullname, tran->t_linenum );
-	    exit( 1 );
+	    exit( 2 );
 	} 
     } while ((( ac = argcargv( line, &argv )) == 0 ) || ( *argv[ 0 ] == '#' ));
 
     if ( strlen( argv[ 0 ] ) != 1 ) {
 	fprintf( stderr, "%s: line %d: %s is too long to be a type\n",
 		tran->t_fullname, tran->t_linenum, argv[ 0 ] );
-	exit( 1 );
+	exit( 2 );
     }
 
     if ( argv[ 0 ][ 0 ] == '-' ) {
@@ -77,7 +77,7 @@ t_parse( struct transcript *tran )
     if ( pathcmp( epath, tran->t_pinfo.pi_name ) < 0 ) {
 	fprintf( stderr, "%s: line %d: bad sort order\n",
 		tran->t_fullname, tran->t_linenum );
-	exit( 1 );
+	exit( 2 );
     }
 
     strcpy( tran->t_pinfo.pi_name, epath );
@@ -91,7 +91,7 @@ t_parse( struct transcript *tran )
 	if ( ac != 5 ) {
 	    fprintf( stderr, "%s: line %d: expected 5 arguments, got %d\n",
 		    tran->t_fullname, tran->t_linenum, ac );
-	    exit( 1 );
+	    exit( 2 );
 	}
 	tran->t_pinfo.pi_stat.st_mode = strtol( argv[ 2 ], NULL, 8 );
 	tran->t_pinfo.pi_stat.st_uid = atoi( argv[ 3 ] );
@@ -103,7 +103,7 @@ t_parse( struct transcript *tran )
 	if ( ac != 7 ) {
 	    fprintf( stderr, "%s: line %d: expected 7 arguments, got %d\n",
 		    tran->t_fullname, tran->t_linenum, ac );
-	    exit( 1 );
+	    exit( 2 );
 	}
 	tran->t_pinfo.pi_stat.st_mode = strtol( argv[ 2 ], NULL, 8 );
 	tran->t_pinfo.pi_stat.st_uid = atoi( argv[ 3 ] );
@@ -118,7 +118,7 @@ t_parse( struct transcript *tran )
 	if ( ac != 3 ) {
 	    fprintf( stderr, "%s: line %d: expected 3 arguments, got %d\n",
 		    tran->t_fullname, tran->t_linenum, ac );
-	    exit( 1 );
+	    exit( 2 );
 	}
 	epath = decode( argv[ 2 ] );
 	strcpy( tran->t_pinfo.pi_link, epath );
@@ -129,7 +129,7 @@ t_parse( struct transcript *tran )
 	if ( ac != 8 ) {
 	    fprintf( stderr, "%s: line %d: expected 8 arguments, got %d\n",
 		    tran->t_fullname, tran->t_linenum, ac );
-	    exit( 1 );
+	    exit( 2 );
 	}
 	tran->t_pinfo.pi_stat.st_mode = strtol( argv[ 2 ], NULL, 8 );
 	tran->t_pinfo.pi_stat.st_uid = atoi( argv[ 3 ] );
@@ -140,7 +140,7 @@ t_parse( struct transcript *tran )
 	    if (( cksum ) && ( strcmp( "-", argv [ 7 ] ) == 0  )) {
 		fprintf( stderr, "%s: line %d: no cksums in transcript\n",
 			tran->t_fullname, tran->t_linenum );
-		exit( 1 );
+		exit( 2 );
 	    }
 	}
 	strcpy( tran->t_pinfo.pi_cksum_b64, argv[ 7 ] );
@@ -150,7 +150,7 @@ t_parse( struct transcript *tran )
 	fprintf( stderr,
 	    "%s: line %d: unknown file type '%c'\n",
 	    tran->t_fullname, tran->t_linenum, *argv[ 0 ] );
-	exit( 1 );
+	exit( 2 );
     }
 
     return;
@@ -238,7 +238,7 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 
     default:
 	fprintf( stderr, "PANIC! XXX OOPS!\n" );
-	exit( 1 );
+	exit( 2 );
     } 
 }
 
@@ -295,14 +295,14 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 	if ( fs->pi_type == 'f' ) {
 	    if ( do_cksum( fs->pi_name, fs->pi_cksum_b64 ) < 0 ) {
 		perror( fs->pi_name );
-		exit( 1 );
+		exit( 2 );
 	    }
 	} else if ( fs->pi_type == 'a' ) {
 	    if ( do_acksum( fs->pi_name, fs->pi_cksum_b64,
 	    	    &fs->afinfo )
 		    < 0 ) {
 		perror( fs->pi_name );
-		exit( 1 );
+		exit( 2 );
 	    }
 	}
     }
@@ -438,10 +438,10 @@ transcript( struct pathinfo *new )
 	    break;
 	case 1:
 	    fprintf( stderr, "%s is of an unknown type\n", new->pi_name );
-	    exit( 1 );
+	    exit( 2 );
 	default:
 	    perror( new->pi_name );
-	    exit( 1 );
+	    exit( 2 );
 	}
 
 	/* if it's multiply referenced, check if it's a hardlink */
@@ -514,7 +514,7 @@ transcript( struct pathinfo *new )
 
 	default :
 	    fprintf( stderr, "OOPS! XXX FAMINE and DESPAIR!\n" );
-	    exit( 1 );
+	    exit( 2 );
 	}
     }
 }
@@ -527,7 +527,7 @@ t_new( int type, char *fullname, char *shortname )
     if (( new = (struct transcript *)malloc( sizeof( struct transcript )))
 	    == NULL ) {
 	perror( "malloc" );
-	exit( 1 );
+	exit( 2 );
     }
     memset( new, 0, sizeof( struct transcript ));
 
@@ -542,7 +542,7 @@ t_new( int type, char *fullname, char *shortname )
 	strcpy( new->t_fullname, fullname );
 	if (( new->t_in = fopen( fullname, "r" )) == NULL ) {
 	    perror( fullname );
-	    exit( 1 );
+	    exit( 2 );
 	}
 	t_parse( new );
     }
@@ -579,7 +579,7 @@ transcript_init( char *kfile, int kfilemustexist )
     if (( fp = fopen( kfile, "r" )) == NULL ) {
 	if ( kfilemustexist || ( edit_path == APPLICABLE )) {
 	    perror( kfile );
-	    exit( 1 );
+	    exit( 2 );
 	}
 	return;
     }
@@ -601,7 +601,7 @@ transcript_init( char *kfile, int kfilemustexist )
 	length = strlen( line );
 	if ( line[ length - 1 ] != '\n' ) {
 	    fprintf( stderr, "command: line %d: line too long\n", linenum );
-	    exit( 1 );
+	    exit( 2 );
 	}
 
 	/* skips blank lines and comments */
@@ -612,7 +612,7 @@ transcript_init( char *kfile, int kfilemustexist )
 	if ( ac != 2 ) {
 	    fprintf( stderr, "command: line %d: expected 2 arguments, got %d\n",
 		    linenum, ac );
-	    exit ( 1 );
+	    exit( 2 );
 	} 
 
 	if ( strlen( kdir ) + strlen( av[ 1 ] ) + 2 > MAXPATHLEN ) {
@@ -620,7 +620,7 @@ transcript_init( char *kfile, int kfilemustexist )
 		    linenum );
 	    fprintf( stderr, "command: line %d: %s%s\n",
 		    linenum, kdir, av[ 1 ] );
-	    exit( 1 );
+	    exit( 2 );
 	}
 	sprintf( fullpath, "%s%s", kdir, av[ 1 ] );
 
@@ -637,7 +637,7 @@ transcript_init( char *kfile, int kfilemustexist )
 	default:
 	    fprintf( stderr, "command: line %d: '%s' invalid\n",
 		    linenum, av[ 0 ] );
-	    exit( 1 );
+	    exit( 2 );
 	}
     }
 
@@ -648,7 +648,7 @@ transcript_init( char *kfile, int kfilemustexist )
 	if ( strlen( kdir ) + strlen( special ) + 2 > MAXPATHLEN ) {
 	    fprintf( stderr, 
 		    "special path too long: %s%s\n", kdir, special );
-	    exit( 1 );
+	    exit( 2 );
 	}
 	sprintf( fullpath, "%s%s", kdir, special );
 	t_new( T_SPECIAL, fullpath, special );
@@ -656,7 +656,7 @@ transcript_init( char *kfile, int kfilemustexist )
 
     if ( tran_head->t_type == T_NULL  && edit_path == APPLICABLE ) {
 	fprintf( stderr, "-T option requires a non-NULL transcript\n" );
-	exit( 1 );
+	exit( 2 );
     }
 
     return;

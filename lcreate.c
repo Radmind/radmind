@@ -79,7 +79,7 @@ main( int argc, char **argv )
             md = EVP_get_digestbyname( optarg );
             if ( !md ) {
                 fprintf( stderr, "%s: unsupported checksum\n", optarg );
-                exit( 1 );
+                exit( 2 );
             }
             cksum = 1;
             break;
@@ -98,7 +98,7 @@ main( int argc, char **argv )
 	    if (( port = htons( atoi( optarg ))) == 0 ) {
 		if (( se = getservbyname( optarg, "tcp" )) == NULL ) {
 		    fprintf( stderr, "%s: service unknown\n", optarg );
-		    exit( 1 );
+		    exit( 2 );
 		}
 		port = se->s_port;
 	    }
@@ -141,7 +141,7 @@ main( int argc, char **argv )
 	fprintf( stderr, "[ -c checksum ] " );
 	fprintf( stderr, "[ -h host ] [-p port ] [ -t stored-name ] " );
 	fprintf( stderr, "difference-transcript\n" );
-	exit( 1 );
+	exit( 2 );
     }
 
     if ( network ) {
@@ -156,13 +156,13 @@ main( int argc, char **argv )
 
 	if (( sn = connectsn( host, port )) == NULL ) {
 	    fprintf( stderr, "%s:%d connection failed.\n", host, port );
-	    exit( 1 );
+	    exit( 2 );
 	}
 
 	if ( cksum ) {
 	    if ( do_cksum( argv[ optind ], cksumval ) < 0 ) {
 	       perror( tname );
-		exitcode = 1;
+		exitcode = 2;
 		goto done;
 	    }
 	}
@@ -188,7 +188,7 @@ main( int argc, char **argv )
 		fprintf( stderr, "failed to store transcript \"%s\"\n", tname );
 		break;
 	    }
-	    exitcode = 1;
+	    exitcode = 2;
 	    goto done;
 	}
 
@@ -199,14 +199,14 @@ main( int argc, char **argv )
 
     if (( tran = fopen( argv[ optind ], "r" )) < 0 ) {
 	perror( argv[ optind ] );
-	exit( 1 );
+	exit( 2 );
     }
 
     while ( fgets( tline, MAXPATHLEN, tran ) != NULL ) {
 	len = strlen( tline );
 	if (( tline[ len - 1 ] ) != '\n' ) {
 	    fprintf( stderr, "%s: line too long\n", tline );
-	    exitcode = 1;
+	    exitcode = 2;
 	    break;
 	}
 	linenum++;
@@ -219,7 +219,7 @@ main( int argc, char **argv )
 
 	if ( tac == 1 ) {
 	    fprintf( stderr, "Appliable transcripts cannot be uploaded.\n" );
-	    exitcode = 1;
+	    exitcode = 2;
 	    break;
 	}
 	if ( tac >= 2 && ( *targv[ 0 ] == 'f' || *targv[ 0 ] == 'a' )) {
@@ -228,19 +228,19 @@ main( int argc, char **argv )
 	    /* Verify transcript line is correct */
 	    if ( radstat( dpath, &st, &type, &afinfo ) != 0 ) {
 		perror( dpath );
-		exitcode = 1;
+		exitcode = 2;
 		break;
 	    }
 	    if ( *targv[ 0 ] != type ) {
 		fprintf( stderr, "line %d: file type wrong\n", linenum );
-		exitcode = 1;
+		exitcode = 2;
 		break;
 	    }
 
 	    if ( !network ) {
 		if ( access( dpath,  R_OK ) < 0 ) {
 		    perror( dpath );
-		    exitcode = 1;
+		    exitcode = 2;
 		    break;
 		}
 	    } else {
@@ -248,7 +248,7 @@ main( int argc, char **argv )
 			tname, targv[ 1 ] ) > ( MAXPATHLEN * 2 ) - 1 ) {
 		    fprintf( stderr, "STOR FILE %s %s: path description too \
 			long\n", tname, dpath );
-		    exitcode = 1;
+		    exitcode = 2;
 		    break;
 		}
 
@@ -256,7 +256,7 @@ main( int argc, char **argv )
 		    if (( rc = n_stor_file( sn, pathdesc,
 			    decode( targv[ 1 ] ))) < 0 ) {
 			fprintf( stderr, "failed to store file %s\n", dpath );
-			exitcode = 1;
+			exitcode = 2;
 			break;
 		    }
 		} else {
@@ -283,7 +283,7 @@ main( int argc, char **argv )
 				dpath );
 			    break;
 			}
-			exitcode = 1;
+			exitcode = 2;
 			goto done;
 		    }
 		}
@@ -295,7 +295,7 @@ done:
      if ( network ) {
 	 if (( closesn( sn )) != 0 ) {
 	     fprintf( stderr, "cannot close sn\n" );
-	     exitcode = 1;
+	     exitcode = 2;
 	 }
      }
 

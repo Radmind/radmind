@@ -70,14 +70,14 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, size_t transize,
     if ( snet_writef( sn, "RETR %s\n", pathdesc ) < 0 ) {
 	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	exit( 1 );
+	exit( 2 );
     }
 
     tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
 	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	exit( 1 );
+	exit( 2 );
     }
 
     if ( *line != '2' ) {
@@ -206,14 +206,14 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     if ( snet_writef( sn, "RETR %s\n", pathdesc ) < 0 ) {
 	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	exit( 1 );
+	exit( 2 );
     }
 
     tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
 	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	exit( 1 );
+	exit( 2 );
     }
 
     if ( *line != '2' ) {
@@ -226,7 +226,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     if (( line = snet_getline( sn, &tv )) == NULL ) {
 	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	exit( 1 );
+	exit( 2 );
     }
     size = atol( line );
     if ( transize != 0 && size != transize ) {
@@ -242,7 +242,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	    != AS_HEADERLEN ) {
 	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	exit( 1 );
+	exit( 2 );
     }
     if ( memcmp( &as_header, &ah, AS_HEADERLEN ) != 0 ) {
 	fprintf( stderr,
@@ -262,7 +262,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	    != ( 3 * sizeof( struct as_entry ))) {
 	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	exit( 1 );
+	exit( 2 );
     }
 
     /* Should we check for valid ae_ents here? */
@@ -280,7 +280,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	    != sizeof( finfo )) {
 	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	exit( 1 );
+	exit( 2 );
     }
     if ( cksum ) {
 	EVP_DigestUpdate( &mdctx, finfo, (unsigned int)rc );
@@ -338,7 +338,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     
 	if ( close( rfd ) < 0 ) {
 	    perror( rsrc_path );
-	    exit( 1 );
+	    exit( 2 );
 	}
     }
 
@@ -365,7 +365,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 
     if ( close( dfd ) < 0 ) {
 	perror( temppath );
-	exit( 1 );
+	exit( 2 );
     }
     if ( verbose ) printf( "\n" );
 

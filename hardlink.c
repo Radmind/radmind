@@ -62,7 +62,7 @@ d_insert( struct devlist **dev_head, struct pathinfo *pinfo )
     if (( new = ( struct devlist * ) malloc( sizeof( struct devlist ))) 
 	    == NULL ) {
 	perror( "d_insert malloc" );
-	exit( 1 );
+	exit( 2 );
     }
 
     new->d_dev = pinfo->pi_stat.st_dev; 
@@ -91,13 +91,13 @@ i_insert( struct devlist *dev_head, struct pathinfo *pinfo )
     if (( new = ( struct inolist * ) malloc( sizeof( struct inolist ))) 
 	    == NULL ) {
 	perror( "i_insert malloc" );
-	exit( 1 );
+	exit( 2 );
     }
 
     if (( new->i_name = ( char * ) malloc( strlen( pinfo->pi_name ) + 1 ))
 	    == NULL ) {
 	perror( "i_insert malloc" );
-	exit( 1 );
+	exit( 2 );
     }
 
     strcpy( new->i_name, pinfo->pi_name );
@@ -146,7 +146,7 @@ hardlink_changed( struct pathinfo *pinfo, int set )
     if (( dcur == NULL ) || ( pinfo->pi_stat.st_dev != dcur->d_dev )) {
 	fprintf( stderr, "hardlink_changed: %s: dev not found\n",
 		pinfo->pi_name );
-	exit( 1 );
+	exit( 2 );
     }
 
     for ( icur = dcur->d_ilist; icur != NULL; icur = icur->i_next ) {
@@ -158,7 +158,7 @@ hardlink_changed( struct pathinfo *pinfo, int set )
     if (( icur == NULL ) || ( pinfo->pi_stat.st_ino != icur->i_ino )) {
 	fprintf( stderr, "hardlink_changed: %s: ino not found\n",
 		pinfo->pi_name );
-	exit( 1 );
+	exit( 2 );
     }
 
     if ( set ) {

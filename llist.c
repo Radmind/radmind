@@ -21,7 +21,7 @@ ll_allocate( char *name )
     /* allocate space for next item in list */
     if (( new = (struct llist *)malloc( sizeof( struct llist ))) == NULL ) {
 	perror( "malloc" );
-	exit( 1 );
+	exit( 2 );
     } 
 
     /* copy info into new item */

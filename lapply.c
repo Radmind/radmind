@@ -219,7 +219,7 @@ main( int argc, char **argv )
             md = EVP_get_digestbyname( optarg );
             if ( !md ) {
                 fprintf( stderr, "%s: unsupported checksum\n", optarg );
-                exit( 1 );
+                exit( 2 );
             }
             cksum = 1;
             break;
@@ -233,7 +233,7 @@ main( int argc, char **argv )
 	    if (( port = htons ( atoi( optarg ))) == 0 ) {
 		if (( se = getservbyname( optarg, "tcp" )) == NULL ) {
 		    fprintf( stderr, "%s: service unkown\n", optarg );
-		    exit( 1 );
+		    exit( 2 );
 		}
 		port = se->s_port;
 	    }
@@ -283,7 +283,7 @@ main( int argc, char **argv )
 	fprintf( stderr, "usage: %s [ -nsV ] [ -q | -v ] ", argv[ 0 ] );
 	fprintf( stderr, "[ -c checksum ] [ -h host ] [ -p port ] " );
 	fprintf( stderr, "[ appliable-transcript ]\n" );
-	exit( 1 );
+	exit( 2 );
     }
 
     if ( network ) {
@@ -517,17 +517,17 @@ filechecklist:
 error2:
     if ( fclose( f ) != 0 ) {
 	perror( argv[ optind ] );
-	exit( 1 );
+	exit( 2 );
     }
 
 error1:
     if ( network ) {
 	if (( closesn( sn )) !=0 ) {
 	    fprintf( stderr, "can not close sn\n" );
-	    exit( 1 );
+	    exit( 2 );
 	}
     }
 
 error0:
-    exit( 1 );
+    exit( 2 );
 }

@@ -46,7 +46,7 @@ fs_walk( struct llist *path  )
     /* open directory */
     if (( dir = opendir( path->ll_pinfo.pi_name )) == NULL ) {
 	perror( path->ll_pinfo.pi_name );
-	exit( 1 );	
+	exit( 2 );	
     }
 
     /* read contents of directory */
@@ -63,7 +63,7 @@ fs_walk( struct llist *path  )
 	/* absolute pathname. add 2 for / and NULL termination.  */
 	if (( len + strlen( de->d_name ) + 2 ) > MAXPATHLEN ) {
 	    fprintf( stderr, "Absolute pathname too long\n" );
-	    exit( 1 );
+	    exit( 2 );
 	}
 
 	if ( path->ll_pinfo.pi_name[ len - 1 ] == '/' ) {
@@ -71,14 +71,14 @@ fs_walk( struct llist *path  )
 		    de->d_name ) > MAXPATHLEN ) {
                 fprintf( stderr, "%s%s: path too long\n",
                     path->ll_pinfo.pi_name, de->d_name );
-		exit( 1 );
+		exit( 2 );
 	    }
 	} else {
             if ( snprintf( temp, MAXPATHLEN, "%s/%s", path->ll_pinfo.pi_name,
                     de->d_name ) > MAXPATHLEN ) {
                 fprintf( stderr, "%s/%s: path too long\n",
                     path->ll_pinfo.pi_name, de->d_name );
-                exit( 1 );
+                exit( 2 );
             }
 	}
 
@@ -92,7 +92,7 @@ fs_walk( struct llist *path  )
 
     if ( closedir( dir ) != 0 ) {
 	perror( "closedir" );
-	exit( 1 );
+	exit( 2 );
     }
 
     /* call fswalk on each element in the sorted list */
@@ -127,14 +127,14 @@ main( int argc, char **argv )
             md = EVP_get_digestbyname( optarg );
             if ( !md ) {
                 fprintf( stderr, "%s: unsupported checksum\n", optarg );
-                exit( 1 );
+                exit( 2 );
             }
             cksum = 1;
             break;
 	case 'o':
 	    if (( outtran = fopen( optarg, "w" )) == NULL ) {
 		perror( optarg );
-		exit( 1 );
+		exit( 2 );
 	    }
 	    break;
 
@@ -187,7 +187,7 @@ main( int argc, char **argv )
 	fprintf( stderr, "usage: %s [ -C | { -T | -A } | -1 ] ", argv[ 0 ] );
 	fprintf( stderr, "[ -K command ] " );
 	fprintf( stderr, "[ -c cksumtype ] [ -o file ] path\n" );
-	exit ( 1 );
+	exit ( 2 );
     }
 
     /* initialize the transcripts */

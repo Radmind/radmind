@@ -22,7 +22,7 @@ encode( char *line )
 
     if ( strlen( line ) > MAXPATHLEN ) {
 	fprintf( stderr, "ERROR: The path is too long\n" );
-	exit( 1 );
+	exit( 2 );
     }
 
     temp = buf;
@@ -72,7 +72,7 @@ decode( char *line )
 
     if ( strlen( line ) > ( 2 * MAXPATHLEN )) {
 	fprintf( stderr, "ERROR:  The path name is too long\n" );
-	exit( 1 );
+	exit( 2 );
     }
 
     temp = buf;
