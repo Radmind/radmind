@@ -1085,7 +1085,7 @@ cmdloop( int fd, struct sockaddr_in *sin )
 	syslog( LOG_ERR, "snet_attach: %m" );
 	exit( 1 );
     }
-    remote_addr= strdup( inet_ntoa( sin->sin_addr ));
+    remote_addr = strdup( inet_ntoa( sin->sin_addr ));
 
     if (( hp = gethostbyaddr( (char *)&sin->sin_addr,
 	    sizeof( struct in_addr ), AF_INET )) == NULL ) {
