@@ -27,7 +27,7 @@
 #include "chksum.h"
 #include "mkdirs.h"
 
-#define	DEFAULT_MODE 0666
+#define	DEFAULT_MODE 0444
 #define DEFAULT_UID     0
 #define DEFAULT_GID     0
 
