@@ -296,21 +296,29 @@ main( int argc, char **argv )
                     exit( 2 );
                 } 
             }
-            if ( password == NULL ) {
-		printf( "user: %s\n", user );
-                if (( password = getpass( "password:" )) == NULL ) {
-                    fprintf( stderr, "Invalid null password\n" );
-                    exit( 2 );
-                }
-		/* get the length of the password so we can zero it later */
-		len = strlen( password );
-            }
-            if ( verbose ) printf( ">>> LOGIN %s %s\n", user, password );
+
+	    printf( "user: %s\n", user );
+	    if (( password = getpass( "password:" )) == NULL ) {
+		fprintf( stderr, "Invalid null password\n" );
+		exit( 2 );
+	    }
+
+	    len = strlen( password );
+	    if ( len == 0 ) {
+		fprintf( stderr, "Invalid null password\n" );
+		exit( 2 );
+	    }
+
+            if ( verbose ) printf( ">>> LOGIN %s\n", user );
             if ( snet_writef( sn, "LOGIN %s %s\n", user, password ) < 0 ) {
                 fprintf( stderr, "login %s failed: 1-%s\n", user, 
                     strerror( errno ));
                 exit( 2 );                       
             }                            
+
+	    /* clear the password from memory */
+	    memset( password, 0, len );
+
 	    tv = timeout;
 	    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
 		fprintf( stderr, "login %s failed: 2-%s\n", user,
@@ -322,10 +330,6 @@ main( int argc, char **argv )
 		return( 1 );
 	    }
 
-	    /* clear the password from memory */
-	    if ( len ) {
-		memset( password, 0, len );
-	    }
         }
 
 	if ( cksum ) {
