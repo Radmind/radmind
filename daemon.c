@@ -229,7 +229,7 @@ main( int ac, char **av )
     }
 
     if ( err || optind != ac ) {
-	fprintf( stderr, "Usage: radmind [ -dRUV ] [ -a bind-address ] " );
+	fprintf( stderr, "Usage: radmind [ -dRrUV ] [ -a bind-address ] " );
 	fprintf( stderr, "[ -b backlog ] [ -D path ] " );
 	fprintf( stderr, "[ -L syslog-facility ] [ -m max-connections ] " );
 	fprintf( stderr, "[ -p port ] [ -u umask ] " );

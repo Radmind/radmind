@@ -426,7 +426,7 @@ main( int argc, char **argv )
 	    break;
 
 	case 'v':
-	    verbose = 2;
+	    verbose = 1;
 	    logger = output;
 	    if ( isatty( fileno( stdout ))) {
 		dodots = 1;
@@ -477,7 +477,8 @@ main( int argc, char **argv )
 
     if ( err || ( argc - optind != 0 )) {
 	fprintf( stderr,
-		"usage: ktcheck -c checksum [ -nrV ] [ -q | -v | -i ] " );
+		"usage: ktcheck [ -nrV ] [ -q | -v | -i ] " );
+	fprintf( stderr, "[ -c checksum ] " );
 	fprintf( stderr, "[ -K command file ] " );
 	fprintf( stderr, "[ -h host ] [ -p port ] " );
 	fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );
