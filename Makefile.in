@@ -237,10 +237,10 @@ package : all man info
 	    ${INSTALL} -o root -g wheel -m 0444 -c tmp/man/$$i \
 		${CLIENTMANPKGDIR}/man5/; \
 	done 
-	mkdir -p -m 0755 ${CLIENTVARPKGDIR}
-	${INSTALL} -o root -g staff -m 0755 -c OS_X/command.K \
+	mkdir -p -m 0700 ${CLIENTVARPKGDIR}
+	${INSTALL} -o root -g staff -m 0700 -c OS_X/command.K \
 	    ${CLIENTVARPKGDIR}
-	${INSTALL} -o root -g staff -m 0755 -c OS_X/negative.T \
+	${INSTALL} -o root -g staff -m 0700 -c OS_X/negative.T \
 	    ${CLIENTVARPKGDIR}
 	chown root:wheel ${MPKGDIR}
 	find ${MPKGDIR}/* -exec chown root:wheel {} \;
