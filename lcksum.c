@@ -132,7 +132,6 @@ main( int argc, char **argv )
 	fprintf( stderr, "%s/%s: path too long\n", cwd, tpath );
 	exit( 2 );
     }
-    printf( "tpath: %s\n", cwd );
     if ( get_root( cwd, file_root, tran_root, tran_name ) != 0 ) {
 	exit( 2 );
     }
