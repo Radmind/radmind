@@ -244,7 +244,6 @@ main( int argc, char **argv )
     extern int          optind;
     extern char		*version;
     char		*host = NULL;
-    char		*transcript = NULL;
     char                **targv;
     char                cline[ 2 * MAXPATHLEN ];
     char		path[ MAXPATHLEN ], temppath[ MAXPATHLEN ];
@@ -255,7 +254,7 @@ main( int argc, char **argv )
     struct node		*head = NULL;
     struct stat		tst, lst;
 
-    while ( ( c = getopt ( argc, argv, "c:K:np:T:Vv" ) ) != EOF ) {
+    while ( ( c = getopt ( argc, argv, "c:K:np:Vv" ) ) != EOF ) {
 	switch( c ) {
 	case 'c':
 	    if ( strcasecmp( optarg, "sha1" ) != 0 ) {
@@ -292,9 +291,6 @@ main( int argc, char **argv )
 	case 'n':
 	    update = 0;
 	    break;
-	case 'T':
-	    transcript = optarg;
-	    break;
 	case 'V':
 	    printf( "%s\n", version );
 	    exit( 0 );
@@ -315,7 +311,7 @@ main( int argc, char **argv )
 	fprintf( stderr, "usage: ktcheck [ -nvV ] " );
 	fprintf( stderr, "[ -c checksum ] [ -K command file ] " );
 	fprintf( stderr, "[ -p port ] " );
-	fprintf( stderr, "[-T transcript ] host\n" );
+	fprintf( stderr, "host\n" );
 	exit( 2 );
     }
     host = argv[ optind ];
