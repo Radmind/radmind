@@ -27,10 +27,13 @@ DEFAULTS="/etc/defaults/radmind"
 FSDIFFROOT="."
 FLAG="/var/radmind/client/.RadmindRunning"
 
+PREAPPLY="_RADMIND_PREAPPLY"
+POSTAPPLY="_RADMIND_POSTAPPLY"
+
 PATH=/usr/local/bin:/usr/bin:/bin; export PATH
 RETRY=10
 
-MKTEMP="/usr/bin/mktemp"
+MKTEMP="_RADMIND_MKTEMP"
 TEMPFILES=FALSE
 TMPDIR="/tmp/.ra.$$"
 if [ -f "${MKTEMP}" ]; then
@@ -42,9 +45,6 @@ if [ -f "${MKTEMP}" ]; then
 fi
 LTMP="${TMPDIR}/lapply.out"
 FTMP="${TMPDIR}/fsdiff.out"
-
-PREAPPLY="/var/radmind/preapply"
-POSTAPPLY="/var/radmind/postapply"
 
 # different systems use different default dirs
 if [ ! -f "${DEFAULTS}" ]; then

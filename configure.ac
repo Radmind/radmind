@@ -32,6 +32,7 @@ AC_PROG_AWK
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_PATH_PROG(diffpath, diff)
+AC_PATH_PROG(mktemppath, mktemp)
 AC_SYS_LARGEFILE
 
 # Check sizes

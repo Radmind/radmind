@@ -18,10 +18,12 @@ RADMINDDIR=@radminddir@
 # For client
 COMMANDFILE=${RADMINDDIR}/client/command.K
 CERTDIR=${RADMINDDIR}/cert
-CLIENTDIR=${RADMINDDIR}/client
+PREAPPLYDIR=${RADMINDDIR}/preapply
+POSTAPPLYDIR=${RADMINDDIR}/postapply
 TLS_CA=${CERTDIR}/ca.pem
 TLS_CERT=${CERTDIR}/cert.pem
 GNU_DIFF=@diffpath@
+MKTEMP=@mktemppath@
 RADMIND_HOST=@server@
 RADMIND_AUTHLEVEL=@authlevel@
 RADMIND_MAXCONNECTIONS=@maxconnections@
@@ -210,6 +212,9 @@ rash : FRC
 	-mkdir tmp
 	sed -e 's@_RADMIND_HOST@${RADMIND_HOST}@g' \
 	    -e 's@_RADMIND_AUTHLEVEL@${RADMIND_AUTHLEVEL}@g' \
+	    -e 's@_RADMIND_PREAPPLY@${PREAPPLYDIR}@g' \
+	    -e 's@_RADMIND_POSTAPPLY@${POSTAPPLYDIR}@g' \
+	    -e 's@_RADMIND_MKTEMP@${MKTEMP}@g' \
 	    ${srcdir}/ra.sh > tmp/ra.sh; 
 
 man : FRC
@@ -250,7 +255,9 @@ install	: all man rash
 	 for i in ${MAN8TARGETS}; do \
 	    ${INSTALL} -m 0644 -c tmp/man/$$i ${MANDIR}/man8/; \
 	done
-	-mkdir -p ${CLIENTDIR}
+	-mkdir -p ${RADMINDDIR}/client
+	-mkdir -p ${PREAPPLYDIR}
+	-mkdir -p ${POSTAPPYLDIR}
 	-mkdir -p ${CERTDIR}
 
 PKGNAME=RadmindTools-${VERSION}
