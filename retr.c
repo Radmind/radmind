@@ -32,6 +32,7 @@
 #include "base64.h"
 #include "code.h"
 #include "largefile.h"
+#include "progress.h"
 
 #ifdef sun
 #define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
@@ -41,6 +42,7 @@ extern void            (*logger)( char * );
 extern struct timeval  	timeout;
 extern int 		linenum;
 extern int		verbose;
+extern int		showprogress;
 extern int		dodots;
 extern int		cksum;
 extern int		errno;
@@ -81,7 +83,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, off_t transize,
 	EVP_DigestInit( &mdctx, md );
     }
 
-    if ( verbose ) printf( ">>> RETR %s\n", pathdesc );
+    if ( verbose >= 2 ) printf( ">>> RETR %s\n", pathdesc );
     if ( snet_writef( sn, "RETR %s\n", pathdesc ) < 0 ) {
 	fprintf( stderr, "retrieve %s failed: 1-%s\n", pathdesc,
 	    strerror( errno ));
@@ -108,14 +110,14 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, off_t transize,
 	return( -1 );
     }
     size = strtoofft( line, NULL, 10 );
-    if ( verbose ) printf( "<<< %" PRIofft "d\n", size );
+    if ( verbose >= 2 ) printf( "<<< %" PRIofft "d\n", size );
     if ( transize >= 0 && size != transize ) {
 	fprintf( stderr, "line %d: size in transcript does not match size "
 	    "from server\n", linenum );
 	fprintf( stderr, "%s\n", pathdesc );
 	return( -1 );
     }
-    if ( verbose ) printf( "<<< " );
+    if ( verbose >= 2 ) printf( "<<< " );
 
     /*Create temp file name*/
     if ( snprintf( temppath, MAXPATHLEN, "%s.radmind.%i",
@@ -150,13 +152,16 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, off_t transize,
 	}
 	if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 	size -= rr;
+	if ( showprogress ) {
+	    progressupdate( rr, path );
+	}
     }
     if ( close( fd ) != 0 ) {
 	perror( path );
 	returnval = -1;
 	goto error1;
     }
-    if ( verbose ) printf( "\n" );
+    if ( verbose >= 2 ) printf( "\n" );
 
     tv = timeout;
     if (( line = snet_getline( sn, &tv )) == NULL ) {
@@ -171,7 +176,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, off_t transize,
 	returnval = -1;
 	goto error1;
     }
-    if ( verbose ) printf( "<<< .\n" );
+    if ( verbose >= 2 ) printf( "<<< .\n" );
 
     /* cksum file */
     if ( cksum ) {
@@ -236,7 +241,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
         EVP_DigestInit( &mdctx, md );
     }
 
-    if ( verbose ) printf( ">>> RETR %s\n", pathdesc );
+    if ( verbose >= 2 ) printf( ">>> RETR %s\n", pathdesc );
     if ( snet_writef( sn, "RETR %s\n", pathdesc ) < 0 ) {
 	fprintf( stderr, "retrieve applefile %s failed: 1-%s\n", pathdesc,
 	    strerror( errno ));
@@ -263,14 +268,14 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	return( -1 );
     }
     size = strtoofft( line, NULL, 10 );
-    if ( verbose ) printf( "<<< %" PRIofft "d\n", size );
+    if ( verbose >= 2 ) printf( "<<< %" PRIofft "d\n", size );
     if ( transize >= 0 && size != transize ) {
 	fprintf( stderr, "line %d: size in transcript does not match size"
 	    "from server\n", linenum );
 	fprintf( stderr, "%s\n", pathdesc );
 	return( -1 );
     }  
-    if ( verbose ) printf( "<<< " );
+    if ( verbose >= 2 ) printf( "<<< " );
     if ( size < ( AS_HEADERLEN + ( 3 * sizeof( struct as_entry )) +
 	    FINFOLEN )) {
 	fprintf( stderr,
@@ -298,6 +303,9 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     }
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
     size -= rc;
+    if ( showprogress ) {
+	progressupdate( rc, path );
+    }
 
     /* read header entries */
     tv = timeout;
@@ -322,6 +330,9 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 
     size -= rc;
+    if ( showprogress ) {
+	progressupdate( rc, path );
+    }
 
     /* read finder info */
     tv = timeout;
@@ -341,6 +352,9 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     }
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
     size -= rc;
+    if ( showprogress ) {
+	progressupdate( rc, path );
+    }
 
     /* name temp file */
     if ( snprintf( temppath, MAXPATHLEN, "%s.radmind.%i", path,
@@ -389,6 +403,9 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 		EVP_DigestUpdate( &mdctx, buf, (unsigned int)rc );
 	    }
 	    if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
+	    if ( showprogress ) {
+		progressupdate( rc, path );
+	    }
 	}
 
 	size -= ae_ents[ AS_RFE ].ae_length;
@@ -420,6 +437,9 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	    EVP_DigestUpdate( &mdctx, buf, (unsigned int)rc );
 	}
 	if ( dodots ) { putc( '.', stdout ); fflush( stdout); }
+	if ( showprogress ) {
+	    progressupdate( rc, path );
+	}
     }
 
     if ( close( dfd ) < 0 ) {
@@ -427,7 +447,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	returnval = -1;
 	goto error1;
     }
-    if ( verbose ) printf( "\n" );
+    if ( verbose >= 2 ) printf( "\n" );
 
     /* set finder info for newly decoded applefile */
     if ( setattrlist( temppath, &setalist, finfo, FINFOLEN,
@@ -452,7 +472,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	returnval = -1;
 	goto error1;
     }
-    if ( verbose ) printf( "<<< .\n" );
+    if ( verbose >= 2 ) printf( "<<< .\n" );
 
     if ( cksum ) {
 	EVP_DigestFinal( &mdctx, md_value, &md_len );

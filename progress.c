@@ -9,6 +9,7 @@
 #include "progress.h"
 
 int		progress = -1;
+int		showprogress = 0;
 off_t		lsize = 0, total = 0;
 
     off_t
@@ -34,6 +35,43 @@ loadsetsize( FILE *tran )
 	}
 
 	size += strtoofft( targv[ 6 ], NULL, 10 );
+    }
+
+    rewind( tran );
+
+    return( size );
+}
+
+    off_t
+applyloadsetsize( FILE *tran )
+{
+    char	tline[ LINE_MAX ];
+    char	**targv;
+    int		tac;
+    off_t	size = 0;
+
+    while ( fgets( tline, LINE_MAX, tran ) != NULL ) {
+	/* skip empty lines and transcript marker lines */
+	if (( tac = argcargv( tline, &targv )) <= 1 ) {
+	    continue;
+	}
+
+	switch ( *targv[ 0 ] ) {
+	case '+':
+	    switch ( *targv[ 1 ] ) {
+	    case 'a':
+	    case 'f':
+		size += strtoofft( targv[ 7 ], NULL, 10 );
+
+	    default:
+		break;
+	    }
+
+	default:
+	    break;
+	}
+
+	size += UPDATEUNIT;
     }
 
     rewind( tran );

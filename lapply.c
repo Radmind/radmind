@@ -34,6 +34,7 @@
 #include "update.h"
 #include "tls.h"
 #include "largefile.h"
+#include "progress.h"
 
 void		(*logger)( char * ) = NULL;
 int		linenum = 0;
@@ -47,6 +48,8 @@ int		change = 0;
 char		transcript[ 2 * MAXPATHLEN ] = { 0 };
 char		prepath[ MAXPATHLEN ]  = { 0 };
 extern char	*version, *checksumlist;
+extern off_t	lsize;
+extern int	showprogress;
 const EVP_MD    *md;
 SSL_CTX  	*ctx;
 
@@ -237,6 +240,8 @@ main( int argc, char **argv )
     int			force = 0;
     int			use_randfile = 0;
 
+    showprogress = 1;
+
     while (( c = getopt ( argc, argv, "c:Fh:inp:qrVvw:x:y:z:" )) != EOF ) {
 	switch( c ) {
 	case 'c':
@@ -277,6 +282,7 @@ main( int argc, char **argv )
 	    break;
 
 	case 'q':
+	    showprogress = 0;
 	    quiet = 1;
 	    break;
 
@@ -290,10 +296,12 @@ main( int argc, char **argv )
 	    exit( 0 );
 
 	case 'v':
-	    verbose = 1;
-	    logger = output;
-	    if ( isatty( fileno( stdout ))) {
-		dodots = 1;
+	    showprogress = 0;
+	    if ( ++verbose >= 2 ) {
+		logger = output;
+		if ( isatty( fileno( stdout ))) {
+		    dodots = 1;
+		}
 	    }
 	    break;
 
@@ -333,16 +341,25 @@ main( int argc, char **argv )
     }
 
     if ( argc - optind == 0 ) {
+	showprogress = 0;
+	verbose = 1;
 	f = stdin; 
     } else if ( argc - optind == 1 ) {
 	if (( f = fopen( argv[ optind ], "r" )) == NULL ) { 
 	    perror( argv[ optind ]);
 	    exit( 2 );
 	}
+	lsize = applyloadsetsize( f );
     } else {
 	err++;
     }
+    if ( quiet && showprogress ) {
+	err++;
+    }
     if ( verbose && quiet ) {
+	err++;
+    }
+    if ( verbose && showprogress ) {
 	err++;
     }
     if ( verbose && lnbf ) {
@@ -422,7 +439,7 @@ main( int argc, char **argv )
 	    } else {
 		special = 0;
 	    }
-	    if ( verbose ) printf( "Transcript: %s\n", transcript );
+	    if ( verbose >= 2 ) printf( "Transcript: %s\n", transcript );
 	    continue;
 	}
 
@@ -525,7 +542,12 @@ dirchecklist:
 			    perror( head->path );
 			    goto error2;
 			}
-			if ( !quiet ) printf( "%s: deleted\n", head->path );
+			if ( !quiet && verbose ) {
+			    printf( "%s: deleted\n", head->path );
+			}
+			if ( showprogress ) {
+			    progressupdate( UPDATEUNIT, head->path );
+			}
 			node = head;
 			head = node->next;
 			if ( node->doline ) {
@@ -545,21 +567,34 @@ filechecklist:
 			perror( path );
 			goto error2;
 		    }
-		    if ( !quiet ) printf( "%s: deleted\n", path );
+		    if ( !quiet && verbose ) printf( "%s: deleted\n", path );
+		    if ( showprogress ) {
+			progressupdate( UPDATEUNIT, path );
+		    }
 		} else {
 		    if ( ischild( path, head->path)) {
 			if ( unlink( path ) != 0 ) {
 			    perror( path );
 			    goto error2;
 			}
-			if ( !quiet ) printf( "%s: deleted\n", path );
+			if ( !quiet && verbose ) {
+			    printf( "%s: deleted\n", path );
+			}
+			if ( showprogress ) {
+			    progressupdate( UPDATEUNIT, path );
+			}
 		    } else {
 			/* remove head */
 			if ( rmdir( head->path ) != 0 ) {
 			    perror( head->path );
 			    goto error2;
 			}
-			if ( !quiet ) printf( "%s: deleted\n", head->path );
+			if ( !quiet && verbose ) {
+			    printf( "%s: deleted\n", head->path );
+			}
+			if ( showprogress ) {
+			    progressupdate( UPDATEUNIT, head->path );
+			}
 			node = head;
 			head = node->next;
 			if ( node->doline ) {
@@ -586,7 +621,10 @@ filechecklist:
 		perror( head->path );
 		goto error2;
 	    }
-	    if ( !quiet ) printf( "%s: deleted\n", head->path );
+	    if ( !quiet && verbose ) printf( "%s: deleted\n", head->path );
+	    if ( showprogress ) {
+		progressupdate( UPDATEUNIT, head->path );
+	    }
 	    node = head;
 	    head = node->next;
 	    if ( node->doline ) {
@@ -611,7 +649,10 @@ filechecklist:
 	    perror( head->path );
 	    goto error2;
 	}
-	if ( !quiet ) printf( "%s: deleted\n", head->path );
+	if ( !quiet && verbose ) printf( "%s: deleted\n", head->path );
+	if ( showprogress ) {
+	    progressupdate( UPDATEUNIT, head->path );
+	}
 	node = head;
 	head = node->next;
 	if ( node->doline ) {

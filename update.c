@@ -26,9 +26,12 @@
 #include "code.h"
 #include "radstat.h"
 #include "transcript.h"
+#include "progress.h"
 
 extern int quiet;
 extern int linenum;
+extern int verbose;
+extern int showprogress;
 
     int
 update( const char *path, char *displaypath, int present, int newfile,
@@ -128,7 +131,9 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    perror( path );
 	    return( 1 );
 	}
-	if ( !quiet ) printf( "%s: hard linked to %s", displaypath, d_target);
+	if ( !quiet && verbose ) {
+	    printf( "%s: hard linked to %s", displaypath, d_target);
+	}
 	goto done;
 
     case 'l':
@@ -152,8 +157,8 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    perror( path );
 	    return( 1 );
 	}
-	if ( !quiet ) printf( "%s: symbolic linked to %s",
-	    displaypath, d_target );
+	if ( !quiet && verbose ) printf( "%s: symbolic linked to %s",
+		displaypath, d_target );
 	goto done;
 
     case 'p':
@@ -247,11 +252,11 @@ update( const char *path, char *displaypath, int present, int newfile,
 	break;
 
     default :
-	fprintf( stderr, "%d: Unkown type %s\n", linenum, targv[ 0 ] );
+	fprintf( stderr, "%d: Unknown type %s\n", linenum, targv[ 0 ] );
 	return( 1 );
     }
 
-    if ( !quiet ) {
+    if ( !quiet && verbose ) {
 	if ( newfile ) {
 	    printf( "%s: created updating", displaypath );
 	} else {
@@ -268,10 +273,10 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    return( 1 );
 	}
 	if ( uid != st->st_uid ) {
-	    if ( !quiet ) printf( " uid" );
+	    if ( !quiet && verbose ) printf( " uid" );
 	}
 	if ( gid != st->st_gid ) {
-	    if ( !quiet ) printf( " gid" );
+	    if ( !quiet && verbose ) printf( " gid" );
 	}
     }
     /* chmod after chown to preserve S_ISUID and S_ISGID mode bits */
@@ -280,16 +285,19 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    perror( path );
 	    return( 1 );
 	}
-	if ( !quiet ) printf( " mode" );
+	if ( !quiet && verbose ) printf( " mode" );
     }
 
-    if ( timeupdated & !quiet ) {
+    if ( timeupdated && verbose && !quiet ) {
 	printf( " time" );
     }
 
 done:
 
-    if ( !quiet ) printf( "\n" );
+    if ( !quiet && verbose ) printf( "\n" );
+    if ( showprogress ) {
+	progressupdate( UPDATEUNIT, displaypath );
+    }
 
     return( 0 );
 }

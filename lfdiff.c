@@ -122,7 +122,7 @@ main( int argc, char **argv, char **envp )
 	    exit( 0 );
 
 	case 'v':
-	    verbose = 1;
+	    verbose = 2;
 	    logger = output;
 	    if ( isatty( fileno( stdout ))) {
 		dodots = 1;
