@@ -23,32 +23,13 @@ void            (*logger)( char * ) = NULL;
 
 extern char	*version, *checksumlist;
 
-void	progress_update( char * );
-void	fs_walk( struct llist *, int );
-int	verbose = 0, ihookoutput = 0;
-int	dodots = 0;
-int	rootitems = 0;
-float	pctdone = 0.0;
+void		fs_walk( struct llist *, int, int );
+int		verbose = 0, ihookoutput = 0;
+int		dodots = 0;
 const EVP_MD    *md;
 
     void
-progress_update( char *location )
-{
-    if ( pctdone > 100 ) {
-	pctdone = 100.0;
-    }
-
-    if ( ihookoutput ) {
-	printf( "%%%d\n", ( int )pctdone );
-    } else {
-	printf( "\rScanning %-50s %3d%% done", location, ( int )pctdone );
-    }
-
-    fflush( stdout );
-}
-
-    void
-fs_walk( struct llist *path, int atroot  ) 
+fs_walk( struct llist *path, int start, int finish ) 
 {
     DIR			*dir;
     struct dirent	*de;
@@ -56,8 +37,12 @@ fs_walk( struct llist *path, int atroot  )
     struct llist	*new;
     struct llist	*cur;
     int			len;
-    float		increment = 0.0;
+    int			chunk, count = 0;
     char		temp[ MAXPATHLEN ];
+
+    if ( finish > start ) {
+	printf( "%%%.3d %s\n", start, path->ll_pinfo.pi_name );
+    }
 
     /* call the transcript code */
     if (( transcript( &path->ll_pinfo ) == 0 ) || ( skip )) {
@@ -80,9 +65,7 @@ fs_walk( struct llist *path, int atroot  )
 	    continue;
 	}
 
-	if ( verbose && atroot ) {
-	    rootitems++;
-	}
+	count++;
 	len = strlen( path->ll_pinfo.pi_name );
 
 	/* absolute pathname. add 2 for / and NULL termination.  */
@@ -115,12 +98,9 @@ fs_walk( struct llist *path, int atroot  )
 
 	/* insert new file into the list */
 	ll_insert( &head, new ); 
-
     }
 
-    if ( verbose && atroot ) {
-	increment = ( float )( 100.0 / rootitems );
-    }
+    chunk = ( finish - start ) / count;
 
     if ( closedir( dir ) != 0 ) {
 	perror( "closedir" );
@@ -129,23 +109,11 @@ fs_walk( struct llist *path, int atroot  )
 
     /* call fswalk on each element in the sorted list */
     for ( cur = head; cur != NULL; cur = cur->ll_next ) {
-	if ( verbose && atroot ) {
-	    progress_update( cur->ll_pinfo.pi_name );
-	}
-
-	fs_walk ( cur, 0 );
-	
-	if ( verbose && atroot ) {
-	    pctdone += increment;
-	}
+	fs_walk ( cur, start, start + chunk );
+	start += chunk;
     }
 
     ll_free( head );
-    if ( verbose && atroot ) {
-	pctdone = 100.0;
-	progress_update( "complete." );
-	if ( ! ihookoutput ) putc( '\n', stdout );
-    }
 
     return;
 }
@@ -160,12 +128,13 @@ main( int argc, char **argv )
     int			gotkfile = 0;
     int 		c, len, edit_path_change = 0;
     int 		errflag = 0, use_outfile = 0;
+    int			finish = 0;
 
     edit_path = CREATABLE;
     cksum = 0;
     outtran = stdout;
 
-    while (( c = getopt( argc, argv, "Ac:CIo:K:1Vv" )) != EOF ) {
+    while (( c = getopt( argc, argv, "Ac:Co:K:1Vv" )) != EOF ) {
 	switch( c ) {
 	case 'c':
             OpenSSL_add_all_digests();
@@ -189,11 +158,6 @@ main( int argc, char **argv )
 	    gotkfile = 1;
 	    break;
 
-	case 'I':
-	    ihookoutput = 1;
-	    verbose = 1;
-	    break;
-
 	case '1':
 	    skip = 1;
 	case 'C':
@@ -212,7 +176,7 @@ main( int argc, char **argv )
 	    exit( 0 );
 
 	case 'v':
-	    verbose = 1;
+	    finish = 100;
 	    break;
 
 	case '?':
@@ -224,7 +188,7 @@ main( int argc, char **argv )
 	}
     }
 
-    if ( verbose && ! use_outfile ) {
+    if (( verbose || finish > 0 ) && ! use_outfile ) {
 	errflag++;
     }
 
@@ -243,8 +207,8 @@ main( int argc, char **argv )
 
     if ( errflag || ( argc - optind != 1 )) {
 	fprintf( stderr, "usage: %s [ -C | -A | -1 ] ", argv[ 0 ] );
-	fprintf( stderr, "[ -Iv ] [ -K command ] " );
-	fprintf( stderr, "[ -c cksumtype ] [ -o file ] path\n" );
+	fprintf( stderr, "[ -K command ] " );
+	fprintf( stderr, "[ -c cksumtype ] [ -o file [ -v ] ] path\n" );
 	exit ( 2 );
     }
 
@@ -252,12 +216,16 @@ main( int argc, char **argv )
     transcript_init( kfile, gotkfile );
     root = ll_allocate( argv[ optind ] );
 
-    fs_walk( root, 1 );
+    fs_walk( root, 0, finish );
+
+    if ( finish > 0 ) {
+	printf( "%%%d\n", finish );
+    }
 
     /* free the transcripts */
     transcript_free( );
     hardlink_free( );
-	    
+
     /* close the output file */     
     fclose( outtran );
 
