@@ -24,9 +24,8 @@ mkdirs( char *path )
 	if ( mkdir( path, 0777 ) < 0 ) {
 	    if ( errno != EEXIST ) {
 		return( -1 );
-	    } else {
-		errno = 0;
 	    }
+	    errno = 0;
 	}
 	*p++ = '/';
     }
