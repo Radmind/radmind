@@ -30,7 +30,8 @@ INSTALL = @INSTALL@
 
 CFLAGS=		${CWARN} ${OSNAME} ${INCPATH} @CFLAGS@
 INCPATH=	-I${OPENSSL}/include -Ilibsnet
-LDFLAGS=	-L${OPENSSL}/lib -Llibsnet ${ADDLIBS} -lsnet -lcrypto
+#LDFLAGS=	-L${OPENSSL}/lib -Llibsnet ${ADDLIBS} -lsnet -lcrypto
+LDFLAGS=	${LIBS}
 
 BINTARGETS=     fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff twhich
 MAN1TARGETS=    fsdiff.1 ktcheck.1 lapply.1 lcksum.1 lcreate.1 lfdiff.1 \

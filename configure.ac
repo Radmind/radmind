@@ -3,7 +3,7 @@ AC_INIT(radmind, VERSION, radmind@umich.edu)
 AC_PREREQ(2.52)
 AC_COPYRIGHT([Copyright (c) 1998 Regents of The University of Michigan.  All Rights Reserved.])
 AC_CONFIG_SRCDIR([applefile.c])
-AC_CONFIG_HEADER([config.h])
+#AC_CONFIG_HEADER([config.h])
 
 # Set up variables
 AC_ARG_VAR(diffpath, [path to diff utility])
@@ -20,15 +20,15 @@ AC_CHECK_LIB([crypto], [main])
 # FIXME: Replace `main' with a function in `-ld':
 AC_CHECK_LIB([d], [main])
 AC_CHECK_LIB([nsl], [inet_ntoa])
-AC_CHECK_LIB([snet], [snet_read])
+AC_CHECK_LIB([snet], [snet_getline])
 AC_CHECK_LIB([socket], [socket])
 
 # Checks for header files.
-AC_HEADER_DIRENT
-AC_HEADER_STDC
-AC_HEADER_MAJOR
-AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h inttypes.h netdb.h netinet/in.h stdlib.h string.h sys/param.h sys/socket.h sys/time.h syslog.h unistd.h utime.h])
+#AC_HEADER_DIRENT
+#AC_HEADER_STDC
+#AC_HEADER_MAJOR
+#AC_HEADER_SYS_WAIT
+#AC_CHECK_HEADERS([arpa/inet.h fcntl.h inttypes.h netdb.h netinet/in.h stdlib.h string.h sys/param.h sys/socket.h sys/time.h syslog.h unistd.h utime.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -36,7 +36,7 @@ AC_TYPE_UID_T
 AC_TYPE_MODE_T
 AC_TYPE_SIZE_T
 AC_CHECK_MEMBERS([struct stat.st_rdev])
-AC_HEADER_TIME
+#AC_HEADER_TIME
 
 # Checks for library functions.
 AC_FUNC_CHOWN
