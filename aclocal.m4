@@ -7,7 +7,7 @@ AC_DEFUN([CHECK_SNET],
 	    snetdir="$withval")
     if test -f "$snetdir/snet.h"; then
 	found_snet="yes";
-	CFLAGS="$CFLAGS -I$snetdir";
+	CPPFLAGS="$CPPFLAGS -I$snetdir";
     fi
     if test x_$found_snet != x_yes; then
 	AC_MSG_ERROR(cannot find snet libraries)
@@ -34,18 +34,20 @@ AC_DEFUN([CHECK_SSL],
 	ssldir="$dir"
 	if test -f "$dir/include/openssl/ssl.h"; then
 	    found_ssl="yes";
-	    CFLAGS="$CFLAGS -I$ssldir/include";
+	    CPPFLAGS="$CPPFLAGS -I$ssldir/include";
 	    break;
 	fi
 	if test -f "$dir/include/ssl.h"; then
 	    found_ssl="yes";
-	    CFLAGS="$CFLAGS -I$ssldir/include";
+	    CPPFLAGS="$CPPFLAGS -I$ssldir/include";
 	    break
 	fi
     done
     if test x_$found_ssl != x_yes; then
 	AC_MSG_ERROR(cannot find ssl libraries)
     else
+	TLSDEFS=-DTLS;
+	AC_SUBST(TLSDEFS)
 	LIBS="$LIBS -lssl -lcrypto";
 	LDFLAGS="$LDFLAGS -L$ssldir/lib";
 	HAVE_SSL=yes

@@ -17,13 +17,15 @@ RADMIND_HOST=@server@
 
 RADMINDSYSLOG=LOG_LOCAL7
 
-CWARN=		-Wall -Wmissing-prototypes 
+INCPATH=        @CPPFLAGS@ -Ilibsnet
+OPTOPTS=	-Wall -Wmissing-prototypes 
 CC=		@CC@
-LIBS=		@LIBS@ -lsnet
+DEFS=		@TLSDEFS@
+LIBS=		-lsnet @LIBS@
 LDFLAGS=	-Llibsnet @LDFLAGS@ ${LIBS}
 INSTALL=	@INSTALL@
 
-CFLAGS=		${CWARN} -Ilibsnet @CFLAGS@ -DTLS
+CFLAGS=		${DEFS} ${OPTOPTS} @CFLAGS@ ${INCPATH}
 
 BINTARGETS=     fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff twhich
 MAN1TARGETS=    fsdiff.1 ktcheck.1 lapply.1 lcksum.1 lcreate.1 lfdiff.1 \
