@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2002 Regents of The University of Michigan.
+ * All Rights Reserved.  See COPYRIGHT.
+ */
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -9,6 +14,8 @@
 
 #include <openssl/evp.h>
 
+#include "applefile.h"
+#include "base64.h"
 #include "argcargv.h"
 #include "cksum.h"
 #include "code.h"
@@ -44,7 +51,7 @@ main( int argc, char **argv )
     char                tline[ 2 * MAXPATHLEN ];
     char		path[ 2 * MAXPATHLEN ];
     char		upath[ 2 * MAXPATHLEN ];
-    char		lcksum[ 29 ];
+    char		lcksum[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
     FILE		*f, *ufs;
     struct stat		st;
     ssize_t		cksumsize;

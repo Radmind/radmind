@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2002 Regents of The University of Michigan.
+ * All Rights Reserved.  See COPYRIGHT.
+ */
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <netinet/in.h>
@@ -11,6 +16,7 @@
 #include <openssl/evp.h>
 #include <snet.h>
 
+#include "applefile.h"
 #include "connect.h"
 #include "argcargv.h"
 
@@ -191,7 +197,7 @@ main( int argc, char **argv, char **envp )
 	}
     }
 
-    if ( retr( sn, pathdesc, path, NULL, (char *)&temppath, 0 ) != 0 ) {
+    if ( retr( sn, pathdesc, path, (char *)&temppath, 0, "-" ) != 0 ) {
 	fprintf( stderr, "%s: retr failed\n", file );
 	exit( 2 );
     }

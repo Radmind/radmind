@@ -1,4 +1,9 @@
 /*
+ * Copyright (c) 2002 Regents of The University of Michigan.
+ * All Rights Reserved.  See COPYRIGHT.
+ */
+
+/*
  * Copyright (c) 2000 Regents of The University of Michigan.
  * All Rights Reserved.  See COPYRIGHT.
  */

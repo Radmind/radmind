@@ -1,4 +1,9 @@
 /*
+ * Copyright (c) 2002 Regents of The University of Michigan.
+ * All Rights Reserved.  See COPYRIGHT.
+ */
+
+/*
  * applesingle format:
  *  header:
  *      -magic number (4 bytes)
@@ -51,8 +56,9 @@ struct finderinfo {
 };
 
 struct applefileinfo {
+    char                rsrc_path[ MAXPATHLEN ];
     struct finderinfo	fi;		// finder info
-    struct as_entry	as_entry[ 3 ];	// Apple Single entries
+    struct as_entry	as_ents[ 3 ];	// Apple Single entries
 					// For Finder info, rcrs and data forks
-    size_t		as_size;	// Total size 
+    size_t		as_size;	// Total apple single file size 
 };

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2002 Regents of The University of Michigan.
+ * All Rights Reserved.  See COPYRIGHT.
+ */
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -13,10 +18,8 @@
 #include <openssl/evp.h>
 #include <snet.h>
 
-#include "connect.h"
-#ifdef __APPLE__
 #include "applefile.h"
-#endif __APPLE__
+#include "connect.h"
 #include "cksum.h"
 #include "base64.h"
 #include "code.h"
@@ -38,8 +41,8 @@ extern int		cksum;
  */
 
     int 
-retr( SNET *sn, char *pathdesc, char *path, char *cksumval, char *temppath,
-    size_t transize ) 
+retr( SNET *sn, char *pathdesc, char *path, char *temppath, size_t transize,
+    char *trancksum )
 {
     struct timeval      tv;
     char 		*line;
@@ -50,10 +53,10 @@ retr( SNET *sn, char *pathdesc, char *path, char *cksumval, char *temppath,
     extern EVP_MD       *md;
     EVP_MD_CTX          mdctx;
     unsigned char       md_value[ EVP_MAX_MD_SIZE ];
-    unsigned char       cksum_b64[ EVP_MAX_MD_SIZE ];
+    unsigned char       cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
 
     if ( cksum ) {
-	if ( strcmp( cksumval, "-" ) == 0 ) {
+	if ( strcmp( trancksum, "-" ) == 0 ) {
 	    fprintf( stderr, "line %d: cksum not listed\n", linenum);
 	    return( -1 );
 	}
@@ -86,27 +89,25 @@ retr( SNET *sn, char *pathdesc, char *path, char *cksumval, char *temppath,
     }
 
     /* Open file */
-    if ( ( fd = open( temppath, O_RDWR | O_CREAT | O_EXCL, 0666 ) ) < 0 ) {
+    if ( ( fd = open( temppath, O_RDWR | O_CREAT | O_EXCL, 0600 ) ) < 0 ) {
 	perror( temppath );
 	goto error3;
     }
 
     /* Get file size from server */
     tv = timeout;
-    if ( ( line = snet_getline( sn, &tv ) ) == NULL ) {
+    if (( line = snet_getline( sn, &tv )) == NULL ) {
 	fprintf( stderr, "snet_getline" );
 	goto error;
     }
     size = atol( line );
-    if ( transize != 0 ) {
-	if ( size != transize ) {
-	    fprintf( stderr,
-		"%s: size in transcript does not match size from server\n",
-		decode( path ));
-	    return( -1 );
-	}
+    if ( transize != 0 && size != transize ) {
+	fprintf( stderr,
+	    "%s: size in transcript does not match size from server\n",
+	    decode( path ));
+	return( -1 );
     }
-    if ( verbose ) printf( "<<< %ld\n<<< ", size );
+    if ( verbose ) printf( "<<< %ld\n<<< ", (long)size );
 
     /* Get file from server */
     while ( size > 0 ) {
@@ -147,7 +148,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *cksumval, char *temppath,
     if ( cksum ) {
 	EVP_DigestFinal( &mdctx, md_value, &md_len );
 	base64_e( ( char*)&md_value, md_len, cksum_b64 );
-	if ( strcmp( cksumval, cksum_b64 ) != 0 ) {
+	if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
 	    fprintf( stderr, "checksum failed: %s\n", path );
 	    goto error;
 	}
@@ -170,8 +171,8 @@ error3:
 #ifdef __APPLE__
 
     int
-retr_applefile( SNET *sn, char *pathdesc, char *path, char *cksumval,
-    char *temppath, size_t transize )
+retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
+    size_t transize, char *trancksum )
 {
     int				dfd, rfd, rc, md_len;
     size_t			size, rsize;
@@ -186,11 +187,11 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *cksumval,
     struct timeval		tv;
     extern EVP_MD       	*md;
     EVP_MD_CTX   	       	mdctx;
-    unsigned char       md_value[ EVP_MAX_MD_SIZE ];
-    unsigned char       cksum_b64[ EVP_MAX_MD_SIZE ];
+    unsigned char       	md_value[ EVP_MAX_MD_SIZE ];
+    unsigned char       	cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
 
     if ( cksum ) {
-        if ( strcmp( cksumval, "-" ) == 0 ) {
+        if ( strcmp( trancksum, "-" ) == 0 ) {
             fprintf( stderr, "line %d: cksum not listed\n", linenum);
             return( -1 );
         }
@@ -221,26 +222,23 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *cksumval,
 	return( -1 );
     }
     size = atol( line );
-    if ( transize != 0 ) {
-        if ( size != transize ) {
-            fprintf( stderr,
-                "%s: size in transcript does not match size from server\n",
-                decode( path ));
-            return( -1 );
-        }
+    if ( transize != 0 && size != transize ) {
+	fprintf( stderr,
+	    "%s: size in transcript does not match size from server\n",
+	    decode( path ));
+	return( -1 );
     }
     if ( verbose ) printf( "<<< %ld\n<<< ", size );
 
-    tv = timeout;
     /* read header to determine if file is encoded in applesingle */
+    tv = timeout;
     if (( rc = snet_read( sn, ( char * )&ah, AS_HEADERLEN, &tv ))
-		!= AS_HEADERLEN ) {
+	    != AS_HEADERLEN ) {
 	perror( "snet_read" ); 
 	return( -1 );
     }
-
     if ( memcmp( &as_header, &ah, AS_HEADERLEN ) != 0 ) {
-	fprintf( stderr, "%s is not a radmind AppleSingle file.\n", path );
+	fprintf( stderr, "%s: not a radmind AppleSingle file.\n", path );
 	return( -1 );
     }
     if ( cksum ) {
@@ -252,8 +250,8 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *cksumval,
     /* read header entries */
     tv = timeout;
     if (( rc = snet_read( sn, ( char * )&ae_ents,
-		( 3 * sizeof( struct as_entry )), &tv ))
-		!= ( 3 * sizeof( struct as_entry ))) {
+	    ( 3 * sizeof( struct as_entry )), &tv ))
+	    != ( 3 * sizeof( struct as_entry ))) {
 	perror( "snet_read" );
 	return( -1 );
     }
@@ -267,7 +265,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *cksumval,
     /* read finder info */
     tv = timeout;
     if (( rc = snet_read( sn, finfo, sizeof( finfo ), &tv ))
-		!= sizeof( finfo )) {
+	    != sizeof( finfo )) {
 	perror( "snet_read" );
 	return( -1 );
     }
@@ -286,14 +284,14 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *cksumval,
 
     /* make rsrc fork name */
     if ( snprintf( rsrc_path, MAXPATHLEN, "%s%s", temppath,
-		_PATH_RSRCFORKSPEC ) > MAXPATHLEN ) {
+	    _PATH_RSRCFORKSPEC ) > MAXPATHLEN ) {
 	fprintf( stderr, "%s%s: path too long\n", temppath,
-		_PATH_RSRCFORKSPEC );
+	    _PATH_RSRCFORKSPEC );
 	return ( -1 );
     }
 
     /* data fork must exist to write to rsrc fork */        
-    if (( dfd = open( temppath, O_CREAT | O_EXCL | O_WRONLY, 0666 )) < 0 ) {
+    if (( dfd = open( temppath, O_CREAT | O_EXCL | O_WRONLY, 0600 )) < 0 ) {
 	goto error1;
     }
 
@@ -302,7 +300,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *cksumval,
     };  
 
     for ( rc = 0, rsize = ae_ents[ AS_RFE ].ae_length; rsize > 0;
-		rsize -= rc ) {
+	    rsize -= rc ) {
 	tv = timeout;
 	if (( rc = snet_read( sn, buf, ( int )MIN( sizeof( buf ), rsize ),
 		&tv )) <= 0 ) {
@@ -355,7 +353,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *cksumval,
 
     /* set finder info for newly decoded applefile */
     if ( setattrlist( temppath, &alist, finfo, sizeof( finfo ),
-		FSOPT_NOFOLLOW ) != 0 ) {
+	    FSOPT_NOFOLLOW ) != 0 ) {
 	goto error3;
     }
 
@@ -373,7 +371,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *cksumval,
     if ( cksum ) {
 	EVP_DigestFinal( &mdctx, md_value, &md_len );
 	base64_e( ( char*)&md_value, md_len, cksum_b64 );
-        if ( strcmp( cksumval, cksum_b64 ) != 0 ) {
+        if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
             fprintf( stderr, "checksum failed: %s\n", path );
             return( -1 );
         }
@@ -408,8 +406,8 @@ error3:
 #else !__APPLE__
 
     int
-retr_applefile( SNET *sn, char *pathdesc, char *path, char *cksumval,
-    char *temppath, size_t transize )
+retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
+    size_t transize, char *trancksum )
 {
     return( -1 );
 }

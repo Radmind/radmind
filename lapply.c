@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2002 Regents of The University of Michigan.
+ * All Rights Reserved.  See COPYRIGHT.
+ */
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -10,6 +15,8 @@
 #include <openssl/evp.h>
 #include <snet.h>
 
+#include "applefile.h"
+#include "base64.h"
 #include "cksum.h"
 #include "connect.h"
 #include "argcargv.h"
@@ -17,7 +24,6 @@
 #include "code.h"
 #include "pathcmp.h"
 #include "update.h"
-#include "applefile.h"
 
 int apply( FILE *f, char *parent, SNET *sn );
 void output( char *string);
@@ -113,8 +119,8 @@ apply( FILE *f, char *parent, SNET *sn )
     char		path[ 2 * MAXPATHLEN ];
     char		temppath[ 2 * MAXPATHLEN ];
     char		pathdesc[ 2 * MAXPATHLEN ];
-    char		cksum_b64[ 29 ];
-    unsigned char	finfo[ 32 ];
+    char		cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
+    struct applefileinfo	afinfo;
     int			tac, present, len;
     char		**targv;
     char		*command = "";
@@ -184,7 +190,7 @@ apply( FILE *f, char *parent, SNET *sn )
 	}
 
 	/* Do type check on local file */
-	switch ( radstat( path, &st, &fstype, finfo )) {
+	switch ( radstat( path, &st, &fstype, &afinfo )) {
 	case 0:
 	    present = 1;
 	    break;
@@ -290,16 +296,18 @@ filechecklist:
 	    }
 
 	    if ( *targv[ 0 ] == 'a' ) {
-		if ( retr_applefile( sn, pathdesc, path, cksum_b64, temppath,
-			(size_t)atol( targv[ 6 ] )) != 0 ) {
+		if ( retr_applefile( sn, pathdesc, path, temppath,
+			(size_t)atol( targv[ 6 ] ), cksum_b64 ) != 0 ) {
 		    return( 1 );
 		}
-	    } else if ( retr( sn, pathdesc, path, cksum_b64,
-		    (char *)&temppath, (size_t)atol( targv[ 6 ] )) != 0 ) {
-		return( 1 );
+	    } else {
+		if ( retr( sn, pathdesc, path, (char *)&temppath,
+			(size_t)atol( targv[ 6 ] ), cksum_b64 ) != 0 ) {
+		    return( 1 );
+		}
 	    }
 
-	    if ( radstat( temppath, &st, &fstype, finfo ) < 0 ) {
+	    if ( radstat( temppath, &st, &fstype, &afinfo ) < 0 ) {
 		perror( temppath );
 		return( 1 );
 	    }

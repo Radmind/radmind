@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2002 Regents of The University of Michigan.
+ * All Rights Reserved.  See COPYRIGHT.
+ */
+
 #define SZ_BASE64_E( x )	(((x)+2)/3*4+1)
 #define SZ_BASE64_D( x )	(((x)*3)/4)
 

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2002 Regents of The University of Michigan.
+ * All Rights Reserved.  See COPYRIGHT.
+ */
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <netinet/in.h>
@@ -11,12 +16,13 @@
 #include <openssl/evp.h>
 #include <snet.h>
 
+#include "applefile.h"
+#include "radstat.h"
 #include "base64.h"
 #include "cksum.h"
 #include "connect.h"
 #include "argcargv.h"
 #include "code.h"
-#include "applefile.h"
 
 /*
  * STOR
@@ -47,18 +53,22 @@ v_logger( char *line )
     int
 main( int argc, char **argv )
 {
-    int			c, err = 0, port = htons(6662), tac, fd, fdt;
+    int			c, err = 0, port = htons(6662), tac; 
     int			network = 1, exitcode = 0, len, rc;
     int			negative = 0, tran_only = 0;
     extern int		optind;
     struct servent	*se;
     SNET          	*sn;
+    char		type;
     char		*tname = NULL, *host = _RADMIND_HOST; 
     char		*p,*dpath, tline[ 2 * MAXPATHLEN ];
+    char		pathdesc[ 2 * MAXPATHLEN ];
     char		**targv;
-    char                cksumval[ 29 ];
+    char                cksumval[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
     extern char		*optarg;
-    FILE		*fdiff; 
+    FILE		*tran; 
+    struct stat		st;
+    struct applefileinfo	afinfo;
 
     while (( c = getopt( argc, argv, "c:h:nNp:qt:TvV" )) != EOF ) {
 	switch( c ) {
@@ -124,14 +134,10 @@ main( int argc, char **argv )
     }
 
     if ( err || ( argc - optind != 1 ))   {
-	fprintf( stderr, "usage: lcreate [ -nNTV ] [ -q | -v ]" );
-	fprintf( stderr, "[ -h host ] [-p port ] [ -t stored-name ] ");
+	fprintf( stderr, "usage: lcreate [ -nNTV ] [ -q | -v ] " );
+	fprintf( stderr, "[ -c checksum ] " );
+	fprintf( stderr, "[ -h host ] [-p port ] [ -t stored-name ] " );
 	fprintf( stderr, "difference-transcript\n" );
-	exit( 1 );
-    }
-
-    if (( fd = open( argv[ optind ], O_RDONLY, 0 )) < 0 ) {
-	perror( argv[ optind ] );
 	exit( 1 );
     }
 
@@ -147,7 +153,6 @@ main( int argc, char **argv )
 
 	if (( sn = connectsn( host, port )) == NULL ) {
 	    fprintf( stderr, "%s:%d connection failed.\n", host, port );
-	    (void)close( fd );
 	    exit( 1 );
 	}
 
@@ -155,48 +160,46 @@ main( int argc, char **argv )
 	    if ( do_cksum( argv[ optind ], cksumval ) < 0 ) {
 	       perror( tname );
 		exitcode = 1;
-		(void)close( fd );
 		goto done;
 	    }
 	}
 
-	if (( rc = stor_file( fd, sn, NULL, cksumval, tname, "f", 0 )) <  0 ) {
-	    if ( dodots ) { printf( "\n"); }
-	    (void)close( fd );
-	    exitcode = 1;
+	if ( snprintf( pathdesc, MAXPATHLEN * 2, "STOR TRANSCRIPT %s\r\n",
+		tname ) > ( MAXPATHLEN * 2 ) - 1 ) {
+	    fprintf( stderr, "STOR TRANSCRIPT %s: path description too long\n",
+		tname );
+	}
+
+	if (( rc = stor_file( sn, pathdesc, argv[ optind ], 0, cksumval ))
+		<  0 ) {
 	    switch( rc ) {
 	    case -3:
-		fprintf( stderr, "failed to store transcript \"%s\": checksum not listed in transcript\n", dpath );
+		fprintf( stderr, "failed to store transcript \"%s\":\
+		    checksum not listed in transcript\n", dpath );
 		break;
 	    case -2:
-		fprintf( stderr, "failed to store transcript \"%s\": checksum list in transcript wrong\n", dpath );
+		fprintf( stderr, "failed to store transcript \"%s\":\
+		    checksum list in transcript wrong\n", dpath );
 		break;
 	    default:
 		fprintf( stderr, "failed to store transcript \"%s\"\n", tname );
 		break;
 	    }
+	    exitcode = 1;
 	    goto done;
 	}
 
 	if ( tran_only ) {	/* don't upload files */
-	    (void)close( fd );
-	    goto done;
-	}
-
-	/* lseek back to the beginning */
-	if ( lseek( fd, 0L, SEEK_SET) != 0 ) {
-	    perror( "lseek" );
-	    (void)close( fd );
 	    goto done;
 	}
     }
 
-    if (( fdiff = fdopen( fd, "r" )) == NULL ) {
-	perror( "fdopen" );
+    if (( tran = fopen( argv[ optind ], "r" )) < 0 ) {
+	perror( argv[ optind ] );
 	exit( 1 );
     }
 
-    while ( fgets( tline, MAXPATHLEN, fdiff ) != NULL ) {
+    while ( fgets( tline, MAXPATHLEN, tran ) != NULL ) {
 	len = strlen( tline );
 	if (( tline[ len - 1 ] ) != '\n' ) {
 	    fprintf( stderr, "%s: line too long\n", tline );
@@ -213,51 +216,72 @@ main( int argc, char **argv )
 	}
 	if ( tac >= 2 && ( *targv[ 0 ] == 'f' || *targv[ 0 ] == 'a' )) {
 	    dpath = decode( targv[ 1 ] );
+
+	    /* Verify transcript line is correct */
+	    if ( radstat( dpath, &st, &type, &afinfo ) != 0 ) {
+		perror( dpath );
+		exitcode = 1;
+		break;
+	    }
+	    if ( *targv[ 0 ] != type ) {
+		fprintf( stderr, "line %d: file type wrong\n", linenum );
+		exitcode = 1;
+		break;
+	    }
+
 	    if ( !network ) {
 		if ( access( dpath,  R_OK ) < 0 ) {
 		    perror( dpath );
 		    exitcode = 1;
-		}
-	    } else if ( negative ) {
-		if (( rc = n_stor_file( sn, targv[ 1 ], tname )) < 0 ) {
-		    fprintf( stderr, "failed to store file %s\n", dpath );
-		    exitcode = 1;
 		    break;
 		}
 	    } else {
-		if (( fdt = open( dpath, O_RDONLY, 0 )) < 0 ) {
-		    perror( dpath );
+		if ( snprintf( pathdesc, MAXPATHLEN * 2, "STOR FILE %s %s\r\n", 
+			tname, targv[ 1 ] ) > ( MAXPATHLEN * 2 ) - 1 ) {
+		    fprintf( stderr, "STOR FILE %s %s: path description too
+			long\n", tname, dpath );
 		    exitcode = 1;
 		    break;
-		} 
-		if ( *targv[ 0 ] == 'f' ) {
-		    rc = stor_file( fdt, sn, targv[ 1 ], targv[ 7 ], tname,
-			targv[ 0 ], (size_t)atol( targv[ 6 ] )); 
-		} else {
-		    rc = stor_applefile( fdt, sn, targv[ 1 ], targv[ 7 ], tname,
-			targv[ 0 ], (size_t)atol( targv[ 6 ] ));
 		}
-		(void)close( fdt ); 
-		if ( rc < 0 ) {
-		    if ( dodots ) { printf( "\n"); }
-		    switch( rc ) {
-		    case -3:
-			fprintf( stderr, "failed to store file %s: checksum no listed in transcript\n", dpath );
-			break;
-		    case -2:
-			fprintf( stderr, "failed to store file %s: checksum list in transcript wrong\n", dpath );
-			break;
-		    default:
+
+		if ( negative ) {
+		    if (( rc = n_stor_file( sn, pathdesc,
+			    decode( targv[ 1 ] ))) < 0 ) {
 			fprintf( stderr, "failed to store file %s\n", dpath );
+			exitcode = 1;
 			break;
 		    }
-		    exitcode = 1;
-		    goto done;
+		} else {
+		    if ( *targv[ 0 ] == 'a' ) {
+			rc = stor_applefile( sn, pathdesc, decode( targv[ 1 ] ),
+			    (size_t)atol( targv[ 6 ] ), targv[ 7 ], &afinfo );
+		    } else {
+			rc = stor_file( sn, pathdesc, decode( targv[ 1 ] ), 
+			    (size_t)atol( targv[ 6 ] ), targv[ 7 ]); 
+		    }
+		    if ( rc < 0 ) {
+			if ( dodots ) { putchar( (char)'\n' ); }
+			switch( rc ) {
+			case -3:
+			    fprintf( stderr, "failed to store file %s: \
+				checksum not listed in transcript\n", dpath );
+			    break;
+			case -2:
+			    fprintf( stderr, "failed to store file %s: checksum 
+				listed in transcript wrong\n", dpath );
+			    break;
+			default:
+			    fprintf( stderr, "failed to store file %s\n",
+				dpath );
+			    break;
+			}
+			exitcode = 1;
+			goto done;
+		    }
 		}
 	    }
 	}
     }
-    (void)fclose( fdiff );
 
 done:
      if ( network ) {

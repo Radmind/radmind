@@ -1,8 +1,14 @@
+/*
+ * Copyright (c) 2002 Regents of The University of Michigan.
+ * All Rights Reserved.  See COPYRIGHT.
+ */
+
 #include <sys/param.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "applefile.h"
 #include "transcript.h"
 
 struct devlist {

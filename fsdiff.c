@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2002 Regents of The University of Michigan.
+ * All Rights Reserved.  See COPYRIGHT.
+ */
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <unistd.h>
@@ -9,9 +14,9 @@
 #include <openssl/evp.h>
 #include <snet.h>
 
+#include "applefile.h"
 #include "transcript.h"
 #include "llist.h"
-#include "applefile.h"
 
 void            (*logger)( char * ) = NULL;
 

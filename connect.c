@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2002 Regents of The University of Michigan.
+ * All Rights Reserved.  See COPYRIGHT.
+ */
+
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -10,6 +15,7 @@
 #include <openssl/sha.h>
 #include <snet.h>
 
+#include "applefile.h"
 #include "cksum.h"
 #include "connect.h"
 

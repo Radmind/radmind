@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2002 Regents of The University of Michigan.
+ * All Rights Reserved.  See COPYRIGHT.
+ */
+
 #define argcargv(X, Y) (acav_parse( NULL, X, Y ))
 
 typedef struct {

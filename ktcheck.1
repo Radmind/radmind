@@ -4,9 +4,10 @@
 \- verify and download command file and transcripts
 .SH SYNOPSIS
 .B ktcheck 
+[
 .BI \-c\  checksum 
 .RB [ \-nV ]
-[
+] [
 .RB \-q\ |\ \-v
 ] [
 .BI \-K\  command-file 
@@ -22,7 +23,8 @@ verifies the command file with the radmind server
 .I host.  
 The command file is downloaded from 
 .I host 
-if it is missing or has a different checksum.
+if it is missing or has the wrong size.  With the -c option, checksums are
+also used to verify files. 
 
 Reading the command file line-by-line, ignoring blank lines and comments
 ( lines starting with # ), 

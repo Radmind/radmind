@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2002 Regents of The University of Michigan.
+ * All Rights Reserved.  See COPYRIGHT.
+ */
+
 #include <sys/stat.h>
 
 #define T_NULL		0
@@ -26,12 +31,12 @@ int			cksum;
 FILE			*outtran;
 
 struct pathinfo {
-    char		pi_type;
-    char		pi_name[ MAXPATHLEN ];
-    char		pi_link[ MAXPATHLEN ];
-    struct stat		pi_stat;
-    char		pi_cksum_b64[ 29 ];
-    char		pi_hfs_finfo[ 32 ];
+    char			pi_type;
+    char			pi_name[ MAXPATHLEN ];
+    char			pi_link[ MAXPATHLEN ];
+    struct stat			pi_stat;
+    char			pi_cksum_b64[ MAXPATHLEN ];
+    struct applefileinfo	afinfo;
 };
 
 struct transcript {

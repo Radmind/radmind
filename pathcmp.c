@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2002 Regents of The University of Michigan.
+ * All Rights Reserved.  See COPYRIGHT.
+ */
+
 #include "pathcmp.h"
 
 /* Just like strcmp(), but pays attention to the meaning of '/'.  */

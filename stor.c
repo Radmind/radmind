@@ -1,5 +1,11 @@
+/*
+ * Copyright (c) 2002 Regents of The University of Michigan.
+ * All Rights Reserved.  See COPYRIGHT.
+ */
+
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 #ifdef __APPLE__
 #include <sys/paths.h>
 #include <sys/attr.h>
@@ -15,9 +21,9 @@
 #include <openssl/evp.h>
 #include <snet.h>
 
+#include "applefile.h"
 #include "connect.h"
 #include "cksum.h"
-#include "applefile.h"
 #include "base64.h"
 #include "code.h"
 
@@ -32,19 +38,18 @@ extern int		linenum;
 extern void            (*logger)( char * );
 
     int
-n_stor_file( SNET *sn, char *filename, char *transcript )
+n_stor_file( SNET *sn, char *pathdesc, char *path )
 {
     struct timeval      tv;
     char                *line;
 
-    if ( snet_writef( sn,
-                "STOR FILE %s %s\r\n", transcript, filename ) == NULL ) {
+    if ( snet_writef( sn, "%s", pathdesc ) == NULL ) {
             perror( "snet_writef" );
             return( -1 );
     }
 
     if ( verbose ) {
-        printf( ">>> STOR FILE %s %s\n", transcript, filename );
+        printf( ">>> %s", pathdesc );
     }
 
     tv.tv_sec = 120;
@@ -76,54 +81,39 @@ n_stor_file( SNET *sn, char *filename, char *transcript )
     }
 
     if ( !quiet && !verbose ) {
-        printf( "%s: stored as zero length file\n", decode( filename ));
+        printf( "%s: stored as zero length file\n", path );
     }
     return( 0 );
 }
 
     int 
-stor_file( int fd, SNET *sn, char *filename, char *cksumval, char *transcript,
-    char *filetype, size_t size )
+stor_file( SNET *sn, char *pathdesc, char *path, size_t transize,
+    char *trancksum )
 {
-    int			md_len;
+    int			fd;
     char                *line;
     unsigned char       buf[ 8192 ];
     struct stat         st;
     struct timeval      tv;
     ssize_t             rr;
+    int			md_len;
     extern EVP_MD       *md;
     EVP_MD_CTX          mdctx;
     unsigned char       md_value[ EVP_MAX_MD_SIZE ];
-    unsigned char       cksum_b64[ EVP_MAX_MD_SIZE ];
+    unsigned char       cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
 
     if ( cksum ) {
-        if ( strcmp( cksumval, "-" ) == 0 ) {
+        if ( strcmp( trancksum, "-" ) == 0 ) {
             return( -3 );
         }
 	EVP_DigestInit( &mdctx, md );
     }
 
-    /* STOR "TRANSCRIPT" <transcript-name>  "\r\n" */
-    if ( filename == NULL ) {
-        filename = transcript;
-        if ( snet_writef( sn,
-                "STOR TRANSCRIPT %s\r\n", transcript ) == NULL ) {
-            perror( "snet_writef" );
-            return( -1 );
-        }
-        if ( verbose ) {
-            printf( ">>> STOR TRANSCRIPT %s\n", transcript );
-        }
-    } else {  /* STOR "FILE" <transcript-name> <path> "\r\n" */
-        if ( snet_writef( sn,
-                "STOR FILE %s %s\r\n", transcript, filename ) == NULL ) {
-            perror( "snet_writef" );
-            return( -1 );
-        }
-        if ( verbose ) {
-            printf( ">>> STOR FILE %s %s\n", transcript, filename );
-        }
+    if ( snet_writef( sn, "%s", pathdesc ) == NULL ) {
+	perror( "snet_writef" );
+	return( -1 );
     }
+    if ( verbose ) printf( ">>> %s", pathdesc );
 
     tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
@@ -135,17 +125,21 @@ stor_file( int fd, SNET *sn, char *filename, char *cksumval, char *transcript,
         return( -1 );
     }
 
+    if (( fd = open( path, O_RDONLY, 0 )) < 0 ) {
+	perror( path );
+	return( -1 );
+    }
     if ( fstat( fd, &st) < 0 ) {
-	perror( filename );
+	perror( path );
 	return( -1 );
     }
 
     /* Check size listed in transcript */
-    if ( size != 0 ) {
-	if ( st.st_size != size ) {
+    if ( transize != 0 ) {
+	if ( st.st_size != transize ) {
 	    fprintf( stderr,
 		"%s: size in transcript does not match size of file\n",
-		decode( filename ));
+		path );
 	    return( -1 );
 	}
     }
@@ -169,17 +163,8 @@ stor_file( int fd, SNET *sn, char *filename, char *cksumval, char *transcript,
 	}
     }
     if ( rr < 0 ) {
-	perror( filename );
+	perror( path );
 	return( -1 );
-    }
-
-    /* cksum data sent */
-    if ( cksum ) {
-	EVP_DigestFinal( &mdctx, md_value, &md_len );
-	base64_e( ( char*)&md_value, md_len, cksum_b64 );
-        if ( strcmp( cksumval, cksum_b64 ) != 0 ) {
-            return( -2 );
-        }
     }
 
     if ( snet_writef( sn, ".\r\n" ) == NULL ) {
@@ -198,64 +183,57 @@ stor_file( int fd, SNET *sn, char *filename, char *cksumval, char *transcript,
         return( -1 );
     }
 
-    if ( !quiet && !verbose ) printf( "%s: stored\n", decode( filename ));
+    /* cksum data sent */
+    if ( cksum ) {
+	EVP_DigestFinal( &mdctx, md_value, &md_len );
+	base64_e( ( char*)&md_value, md_len, cksum_b64 );
+        if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
+            return( -2 );
+        }
+    }
+
+    if ( !quiet && !verbose ) printf( "%s: stored\n", path );
     return( 0 );
 }
 
 #ifdef __APPLE__
     int    
-stor_applefile( int dfd, SNET *sn, char *filename, char *cksumval,
-    char *transcript, char *filetype, size_t transize )
+stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize, 
+    char *trancksum, struct applefileinfo *afinfo )
 {
-    int		    	    rfd, rc, md_len;
-    size_t		    asingle_size = 0;
-    char	    	    rsrc_path[ MAXPATHLEN ];
-    char		    buf[ 8192 ];
-    char	            *line;
-    static char		    null_buf[ 32 ] = { 0 };
-    struct timeval	    tv;
-    struct stat		    r_stp;	    /* for rsrc fork */
-    struct stat		    d_stp;	    /* for data fork */
-    static struct as_entry  ae_ents[ 3 ] = {	{ ASEID_FINFO, 62, 32 },
-						{ ASEID_RFORK, 94, 0 },
-						{ ASEID_DFORK, 0, 0 }
-					    };
-    struct {
-	unsigned long	fs_ssize;
-	char		fs_fi[ 32 ];
-    } fi_struct;
-    extern EVP_MD       *md;
-    EVP_MD_CTX          mdctx;
-    unsigned char       md_value[ EVP_MAX_MD_SIZE ];
-    unsigned char       cksum_b64[ EVP_MAX_MD_SIZE ];
+    int			rc, dfd, rfd;
+    char		buf[ 8192 ];
+    char	        *line;
+    struct timeval   	tv;
+    int		      	md_len;
+    extern EVP_MD      	*md;
+    EVP_MD_CTX         	mdctx;
+    unsigned char      	md_value[ EVP_MAX_MD_SIZE ];
+    unsigned char	cksum_b64[ EVP_MAX_MD_SIZE ];
 
     if ( cksum ) {
-        if ( strcmp( cksumval, "-" ) == 0 ) {
+        if ( strcmp( trancksum, "-" ) == 0 ) {
             return( -3 );
         }
         EVP_DigestInit( &mdctx, md );
     }
 
-    /* STOR "TRANSCRIPT" <transcript-name>  "\r\n" */
-    if ( filename == NULL ) {
-        filename = transcript;
-        if ( snet_writef( sn,
-                "STOR TRANSCRIPT %s\r\n", transcript ) == NULL ) {
-            perror( "snet_writef" );
-            return( -1 );
-        }
-        if ( verbose ) {
-            printf( ">>> STOR TRANSCRIPT %s\n", transcript );
-        }
-    } else {  /* STOR "FILE" <transcript-name> <path> "\r\n" */
-        if ( snet_writef( sn,
-                "STOR FILE %s %s\r\n", transcript, filename ) == NULL ) {
-            perror( "snet_writef" );
-            return( -1 );
-        }
-        if ( verbose ) {
-            printf( ">>> STOR FILE %s %s\n", transcript, filename );
-        }
+    if (( dfd = open( path, O_RDONLY )) < 0 ) {
+	perror( path );
+	goto error1;
+    }
+    if (( rfd = open( afinfo->rsrc_path, O_RDONLY )) < 0 ) {
+	perror( afinfo->rsrc_path );
+	goto error1;
+    }
+
+    /* STOR "FILE" <transcript-name> <path> "\r\n" */
+    if ( snet_writef( sn, "%s",	pathdesc ) == NULL ) {
+	perror( "snet_writef" );
+	return( -1 );
+    }
+    if ( verbose ) {
+	printf( ">>> %s", pathdesc );
     }
 
     tv = timeout;
@@ -268,75 +246,23 @@ stor_applefile( int dfd, SNET *sn, char *filename, char *cksumval,
         return( -1 );
     }
 
-    /* must check for finder info here first */
-    if ( getattrlist( decode( filename ), &alist, &fi_struct, sizeof( fi_struct ),
-		FSOPT_NOFOLLOW ) != 0 ) {
-	fprintf( stderr, "Non-HFS+ filesystem\n" );
-	goto error1;
-    }
-
-    if ( memcmp( fi_struct.fs_fi, null_buf, sizeof( null_buf )) == 0 ) {
-	goto error1;
-    }
-
-    if ( fstat( dfd, &d_stp ) != 0 ) {
-	perror( filename );
-	goto error1;
-    }
-
-    if ( snprintf( rsrc_path, MAXPATHLEN, "%s%s", decode( filename ), _PATH_RSRCFORKSPEC )
-		> MAXPATHLEN ) {
-	fprintf( stderr, "%s%s: path too long\n", decode( filename ),
-		_PATH_RSRCFORKSPEC );
-	goto error1;
-    }
-
-    if (( rfd = open( rsrc_path, O_RDONLY )) < 0 ) {
-	perror( rsrc_path );
-	goto error1;
-    }
-
-    if 	( fstat( rfd, &r_stp ) != 0 ) {
-	/* if there's no rsrc fork, but there is finder info,
-	 * assume zero length rsrc fork.
-	 */
-	if ( errno == ENOENT ) {
-	    ae_ents[ AS_RFE ].ae_length = 0;
-    	} else {
-	    perror( rsrc_path );
-	    goto error2;
-	}
-    } else {
-    	ae_ents[ AS_RFE ].ae_length = ( int )r_stp.st_size;
-    }
-
-    ae_ents[ AS_DFE ].ae_offset = 
-	( ae_ents[ AS_RFE ].ae_offset + ae_ents[ AS_RFE ].ae_length );
-    ae_ents[ AS_DFE ].ae_length = ( int )d_stp.st_size;
-
-    /* calculate total applesingle file size */
-    asingle_size = ( AS_HEADERLEN + ( 3 * sizeof( struct as_entry ))
-		+ FINFOLEN + ae_ents[ AS_RFE ].ae_length
-		+ ae_ents[ AS_DFE ].ae_length );
-
     /* Check size listed in transcript */
     if ( transize != 0 ) {
-	if ( asingle_size != transize ) {
-printf( "tran: %ld\ncalc: %ld\n", transize, asingle_size );
+	if ( afinfo->as_size != transize ) {
 	    fprintf( stderr,
 		"%s: size in transcript does not match size of file\n",
-		decode( filename ));
+		decode( path ));
 	    return( -1 );
 	}
     }
 
     /* tell server how much data to expect */
     tv = timeout;
-    if ( snet_writef( sn, "%d\r\n", ( int )asingle_size ) == NULL ) {
+    if ( snet_writef( sn, "%d\r\n", (int)afinfo->as_size ) == NULL ) {
         perror( "snet_writef" );
         goto error2;
     }
-    if ( verbose ) printf( ">>> %d\n", ( int )asingle_size );
+    if ( verbose ) printf( ">>> %d\n", (int)afinfo->as_size );
 
     /* snet write applesingle header to server */
     tv = timeout;
@@ -352,27 +278,26 @@ printf( "tran: %ld\ncalc: %ld\n", transize, asingle_size );
 
     /* snet write header entries */
     tv = timeout;
-    if ( snet_write( sn, ( char * )&ae_ents,
+    if ( snet_write( sn, ( char * )&afinfo->as_ents,
 		( 3 * sizeof( struct as_entry )), &tv )
 		!= ( 3 * sizeof( struct as_entry ))) {
 	perror( "snet_write" );
 	goto error2;
     }
     if ( cksum ) {
-	EVP_DigestUpdate( &mdctx, (char *)&ae_ents,
+	EVP_DigestUpdate( &mdctx, (char *)&afinfo->as_ents,
 	    (unsigned int)( 3 * sizeof( struct as_entry )));
     }
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 
     /* snet_write finder info data to server */
     tv = timeout;
-    if ( snet_write( sn, fi_struct.fs_fi, sizeof( fi_struct.fs_fi ), &tv ) !=
-		sizeof( fi_struct.fs_fi )) {
+    if ( snet_write( sn, afinfo->fi.fi_data, FINFOLEN, &tv ) != FINFOLEN ) {
 	perror( "snet_write" );
 	goto error2;
     }
     if ( cksum ) {
-	EVP_DigestUpdate( &mdctx, fi_struct.fs_fi, sizeof( fi_struct.fs_fi ));
+	EVP_DigestUpdate( &mdctx, afinfo->fi.fi_data, FINFOLEN );
     }
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 
@@ -408,16 +333,6 @@ printf( "tran: %ld\ncalc: %ld\n", transize, asingle_size );
     	if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
     }
     /* dfd is closed in main() of lcreate.c */
-
-    /* cksum data sent */
-    if ( cksum ) {
-        EVP_DigestFinal( &mdctx, md_value, &md_len );
-        base64_e( ( char*)&md_value, md_len, cksum_b64 );
-        if ( strcmp( cksumval, cksum_b64 ) != 0 ) {
-            return( -2 );
-        }
-    }
-
     if ( snet_writef( sn, ".\r\n" ) == NULL ) {
         perror( "snet_writef" );
         return( -1 );
@@ -434,7 +349,16 @@ printf( "tran: %ld\ncalc: %ld\n", transize, asingle_size );
         return( -1 );
     }
 
-    if ( !quiet && !verbose ) printf( "%s: stored\n", decode( filename ));
+    /* cksum data sent */
+    if ( cksum ) {
+        EVP_DigestFinal( &mdctx, md_value, &md_len );
+        base64_e( ( char*)&md_value, md_len, cksum_b64 );
+        if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
+            return( -2 );
+        }
+    }
+
+    if ( !quiet && !verbose ) printf( "%s: stored\n", decode( path ));
     return( 0 );
 
 
@@ -444,22 +368,15 @@ error1:
     return( -1 );
 error2:
     if ( close( rfd ) < 0 ) {
-	perror( rsrc_path );
+	perror( afinfo->rsrc_path );
 	exit( 1 );
     }
     return( -1 );
 }
 #else !__APPLE__
-
-#include <sys/types.h>
-#include <stdio.h>
-
-
-#include "connect.h"
-
     int
-stor_applefile( int dfd, SNET *sn, char *filename, char *trancksum,
-    char *transcript, char *filetype, size_t transize )
+stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize, 
+    char *trancksum, struct applefileinfo *afinfo )
 {
     return( -1 );
 }

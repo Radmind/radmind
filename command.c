@@ -1,4 +1,9 @@
 /*
+ * Copyright (c) 2002 Regents of The University of Michigan.
+ * All Rights Reserved.  See COPYRIGHT.
+ */
+
+/*
  * Copyright (c) 1998 Regents of The University of Michigan.
  * All Rights Reserved.  See COPYRIGHT.
  */
@@ -18,6 +23,8 @@
 #include <openssl/evp.h>
 #include <snet.h>
 
+#include "applefile.h"
+#include "base64.h"
 #include "command.h"
 #include "argcargv.h"
 #include "cksum.h"
@@ -301,7 +308,7 @@ f_stat( SNET *sn, int ac, char *av[] )
 {
 
     char 		path[ MAXPATHLEN ];
-    char		cksum_b64[ 29 ];
+    char		cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
     struct stat		st;
     int			key;
     char		*enc_file, stranpath[ MAXPATHLEN ];

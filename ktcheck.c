@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2002 Regents of The University of Michigan.
+ * All Rights Reserved.  See COPYRIGHT.
+ */
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -6,11 +11,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
+#include <time.h>
 #include <unistd.h>
+#include <utime.h>
 
 #include <openssl/evp.h>
 #include <snet.h>
 
+#include "applefile.h"
+#include "base64.h"
 #include "cksum.h"
 #include "connect.h"
 #include "argcargv.h"
@@ -19,7 +28,7 @@
 void output( char* string);
 int check( SNET *sn, char *type, char *path); 
 int createspecial( SNET *sn, struct node *head );
-char * getstat( SNET *sn, char *description );
+int getstat( SNET *sn, char *description, char *stats );
 
 void			(*logger)( char * ) = NULL;
 int			linenum = 0;
@@ -35,15 +44,15 @@ const EVP_MD		*md;
 extern struct timeval	timeout;
 extern char		*version, *checksumlist;
 
-    char * 
-getstat( SNET *sn, char *description ) 
+    int 
+getstat( SNET *sn, char *description, char *stats ) 
 {
     struct timeval      tv;
     char		*line;
 
     if( snet_writef( sn, "STAT %s\n", description ) == NULL ) {
 	perror( "snet_writef" );
-	return( NULL );
+	return( -1 );
     }
 
     if ( verbose ) printf( ">>> STAT %s\n", description );
@@ -51,22 +60,26 @@ getstat( SNET *sn, char *description )
     tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
 	perror( "snet_getline_multi" );
-	return( NULL );
+	return( -1 );
     }
     if ( *line != '2' ) {
 	fprintf( stderr, "%s\n",  line );
-	return( NULL );
+	return( -1 );
     }
 
     tv = timeout;
     if (( line = snet_getline( sn, &tv )) == NULL ) {
 	perror( "snet_getline 1" );
-	return( NULL );
+	return( -1 );
+    }
+    if ( snprintf( stats, MAXPATHLEN, "%s", line ) > MAXPATHLEN - 1 ) {
+	fprintf( stderr, "%s: line too long\n", line );
+	return( -1 );
     }
 
-    if ( verbose ) printf( "<<< %s\n", line );
+    if ( verbose ) printf( "<<< %s\n", stats );
 
-    return ( line );
+    return( 0 );
 }
 
     void
@@ -84,7 +97,7 @@ createspecial( SNET *sn, struct node *head )
     struct node 	*prev;
     char		filedesc[ MAXPATHLEN * 2 ];
     char		path[ MAXPATHLEN ];
-    char		*stats;
+    char		stats[ MAXPATHLEN ];
 
     /* Open file */
     if ( snprintf( path, MAXPATHLEN, "%sspecial.T.%i", kdir,
@@ -111,7 +124,7 @@ createspecial( SNET *sn, struct node *head )
 	    return( 1 );
 	}
 
-	if (( stats = getstat( sn, (char *)&filedesc)) == NULL ) {
+	if ( getstat( sn, (char *)&filedesc, stats ) != 0 ) {
 	    return( 1 );
 	}
 
@@ -149,18 +162,19 @@ createspecial( SNET *sn, struct node *head )
     int
 check( SNET *sn, char *type, char *file )
 {
-    char	*scksum, *stats;
+    int		needupdate = 0;
     char	**targv;
-    char 	filedesc[ 2 * MAXPATHLEN ];
+    char	stats[ MAXPATHLEN ];
+    char 	pathdesc[ 2 * MAXPATHLEN ];
     char 	tempfile[ 2 * MAXPATHLEN ];
-    char        ccksum[ 29 ];
+    char        ccksum[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
     char	path[ MAXPATHLEN ];
     int		tac;
-    struct stat	st;
-    ssize_t	cksumsize;
+    struct stat		st;
+    struct utimbuf      times;
 
     if ( file != NULL ) {
-	if ( snprintf( filedesc, MAXPATHLEN * 2, "%s %s", type, file  )
+	if ( snprintf( pathdesc, MAXPATHLEN * 2, "%s %s", type, file  )
 		> MAXPATHLEN * 2 ) {
 	    fprintf( stderr, "%s %s: too long", type, file );
 	    return( 2 );
@@ -172,7 +186,7 @@ check( SNET *sn, char *type, char *file )
 	    return( 2 );
 	}
     } else {
-	if ( snprintf( filedesc, MAXPATHLEN, "%s", type ) > MAXPATHLEN * 2 ) {
+	if ( snprintf( pathdesc, MAXPATHLEN, "%s", type ) > MAXPATHLEN * 2 ) {
 	    fprintf( stderr, "%s: too long\n", type );
 	    return( 2 );
 	}
@@ -184,60 +198,80 @@ check( SNET *sn, char *type, char *file )
 	}
     }
 
-    if (( stats = getstat( sn, (char *)&filedesc )) == NULL ) {
+    if ( getstat( sn, (char *)&pathdesc, stats ) != 0 ) {
 	return( 2 );
     }
-
     tac = acav_parse( NULL, stats, &targv );
-
     if ( tac != 8 ) {
 	perror( "Incorrect number of arguments\n" );
 	return( 2 );
     }
+    times.modtime = atoi( targv[ 5 ] );
+    times.actime = time( NULL );
 
-    if (( scksum = strdup( targv[ 7 ] )) == NULL ) {
-	perror( "strdup" );
-	return( 2 );
-    }
-
-    if (( cksumsize = do_cksum( path, ccksum )) < 0 ) {
+    if (( stat( path, &st )) != 0 ) {
 	if ( errno != ENOENT ) {
 	    perror( path );
 	    return( 2 );
-	}
-	if ( update ) {
-	    if ( retr( sn, filedesc, path, scksum, (char *)&tempfile,
-		    (size_t)atol( targv[ 6 ] )) != 0 ) {
-		fprintf( stderr, "%s: retr failed\n", path );
-		return( 2 );
-	    }
-	    if ( rename( tempfile, path ) != 0 ) {
-		perror( tempfile );
-		return( 2 );
-	    }
-	    if ( !quiet ) printf( "%s: updated\n", path );
 	} else {
-	    if ( !quiet ) printf ( "%s: missing\n", path );
+	    /* Local file is missing */
+	    if ( update ) {
+		if ( retr( sn, pathdesc, path, (char *)&tempfile,
+			(size_t)atol( targv[ 6 ] ), targv[ 7 ] ) != 0 ) {
+		    fprintf( stderr, "%s: retr failed\n", path );
+		    return( 2 );
+		}
+		if ( utime( tempfile, &times ) != 0 ) {
+		    perror( path );
+		    return( 1 );
+		}
+		if ( rename( tempfile, path ) != 0 ) {
+		    perror( tempfile );
+		    return( 2 );
+		}
+		if ( !quiet ) printf( "%s: updated\n", path );
+	    } else {
+		if ( !quiet ) printf ( "%s: missing\n", path );
+	    }
+	    return( 1 );
 	}
-	return( 1 );
     }
 
-    if ((stat( path, &st )) != 0 ) {
-	perror( path );
-	return( 2 );
+    /*
+     * With cksum we only use cksum and size.
+     * Without cksum we only use mtime and size.
+     */
+    if ( atoi( targv[ 6 ] ) != (long)st.st_size ) {
+	needupdate = 1;
+    } else {
+	if ( cksum ) {
+	    if (( do_cksum( path, ccksum )) < 0 ) {
+		perror( path );
+		return( 2 );
+	    }
+	    if ( strcmp( targv[ 7 ], ccksum ) != 0 ) {
+		needupdate = 1;
+	    }
+	} else {
+	    if ( atoi( targv[ 5 ] ) != (int)st.st_mtime )  {
+		needupdate = 1;
+	    }
+	}
     }
-
-    if (( strcmp( scksum, ccksum ) != 0 )
-	    || ( atoi( targv[ 6 ] ) != (int)st.st_size )) {
+    if ( needupdate ) {
 	if ( update ) {
 	    if ( unlink( path ) != 0 ) {
 		perror( path );
 		return( 2 );
 	    }
-	    if ( retr( sn, filedesc, path, scksum, (char *)&tempfile,
-		    (size_t)atol( targv[ 6 ] )) != 0 ) {
+	    if ( retr( sn, pathdesc, path, (char *)&tempfile,
+		    (size_t)atol( targv[ 6 ] ), targv[ 7 ] ) != 0 ) {
 		fprintf( stderr, "retr failed\n" );
 		return( 2 );
+	    }
+	    if ( utime( tempfile, &times ) != 0 ) {
+		perror( path );
+		return( 1 );
 	    }
 	    if ( rename( tempfile, path ) != 0 ) {
 		perror( path );
@@ -251,7 +285,6 @@ check( SNET *sn, char *type, char *file )
     } else {
 	return( 0 );
     }
-
 }
 
 /*
@@ -272,7 +305,8 @@ main( int argc, char **argv )
     char                cline[ 2 * MAXPATHLEN ];
     char		tempfile[ MAXPATHLEN ];
     char		path[ MAXPATHLEN ];
-    char		lcksum[ 29 ], tcksum[ 29 ];
+    char		lcksum[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
+    char		tcksum[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
     struct servent	*se;
     SNET		*sn;
     FILE		*f;
@@ -332,10 +366,6 @@ main( int argc, char **argv )
     }
 
     if ( verbose && quiet ) {
-	err++;
-    }
-
-    if ( !cksum ) {
 	err++;
     }
 

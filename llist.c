@@ -1,7 +1,13 @@
+/*
+ * Copyright (c) 2002 Regents of The University of Michigan.
+ * All Rights Reserved.  See COPYRIGHT.
+ */
+
 #include <sys/param.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "applefile.h"
 #include "transcript.h"
 #include "llist.h"
 

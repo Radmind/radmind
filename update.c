@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2002 Regents of The University of Michigan.
+ * All Rights Reserved.  See COPYRIGHT.
+ */
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #ifdef sun
@@ -9,6 +14,7 @@
 #include <utime.h>
 
 #include "update.h"
+#include "code.h"
 
 extern int quiet;
 extern int linenum;

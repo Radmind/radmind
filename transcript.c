@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2002 Regents of The University of Michigan.
+ * All Rights Reserved.  See COPYRIGHT.
+ */
+
 #include <sys/types.h>
 #include <sys/param.h>
 #ifdef sun
@@ -8,13 +13,14 @@
 #include <unistd.h>
 #include <snet.h>
 
+#include "applefile.h"
+#include "base64.h"
 #include "transcript.h"
 #include "argcargv.h"
 #include "code.h"
 #include "radstat.h"
 #include "cksum.h"
 #include "pathcmp.h"
-#include "applefile.h"
 
 static struct transcript	*tran_head = NULL;
 static struct transcript	*prev_tran = NULL;
@@ -276,7 +282,8 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 		exit( 1 );
 	    }
 	} else if ( fs->pi_type == 'a' ) {
-	    if ( do_acksum( fs->pi_name, fs->pi_cksum_b64, fs->pi_hfs_finfo )
+	    if ( do_acksum( fs->pi_name, fs->pi_cksum_b64,
+	    	    &fs->afinfo )
 		    < 0 ) {
 		perror( fs->pi_name );
 		exit( 1 );
@@ -411,7 +418,7 @@ transcript( struct pathinfo *new )
      */
     if ( new != NULL ) {
 	switch ( radstat( new->pi_name, &new->pi_stat, &new->pi_type,
-		new->pi_hfs_finfo )) {
+		&new->afinfo )) {
 	case 0:
 	    break;
 	case 1:

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2002 Regents of The University of Michigan.
+ * All Rights Reserved.  See COPYRIGHT.
+ */
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -11,8 +16,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "radstat.h"
 #include "applefile.h"
+#include "radstat.h"
 
 /* Return values:
  * < 0 system error - errno set
@@ -21,45 +26,30 @@
  */
 
     int
-radstat( char *path, struct stat *st, char *type, char *finfo )
+radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 {
-    char			rsrc_path[ MAXPATHLEN ];
     struct stat			rsrc_st;
-#ifdef __APPLE__
-    static char			null_buf[ 32 ] = { 0 };
-    struct {
-        unsigned long   ssize;
-        char            finfo_buf[ 32 ];
-    } finfo_struct;
-    extern struct attrlist 	alist;
-#endif __APPLE__
 
     if ( lstat( path, st ) != 0 ) {
 	return( -1 );
     }
     switch( st->st_mode & S_IFMT ) {
     case S_IFREG:
-	if ( finfo == NULL ) {
-	    goto regularfile;
-	} else {
 #ifdef __APPLE__
+	if ( afinfo != NULL ) {
+	    static char			null_buf[ 32 ] = { 0 };
+	    extern struct attrlist 	alist;
+
 	    /* Check to see if it's an HFS+ file */
-	    if ( getattrlist( path, &alist, &finfo_struct,
-		    sizeof( finfo_struct ), FSOPT_NOFOLLOW ) != 0 ) {
-		goto regularfile;
-	    }
-	    if ( memcmp( finfo_struct.finfo_buf, null_buf,
-		    sizeof( null_buf )) == 0 ) {
-		goto regularfile;
-	    } else {
-		memcpy( finfo, finfo_struct.finfo_buf,
-		    sizeof( finfo_struct.finfo_buf ));
+	    if (( getattrlist( path, &alist, &afinfo->fi,
+		    sizeof( struct finderinfo ), FSOPT_NOFOLLOW ) == 0 )
+		    && ( memcmp( &afinfo->fi.fi_data, null_buf,
+		    sizeof( null_buf )) != 0 )) {
 		*type = 'a';
 		break;
 	    }
-#endif __APPLE__
 	}
-regularfile:
+#endif __APPLE__
 	*type = 'f';
 	break;
     case S_IFDIR:
@@ -91,18 +81,47 @@ regularfile:
 
     /* Calculate full size of applefile */
     if ( *type == 'a' ) {
-	if ( snprintf( rsrc_path, MAXPATHLEN, "%s/..namedfork/rsrc", path )
-		> MAXPATHLEN -1 ) {
+ 
+	if ( snprintf( afinfo->rsrc_path, MAXPATHLEN,
+		"%s/..namedfork/rsrc", path ) > MAXPATHLEN - 1 ) {
 	    errno = ENAMETOOLONG;
 	    return( -1 );
 	}
-	if ( lstat( rsrc_path, &rsrc_st ) != 0 ) {
-	    return( -1 );
+
+	/* Finder Info */
+	afinfo->as_ents[AS_FIE].ae_id = ASEID_FINFO;
+	afinfo->as_ents[AS_FIE].ae_offset = AS_HEADERLEN +
+		( 3 * sizeof( struct as_entry ));		/* 62 */
+	afinfo->as_ents[AS_FIE].ae_length = FINFOLEN;
+
+	/* Resource Fork */
+	afinfo->as_ents[AS_RFE].ae_id = ASEID_RFORK;
+	afinfo->as_ents[AS_RFE].ae_offset =			/* 94 */
+		( afinfo->as_ents[ AS_FIE ].ae_offset
+		+ afinfo->as_ents[ AS_FIE ].ae_length );
+	/* if there's no rsrc fork set rsrc fork len to zero */
+	if ( lstat( afinfo->rsrc_path, &rsrc_st ) != 0 ) {
+	    if ( errno == ENOENT ) {
+		afinfo->as_ents[ AS_RFE ].ae_length = 0;
+	    } else {
+		return( -1 );
+	    }
+	} else {
+	    afinfo->as_ents[ AS_RFE ].ae_length = ( int )rsrc_st.st_size;
 	}
-	st->st_size += rsrc_st.st_size;		// Add rsrc fork size
-	st->st_size += AS_HEADERLEN;		// Add header size
-	st->st_size += ( 3 * sizeof( struct as_entry ));// Add entry size
-	st->st_size += 32;			// Add finder info size
+
+	/* Data Fork */
+	afinfo->as_ents[AS_DFE].ae_id = ASEID_DFORK;
+	afinfo->as_ents[ AS_DFE ].ae_offset =
+	    ( afinfo->as_ents[ AS_RFE ].ae_offset
+	    + afinfo->as_ents[ AS_RFE ].ae_length );
+	afinfo->as_ents[ AS_DFE ].ae_length = (long)st->st_size;
+
+	afinfo->as_size = afinfo->as_ents[ AS_DFE ].ae_offset
+	    + afinfo->as_ents[ AS_DFE ].ae_length;
+
+	/* Set st->st_size to size of encoded apple single file */
+	st->st_size = afinfo->as_size;
     }
 
     return( 0 );

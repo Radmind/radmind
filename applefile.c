@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2002 Regents of The University of Michigan.
+ * All Rights Reserved.  See COPYRIGHT.
+ */
+
 #ifdef __APPLE__
 #include <sys/attr.h>
 
@@ -22,4 +27,6 @@ struct as_header		as_header = {
     },
     AS_NENTRIES,
 };
+
+extern struct as_header as_header;
 #endif __APPLE__
