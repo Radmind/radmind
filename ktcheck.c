@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <netinet/in.h>
+#include <dirent.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <netdb.h>
@@ -33,11 +34,15 @@
 #include "connect.h"
 #include "argcargv.h"
 #include "list.h"
+#include "llist.h"
+#include "pathcmp.h"
 #include "tls.h"
 #include "largefile.h"
 #include "mkdirs.h"
 #include "rmdirs.h"
 
+void cleandirs( char *path, FILE *f );
+int clean_client_dir( void );
 void output( char* string);
 int check( SNET *sn, char *type, char *path); 
 int createspecial( SNET *sn, struct list *special_list );
@@ -54,6 +59,7 @@ int			quiet = 0;
 int			update = 1;
 int			change = 0;
 char			*base_kfile= _RADMIND_COMMANDFILE;
+char			*radmind_path = _RADMIND_PATH;
 char			*kdir= "";
 const EVP_MD		*md;
 SSL_CTX  		*ctx;
@@ -62,6 +68,132 @@ struct list		*special_list, *kfile_list, *kfile_seen;
 extern struct timeval	timeout;
 extern char		*version, *checksumlist;
 extern char             *ca, *cert, *privatekey; 
+
+    void
+cleandirs( char *path, FILE *f )
+{
+    DIR			*d;
+    struct dirent	*de;
+    struct llist	*head = NULL;
+    struct llist	*cur, *new;
+    struct stat		st;
+    char		fsitem[ MAXPATHLEN ];
+    char		kitem[ MAXPATHLEN ];
+    char		tmp[ MAXPATHLEN ], line[ MAXPATHLEN ];
+    char		**tav;
+    int			tac;
+    int			match = 0;
+
+    if (( d = opendir( path )) == NULL ) {
+	perror( path );
+	exit( 2 );
+    }
+
+    while (( de = readdir( d )) != NULL ) {
+	/* skip dotfiles and the special transcript */
+	if ( de->d_name[ 0 ] == '.' ||
+		strcmp( de->d_name, "special.T" ) == 0 ) {
+	    continue;
+	}
+
+	if ( snprintf( fsitem, MAXPATHLEN, "%s/%s", path, de->d_name )
+		>= MAXPATHLEN ) {
+	    fprintf( stderr, "%s/%s: path too long\n", path, de->d_name );
+	    exit( 2 );
+	}
+
+	/* also skip the base command file */
+	if ( strcmp( fsitem, base_kfile ) == 0 ) {
+	    continue;
+	}
+
+	new = ll_allocate( fsitem );
+	ll_insert( &head, new );
+    }
+
+    if ( closedir( d ) != 0 ) {
+	perror( "closedir" );
+	exit( 2 );
+    }
+
+    for ( cur = head; cur != NULL; cur = cur->ll_next ) {
+	if ( lstat( cur->ll_name, &st ) != 0 ) {
+	    perror( cur->ll_name );
+	    exit( 2 );
+	}
+
+	while ( fgets( tmp, MAXPATHLEN, f ) != NULL ) {
+	    strcpy( line, tmp );
+
+	    tac = argcargv( tmp, &tav );
+	    if ( tac == 0 || **tav == '#' || **tav == 's' ) {
+		continue;
+	    } else if ( tac != 2 ) {
+		fprintf( stderr, "%s: invalid command file line\n", line );
+		exit( 2 );
+	    }
+
+	    if ( snprintf( kitem, MAXPATHLEN, "%s/client/%s", radmind_path,
+			tav[ 1 ] ) >= MAXPATHLEN ) {
+		fprintf( stderr, "%s/client/%s: path too long",
+			radmind_path, tav[ 1 ] );
+		exit( 2 );
+	    }
+
+	    if ( strcmp( cur->ll_name, kitem ) == 0
+			|| ischild( kitem, cur->ll_name )) {
+		match = 1;
+	    }
+	}
+	if ( ferror( f )) {
+	    perror( "fgets" );
+	    exit( 2 );
+	}
+	rewind( f );
+
+	if ( !match ) {
+	    if ( S_ISDIR( st.st_mode )) {
+		rmdirs( cur->ll_name );
+	    } else {
+		if ( unlink( cur->ll_name ) != 0 ) {
+		    perror( cur->ll_name );
+		    exit( 2 );
+		}
+	    }
+	} else if ( S_ISDIR( st.st_mode )) {
+	    cleandirs( cur->ll_name, f );
+	}
+	match = 0;
+    }
+
+    ll_free( head );
+}
+
+    int
+clean_client_dir( void )
+{
+    FILE		*kf;
+    char		clientdir[ MAXPATHLEN ];
+
+    if ( snprintf( clientdir, MAXPATHLEN, "%s/client", radmind_path )
+		>= MAXPATHLEN ) {
+	fprintf( stderr, "%s/client: path too long\n", radmind_path );
+	return( -1 );
+    }
+    if (( kf = fopen( base_kfile, "r" )) == NULL ) {
+	perror( base_kfile );
+	return( -1 );
+    }
+
+    cleandirs( clientdir, kf );
+
+    if ( fclose( kf ) != 0 ) {
+	fprintf( stderr, "fclose: %s\n", strerror( errno ));
+	return( -1 );
+    }
+
+    return( 0 );
+}
 
     int 
 getstat( SNET *sn, char *description, char *stats ) 
@@ -367,6 +499,7 @@ main( int argc, char **argv )
     int			c, port = htons( 6662 ), err = 0;
     int			authlevel = _RADMIND_AUTHLEVEL;
     int			use_randfile = 0;
+    int			clean = 0;
     char	lcksum[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
     char	tcksum[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
     struct stat		tst, lst;
@@ -377,8 +510,12 @@ main( int argc, char **argv )
     struct servent	*se;
     struct node		*node;
 
-    while (( c = getopt( argc, argv, "c:h:iK:np:qrvVw:x:y:z:" )) != EOF ) {
+    while (( c = getopt( argc, argv, "Cc:D:h:iK:np:qrvVw:x:y:z:" )) != EOF ) {
 	switch( c ) {
+	case 'C':	/* clean up _RADMIND_PATH/client */
+	    clean = 1;
+	    break;
+
 	case 'c':
             OpenSSL_add_all_digests();
             md = EVP_get_digestbyname( optarg );
@@ -388,6 +525,10 @@ main( int argc, char **argv )
             }
             cksum = 1;
             break;
+
+	case 'D':
+	    radmind_path = optarg;
+	    break;
 
 	case 'h':
 	    host = optarg;
@@ -650,6 +791,10 @@ main( int argc, char **argv )
     }
 
 done:
+    if ( clean ) {
+	clean_client_dir();
+    }
+
     if ( change ) {
 	exit( 1 );
     } else {

@@ -59,7 +59,7 @@ FSDIFF_OBJ=     version.o fsdiff.o argcargv.o transcript.o llist.o code.o \
 		list.o
 
 KTCHECK_OBJ=    version.o ktcheck.o argcargv.o retr.o base64.o code.o \
-                cksum.o list.o connect.o applefile.o tls.o pathcmp.o \
+                cksum.o list.o llist.o connect.o applefile.o tls.o pathcmp.o \
 		progress.o mkdirs.o rmdirs.o
 
 LAPPLY_OBJ=     version.o lapply.o argcargv.o code.o base64.o retr.o \
@@ -130,6 +130,7 @@ lfdiff.o : lfdiff.c
 
 ktcheck.o : ktcheck.c
 	${CC} ${CFLAGS} \
+		-D_RADMIND_PATH=\"${RADMINDDIR}\" \
 		-D_RADMIND_HOST=\"${RADMIND_HOST}\" \
 		-D_RADMIND_AUTHLEVEL=${RADMIND_AUTHLEVEL} \
 		-D_RADMIND_COMMANDFILE=\"${COMMANDFILE}\" \
