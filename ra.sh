@@ -75,15 +75,19 @@ cleanup() {
 }
 
 dopreapply() {
-    for script in ${PREAPPLY}/*; do
-	${script} "$1"
-    done
+    if [ -d ${PREAPPLY} ]; then
+	for script in ${PREAPPLY}/*; do
+	    ${script} "$1"
+	done
+    fi
 }
 
 dopostapply() {
-    for script in ${POSTAPPLY}/*; do
-	${script} "$1"
-    done
+    if [ -d ${POSTAPPLY} ]; then
+	for script in ${POSTAPPLY}/*; do
+	    ${script} "$1"
+	done
+    fi
 }
 
 update() {
