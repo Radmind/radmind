@@ -24,13 +24,15 @@
 #include <unistd.h>
 #include <dirent.h>
 
-#include <net.h>
+#include <snet.h>
 
-#include "compat.h"
 #include "command.h"
 
 int		debug = 0;
 int		backlog = 5;
+char		*path_radmind = _PATH_RADMIND;
+char		chostname[MAXHOSTNAMELEN];
+char		*c_hostname = chostname;
 
 char		*version = VERSION;
 
@@ -96,6 +98,7 @@ main( ac, av )
     unsigned short	port = 0;
     extern int		optind;
     extern char		*optarg;
+    int			yoomask = 077;
 
 
     if (( prog = strrchr( av[ 0 ], '/' )) == NULL ) {
@@ -104,7 +107,7 @@ main( ac, av )
 	prog++;
     }
 
-    while (( c = getopt( ac, av, "Vrcdp:b:" )) != -1 ) {
+    while (( c = getopt( ac, av, "Vrcdp:b:g:" )) != -1 ) {
 	switch ( c ) {
 	case 'V' :		/* virgin */
 	    printf( "%s\n", version );
@@ -130,10 +133,16 @@ main( ac, av )
 	    backlog = atoi( optarg );
 	    break;
 
+	case 'g' :		/* umask */
+	    yoomask = strtol( optarg, (char **)NULL, 0 );
+	    break;
+
 	default :
 	    err++;
 	}
     }
+
+    umask( yoomask );
 
     if ( chdir( _PATH_RADMIND ) < 0 ) {
 	perror( _PATH_RADMIND );
@@ -324,6 +333,10 @@ main( ac, av )
 		/* give an error banner */
 		exit( 1 );
 	    }
+
+	    /* set global c_hostname for retr command */
+	    strcpy( c_hostname, hp->h_name );
+printf( "%s\n", c_hostname );
 
 	    syslog( LOG_INFO, "child for %s %s",
 		    inet_ntoa( sin.sin_addr ), hp->h_name );
