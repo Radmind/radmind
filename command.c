@@ -388,7 +388,7 @@ special_t( char *transcript, char *epath )
 	if (( ac = argcargv( line, &av )) != 8 ) {
 	    continue;
 	}
-	if (( *av[ 0 ] != 'f' ) || ( *av[ 0 ] != 'a' )) {
+	if (( *av[ 0 ] != 'f' ) && ( *av[ 0 ] != 'a' )) {
 	    continue;
 	}
 
