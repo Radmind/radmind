@@ -186,7 +186,7 @@ f_retr( sn, ac, av )
 	break;
 
     case K_SPECIAL:
-	sprintf( path, "special/%s", decode( av[ 2 ] ));
+	sprintf( path, "special/%s/%s", remote_host, decode( av[ 2 ] ));
 	break;
 
     case K_FILE:
@@ -304,11 +304,11 @@ f_stat( SNET *sn, int ac, char *av[] )
 	break;
 
     case K_TRANSCRIPT:
-	sprintf( path, "%s/%s", "transcript", decode( av[ 2 ] ));
+	sprintf( path, "transcript/%s", decode( av[ 2 ] ));
 	break;
 
     case K_SPECIAL:
-	sprintf( path, "%s/%s/%s", "special", remote_host, decode( av[ 2 ] ));
+	sprintf( path, "special/%s/%s", remote_host, decode( av[ 2 ] ));
 	break;
 
     default:
