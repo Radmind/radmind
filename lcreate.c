@@ -83,6 +83,7 @@ main( int argc, char **argv )
     char		**targv;
     char                cksumval[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
     extern char		*optarg;
+    struct timeval	tv;
     FILE		*tran; 
     struct stat		st;
     struct applefileinfo	afinfo;
@@ -258,7 +259,6 @@ main( int argc, char **argv )
         }
 
         if ( login ) {
-	    struct timeval	tv;
 	    char		*line;
 
 	    if ( authlevel < 1 ) {
@@ -335,7 +335,9 @@ main( int argc, char **argv )
 
     while ( fgets( tline, MAXPATHLEN, tran ) != NULL ) {
 	if ( network && respcount > 0 ) {
-	    if ( stor_response( sn, &respcount ) < 0 ) {
+	    tv.tv_sec = 0;
+	    tv.tv_usec = 0;
+	    if ( stor_response( sn, &respcount, &tv ) < 0 ) {
 		exit( 2 );
 	    }
 	}
@@ -449,7 +451,7 @@ main( int argc, char **argv )
 done:
     if ( network ) {
 	while ( respcount > 0 ) {
-	    if ( stor_response( sn, &respcount ) < 0 ) {
+	    if ( stor_response( sn, &respcount, NULL ) < 0 ) {
 		exit( 2 );
 	    }
 	}

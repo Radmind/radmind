@@ -46,30 +46,27 @@ extern void            	(*logger)( char * );
 extern SSL_CTX  	*ctx;
 
     int
-stor_response( SNET *sn, int *respcount )
+stor_response( SNET *sn, int *respcount, struct timeval *tv )
 {
     fd_set		fds;
-    struct timeval	tv;
     char		*line;
+    struct timeval	to;
 
-    for (;;) {
+    for ( ; *respcount > 0; (*respcount)-- ) {
 	if ( ! snet_hasdata( sn )) {
 	    FD_ZERO( &fds );
 	    FD_SET( snet_fd( sn ), &fds );
 
-	    tv.tv_sec = 0;
-	    tv.tv_usec = 0;
-
-	    if ( select( snet_fd( sn ) + 1, &fds, NULL, NULL, &tv ) < 0 ) {
+	    if ( select( snet_fd( sn ) + 1, &fds, NULL, NULL, tv ) < 0 ) {
 		return( -1 );
 	    }
 	    if ( ! FD_ISSET( snet_fd( sn ), &fds )) {
-		return( 0 );
+		break;
 	    }
 	}
 
-	tv = timeout;
-	if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
+	to = timeout;
+	if (( line = snet_getline_multi( sn, logger, &to )) == NULL ) {
 	    if ( snet_eof( sn )) {
 		fprintf( stderr, "store failed: Connection closed\n" );
 	    } else {
@@ -91,8 +88,8 @@ stor_response( SNET *sn, int *respcount )
 		return( -1 );
 	    }
 	}
-	(*respcount)--;
     }
+    return( 0 );
 }
 
     int

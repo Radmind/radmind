@@ -619,7 +619,7 @@ f_stor( SNET *sn, int ac, char *av[] )
 	 * files in that transcript
 	 */
 	if (( strcmp( upload_xscript, av[ 2 ] ) != 0 )) {
-	    snet_writef( sn, "%d Incorrect Transcript\r\n", 552 );
+	    snet_writef( sn, "%d Incorrect Transcript %s\r\n", 552, av[ 2 ] );
 	    exit( 1 );
 	}
 
@@ -698,7 +698,8 @@ f_stor( SNET *sn, int ac, char *av[] )
 
     /* make sure client agrees we're at the end */
     if ( strcmp( line, "." ) != 0 ) {
-	snet_writef( sn, "%d Length doesn't match sent data\r\n", 555 );
+	snet_writef( sn, "%d Length doesn't match sent data %s\r\n",
+		555, upload );
 	(void)unlink( upload );
 
 	tv.tv_sec = 60;
