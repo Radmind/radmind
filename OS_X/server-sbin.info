@@ -1,5 +1,5 @@
 Title                	Radmind server
-Version              	0.6.0
+Version              	_RADMIND_VERSION
 Description          	This package installs radmind server for Mac OS X
 
 DefaultLocation      	/usr/local/sbin

@@ -1,5 +1,5 @@
 # the name to display in Installer.app
-Title		Radmind
+Title		Radmind _VERSION_RADMIND
 
 # This will indicate that the packages are in the .mpkg directory itself
 PackageLocation ./

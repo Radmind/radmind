@@ -1,5 +1,5 @@
 Title                	Radmind client example files
-Version              	0.6.0
+Version              	_RADMIND_VERSION
 Description          	This package installs radmind client example files for Mac OS X
 
 DefaultLocation      	/private/var/radmind/client

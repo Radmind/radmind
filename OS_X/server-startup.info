@@ -1,5 +1,5 @@
 Title                	Radmind server startup items
-Version              	0.6.0
+Version              	_RADMIND_VERSION
 Description          	This package installs the radmind server startup items for Mac OS X
 
 DefaultLocation      	/Library/StartupItems/RadmindServer
