@@ -35,6 +35,8 @@
 #include "list.h"
 #include "tls.h"
 #include "largefile.h"
+#include "mkdirs.h"
+#include "rmdirs.h"
 
 void output( char* string);
 int check( SNET *sn, char *type, char *path); 
@@ -176,6 +178,7 @@ check( SNET *sn, char *type, char *file )
     char 	tempfile[ 2 * MAXPATHLEN ];
     char        ccksum[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
     char	path[ MAXPATHLEN ];
+    char	*p;
     int		tac;
     struct stat		st;
     struct utimbuf      times;
@@ -193,6 +196,57 @@ check( SNET *sn, char *type, char *file )
 	    fprintf( stderr, "%s%s: path too long\n", kdir, file );
 	    return( 2 );
 	}
+
+	/* Check for transcript with directories */
+	for ( p = strchr( file, '/' ); p != NULL; p = strchr( p, '/' )) {
+	    *p = '\0';
+
+	    /* Check to see if path exists as a directory */
+	    if ( snprintf( tempfile, MAXPATHLEN, "%s%s", kdir, file )
+		    > MAXPATHLEN - 1 ) {
+		fprintf( stderr, "%s%s: path too long\n", kdir, file );
+		return( 2 );
+	    }
+	    if ( stat( tempfile, &st ) != 0 ) {
+		if ( errno != ENOENT ) {
+		    perror( tempfile );
+		    return( 2 );
+		} else {
+		    if ( mkdir( tempfile, 0777 ) != 0 ) {
+			perror( tempfile );
+			return( 2 );
+		    }
+		}
+	    } else {
+		/* Make sure it is a directory */
+		if ( !S_ISDIR( st.st_mode )) {
+		    if ( unlink( tempfile ) != 0 ) {
+			perror( tempfile );
+			return( 2 );
+		    }
+		    if ( mkdir( tempfile, 0777 )) {
+			perror( tempfile );
+			return( 2 );
+		    }
+		}
+	    }
+	    *p++ = '/';
+	}
+	if ( stat( path, &st ) != 0 ) {
+	    if ( errno != ENOENT ) {
+		perror( path );
+		return( 2 );
+	    }
+	} else {
+	    if ( S_ISDIR( st.st_mode )) {
+		if ( rmdirs( path ) != 0 ) {
+		    perror( path );
+		    return( 2 );
+		}
+	    }
+	}
+
+
     } else {
 	if ( snprintf( pathdesc, MAXPATHLEN, "%s", type )
 		> ( MAXPATHLEN * 2 ) - 1 ) {
