@@ -239,6 +239,11 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 	exit( 2 );
     }
 
+    if ( prev_tran != tran ) {
+	fprintf( outtran, "%s:\n", tran->t_shortname );
+	prev_tran = tran;
+    }
+
     /* print out info to file based on type */
     switch( cur->pi_type ) {
     case 's':
@@ -283,10 +288,6 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
     case 'f':
 	if (( edit_path == APPLICABLE ) && (( flag == PR_TRAN_ONLY ) || 
 		( flag == PR_DOWNLOAD ))) {
-	    if ( prev_tran != tran ) {
-		fprintf( outtran, "%s:\n", tran->t_shortname );
-		prev_tran = tran;
-	    }
 	    fprintf( outtran, "+ " );
 	}
 
