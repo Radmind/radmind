@@ -71,8 +71,9 @@ files, symbolic links etc. Transcripts have the following format:
 type	path	[type specific information]
 .br
 .sp
-Type is a single letter: h, l, d, c, b, p, s, D, f. Path is the encoded
-path, where space is "\\b", tab is "\\t", newline is "\\n" and
+Type is a single letter: h, l, d, c, b, p, s, D, f, a. Path is the encoded
+path, where space is "\\b", tab is "\\t", newline is "\\n", carriage return
+is "\\r", and 
 \\ is "\\\\". The type specific information varies.
 .sp
 .br
@@ -120,12 +121,21 @@ and minor device number will be checked.
 .br
 f       path    mode    uid     gid     mtime   size    checksum
 .br
+a       path    mode    uid     gid     mtime   size    checksum
+.br
 .sp
 Type 'f' is a file. Mtime is a decimal number of seconds since 1970 GMT.
 Size is the size of the file in bytes. Checksum is the base64 encoded
 checksum if enabled, otherwise it is "-". If a file is listed in a 
 .B negative
-transcript, only mode, uid and gid will be checked.
+transcript, only mode, uid and gid will be checked. Everything that applies to
+a type 'f' file applies to type 'a', as well. Type 'a' is an
+.B applefile,
+relevant only on Mac OS X machines running on an HFS+-formatted drive. A file
+labeled as an applefile by
+.B fsdiff
+has Mac OS metadata, and is stored on the server as an AppleSingle file 
+(see applefile(5)).
 .sp
 Transcripts are sorted in depth first order, which means subdirectories have
 precedence over files in the same directory. This means that "/" has
@@ -244,6 +254,7 @@ name of the default command file.
 name of the special transcript.
 .sp
 .SH SEE ALSO
+.BR applefile (5),
 .BR ktcheck (1),
 .BR lapply (1),
 .BR lcreate (1),

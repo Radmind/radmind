@@ -1,0 +1,51 @@
+.TH radmind "25" "March 2002" "RSUG" "System Manager's Manual"
+.SH NAME
+.B applefile
+\- Radmind AppleSingle file
+.sp
+.SH DESCRIPTION
+To provide support for Mac OS X, radmind is aware of the Mac OS metadata used
+on HFS+-formatted drives. When
+.B lcreate
+uploads a file denoted in the transcript as an
+.B applefile
+(type 'a'), it encodes the file and the file's metadata to the server as an
+AppleSingle file. The AppleSingle file is an archive containing a file's
+relevant metadata and data in a single file stream. The radmind AppleSingle
+file has the following format:
+.sp
+1) The AppleSingle header, consisting of a 
+4-byte magic number, 4-byte version number, 16-byte filler, 2-byte number 
+denoting the number of entries in the archive, and 3 header entries, each
+describing the items in the archive and containing a 4-byte entry id, 4-byte
+offset, and 4-byte length;
+.sp
+2) The file's Finder information (32 bytes),
+which stores
+the file's Type and Creator codes, as well its position in the Finder window;
+.sp
+3) The file's Resource Fork, which contains things like images, sounds, and
+other data not easily or appropriately stored in the Data Fork;
+.sp
+4) The file's
+Data Fork, the portion visible from the Finder, and the only part which is
+considered valid by flat file systems.
+.sp
+The radmind tool
+.B lapply
+similarly decodes the applefile from the server and restores it to the client
+Mac OS X machine running on an HFS+-formatted drive.
+.sp
+.SH MORE INFO
+The Apple Computer's AppleSingle RFC is available at
+.B http://www.faqs.org/rfcs/rfc1740.html.
+.sp
+.SH SEE ALSO
+.BR ktcheck (1),
+.BR lapply (1),
+.BR lcreate (1),
+.BR lcksum (1),
+.BR lfdiff (1),
+.BR lmerge (1),
+.BR radmind (8), 
+.BR twhich (1).
