@@ -20,9 +20,6 @@ extern struct timeval	timeout;
 int			verbose = 0;
 int			linenum = 0;
 int			chksum = 0;
-char			fullpath[ MAXPATHLEN ];
-char			*diff = _PATH_GNU_DIFF;
-char			*location = "/tmp/lfdiff";
 
     void
 output( char *string )
@@ -49,10 +46,12 @@ main( int argc, char **argv, char **envp )
     char		*host = _RADMIND_HOST;
     char		*transcript = NULL;
     char		*file = NULL;
+    char		*diff = _PATH_GNU_DIFF;
     char		**diffargv;
     char		**argcargv;
     char 		pathdesc[ 2 * MAXPATHLEN ];
-    char 		temppath[ 2 * MAXPATHLEN ];
+    char 		*path = "/tmp/lfdiff";
+    char 		temppath[ MAXPATHLEN ];
     char		opt[ 3 ];
     struct servent	*se;
     SNET		*sn;
@@ -111,7 +110,8 @@ main( int argc, char **argv, char **envp )
 		exit( 2 );
 	    };
 	    break;
-	case 'C': case 'D': 
+	case 'C':
+	case 'D': 
 	    if (( diffargv = (char **)realloc( diffargv, ( sizeof( *diffargv )
 		    + ( 3 * sizeof( char * ))))) == NULL ) {
 		perror( "malloc" );
@@ -185,7 +185,7 @@ main( int argc, char **argv, char **envp )
 	}
     }
 
-    if ( retr( sn, pathdesc, file, location, NULL, (char *)&temppath ) != 0 ) {
+    if ( retr( sn, pathdesc, path, NULL, NULL, (char *)&temppath ) != 0 ) {
 	fprintf( stderr, "%s: retr failed\n", file );
 	exit( 2 );
     }
