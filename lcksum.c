@@ -30,6 +30,7 @@ main( int argc, char **argv )
 {
     int			ufd, c, err = 0, updatetran = 1, updateline = 0;
     int			ucount = 0, len, tac, amode = R_OK | W_OK;
+    int			remove = 0;
     extern int          optind;
     char		*transcript = NULL, *tpath = NULL, *line;
     char		*prefix = NULL;
@@ -135,6 +136,13 @@ main( int argc, char **argv )
 
 	tac = acav_parse( NULL, tline, &targv );
 
+	if ( *targv[ 0 ] == '-' ) {
+	    remove = 1;
+	    targv++;
+	} else {
+	    remove = 0;
+	}
+
 	if ( snprintf( path, MAXPATHLEN, "%s", decode( targv[ 1 ] ))
 		> MAXPATHLEN ) {
 	    fprintf( stderr, "line %d: path too long\n", linenum );
@@ -154,7 +162,7 @@ main( int argc, char **argv )
 	    exit( 1 );
 	}
 
-	if ( ( tac != 8 ) || ( *targv[ 0 ] != 'f' ) ) {
+	if (( tac != 8 ) || ( *targv[ 0 ] != 'f' ) || ( remove )) {
 	    if ( updatetran ) {
 		fprintf( ufs, "%s", line );
 	    }
