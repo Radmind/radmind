@@ -208,10 +208,6 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
      */
     if ( edit_path == FS2TRAN ) {
 	cur = &tran->t_pinfo;
-	if ( prev_tran != tran ) {
-	    fprintf( outtran, "%s:\n", tran->t_name );
-	    prev_tran = tran;
-	}
     } else {
 	cur = fs;
     }
@@ -251,6 +247,10 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
     case 'f':
 	if (( edit_path == FS2TRAN ) && (( flag == PR_TRAN_ONLY ) || 
 		( flag == PR_DOWNLOAD ))) {
+	    if ( prev_tran != tran ) {
+		fprintf( outtran, "%s:\n", tran->t_name );
+		prev_tran = tran;
+	    }
 	    fprintf( outtran, "+ " );
 	}
 	fprintf( outtran, "f %-37s\t%.4lo %5d %5d %9d %7d %s\n", epath,
@@ -582,6 +582,11 @@ transcript_init(  char *cmd )
     /* open the special transcript if there were any special files */
     if ( special == 1 ) {
 	t_new( T_SPECIAL, "special.T" );
+    }
+
+    if ( tran_head->t_type == T_NULL  && edit_path == FS2TRAN ) {
+	fprintf( stderr, "-T option requires a non-NULL transcript\n" );
+	exit( 1 );
     }
 
     return;
