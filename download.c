@@ -93,7 +93,7 @@ download( SNET *sn, char *pathdesc, char* path, char *file, char *chksumval )
     if ( temppath == NULL ) { perror( "malloc" );
 	return ( NULL );
     }
-    if ( snprintf( temppath, sizeof( temppath ), "%s/%s.radmind.%i",
+    if ( snprintf( temppath, MAXPATHLEN, "%s/%s.radmind.%i",
 	    path, file, getpid() ) > MAXPATHLEN ) {
 	fprintf( stderr, "%s/%s.radmind.%i: too long", path, file,
 		(int)getpid() );
