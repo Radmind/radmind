@@ -24,6 +24,7 @@ GNU_DIFF=@diffpath@
 RADMIND_HOST=@server@
 RADMIND_AUTHLEVEL=@authlevel@
 RADMIND_MAXCONNECTIONS=@maxconnections@
+RADMIND_BUILD_DATE=@build_date@
 
 RADMINDSYSLOG=LOG_LOCAL7
 
@@ -183,7 +184,7 @@ DISTDIR=../radmind-${VERSION}
 
 dist   : distclean
 	mkdir ${DISTDIR}
-	tar chfFFX - EXCLUDE . | ( cd ${DISTDIR}; tar xvf - )
+	tar -c -f - -X EXCLUDE . | tar xpf - -C ${DISTDIR}
 	echo ${VERSION} > ${DISTDIR}/VERSION
 
 man : FRC
@@ -198,6 +199,7 @@ man : FRC
 		-e 's@_RADMIND_TLS_CA@${TLS_CA}@g' \
 		-e 's@_RADMIND_TLS_CERT@${TLS_CERT}@g' \
 		-e 's@_RADMIND_MAXCONNECTIONS@${RADMIND_MAXCONNECTIONS}@g' \
+		-e 's@_RADMIND_BUILD_DATE@${RADMIND_BUILD_DATE}@g' \
 		${srcdir}/man/$$i > tmp/man/$$i; \
 	done
 
@@ -225,13 +227,9 @@ install	: all man
 	done
 	-mkdir -p ${CERTDIR}
 
-PKGSDIR=../radmind-packages
 PKGNAME=RadmindTools
-PKGROOTDIR=../RadmindToolsInstaller
-PKGDIR=${PKGROOTDIR}/usr/local/bin
-SBINPKGDIR=${PKGROOTDIR}/usr/local/sbin
-MANPKGDIR=${PKGROOTDIR}/${MANDIR}
-PKGRSRCDIR=${PKGNAME}.pkg/Contents/Resources
+PKGDIR=tmp/RadmindToolsInstaller
+PKGRSRCDIR=tmp/Resources
 
 INFOLIST=	$(wildcard OS_X/*.info)	
 
@@ -243,39 +241,37 @@ info :
 		$$i > tmp/$$i; \
 	done
 
-package : all man info
-	mkdir -p -m 0755 ${PKGDIR}
-	for i in ${BINTARGETS}; do \
-	    ${INSTALL} -o root -g wheel -m 0555 -c $$i \
-		${PKGDIR}/; \
+package	: all man info
+	-mkdir -p ${PKGDIR}/${exec_prefix}
+	-mkdir -p ${PKGDIR}/${SBINDIR}
+	${INSTALL} -m 0755 -c radmind ${PKGDIR}/${SBINDIR}/
+	-mkdir -p ${PKGDIR}/${BINDIR}
+	for i in ${PKGDIR}/${BINTARGETS}; do \
+	    ${INSTALL} -m 0755 -c $$i ${PKGDIR}/${BINDIR}/; \
 	done
-	mkdir -p -m 0755 ${SBINPKGDIR}
-	${INSTALL} -o root -g wheel -m 0555 -c radmind ${SBINPKGDIR}
-	mkdir -p -m 0755 ${MANPKGDIR}/man1
+	-mkdir -p ${prefix}
+	-mkdir -p ${PKGDIR}/${MANDIR}
+	-mkdir ${PKGDIR}/${MANDIR}/man1
 	for i in ${MAN1TARGETS}; do \
-	    ${INSTALL} -o root -g wheel -m 0444 -c tmp/man/$$i \
-		${MANPKGDIR}/man1/; \
-	done 
-	mkdir -p -m 0755 ${MANPKGDIR}/man5
+	    ${INSTALL} -m 0644 -c tmp/man/$$i ${PKGDIR}/${MANDIR}/man1/; \
+	done
+	-mkdir ${PKGDIR}/${MANDIR}/man5
 	for i in ${MAN5TARGETS}; do \
-	    ${INSTALL} -o root -g wheel -m 0444 -c tmp/man/$$i \
-		${MANPKGDIR}/man5/; \
-	done 
-	mkdir -p -m 0755 ${MANPKGDIR}/man8
-	for i in ${MAN8TARGETS}; do \
-	    ${INSTALL} -o root -g wheel -m 0444 -c tmp/man/$$i \
-		${MANPKGDIR}/man8/; \
-	done 
+	    ${INSTALL} -m 0644 -c tmp/man/$$i ${PKGDIR}/${MANDIR}/man5/; \
+	done
+	-mkdir ${PKGDIR}/${MANDIR}/man8
+	 for i in ${MAN8TARGETS}; do \
+	    ${INSTALL} -m 0644 -c tmp/man/$$i ${PKGDIR}/${MANDIR}/man8/; \
+	done
+	-mkdir -p ${PKGDIR}${CERTDIR}
+	PackageMaker -p ../${PKGNAME}.pkg -r ${PKGRSRCDIR} \
+	    -i tmp/OSX_X/RadmindTools.info 
 
-	mkdir -p -m 1755 ${PKGSDIR}
-	chown root:wheel ${PKGSDIR}
-	package ${PKGROOTDIR} tmp/OS_X/RadmindTools.info \
-		-d ${PKGSDIR}
-	mkdir -p ${PKGSDIR}/${PKGRSRCDIR}/English.lproj
-	cp OS_X/License.rtf ${PKGSDIR}/${PKGRSRCDIR}/English.lproj
-	cp OS_X/ReadMe.rtf ${PKGSDIR}/${PKGRSRCDIR}/English.lproj
-	cp OS_X/Welcome.rtf ${PKGSDIR}/${PKGRSRCDIR}/English.lproj
-	cp OS_X/background.tiff ${PKGSDIR}/${PKGRSRCDIR}/English.lproj
+	mkdir -p ${PKGDIR}/${PKGRSRCDIR}/English.lproj
+	cp OS_X/License.rtf ${PKGDIR}/${PKGRSRCDIR}/English.lproj
+	cp OS_X/ReadMe.rtf ${PKGDIR}/${PKGRSRCDIR}/English.lproj
+	cp OS_X/Welcome.rtf ${PKGDIR}/${PKGRSRCDIR}/English.lproj
+	cp OS_X/background.tiff ${PKGDIR}/${PKGRSRCDIR}/English.lproj
 	rm -rf ${PKGROOTDIR} tmp
 
 clean :

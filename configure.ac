@@ -21,6 +21,9 @@ AC_SUBST(radminddir)
 AC_ARG_WITH(maxconnections, AC_HELP_STRING([--with-max-connections=MAX], [maximum number of simultaneous connections]), maxconnections="$withval", maxconnections=0 )
 AC_SUBST(maxconnections) 
 
+build_date=`date "+%B %d, %Y"`
+AC_SUBST(build_date) 
+
 #AC_ARG_WITH(certdir, AC_HELP_STRING([--cert=DIR], [default certificate location]), certdir="$withval", certdir="/var/radmind/cert" )
 #AC_SUBST(certdir) 
 
