@@ -191,12 +191,6 @@ main( int argc, char **argv )
 	    if (( p = strrchr( tname, '/' )) != NULL ) {
 		tname = ++p;
 	    }
-
-	    /* strip trailing ".T" only */
-	    if ((( p = strrchr( tname, '.' )) != NULL ) &&
-		    ( strcmp( p, ".T") == 0 )) {
-		*p = '\0';
-	    }
 	}
 
 	if (( he = gethostbyname( host )) == NULL ) {
