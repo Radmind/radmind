@@ -33,7 +33,8 @@
 .SH DESCRIPTION
 .B lfdiff 
 retrieves 
-.I file 
+.IR file ,
+given as an unenconded path,
 from the radmind server 
 .I host 
 and writes it to
@@ -51,7 +52,6 @@ as file1
 and file2 arguments respectively.  
 .I file 
 is removed from /tmp on exit.
-
 .B lfdiff
 supports all single letter 
 .BR diff (1)
