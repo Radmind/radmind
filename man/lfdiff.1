@@ -1,10 +1,12 @@
-.TH lfdiff "1" "October 2002" "RSUG" "User Commands"
+.TH lfdiff "1" "June 2003" "RSUG" "User Commands"
 .SH NAME
 .B lfdiff 
 \- compare local files with copies on radmind server
 .SH SYNOPSIS
 .B lfdiff 
-{
+[
+.B \-rv
+] {
 .BI \-T\  transcript
 |
 .B \-S
@@ -71,6 +73,11 @@ specifies the radmind server, by default
 specifies the port of the radmind server, by default
 .BR 6662 .
 .TP 19
+.B \-r
+use random seed file $RANDFILE if that environment variable is set,
+$HOME/.rnd otherwise.  See
+.BR RAND_load_file (3o).
+.TP 19
 .B \-S
 .I file
 is a special file.
@@ -126,4 +133,5 @@ An error occurred.
 .BR lcreate (1),
 .BR lmerge (1),
 .BR twhich (1),
-.BR radmind (8).
+.BR radmind (8),
+.BR RAND_load_file (3o).

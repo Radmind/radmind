@@ -60,7 +60,7 @@ main( int argc, char **argv )
     struct stat		st;
     off_t		cksumsize;
 
-    while ( ( c = getopt ( argc, argv, "c:oP:nqvV" ) ) != EOF ) {
+    while ( ( c = getopt ( argc, argv, "c:P:nqV" ) ) != EOF ) {
 	switch( c ) {
 	case 'c':
 	    OpenSSL_add_all_digests();
@@ -84,8 +84,6 @@ main( int argc, char **argv )
 	    exit( 0 );
 	case 'q':
 	    verbose = 0;
-	    break;
-	case 'v':
 	    break;
 	case '?':
 	    err++;

@@ -1,4 +1,4 @@
-.TH ktcheck "1" "October 2002" "RSUG" "User Commands"
+.TH ktcheck "1" "June 2003" "RSUG" "User Commands"
 .SH NAME
 .B ktcheck 
 \- verify and download command file and transcripts
@@ -6,7 +6,7 @@
 .B ktcheck 
 [
 .BI \-c\  checksum 
-.RB [ \-nV ]
+.RB [ \-nrV ]
 ] [
 .RB \-q\ |\ \-v\ |\ -i\ 
 ] [
@@ -91,6 +91,11 @@ specifies a port, by default
 .B \-q
 suppress all messages.
 .TP 19
+.B \-r
+use random seed file $RANDFILE if that environment variable is set,
+$HOME/.rnd otherwise.  See
+.BR RAND_load_file (3o).
+.TP 19
 .B \-V
 displays the version of 
 .BR ktcheck ,
@@ -141,4 +146,5 @@ An error occurred.
 .BR lfdiff (1),
 .BR lmerge (1),
 .BR twhich (1),
-.BR radmind (8).
+.BR radmind (8),
+.BR RAND_load_file (3o).

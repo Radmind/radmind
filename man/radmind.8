@@ -1,11 +1,11 @@
-.TH radmind "8" "October 2002" "RSUG" "System Manager's Manual"
+.TH radmind "8" "June 2003" "RSUG" "System Manager's Manual"
 .SH NAME
 .B radmind
 \- Remote administration daemon
 .SH SYNOPSIS
 .B radmind
 [
-.B \-dRUV
+.B \-dRrUV
 ] [
 .BI \-b\  backlog
 ] [
@@ -196,6 +196,11 @@ specifies the port of the radmind server, by default
 .BI \-R
 registers daemon as a Rendezvous service (Mac OS X only).
 .TP 19
+.B \-r
+use random seed file $RANDFILE if that environment variable is set,
+$HOME/.rnd otherwise.  See
+.BR RAND_load_file (3o).
+.TP 19
 .BI \-u\  umask
 specifies the umask the server uses to write files to the disk, defaulting
 to the user's umask.
@@ -257,7 +262,8 @@ _RADMIND_PATH/config
 .BR lfdiff (1),
 .BR lmerge (1),
 .BR twhich (1),
-.BR pam.conf (4).
+.BR pam.conf (4),
+.BR RAND_load_file (3o).
 .sp
 Also see the three
 .B Linux-PAM

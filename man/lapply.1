@@ -1,11 +1,11 @@
 '\" t
-.TH lapply "1" "November 2002" "RSUG" "User Commands"
+.TH lapply "1" "June 2003" "RSUG" "User Commands"
 .SH NAME
 .B lapply 
 \- modify file system to match appliable-transcript 
 .SH SYNOPSIS
 .B lapply
-.RB [ \-FnV ]
+.RB [ \-FnrV ]
 [
 .RB \-q\ |\ \-v\ |\ \-i 
 ] [
@@ -91,6 +91,11 @@ specifies the port of the radmind server, by default
 .B \-q
 suppress all messages.
 .TP 19
+.B \-r
+use random seed file $RANDFILE if that environment variable is set,
+$HOME/.rnd otherwise.  See
+.BR RAND_load_file (3o).
+.TP 19
 .B \-V
 displays the version number of
 .B lapply
@@ -134,4 +139,5 @@ An error occurred, system was not modified.
 .BR twhich (1),
 .BR applefile (5),
 .BR radmind (8),
-.BR chflags (2).
+.BR chflags (2),
+.BR RAND_load_file (3o).

@@ -1,10 +1,10 @@
-.TH lcreate "1" "October 2002" "RSUG" "User Commands"
+.TH lcreate "1" "June 2003" "RSUG" "User Commands"
 .SH NAME
 .B lcreate
 \-  upload transcripts and their corresponding files
 .SH SYNOPSIS
 .B lcreate
-.RB [ \-lnNTV ]
+.RB [ \-lnNrTV ]
 [
 .RB \-q\ |\ \-v\ |\ \-i 
 ] [
@@ -85,6 +85,11 @@ specifies a port, by default
 .B \-q
 suppress all messages.
 .TP 19
+.B \-r
+use random seed file $RANDFILE if that environment variable is set,
+$HOME/.rnd otherwise.  See
+.BR RAND_load_file (3o).
+.TP 19
 .B \-T
 uploads the transcript only, and
 .B not
@@ -131,4 +136,5 @@ Client's private key, by default _RADMIND_TLS_CERT.
 .BR lmerge (1),
 .BR twhich (1),
 .BR applefile (5),
-.BR radmind (8).
+.BR radmind (8),
+.BR RAND_load_file (3o).
