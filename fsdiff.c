@@ -1,5 +1,6 @@
 #include <sys/types.h>
 #include <sys/param.h>
+#include <unistd.h>
 #include <errno.h>
 #include <dirent.h>
 #include <stdio.h>
@@ -10,7 +11,6 @@
 
 extern char	*version, *checksumlist;
 
-int	main( int, char ** );
 void	fs_walk( struct llist * );
 
     void
@@ -55,17 +55,17 @@ fs_walk( struct llist *path  )
 	if ( path->ll_pinfo.pi_name[ len - 1 ] == '/' ) {
 	    if ( snprintf( temp, MAXPATHLEN, "%s%s", path->ll_pinfo.pi_name,
 		    de->d_name ) > MAXPATHLEN ) {
-		fprintf( stderr, "%s%s: path too long\n",
-		    path->ll_pinfo.pi_name, de->d_name );
+                fprintf( stderr, "%s%s: path too long\n",
+                    path->ll_pinfo.pi_name, de->d_name );
 		exit( 1 );
 	    }
 	} else {
-	    if ( snprintf( temp, MAXPATHLEN, "%s/%s", path->ll_pinfo.pi_name,
-		    de->d_name ) > MAXPATHLEN ) {
-		fprintf( stderr, "%s/%s: path too long\n",
-		    path->ll_pinfo.pi_name, de->d_name );
-		exit( 1 );
-	    }
+            if ( snprintf( temp, MAXPATHLEN, "%s/%s", path->ll_pinfo.pi_name,
+                    de->d_name ) > MAXPATHLEN ) {
+                fprintf( stderr, "%s/%s: path too long\n",
+                    path->ll_pinfo.pi_name, de->d_name );
+                exit( 1 );
+            }
 	}
 
 	/* allocate new node for newly created relative pathname */
@@ -97,9 +97,6 @@ main( int argc, char **argv )
     struct llist	*root;
     extern char 	*optarg;
     extern int		optind;
-#ifndef linux
-    extern int		errno;
-#endif
     char		*kfile = _RADMIND_COMMANDFILE;
     char		*kdir = "";
     char		*p;
