@@ -192,7 +192,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     char			*line;
     struct as_header		ah;
     extern struct as_header	as_header;
-    extern struct atterlist	alist;
+    extern struct attrlist	alist;
     struct as_entry		ae_ents[ 3 ]; 
     struct timeval		tv;
     extern EVP_MD       	*md;

@@ -39,7 +39,7 @@ update( const char *path, char *displaypath, int present, int newfile,
     char		type;
 #ifdef __APPLE__
     char			fi_data[ FINFOLEN ];
-    extern struct atterlist     alist;
+    extern struct attrlist     alist;
     static char                 null_buf[ 32 ] = { 0 };
 #endif /* __APPLE__ */
 
