@@ -462,7 +462,7 @@ main( int argc, char **argv )
 	    }
 	}
 	len = strlen( path );
-	if ( snprintf( prepath, MAXPATHLEN, "%s", path) > MAXPATHLEN ) { 
+	if ( snprintf( prepath, MAXPATHLEN, "%s", path) >= MAXPATHLEN ) { 
 	    fprintf( stderr, "%s: line %d: path too long\n",
 		    transcript, linenum );
 	    goto error2;
