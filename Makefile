@@ -41,10 +41,10 @@ FSDIFF_OBJ=	version.o fsdiff.o argcargv.o transcript.o llist.o code.o \
 		hardlink.o chksum.o base64.o pathcmp.o convert.o
 #afile.o
 
-KTCHECK_OBJ=	version.o ktcheck.o argcargv.o download.o base64.o code.o \
+KTCHECK_OBJ=	version.o ktcheck.o argcargv.o retr.o base64.o code.o \
 		chksum.o list.o connect.o
 
-LAPPLY_OBJ=	version.o lapply.o argcargv.o code.o base64.o download.o \
+LAPPLY_OBJ=	version.o lapply.o argcargv.o code.o base64.o retr.o \
 		convert.o update.o chksum.o connect.o pathcmp.o
 #afile.o
 
@@ -57,7 +57,7 @@ LCKSUM_OBJ=	version.o lcksum.o argcargv.o chksum.o base64.o code.o \
 
 LMERGE_OBJ=	version.o lmerge.o argcargv.o code.o pathcmp.o mkdirs.o list.o
 
-LFDIFF_OBJ=	version.o lfdiff.o argcargv.o connect.o download.o chksum.o \
+LFDIFF_OBJ=	version.o lfdiff.o argcargv.o connect.o retr.o chksum.o \
 		base64.o
 
 TWHICH_OBJ=	version.o argcargv.o code.o twhich.o

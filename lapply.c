@@ -10,7 +10,7 @@
 
 #include "connect.h"
 #include "argcargv.h"
-#include "download.h"
+#include "retr.h"
 #include "convert.h"
 #include "code.h"
 #include "pathcmp.h"

@@ -10,7 +10,7 @@
 #include <unistd.h>
 
 #include "connect.h"
-#include "download.h"
+#include "retr.h"
 #include "argcargv.h"
 #include "chksum.h"
 #include "list.h"
