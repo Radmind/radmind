@@ -677,12 +677,6 @@ f_starttls( snet, ac, av )
      * Client MUST NOT attempt to start a TLS session if a TLS     
      * session is already active.  No mention of what to do if it does...
      */
-/* We don't have a way of doing this!
-    if ( env->e_flags & E_TLS ) {
-        syslog( LOG_ERR, "f_starttls: called twice" );
-        return( -1 );
-    }
-*/
 
     if ( ac != 1 ) {  
         snet_writef( snet, "%d Syntax error\r\n", 501 );
@@ -728,7 +722,7 @@ f_starttls( snet, ac, av )
 
     /* get command file */
     if ( command_k( "config" ) < 0 ) {
-	snet_writef( snet, "%d Now access for %s\r\n", 500, remote_host );
+	snet_writef( snet, "%d No access for %s\r\n", 500, remote_host );
 	return( -1 );
     } else {
 	commands  = auth;
@@ -738,11 +732,6 @@ f_starttls( snet, ac, av )
 	    exit( 1 );
 	}
     }
-
-/* More env crap we don't have 
-    env_reset( env );
-    env->e_flags = E_TLS;
-*/
 
     return( 0 );
 }
@@ -778,6 +767,11 @@ command_k( char *path_config )
 	    continue;
 	}
 
+	if (( remote_cn != NULL ) && wildcard( av[ 0 ], remote_cn )) {
+	    sprintf( command_file, "command/%s", av[ 1 ] );
+	    special_dir = remote_cn;
+	    return( 0 );
+	}
 	if ( wildcard( av[ 0 ], remote_host )) {
 	    sprintf( command_file, "command/%s", av[ 1 ] );
 	    special_dir = remote_host;
@@ -788,11 +782,6 @@ command_k( char *path_config )
 	    special_dir = remote_addr;
 	    return( 0 );
 	} 
-	if (( remote_cn != NULL ) && wildcard( av[ 0 ], remote_cn )) {
-	    sprintf( command_file, "command/%s", av[ 1 ] );
-	    special_dir = remote_cn;
-	    return( 0 );
-	}
     }
 
     /* If we get here, the host that connected is not in the config
