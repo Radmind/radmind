@@ -387,8 +387,7 @@ main( int argc, char **argv )
 	exit( 2 );
     }
 
-    if(( sn = connectsn( host, port )  ) == NULL ) {
-	fprintf( stderr, "%s:%d: %s \n", host, port, strerror( errno ));
+    if (( sn = connectsn( host, port )) == NULL ) {
 	exit( 2 );
     }
 

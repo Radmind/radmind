@@ -137,17 +137,18 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
 	    return( 1 );
 	}
 	strcpy( cksum_b64, targv[ 7 ] );
+
 	if ( special ) {
 	    if ( snprintf( pathdesc, MAXPATHLEN * 2, "SPECIAL %s",
-		    encode( path )) > ( MAXPATHLEN * 2 ) - 1 ) {
-		fprintf( stderr, "SPECIAL %s: too long\n", encode( path ));
+		    targv[ 1 ]) > ( MAXPATHLEN * 2 ) - 1 ) {
+		fprintf( stderr, "SPECIAL %s: too long\n", targv[ 1 ]);
 		return( 1 );
 	    }
 	} else {
 	    if ( snprintf( pathdesc, MAXPATHLEN * 2, "FILE %s %s",
-		    transcript, encode( path )) > ( MAXPATHLEN * 2 ) -1 ) {
+		    transcript, targv[ 1 ]) > ( MAXPATHLEN * 2 ) -1 ) {
 		fprintf( stderr, "FILE %s %s: command too long\n",
-		    transcript, encode( path ));
+		    transcript, targv[ 1 ]);
 		return( 1 );
 	    }
 	}
@@ -292,9 +293,8 @@ main( int argc, char **argv )
     }
 
     if ( network ) {
-	if(( sn = connectsn( host, port )  ) == NULL ) {
-	    fprintf( stderr, "%s:%d connection failed.\n", host, port );
-	    goto error0;
+	if (( sn = connectsn( host, port )) == NULL ) {
+	    exit( 1 );
 	}
     } else {
 	if ( !quiet ) printf( "No network connection\n" );
@@ -511,7 +511,7 @@ filechecklist:
     }
 
     if ( network ) {
-	if (( closesn( sn )) !=0 ) {
+	if (( closesn( sn )) != 0 ) {
 	    fprintf( stderr, "can not close sn\n" );
 	    goto error0;
 	}

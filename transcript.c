@@ -25,7 +25,6 @@
 
 static struct transcript	*tran_head = NULL;
 static struct transcript	*prev_tran = NULL;
-static int			linenum = 0;
 extern int			edit_path;
 
     static void 
@@ -210,7 +209,10 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 	cur = &tran->t_pinfo;
     }
 
-    epath = encode( cur->pi_name );
+    if (( epath = encode( cur->pi_name )) == NULL ) {
+	fprintf( stderr, "Filename too long: %s\n", cur->pi_name );
+	exit( 2 );
+    }
 
     /* print out info to file based on type */
     switch( cur->pi_type ) {
@@ -245,7 +247,10 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
     case 'l':
     case 'h':
 	fprintf( outtran, "%c %-37s\t", cur->pi_type, epath );
-	epath = encode( cur->pi_link );
+	if (( epath = encode( cur->pi_link )) == NULL ) {
+	    fprintf( stderr, "Filename too long: %s\n", cur->pi_link );
+	    exit( 2 );
+	}
 	fprintf( outtran, "%s\n", epath );
 	break;
 
@@ -628,7 +633,7 @@ transcript_init( char *kfile, int kfilemustexist )
     char	line[ MAXPATHLEN ];
     char	fullpath[ MAXPATHLEN ];
     char	*p;
-    int		length, ac;
+    int		length, ac, linenum = 0;
     int		foundspecial = 0;
     FILE	*fp;
     char	*kdir;

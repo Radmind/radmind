@@ -157,7 +157,6 @@ main( int argc, char **argv )
 	}
 
 	if (( sn = connectsn( host, port )) == NULL ) {
-	    fprintf( stderr, "%s:%d connection failed.\n", host, port );
 	    exit( 2 );
 	}
 

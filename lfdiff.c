@@ -178,8 +178,7 @@ main( int argc, char **argv, char **envp )
     }
     file = argv[ optind ];
 
-    if(( sn = connectsn( host, port )  ) == NULL ) {
-	fprintf( stderr, "%s: %d connection failed.\n", host, port );
+    if (( sn = connectsn( host, port )) == NULL ) {
 	exit( 2 );
     }
 

@@ -39,26 +39,28 @@ connectsn2( struct sockaddr_in *sin )
 	exit( 2 );
     }
     if ( verbose ) printf( "trying %s... ", inet_ntoa( sin->sin_addr ));
-    if ( connect( s, ( struct sockaddr *)sin,
-	    sizeof( struct sockaddr_in ) ) != 0 ) {
+    if ( connect( s, (struct sockaddr *)sin,
+	    sizeof( struct sockaddr_in )) != 0 ) {
 	if ( verbose ) printf( "failed: %s\n", strerror( errno ));
+	fprintf( stderr, "connection to %s failed: %s\n",
+		inet_ntoa( sin->sin_addr ), strerror( errno ));
 	(void)close( s );
 	return( NULL );
     }
     if ( verbose ) printf( "success!\n" );
-    if ( ( sn = snet_attach( s, 1024 * 1024 ) ) == NULL ) {
+    if (( sn = snet_attach( s, 1024 * 1024 )) == NULL ) {
 	perror( "snet_attach" );
 	exit( 2 );
     }
     tv = timeout;
-    if ( ( line = snet_getline_multi( sn, logger, &tv) ) == NULL ) {
-	fprintf( stderr, "connection to %s failed: %s\n",
-		inet_ntoa( sin->sin_addr ), strerror( errno ));
+    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
+	fprintf( stderr, "connection to %s failed\n",
+		inet_ntoa( sin->sin_addr ));
 	snet_close( sn );
 	return( NULL );
     }
-    if ( *line !='2' ) {
-	fprintf( stderr, "%s\n", line);
+    if ( *line != '2' ) {
+	fprintf( stderr, "%s\n", line );
 	snet_close( sn );
 	return( NULL );
     }
@@ -74,7 +76,7 @@ connectsn( char *host, int port )
     struct sockaddr_in  sin;
     SNET                *sn = NULL; 
 
-    memset( &sin, 0, sizeof( struct sockaddr_in ) );
+    memset( &sin, 0, sizeof( struct sockaddr_in ));
     sin.sin_family = AF_INET;
     sin.sin_port = port;
 
@@ -83,27 +85,23 @@ connectsn( char *host, int port )
      * the gethostbyname() routine
      */
     if (( sin.sin_addr.s_addr = inet_addr( host )) != -1 ) {
-	if (( sn = connectsn2( &sin )) != NULL ) {
-	    return( sn );
-	}
-	fprintf( stderr, "%s: connection failed\n", host );
-	exit( 2 );
+	return( connectsn2( &sin ));
     }
 
     if (( he = gethostbyname( host )) == NULL ) {
 	fprintf( stderr, "%s: Unknown host\n", host );
-	exit( 2 );
+	return( NULL );
     }
     
     for ( i = 0; he->h_addr_list[ i ] != NULL; i++ ) {
 	memcpy( &sin.sin_addr.s_addr, he->h_addr_list[ i ],
-		( unsigned int)he->h_length );
+		(unsigned int)he->h_length );
 	if (( sn = connectsn2( &sin )) != NULL ) {
 	    return( sn );
 	}
     }
     fprintf( stderr, "%s: connection failed\n", host );
-    exit( 2 );
+    return( NULL );
 }
 
     int
@@ -118,7 +116,7 @@ closesn( SNET *sn )
 	exit( 2 );
     }
     tv = timeout;
-    if ( ( line = snet_getline_multi( sn, logger, &tv ) ) == NULL ) {
+    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
 	fprintf( stderr, "close failed: %s\n", strerror( errno ));
 	exit( 2 );
     }
