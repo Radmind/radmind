@@ -2,7 +2,6 @@ For 1.0:
     TLS
     users file
     wild card support in hosts file
-    finder info for directories
 
 For after 1.0:
     pipe-line lapply
