@@ -1,0 +1,202 @@
+Using the Radmind Tools to Maintain Multiple Macintosh OS 10.1.3 Machines
+
+This document describes how to install, configure and use the radmind
+client and server tools to maintain a machine running Mac OS 10.1.3. 
+
+Server
+
+The radmind client can connect to a radmind server running on any
+platform.  These directions describe how to install the server on a
+Macintosh running OS X Server 10.1.3. 
+
+1. Download the radmind tools from http://rsug.itd.umich.edu/software/radmind
+
+2. Double click on radmind.mpkg.tgz to extract the installer.
+
+3. Double click on radmind.mpkg to start the radmind installer.
+
+4. If you do not have administrative privileges to the machine, you will
+need to authenticate as an administrative user. 
+
+5. Follow the directions given by the installer.
+
+6. To install the server tools you will need to customize the install.
+
+7. Click the "Customize" button and select the three server packages and
+press install. 
+
+The installer adds:
+ * A RadmindServer Startup script
+ * The radmind server /usr/local/sbin/radmind
+ * The radmind tools into /usr/local/bin
+ * The ramind man pages into /usr/local/share/man
+ * The radmind client directory /var/radmind/client
+ * A default command file /var/radmind/client/command.K
+ * A default negative transcript /var/radmind/client/apple-neg.T
+
+8. Edit /var/radmind/config
+
+The config file contains the list of known clients that can connect to the
+server.  Each line contains the fully qualified domain name and the
+command file for the client separated by any amount of white space.  Lines
+that are blank or begin with '#' are ignored. 
+
+For example, if there are three machines using two different command
+files, the config file might look like this: 
+
+amber.umich.edu		apple.K
+josh.umich.edu		apple.K
+ben.umich.edu		apple-test.T
+
+These command files do not exist yet, and therefore are not on the server.  We
+will create them when we create a load set.
+
+9. Start the server by typing radmind in a terminal window.  On future
+reboots, the server will automatically be started if /var/radmind/config
+exists. Client
+
+Now that the server is running, we are ready to create a base load.  This
+includes installing all software updates, applications and making any
+configurations to the system.  Once this machine is ready, we are ready to
+install the radmind tools and create a load.  It is a good idea to remove
+all removable media and unmount all network drives before doing these
+steps. 
+ 
+1. Download the radmind tools from http://rsug.itd.umich.edu/software/radmind.
+
+2. Double click on radmind.mpkg.tgz to extract the installer.
+
+3. Double click on radmind.mpkg to start the radmind installer.
+
+4. If you do not have administrative privileges to the machine, you will
+need to authenticate as an administrative user. 
+
+5. Follow the directions given by the installer.
+
+The installer adds:
+ * The radmind tools into /usr/local/bin
+ * The ramind man pages into /usr/local/share/man
+ * The radmind client directory /var/radmind/client
+ * A default command file /var/radmind/client/command.K
+ * A default negative transcript /var/radmind/client/apple-neg.T
+
+6. su to root (sudo -s)
+
+Since the radmind tools need access to the entire system, they must be run
+as root. 
+
+7. cd /
+
+8. Make a creatable transcript for the file system.  A creatable
+transcript is one that can be used listed in a command file. 
+
+fsdiff -C -c sha1 . > /var/radmind/client/apple-pos.T
+
+fsdiff walks through the entire file system and makes an entry into
+apple-pos.T for every file system object it encounters.  It records
+different attributes depending on what kind of file system object it is. 
+
+Taking a look at apple-pos.T you might notice that some files have been
+included in the transcript that are not too useful.  For instance, all of
+the files in /private/tmp are listed.  Since these files are temporary,
+there is no need include them in the loadset.  To eliminate these files
+from the transcript, we would add /private/tmp to a negative transcript. 
+
+A negative transcript tells fsdiff which file system objects to ignore. 
+How they are ignored depends on what type of file system object they are. 
+We have included a sample negative transcript to get you going. 
+
+9. Edit /var/radmind/client/apple-neg.T so that ./private/tmp is listed in
+the negative transcript. To do this, just remove the '#' on line 18. 
+(Blank lines and those beginning with '#' are ignored.)
+
+10. Recreate the creatable transcript for the system
+
+fsdiff -C -c sha1 . > /var/radmind/client/apple-pos.T
+
+Taking a look at this file, you will notice that there are no listings for
+file system objects in ./private/tmp. 
+
+11. lcreate -h radmind /var/radmind/client/apple-pos.T
+
+This stores apple-pos.T and all files listed in the transcript on the
+radmind server. 
+
+12. lcreate -h radmind /var/radmind/client/apple-neg.T
+
+This stores apple-neg.T and all files listed in the transcript on the
+radmind server. 
+
+We are now ready to verify the loadsets and make them available from the
+radmind server.  Files and transcripts stored on the server are saved in
+/var/radmind/tmp/file/TRANSCRIPTNAME/ and
+/var/radmind/tmp/transcript/TRANSCRIPTNAME respectively. 
+
+1. cd /var/radmind/tmp/transcript
+2. lcksum -c sha1 -vn apple-pos.T
+
+lcksum will warn you if the transcript does not match the files stored on
+the server.  If there are any warnings, you can correct the transcript by
+running lcksum again without the -n option.  If files are stored using
+lcreate with the -N, lcksum must be run to correct the checksum and file
+sizes listed in the transcript. 
+
+3. lcksum -c sha1 -vn apple-neg.T
+4. Check-in both transcripts and their associated files
+
+mv /var/radmind/tmp/transcript/apple-pos.T /var/radmind/transcript
+mv /var/radmind/tmp/transcript/apple-neg.T /var/radmind/transcript
+mv /var/radmind/tmp/file/apple-pos.T /var/radmind/file
+mv /var/radmind/tmp/file/apple-neg.T /var/radmind/file
+
+5. Create the command file
+
+vi /var/radmind/command/<COMMANDFILE>
+
+Where <COMMANDFILE> is the same command file listed in /var/radmind/config
+for our client. 
+
+6. Add apple-pos.T and apple-neg.T to the command file
+
+p apple-pos.T
+n apple-neg.T
+
+The 'p' indicates that the apple-pos.T is positive while 'n' indicated
+that apple-neg.T is negative. 
+
+Transcripts are listed in order of increasing precedence.  The first
+transcript listed in the command file has the lowest precedence, the next
+higher and the last the highest. 
+
+Client
+
+You can now test the load on the client machine.
+1. ktcheck -h radmindserver
+
+This will download the new command file from the server, and all needed
+transcripts. 
+
+2. fsdiff -A -c sha1 . 
+
+This displays what changes are need to apply the load.  There shouldn't be
+many since the client was used to create the load. 
+
+3. fsdiff -A -c sha1 . | lapply -h radmindserver
+
+Lapply will apply the changes fsdiff lists, bringing the system up-to-date.
+
+Once you have tested the load, you can load other clients.
+
+1. Download the radmind tools from
+http://rsug.itd.umich.edu/software/radmind and install the radmind tools
+on the new client. 
+
+2. Add the client to the servers config file
+
+3. run ktcheck on the client to get the appropriate command file and
+transcripts. 
+
+4. run fsdiff and lapply to update the machine.
+
+Additional material to cover includes "adding new software, patching,
+etc", "overloads", "merging".
