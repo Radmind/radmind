@@ -418,6 +418,7 @@ error2:
 retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     size_t transize, char *trancksum )
 {
+    errno = ENOTSUP;
     return( -1 );
 }
 
