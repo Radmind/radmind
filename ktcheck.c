@@ -35,7 +35,7 @@ int			chksum = 1;
 int			verbose = 0;
 int			update = 1;
 char			*command = _RADMIND_COMMANDFILE;
-char			*commandpath = ".";
+char			*commandpath = _RADMIND_COMMANDPATH;
 char			fullpath[ MAXPATHLEN ];
 
 extern char		*version, *checksumlist;

@@ -100,7 +100,7 @@ main( int argc, char **argv )
     extern int		errno;
 #endif
     char		*cmd = _RADMIND_COMMANDFILE;
-    char		*prepath = "./";
+    char		*prepath = _RADMIND_COMMANDPATH;
     int 		c;
     int 		errflag = 0;
 
