@@ -50,6 +50,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, ssize_t transize,
     struct timeval      tv;
     char 		*line;
     int			fd, md_len;
+    int			returnval = -1;
     size_t              size = 0;
     unsigned char       buf[ 8192 ]; 
     ssize_t             rr;
@@ -61,7 +62,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, ssize_t transize,
     if ( cksum ) {
 	if ( strcmp( trancksum, "-" ) == 0 ) {
 	    fprintf( stderr, "line %d: No checksum\n", linenum);
-	    return( -1 );
+	    return( 1 );
 	}
 	EVP_DigestInit( &mdctx, md );
     }
@@ -70,19 +71,19 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, ssize_t transize,
     if ( snet_writef( sn, "RETR %s\n", pathdesc ) < 0 ) {
 	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	exit( 2 );
+	return( 1 );
     }
 
     tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
 	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	exit( 2 );
+	return( 1 );
     }
 
     if ( *line != '2' ) {
 	fprintf( stderr, "%s\n", line );
-	return( -1 );
+	return( 1 );
     }
 
     /*Create temp file name*/
@@ -90,13 +91,13 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, ssize_t transize,
 	    path, getpid()) >= MAXPATHLEN ) {
 	fprintf( stderr, "%s.radmind.%i: too long", path,
 		(int)getpid());
-	goto error3;
+	return( -1 );
     }
 
     /* Open file */
     if (( fd = open( temppath, O_RDWR | O_CREAT | O_EXCL, 0600 )) < 0 ) {
 	perror( temppath );
-	goto error3;
+	return( -1 );
     }
 
     /* Get file size from server */
@@ -104,6 +105,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, ssize_t transize,
     if (( line = snet_getline( sn, &tv )) == NULL ) {
 	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 	    strerror( errno ));
+	returnval = 1;
 	goto error;
     }
     size = atoi( line );
@@ -111,7 +113,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, ssize_t transize,
     if ( transize >= 0 && size != transize ) {
 	fprintf( stderr, "line %d: size in transcript does not match size "
 	    "from server\n", linenum );
-	return( -1 );
+	return( 1 );
     }
 
     /* Get file from server */
@@ -121,6 +123,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, ssize_t transize,
 		&tv )) <= 0 ) {
 	    fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 		strerror( errno ));
+	    returnval = 1;
 	    goto error;
 	}
 	if ( write( fd, buf, (size_t)rr ) != rr ) {
@@ -139,10 +142,12 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, ssize_t transize,
     if (( line = snet_getline( sn, &tv )) == NULL ) {
 	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 	    strerror( errno ));
+	returnval = 1;
 	goto error;
     }
     if ( strcmp( line, "." ) != 0 ) {
 	fprintf( stderr, "%s", line );
+	returnval = 1;
 	goto error;
     }
     if ( verbose ) printf( "<<< .\n" );
@@ -154,6 +159,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, ssize_t transize,
 	if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
 	    fprintf( stderr, "line %d: checksum in transcript does not match "
 		"checksum from server\n", linenum );
+	    returnval = 1;
 	    goto error;
 	}
     }
@@ -168,8 +174,7 @@ error:
     close( fd );
 error2:
     unlink( temppath );
-error3:
-    return ( -1 );
+    return ( returnval );
 }
 
 #ifdef __APPLE__
@@ -179,6 +184,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     ssize_t transize, char *trancksum )
 {
     int				dfd, rfd, rc, md_len;
+    int				returnval = -1;
     size_t			size, rsize;
     char			finfo[ 32 ];
     char			buf[ 8192 ];
@@ -197,7 +203,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     if ( cksum ) {
         if ( strcmp( trancksum, "-" ) == 0 ) {
 	    fprintf( stderr, "line %d: No checksum\n", linenum);
-            return( -1 );
+            return( 1 );
         }
         EVP_DigestInit( &mdctx, md );
     }
@@ -206,19 +212,19 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     if ( snet_writef( sn, "RETR %s\n", pathdesc ) < 0 ) {
 	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	exit( 2 );
+	return( 1 );
     }
 
     tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
 	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	exit( 2 );
+	return( 1 );
     }
 
     if ( *line != '2' ) {
         fprintf( stderr, "%s\n", line );
-        return( -1 );
+        return( 1 );
     }
 
     /* Get file size from server */
@@ -226,20 +232,20 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     if (( line = snet_getline( sn, &tv )) == NULL ) {
 	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	exit( 2 );
+	return( 1 );
     }
     size = atol( line );
     if ( verbose ) printf( "<<< %ld\n<<< ", size );
     if ( transize >= 0 && size != transize ) {
 	fprintf( stderr, "line %d: size in transcript does not match size"
 	    "from server\n", linenum );
-	return( -1 );
+	return( 1 );
     }
     if ( size < ( AS_HEADERLEN + ( 3 * sizeof( struct as_entry )) +
 	    sizeof( finfo ))) {
 	fprintf( stderr,
 	    "retrieve %s failed: AppleSingle-encoded file too short\n", path );
-	return( -1 );
+	return( 1 );
     }
 
     /* read header to determine if file is encoded in applesingle */
@@ -247,13 +253,13 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     if (( rc = snet_read( sn, ( char * )&ah, AS_HEADERLEN, &tv )) <= 0 ) {
 	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	exit( 2 );
+	return( 1 );
     }
     if (( rc != AS_HEADERLEN ) ||
 	    ( memcmp( &as_header, &ah, AS_HEADERLEN ) != 0 )) {
 	fprintf( stderr,
 	    "retrieve %s failed: corrupt AppleSingle-encoded file\n", path );
-	return( -1 );
+	return( 1 );
     }
     if ( cksum ) {
 	EVP_DigestUpdate( &mdctx, (char *)&ah, (unsigned int)rc );
@@ -267,12 +273,12 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	    ( 3 * sizeof( struct as_entry )), &tv )) <= 0 ) {
 	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	exit( 2 );
+	return( 1 );
     }
     if ( rc != ( 3 * sizeof( struct as_entry ))) {
 	fprintf( stderr,
 	    "retrieve %s failed: corrupt AppleSingle-encoded file\n", path );
-	return( -1 );
+	return( 1 );
     }
 
     /* Should we check for valid ae_ents here? YES! */
@@ -289,12 +295,12 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     if (( rc = snet_read( sn, finfo, sizeof( finfo ), &tv )) <= 0 ) {
 	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	exit( 2 );
+	return( 1 );
     }
     if ( rc != sizeof( finfo )) {
 	fprintf( stderr,
 	    "retrieve %s failed: corrupt AppleSingle-encoded file\n", path );
-	return( -1 );
+	return( 1 );
     }
     if ( cksum ) {
 	EVP_DigestUpdate( &mdctx, finfo, (unsigned int)rc );
@@ -321,6 +327,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 		_PATH_RSRCFORKSPEC ) >= MAXPATHLEN ) {
 	    fprintf( stderr, "%s%s: path too long\n", temppath,
 		_PATH_RSRCFORKSPEC );
+	    returnval = 1;
 	    goto error1;
 	}
 
@@ -335,6 +342,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 		    &tv )) <= 0 ) {
 		fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 		    strerror( errno ));
+		returnval = 1;
 		goto error2;
 	    }
 	    if (( write( rfd, buf, ( unsigned int )rc )) != rc ) {
@@ -351,7 +359,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     
 	if ( close( rfd ) < 0 ) {
 	    perror( rsrc_path );
-	    exit( 2 );
+	    return( -1 );
 	}
     }
 
@@ -362,6 +370,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 		&tv )) <= 0 ) {
 	    fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 		strerror( errno ));
+	    returnval = 1;
 	    goto error1;
 	}
 
@@ -378,7 +387,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 
     if ( close( dfd ) < 0 ) {
 	perror( temppath );
-	exit( 2 );
+	return( -1 );
     }
     if ( verbose ) printf( "\n" );
 
@@ -394,11 +403,11 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     if (( line = snet_getline( sn, &tv )) == NULL ) {
 	fprintf( stderr, "retrieve %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-        return( -1 );
+        return( 1 );
     }
     if ( strcmp( line, "." ) != 0 ) {
         fprintf( stderr, "%s", line );
-        return( -1 );
+        return( 1 );
     }
     if ( verbose ) printf( "<<< .\n" );
 
@@ -408,7 +417,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
         if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
 	    fprintf( stderr, "line %d: checksum in transcript does not match "
 		"checksum from server\n", linenum );
-            return( -1 );
+            return( 1 );
         }
     }
 
@@ -422,7 +431,7 @@ error1:
     if ( close ( dfd ) < 0 ) {
 	perror( temppath );
     }
-    return( -1 );
+    return( returnval );
 }
 
 #else /* !__APPLE__ */
