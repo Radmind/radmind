@@ -196,6 +196,7 @@ f_retr( sn, ac, av )
     char		path[ MAXPATHLEN ];
     char		*d_path;
     int			fd;
+    struct node		*node = NULL;
 
     switch ( keyword( ac, av )) {
     case K_COMMAND:
@@ -203,6 +204,17 @@ f_retr( sn, ac, av )
 	break;
 
     case K_TRANSCRIPT:
+	/* Check for access */
+	for ( node = tran_list; node != NULL; node = node->next ) {
+	    if ( strcmp( av[ 2 ], node->path ) == 0 ) {
+		break;
+	    }
+	}
+	if ( node == NULL ) {
+	    syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s", av[ 2 ] );
+	    snet_writef( sn, "%d No access for %s\r\n", 540, av[ 2 ] );
+	    return( 1 );
+	}
 	sprintf( path, "transcript/%s", decode( av[ 2 ] ));
 	break;
 
@@ -211,6 +223,18 @@ f_retr( sn, ac, av )
 	break;
 
     case K_FILE:
+	/* Check for access */
+	for ( node = tran_list; node != NULL; node = node->next ) {
+	    if ( strcmp( av[ 3 ], node->path ) == 0 ) {
+		break;
+	    }
+	}
+	if ( node == NULL ) {
+	    syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s", av[ 3 ] );
+	    snet_writef( sn, "%d No access for %s\r\n", 540, av[ 3 ] );
+	    return( 1 );
+	}
+
 	if (( d_path = strdup( decode( av[ 3 ] ))) == NULL ) {
 	    syslog( LOG_ERR, "f_retr: strdup: %s: %m", av[ 3 ] );
 	    snet_writef( sn, "%d Can't allocate memory: %s\r\n", 555, av[ 3 ] );
@@ -320,6 +344,7 @@ f_stat( SNET *sn, int ac, char *av[] )
     struct stat		st;
     int			key;
     char		*enc_file, stranpath[ MAXPATHLEN ];
+    struct node		*node;
 
     switch ( key = keyword( ac, av )) {
     case K_COMMAND:
@@ -327,6 +352,17 @@ f_stat( SNET *sn, int ac, char *av[] )
 	break;
 
     case K_TRANSCRIPT:
+	/* Check for access */
+	for ( node = tran_list; node != NULL; node = node->next ) {
+	    if ( strcmp( av[ 2 ], node->path ) == 0 ) {
+		break;
+	    }
+	}
+	if ( node == NULL ) {
+	    syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s", av[ 2 ] );
+	    snet_writef( sn, "%d No access for %s\r\n", 540, av[ 2 ] );
+	    return( 1 );
+	}
 	sprintf( path, "transcript/%s", decode( av[ 2 ] ));
 	break;
 
@@ -578,10 +614,8 @@ command_k( char *path_config )
 {
     SNET	*sn;
     char	**av, *line;
-    char	kline[ MAXPATHLEN * 2 ];
     int		ac;
     int		linenum = 0;
-    FILE	*f;
 
     if (( sn = snet_open( path_config, O_RDONLY, 0, 0 )) == NULL ) {
         syslog( LOG_ERR, "command_k: snet_open: %s: %m", path_config );
@@ -608,31 +642,6 @@ command_k( char *path_config )
 	if ( wildcard( av[ 0 ], remote_host )
 		|| wildcard( av[ 0 ], remote_addr )) {
 	    sprintf( command_file, "command/%s", av[ 1 ] );
-
-	    /* Create list of transcripts */
-	    if (( f = fopen( command_file, "r" )) == NULL ) {
-		syslog( LOG_ERR, "fopen: %s: %m", command_file );
-	    }
-	    linenum = 0;
-	    while ( fgets( kline, MAXPATHLEN, f ) != NULL ) {
-		linenum++;
-		ac = acav_parse( NULL, kline, &av );
-		if (( ac == 0 ) || ( *av[ 0 ] == '#' )
-			|| ( *av[ 0 ] == 's')) {
-		    continue;
-		}
-		if ( ac != 2 ) {
-		    syslog( LOG_ERR, "%s: %d: invalid command line\n",
-			    command_file, linenum );
-		    return( -1 );
-		}
-		insert_node( av[ 1 ], &tran_list );
-	    }
-	    print_list( tran_list );
-	    if ( fclose( f ) < 0 ) {
-		syslog( LOG_ERR, "fclose: %m" );
-		return( -1 );
-	    }
 
 	    return( 0 );
 	}
@@ -663,11 +672,13 @@ cmdloop( int fd, struct sockaddr_in *sin )
     SNET		*sn;
     struct hostent	*hp;
     char		*p;
-    int			ac, i;
+    int			ac, i, linenum;
     unsigned int	n;
     char		**av, *line;
     struct timeval	tv;
     extern char		*version;
+    char		kline[ MAXPATHLEN * 2 ];
+    FILE		*f;
 
     if (( sn = snet_attach( fd, 1024 * 1024 )) == NULL ) {
 	syslog( LOG_ERR, "snet_attach: %m" );
@@ -693,6 +704,36 @@ cmdloop( int fd, struct sockaddr_in *sin )
 
     if ( command_k( _PATH_CONFIG ) < 0 ) {
         snet_writef( sn, "%d No access for %s\r\n", 500, remote_host );
+	exit( 1 );
+    }
+
+    /* Create list of transcripts */
+    if (( f = fopen( command_file, "r" )) == NULL ) {
+	syslog( LOG_ERR, "fopen: %s: %m", command_file );
+	snet_writef( sn, "%d Unable to access %s.\r\n", 543, command_file );
+	exit( 1 );
+    }
+    linenum = 0;
+    while ( fgets( kline, MAXPATHLEN, f ) != NULL ) {
+	linenum++;
+	ac = acav_parse( NULL, kline, &av );
+	if (( ac == 0 ) || ( *av[ 0 ] == '#' )
+		|| ( *av[ 0 ] == 's')) {
+	    continue;
+	}
+	if ( ac != 2 ) {
+	    syslog( LOG_ERR, "%s: %d: invalid command line\n",
+		    command_file, linenum );
+	    exit( 1 );
+	}
+	insert_node( av[ 1 ], &tran_list );
+    }
+    if ( ferror( f )) {
+	syslog( LOG_ERR, "fgets: %m" );
+	exit( 1 );
+    }
+    if ( fclose( f ) < 0 ) {
+	syslog( LOG_ERR, "fclose: %m" );
 	exit( 1 );
     }
 
