@@ -18,8 +18,10 @@ f /System/Library/Extensions.mkext      0644     0     0 1015476977       0 2jmj
 
 d /Users                                0755     0     0
 d /Volumes                              1777     0     0
+d /automount                            0555     0     0
 d /dev                                  0555     0     0
 f /mach.sym                             0444     0     0 1014310508  563812 6rG3b+tUiem3ycBySprZ7IuRy8o=
+d /private/Network                                      0755     0     0
 d /private/etc/httpd/users              0755     0     0
 
 d /private/tmp                          1777     0     0
