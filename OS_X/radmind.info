@@ -1,9 +1,0 @@
-# the name to display in Installer.app
-Title		Radmind _VERSION_RADMIND
-
-# This will indicate that the packages are in the .mpkg directory itself
-PackageLocation ./
-
-# Setting this to YES will cause failures not to show and checks to be
-# skipped.  Just leave it as NO
-FastInstall NO
