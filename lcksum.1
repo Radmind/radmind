@@ -1,7 +1,7 @@
 .TH lcksum "1" "6 November 2001" "RSUG" "User Commands"
 .SH NAME
 .B lcksum 
-\- verifies transcript 
+\- verifies a transcript's checksums and file sizes
 .SH SYNOPSIS
 .B lcksum 
 [
@@ -11,60 +11,76 @@
 ] [
 .B -V
 ] [
-.BI \-f\  filter 
+.BI \-P\  prefix 
 ]
 .I transcript 
 .sp
 .SH DESCRIPTION
-.B lcksum 
-verifies and updates the checksums and file size listed in 
-.I transcript.
-If there is a discrpency, 
-.I transcript 
-is updated with the correct checksum and file size.
-
-.I transcript 
-must be an applicable transcript.  
 .B lcksum
-looks for files in the directory ../file relative to the location of 
+verifies and updates the checksums and file sizes of the 
+appliable transcript 
+.I transcript 
+line by line.
+.B lcksum compares the checksum and
+file size listed in
 .I transcript
-\.
+to that  
+of the file in the file system.  Files must be located in
+file directory associated with
+.IR transcript .
+With the -n option
+.B lcksum
+verifies but does not modify
+.IR transcript .
 
-The user running 
-.B lcksum 
-must have read and write access to make updates
-to transcript or only read access when using the -n option.
+If there is a difference in either the checksum or file size, the
+transcript line is updated using the checksum, file size and
+modification time of the actual file. 
 
-Given the -f option, 
-.B lcksum 
-will only verify files with paths starting
-with filter.  All other transcript lines are not verified. 
+Since
+.B lcksum
+modifies the file size and/or checksum of
+.IR transcript ,
+the user must have write access to
+.IR transcript .
+
+With the -f option,
+.B lcksum
+will only verify transcript lines with paths starting with
+.IR prefix .
 .sp
 .SH OPTIONS
 .TP 19
-.BI \-f\  filter
-only verify transcript lines with paths the begin with filter.
+.BI \-P\  prefix 
+only verify transcript lines that begin with 
+.IR prefix .
 .TP 19
 .B \-n
-don't modify transcript.
+verify but do not modify transcript.
 .TP 19
 .B \-v
 displays update information to standard out. 
 .TP 19
 .B \-V
 displays the version of 
-.B lcksum 
-and exits.
+.BR lcksum ,
+a list  of supported checksumming algorithims in descending
+order of preference and then exits.
 .sp
-.SH DIAGNOSTICS
-An exit code of 0 means no differences were found, 1 means differences were
-found and 2 means trouble.
+.SH EXIT STATUS
+The following exit values are returned:
+
+0   Transcript was verified.
+
+1   Differences were found.
+
+>1  An error occurred.
 .sp
 .SH SEE ALSO
-.BR ktcheck(1),
-.BR fsdiff(1),
-.BR lapply(1),
-.BR lcreate(1),
-.BR lfdiff(1),
-.BR lmerge(1),
-.BR radmind(8).
+.BR ktcheck (1),
+.BR fsdiff (1),
+.BR lapply (1),
+.BR lcreate (1),
+.BR lfdiff (1),
+.BR lmerge (1),
+.BR radmind (8).

@@ -2,7 +2,7 @@
 .TH lapply "1" "6 November 2001" "RSUG" "User Commands"
 .SH NAME
 .B lapply 
-\- edit file system to match difference-transcript 
+\- modify file system to match appliable-transcript 
 .SH SYNOPSIS
 .B lapply
 [
@@ -17,21 +17,35 @@
 .BI \-h\  host
 ] [
 .BI \-p\  port
-]
+] {
 .I appliable-transcript
+}
 .sp
 .SH DESCRIPTION
+lapply reads an appliable transcript line by line, modifying the file
+system to match the transcript. Transcript lines are applied in order
+unless they are directories marked for deletion.  In such cases,
+subsequent transcript lines are first applied until the file system object 
+listed is outside of the directory.  If another directory marked for
+deletion is encountered, the process is started recursively.
+
+lapply downloads missing files indicated by a "+" from the radmind server
+.I host.
+.I file
+is applied to the system with the attributes as described in
+the transcript line.  File system objects marked with a "-" are removed.
+Other transcript lines indicate that a file system
+object must be modified or created if missing.  lapply is not able to create doors or sockets.
+
+File system objects listed in the transcript and present in the
+file system as a different type are automatically removed.
+
+If
+.I appliable-transcript
+is not given,
 .B lapply
-edits the file system to make it match the 
-.I appliable-transcript.  
-The 
-.I appliable-transcript 
-must be created with fsdiff using the -T option.
-Lapply downloads missing files, indicated by a "+" in the
-.I appliable-transcript, 
-removes file system objects marked with a "-" and
-updates objects without a "+" or "-".  Given the -n option, lapply will
-only remove and update files as described by the appliable-transcript.
+will use stdin for reading.
+
 .sp
 .SH OPTIONS
 .TP 19
@@ -39,12 +53,11 @@ only remove and update files as described by the appliable-transcript.
 no network connection will be made, causing only file system removals and
 updates to be applied.
 .TP 19
-.TP 19
 .B \-v
-causes lapply to be more verbose.
+displays communication with the radmind server and update information.
 .TP 19
 .B \-V
-prints out the lapply version number.
+displays the version of lapply and exits. 
 .TP 19
 .BI \-c\  checksum
 enables checksuming. sha1 is the only currently supported checksuming
@@ -57,11 +70,11 @@ specifies the radmind server.
 specifies the port of the radmind server, by default 6662.
 .sp
 .SH SEE ALSO
-.BR ktcheck(1),
-.BR fsdiff(1),
-.BR lapply(1),
-.BR lcreate(1),
-.BR lcksum(1),
-.BR lfdiff(1),
-.BR lmerge(1),
-.BR radmind(8).
+.BR ktcheck (1),
+.BR fsdiff (1),
+.BR lapply (1),
+.BR lcreate (1),
+.BR lcksum (1),
+.BR lfdiff (1),
+.BR lmerge (1),
+.BR radmind (8).

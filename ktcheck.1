@@ -1,7 +1,7 @@
 .TH ktcheck "1" "6 November 2001" "RSUG" "User Commands"
 .SH NAME
 .B ktcheck 
-\- updates command file and transcripts
+\- verify and download command file and transcripts
 .SH SYNOPSIS
 .B ktcheck 
 [
@@ -11,21 +11,38 @@
 ] [
 .B -V
 ] [
-.BI \-c\ checksum 
+.BI \-c\  checksum 
 ] [
-.BI \-K\ command file 
+.BI \-K\  command-file 
 ] [
-.BI \-p\ port 
+.BI \-h\  host
+] [
+.BI \-p\  port 
 ]
-.I host 
 .sp
 .SH DESCRIPTION
-ktcheck verifies and update the local copies of the command file (the default 
-name is command.K), associated transcripts, and special transcript with the 
-radmind server 
-.I host.
-Missing files and those that fail verification are downloaded from 
-.I host.
+.B ktcheck 
+verifies the command file with the radmind server 
+.I host.  
+The command file is downloaded from 
+.I host 
+if it is missing or has a different checksum.
+
+Reading the command file line-by-line, ignoring blank lines and comments
+( lines starting with # ), 
+.B ktcheck 
+verifies each positive and negative transcript listed, downloading it from 
+.I host 
+if it is missing or has a different checksum.
+
+Each special file listed in the command file is converted into a
+transcript line in special.T with information provided by 
+.I host. 
+
+When run with the -n option,
+.B ktcheck
+verifies but never downloads the command file or transcripts.  A tempory 
+special.T is create for verification purposes and is removed on exit.
 .sp
 .SH OPTIONS
 .TP 19
@@ -42,10 +59,10 @@ file name, by default
 specifies a port, by default 6662
 .TP 19
 .B \-n
-no files are updated or downloaded.
+no files are created or downloaded.
 .TP 19
 .B \-v
-displays update information to standard out. 
+displays verification information to standard out. 
 .TP 19
 .B \-V
 displays the version of ktcheck and exits.
@@ -63,10 +80,10 @@ An exit code of 0 means no differences were found, 1 means differences were
 found and 2 means trouble.
 .sp
 .SH SEE ALSO
-.BR fsdiff(1),
-.BR lapply(1),
-.BR lcksum(1),
-.BR lcreate(1),
-.BR lfdiff(1),
-.BR lmerge(1),
-.BR radmind(8).
+.BR fsdiff (1),
+.BR lapply (1),
+.BR lcksum (1),
+.BR lcreate (1),
+.BR lfdiff (1),
+.BR lmerge (1),
+.BR radmind (8).
