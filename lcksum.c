@@ -181,7 +181,8 @@ main( int argc, char **argv )
 
 	/* check to see if file against prefix */
 	if ( prefix != NULL ) {
-	    if ( strncmp( targv[ 1 ], prefix, strlen( prefix ) ) != 0 ) {
+	    if ( strncmp( decode( targv[ 1 ] ), prefix, strlen( prefix ))
+		    != 0 ) {
 		if ( updatetran ) {
 		    fprintf( ufs, "%s", line );
 		}
