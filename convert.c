@@ -1,5 +1,7 @@
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/stat.h>
+#include <errno.h>
 #include <snet.h>
 #include <stdio.h>
 
@@ -15,12 +17,32 @@
     int
 getfsoinfo( char *path, struct stat *st, char *fstype, char *finfo )
 {
+    char	rsrc_path[ MAXPATHLEN ];
+    struct stat	rsrc_st;
+
     if ( lstat( path, st ) != 0 ) {
 	return( -1 );
     }
     if (( *fstype = t_convert( path, finfo, st->st_mode & S_IFMT )) == 0 ) {
 	fprintf( stderr, "%s is of an unknown type\n", path );
     }
+
+    /* Calculate full size of applefile */
+    if ( *fstype == 'a' ) {
+	if ( snprintf( rsrc_path, MAXPATHLEN, "%s/..namedfork/rsrc", path )
+		> MAXPATHLEN -1 ) {
+	    errno = ENAMETOOLONG;
+	    return( -1 );
+	}
+	if ( lstat( rsrc_path, &rsrc_st ) != 0 ) {
+	    return( -1 );
+	}
+	st->st_size += rsrc_st.st_size;		// Add rsrc fork size
+	st->st_size += AS_HEADERLEN;		// Add header size
+	st->st_size += ( 3 * sizeof( struct as_entry ));// Add entry size
+	st->st_size += 32;			// Add finder info size
+    }
+
     return( 0 );
 }
 
