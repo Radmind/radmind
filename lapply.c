@@ -27,7 +27,6 @@
 
 #define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
 
-
 void		(*logger)( char * ) = NULL;
 struct timeval 	timeout = { 10 * 60, 0 };
 int		linenum = 0;
@@ -36,6 +35,7 @@ int		verbose = 0;
 int		special = 0;
 int		safe = 0;
 char		transcript[ 2 * MAXPATHLEN ];
+extern char	*version;
 
 int apply( FILE *f, char *parent, SNET *sn );
 void output( char* string);
@@ -179,7 +179,7 @@ apply( FILE *f, char *parent, SNET *sn )
 		sprintf( pathdesc, "FILE %s %s", transcript, path );
 	    }
 
-	    if ( ( temppath = download( sn, pathdesc, path, chksum_b64 ) )
+	    if ( ( temppath = download( sn, pathdesc, "", path, chksum_b64 ) )
 		    == NULL ) {
 		perror( "download" );
 		return( 1 );
@@ -234,7 +234,6 @@ main( int argc, char **argv )
     FILE		*f; 
     char		*host = "rearwindow.rsug.itd.umich.edu";
     struct servent	*se;
-    char		*version = "1.0";
     SNET		*sn;
 
     while ( ( c = getopt ( argc, argv, "c:h:np:sVv" ) ) != EOF ) {
