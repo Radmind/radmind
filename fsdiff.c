@@ -236,7 +236,7 @@ main( int argc, char **argv )
     }
 
     if ( errflag || ( argc - optind != 1 )) {
-	fprintf( stderr, "usage: %s [ -C | -A | -1 ] ", argv[ 0 ] );
+	fprintf( stderr, "usage: %s { -C | -A | -1 } [ -V ] ", argv[ 0 ] );
 	fprintf( stderr, "[ -K command ] " );
 	fprintf( stderr, "[ -c cksumtype ] [ -o file [ -v ] ] path\n" );
 	exit ( 2 );
