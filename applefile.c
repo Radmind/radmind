@@ -257,6 +257,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *location,
 	if ( dodots ) { putc( '.', stdout ); fflush( stdout); }
 	size -= as_cc;
     }
+    if ( verbose ) printf( "\n" );
 
     if ( close( ofd ) < 0 ) {
 	perror( "close ofd" );
