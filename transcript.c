@@ -727,7 +727,7 @@ transcript_init( char *kfile, int kfilemustexist )
     }
 
     if ( tran_head->t_type == T_NULL  && edit_path == APPLICABLE ) {
-	fprintf( stderr, "-T option requires a non-NULL transcript\n" );
+	fprintf( stderr, "-A option requires a non-NULL transcript\n" );
 	exit( 2 );
     }
 
