@@ -320,8 +320,6 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 	    return( -1 );
 	}
     }
-
-    /* tell server STOR "FILE" <transcript-name> <path> "\r\n" */
     if ( snet_writef( sn, "%s",	pathdesc ) < 0 ) {
 	fprintf( stderr, "store %s failed: %s\n", pathdesc,
 	    strerror( errno ));
@@ -355,7 +353,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 
     /* tell server how much data to expect */
     tv = timeout;
-    if ( snet_writef( sn, "%d\r\n", afinfo->as_size ) < 0 ) {
+    if ( snet_writef( sn, "%" PRIofft "d\r\n", afinfo->as_size ) < 0 ) {
 	fprintf( stderr, "store %s failed: %s\n", pathdesc,
 	    strerror( errno ));
         goto sn_error;
