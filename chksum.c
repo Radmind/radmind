@@ -37,6 +37,7 @@ do_chksum( char *path, char *chksum_b64 )
     return( 0 );
 }
 
+#ifdef __APPLE__
 int
 do_achksum( char *path, char *chksum_b64 )
 {
@@ -183,6 +184,7 @@ do_achksum( char *path, char *chksum_b64 )
 
     return( 0 );
 }
+#endif __APPLE__
 
     int
 do_chksum_fd( int fd, char *chksum_b64 )
