@@ -16,7 +16,6 @@
 #include <syslog.h>
 #include <unistd.h>
 
-#include "auth.h"
 #include "command.h"
 #include "argcargv.h"
 #include "chksum.h"
@@ -584,7 +583,6 @@ struct command	commands[] = {
     { "QUIT",		f_quit },
     { "NOOP",		f_noop },
     { "HELP",		f_help },
-    { "AUTHenticate",	f_auth },
     { "STATus",		f_stat },
     { "RETRieve",	f_retr },
     { "STORe",		f_stor },
