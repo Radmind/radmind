@@ -186,6 +186,13 @@ dist   : distclean
 	mkdir ${DISTDIR}
 	tar -c -f - -X EXCLUDE . | tar xpf - -C ${DISTDIR}
 	echo ${VERSION} > ${DISTDIR}/VERSION
+	mkdir ${DISTDIR}/tmp
+	for i in ${MANTARGETS}; do \
+	    sed -e 's@_RADMIND_BUILD_DATE@${RADMIND_BUILD_DATE}@g' \
+		${DISTDIR}/man/$$i > ${DISTDIR}/tmp/$$i; \
+	done
+	rm -rf ${DISTDIR}/man
+	mv ${DISTDIR}/tmp ${DISTDIR}/man
 
 man : FRC
 	-mkdir tmp
@@ -199,7 +206,6 @@ man : FRC
 		-e 's@_RADMIND_TLS_CA@${TLS_CA}@g' \
 		-e 's@_RADMIND_TLS_CERT@${TLS_CERT}@g' \
 		-e 's@_RADMIND_MAXCONNECTIONS@${RADMIND_MAXCONNECTIONS}@g' \
-		-e 's@_RADMIND_BUILD_DATE@${RADMIND_BUILD_DATE}@g' \
 		${srcdir}/man/$$i > tmp/man/$$i; \
 	done
 
