@@ -22,6 +22,8 @@
 #include "convert.h"
 #include "download.h"
 #include "update.h"
+#include "copy.h"
+#include "connect.h"
 
 #define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
 
@@ -31,6 +33,7 @@ struct timeval 	timeout = { 10 * 60, 0 };
 int		linenum = 0;
 int		chksum = 0;
 int		verbose = 0;
+int		special = 0;
 char		transcript[ 2 * MAXPATHLEN ];
 
 int apply( FILE *f, char *parent, SNET *sn );
@@ -59,7 +62,7 @@ ischild( const char *parent, const char *child)
 
     void
 output( char *string ) {
-    printf( "%s\n", string );
+    fprintf( stderr, "<<< %s\n", string );
     return;
 }
 
@@ -74,19 +77,21 @@ apply( FILE *f, char *parent, SNET *sn )
 {
     char		tline[ 2 * MAXPATHLEN ];
     char		path[ 2 * MAXPATHLEN ];
+    char		pathdesc[ 2 * MAXPATHLEN ];
     char		chksum_b64[ 29 ];
     int			tac, present, len;
     char		**targv;
-    char		*command = "";
+    char		*temppath = NULL, *command = "";
     char		fstype;
     struct stat		st;
     ACAV		*acav;
 
-    if ( parent != NULL ) printf( "Called from %s\n", parent );
     acav = acav_alloc( );
 
     while ( fgets( tline, MAXPATHLEN, f ) != NULL ) {
 	linenum++;
+
+	if ( verbose ) printf( "\n" );
 
 	len = strlen( tline );
         if (( tline[ len - 1 ] ) != '\n' ) {
@@ -104,6 +109,11 @@ apply( FILE *f, char *parent, SNET *sn )
 		return( 1 );
 	    }
 	    transcript[ len - 1 ] = '\0';
+	    if ( strcmp( transcript, "special.T" ) == 0 ) {
+		special = 1;
+	    } else {
+		special = 0;
+	    }
 	    if ( verbose ) printf( "Command file: %s\n", transcript );
 	    continue;
 	}
@@ -162,10 +172,33 @@ apply( FILE *f, char *parent, SNET *sn )
 	if ( *command == '+' ) {
 	    strcpy( chksum_b64, targv[ 7 ] );
 
-	    if ( download( sn, transcript, path, chksum_b64 ) != 0 ) {
+	    if ( special ) {
+		sprintf( pathdesc, "SPECIAL %s", path );
+	    } else {
+		sprintf( pathdesc, "FILE %s %s", transcript, path );
+	    }
+
+	    if ( ( temppath = download( sn, pathdesc, path, chksum_b64 ) )
+		    == NULL ) {
 		perror( "download" );
 		return( 1 );
 	    }
+	    if ( st.st_nlink > 0 ) {
+		if ( copyover( temppath, path ) != 0 ) {
+		    fprintf( stderr, "%s\n", temppath );
+		    return( 1 );
+		}
+		if ( unlink ( temppath ) != 0 ) {
+		    perror( temppath );
+		    return( 1 );
+		}
+	    } else {
+		if ( rename( temppath, path ) != 0 ) {
+		    perror( temppath );
+		    return( 1 );
+		}
+	    }
+	    free( temppath );
 
 	    /* DO LSTAT ON NEW FILE */
 	    if ( lstat( path, &st ) !=  0 ) {
@@ -195,17 +228,13 @@ done:
     int
 main( int argc, char **argv )
 {
-    int			i, c, s, port = htons( 6662 ), err = 0, network = 1;
+    int			c, port = htons( 6662 ), err = 0, network = 1;
     extern int          optind;
     FILE		*f; 
     char		*host = "rearwindow.rsug.itd.umich.edu";
-    char		*line;
     struct servent	*se;
     char		*version = "1.0";
-    struct hostent	*he;
-    struct sockaddr_in	sin;
     SNET		*sn;
-    struct timeval	tv;
 
     while ( ( c = getopt ( argc, argv, "c:h:np:Vv" ) ) != EOF ) {
 	switch( c ) {
@@ -256,58 +285,8 @@ main( int argc, char **argv )
     }
 
     if ( network ) {
-	if ( ( he = gethostbyname( host ) ) == NULL ) {
-	    perror( host );
-	    exit( 1 );
-	}
-
-	for ( i = 0; he->h_addr_list[ i ] != NULL; i++ ) {
-	    if ( ( s = socket( PF_INET, SOCK_STREAM, NULL ) ) < 0 ) {
-		perror ( host );
-		exit( 1 );
-	    }
-	    memset( &sin, 0, sizeof( struct sockaddr_in ) );
-	    sin.sin_family = AF_INET;
-	    sin.sin_port = port;
-	    memcpy( &sin.sin_addr.s_addr, he->h_addr_list[ i ],
-		( unsigned int)he->h_length );
-	    if ( verbose ) printf( "trying %s... ",
-		    inet_ntoa( *( struct in_addr *)he->h_addr_list[ i ] ) );
-	    if ( connect( s, ( struct sockaddr *)&sin,
-		    sizeof( struct sockaddr_in ) ) != 0 ) {
-		perror( "connect" );
-		(void)close( s );
-		continue;
-	    }
-	    if ( verbose ) printf( "success!\n" );
-
-	    if ( ( sn = snet_attach( s, 1024 * 1024 ) ) == NULL ) {
-		perror ( "snet_attach failed" );
-		continue;
-	    }
-
-	    tv.tv_sec = 10;
-	    tv.tv_usec = 0;
-	    if ( ( line = snet_getline_multi( sn, logger, &tv) ) == NULL ) {
-		perror( "snet_getline_multi" );
-		if ( snet_close( sn ) != 0 ) {
-		    perror ( "snet_close" );
-		}
-		continue;
-	    }
-
-	    if ( *line !='2' ) {
-		fprintf( stderr, "%s\n", line);
-		if ( snet_close( sn ) != 0 ) {
-		    perror ( "snet_close" );
-		}
-		continue;
-	    }
-	    break;
-	}
-
-	if ( he->h_addr_list[ i ] == NULL ) {
-	    perror( "connection failed" );
+	if( ( sn = connectsn( host, port )  ) == NULL ) {
+	    fprintf( stderr, "%s:%d connection failed.\n", host, port );
 	    exit( 1 );
 	}
     }
@@ -323,22 +302,8 @@ main( int argc, char **argv )
     }
 
     if ( network ) {
-	if ( snet_writef( sn, "QUIT\r\n" ) == NULL ) {
-	    perror( "snet_writef" );
-	    exit( 1 );
-	}
-
-	if ( ( line = snet_getline_multi( sn, logger, &tv ) ) == NULL ) {
-	    perror( "snet_getline_multi" );
-	    exit( 1 );
-	}
-
-	if ( *line != '2' ) {
-	    perror( line );
-	}
-
-	if ( snet_close( sn ) != 0 ) {
-	    perror( "snet_close" );
+	if ( ( closesn( sn ) ) !=0 ) {
+	    fprintf( stderr, "can not close sn\n" );
 	    exit( 1 );
 	}
     }
