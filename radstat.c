@@ -28,7 +28,9 @@
     int
 radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 {
+#ifdef __APPLE__
     struct stat			rsrc_st;
+#endif __APPLE__
 
     if ( lstat( path, st ) != 0 ) {
 	return( -1 );
