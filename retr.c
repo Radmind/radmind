@@ -7,6 +7,7 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/param.h>
+#include <sys/time.h>
 #ifdef __APPLE__
 #include <sys/attr.h>
 #include <sys/paths.h>
