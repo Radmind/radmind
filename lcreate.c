@@ -181,7 +181,7 @@ main( int argc, char **argv )
     extern int		optind;
     struct servent	*se;
     SNET          	*sn;
-    char		*tname = NULL, *host = "rsug.itd.umich.edu"; 
+    char		*tname = NULL, *host = _RADMIND_HOST; 
     char		*p,*dpath, tline[ 2 * MAXPATHLEN ];
     char		**targv;
     extern char		*optarg;
