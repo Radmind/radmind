@@ -19,6 +19,7 @@ NOOP does nothing, but should generate a valid response.
 All of STAT, RETR, and STOR take similar arguments.
 
 	<path-description> ::=	"COMMAND"			|
+				"COMMAND" <command-name>	|
 				"TRANSCRIPT" <transcript-name>	|
 				"SPECIAL" <path>		|
 				"FILE" <transcript-name> <path>
