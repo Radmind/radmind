@@ -507,7 +507,7 @@ f_stor( SNET *sn, int ac, char *av[] )
 	tv.tv_sec = 10 * 60;
 	tv.tv_usec = 0;
 	if (( rc = snet_read(
-		sn, buf, (int)MIN( len, sizeof( buf )), &tv )) < 0 ) {
+		sn, buf, (int)MIN( len, sizeof( buf )), &tv )) <= 0 ) {
 	    syslog( LOG_ERR, "f_stor: snet_read: %m" );
 	    return( -1 );
 	}
