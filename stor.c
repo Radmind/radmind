@@ -265,7 +265,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     }
 
     if (( d_path = decode( path )) == NULL ) {
-	fpritnf( stdeer, "line %d: Path too long\n", linenum );
+	fprintf( stderr, "line %d: Path too long\n", linenum );
 	exit( 2 );
     } 
 
