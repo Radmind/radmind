@@ -64,7 +64,7 @@ v_logger( char *line )
 main( int argc, char **argv )
 {
     int			c, err = 0, port = htons(6662), tac; 
-    int			network = 1, exitcode = 0, len, rc;
+    int			network = 1, exitcode = 0, len, rc, lnbf = 0;
     int			negative = 0, tran_only = 0;
     extern int		optind;
     struct servent	*se;
@@ -83,7 +83,7 @@ main( int argc, char **argv )
     int                 authlevel = 0;
     int                 use_randfile = 0;
 
-    while (( c = getopt( argc, argv, "c:h:nNp:qt:TvVw:x:y:z:" )) != EOF ) {
+    while (( c = getopt( argc, argv, "c:h:inNp:qt:TvVw:x:y:z:" )) != EOF ) {
 	switch( c ) {
         case 'c':
             OpenSSL_add_all_digests();
@@ -97,6 +97,11 @@ main( int argc, char **argv )
 
 	case 'h':
 	    host = optarg; 
+	    break;
+
+	case 'i':
+	    setvbuf( stdout, ( char * )NULL, _IOLBF, 0 );
+	    lnbf = 1;
 	    break;
 
 	case 'n':
@@ -175,9 +180,12 @@ main( int argc, char **argv )
     if ( verbose && quiet ) {
 	err++;
     }
+    if ( verbose && lnbf ) {
+	err++;
+    }
 
     if ( err || ( argc - optind != 1 ))   {
-	fprintf( stderr, "usage: lcreate [ -nNTV ] [ -q | -v ] " );
+	fprintf( stderr, "usage: lcreate [ -nNTV ] [ -q | -v | -i ] " );
 	fprintf( stderr, "[ -c checksum ] " );
 	fprintf( stderr, "[ -h host ] [-p port ] [ -t stored-name ] " );
         fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );
