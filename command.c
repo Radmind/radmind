@@ -632,11 +632,16 @@ f_stor( SNET *sn, int ac, char *av[] )
 	snet_writef( sn, "%d Not logged in\r\n", 551 );
 	exit( 1 );
     }
+    /* decode() uses static mem, so strdup() */
     if (( d_tran = decode( av[ 2 ] )) == NULL ) {
 	syslog( LOG_ERR, "f_stor: decode: buffer too small" );
 	snet_writef( sn, "%d Line too long\r\n", 540 );
 	return( 1 );
     } 
+    if (( d_tran = strdup( d_tran )) == NULL ) {
+	syslog( LOG_ERR, "f_stor: strdup: %s: %m", d_tran );
+	return( -1 );
+    }
 
     switch ( keyword( ac, av )) {
 
@@ -687,13 +692,13 @@ f_stor( SNET *sn, int ac, char *av[] )
 	    sprintf( upload, "tmp/file/%s/%s", d_tran, d_path );
 	}
 	free( d_path );
+	free( d_tran );
 	break;
 
     default:
         snet_writef( sn, "%d STOR Syntax error\r\n", 550 );
 	exit( 1 ); 
     }
-
 
     if (( fd = open( upload, O_CREAT|O_EXCL|O_WRONLY, 0666 )) < 0 ) {
 	if ( mkdirs( upload ) < 0 ) {
