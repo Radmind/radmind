@@ -195,7 +195,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 
     if ( cksum ) {
         if ( strcmp( trancksum, "-" ) == 0 ) {
-            fprintf( stderr, "line %d: cksum not listed\n", linenum);
+	    fprintf( stderr, "line %d: No checksum\n", linenum);
             return( -1 );
         }
         EVP_DigestInit( &mdctx, md );
@@ -244,7 +244,8 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	exit( 1 );
     }
     if ( memcmp( &as_header, &ah, AS_HEADERLEN ) != 0 ) {
-	fprintf( stderr, "%s: not a radmind AppleSingle file\n", path );
+	fprintf( stderr,
+	    "retrieve %s failed: corrupt AppleSingle-encoded file\n", path );
 	return( -1 );
     }
     if ( cksum ) {
@@ -366,7 +367,8 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     /* set finder info for newly decoded applefile */
     if ( setattrlist( temppath, &alist, finfo, sizeof( finfo ),
 	    FSOPT_NOFOLLOW ) != 0 ) {
-	fprintf( stderr, "Couldn't set finder info for %s.\n", temppath );
+	fprintf( stderr,
+	    "retrieve %s failed: Could not set attributes\n", pathdesc )
 	return( -1 );
     }
 
