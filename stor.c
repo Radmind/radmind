@@ -44,19 +44,20 @@ n_stor_file( SNET *sn, char *pathdesc, char *path )
     char                *line;
 
     if ( snet_writef( sn, "%s", pathdesc ) < 0 ) {
-            perror( "snet_writef" );
-            return( -1 );
+	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	exit( 1 );
     }
 
     if ( verbose ) {
         printf( ">>> %s", pathdesc );
     }
 
-    tv.tv_sec = 120;
-    tv.tv_usec = 0;
+    tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-        perror( "snet_getline_multi" );
-        return( -1 );
+	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	exit( 1 );
     }
     if ( *line != '3' ) {
         fprintf( stderr, "%s\n", line );
@@ -64,16 +65,17 @@ n_stor_file( SNET *sn, char *pathdesc, char *path )
     }
 
     if ( snet_writef( sn, "0\r\n.\r\n" ) < 0 ) {
-        perror( "snet_writef" );
-        return( -1 );
+	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	exit( 1 );
     }
     if ( verbose ) fputs( ">>> 0\n\n>>> .\n", stdout );
 
-    tv.tv_sec = 120;
-    tv.tv_usec = 0;
+    tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-        perror( "snet_getline_multi" );
-        return( -1 );
+	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	exit( 1 );
     }
     if ( *line != '2' ) {
         fprintf( stderr, "%s\n", line );
@@ -119,15 +121,17 @@ stor_file( SNET *sn, char *pathdesc, char *path, size_t transize,
     }
 
     if ( snet_writef( sn, "%s", pathdesc ) < 0 ) {
-	perror( "snet_writef" );
-	return( -1 );
+	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	exit( 1 );
     }
     if ( verbose ) printf( ">>> %s", pathdesc );
 
     tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-        perror( "snet_getline_multi" );
-        return( -1 );
+	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	exit( 1 );
     }
     if ( *line != '3' ) {
         fprintf( stderr, "%s\n", line );
@@ -146,16 +150,18 @@ stor_file( SNET *sn, char *pathdesc, char *path, size_t transize,
 
      /* tell server how much data to expect */
     if ( snet_writef( sn, "%d\r\n", (int)st.st_size ) < 0 ) {
-	perror( "snet_writef" );
-	return( -1 );
+	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	exit( 1 );
     }
     if ( verbose ) printf( ">>> %d\n", (int)st.st_size );
 
     while (( rr = read( fd, buf, sizeof( buf ))) > 0 ) {
 	tv = timeout;
 	if ( snet_write( sn, buf, (int)rr, &tv ) != rr ) {
-	    perror( "snet_write" );
-	    return( -1 );
+	    fprintf( stderr, "store %s failed: %s\n", pathdesc,
+		strerror( errno ));
+	    exit( 1 );
 	}
 	if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 	if ( cksum ) {
@@ -168,15 +174,17 @@ stor_file( SNET *sn, char *pathdesc, char *path, size_t transize,
     }
 
     if ( snet_writef( sn, ".\r\n" ) < 0 ) {
-        perror( "snet_writef" );
-        return( -1 );
+	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	exit( 1 );
     }
     if ( verbose ) fputs( "\n>>> .\n", stdout );
 
     tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-        perror( "snet_getline_multi" );
-        return( -1 );
+	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	exit( 1 );
     }
     if ( *line != '2' ) {
         fprintf( stderr, "%s\n", line );
@@ -225,19 +233,20 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
 
     if (( dfd = open( path, O_RDONLY )) < 0 ) {
 	perror( path );
-	goto error1;
+	exit( 1 );
     }
     if ( afinfo->as_ents[ AS_RFE ].ae_length > 0 ) {
 	if (( rfd = open( afinfo->rsrc_path, O_RDONLY )) < 0 ) {
 	    perror( afinfo->rsrc_path );
-	    goto error1;
+	    exit( 1 );
 	}
     }
 
     /* STOR "FILE" <transcript-name> <path> "\r\n" */
     if ( snet_writef( sn, "%s",	pathdesc ) < 0 ) {
-	perror( "snet_writef" );
-	return( -1 );
+	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	exit( 1 );
     }
     if ( verbose ) {
 	printf( ">>> %s", pathdesc );
@@ -245,8 +254,9 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
 
     tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-        perror( "snet_getline_multi" );
-        return( -1 );
+	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	exit( 1 );
     }
     if ( *line != '3' ) {
         fprintf( stderr, "%s\n", line );
@@ -266,8 +276,9 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
     /* tell server how much data to expect */
     tv = timeout;
     if ( snet_writef( sn, "%d\r\n", (int)afinfo->as_size ) < 0 ) {
-        perror( "snet_writef" );
-        goto error2;
+	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+        goto error;
     }
     if ( verbose ) printf( ">>> %d\n", (int)afinfo->as_size );
 
@@ -275,8 +286,9 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
     tv = timeout;
     if ( snet_write( sn, ( char * )&as_header, AS_HEADERLEN, &tv ) !=
 		AS_HEADERLEN  ) {
-	perror( "snet_write" );
-	goto error2;
+	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	goto error;
     }
     if ( cksum ) {
 	EVP_DigestUpdate( &mdctx, (char *)&as_header, AS_HEADERLEN );
@@ -288,8 +300,9 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
     if ( snet_write( sn, ( char * )&afinfo->as_ents,
 		( 3 * sizeof( struct as_entry )), &tv )
 		!= ( 3 * sizeof( struct as_entry ))) {
-	perror( "snet_write" );
-	goto error2;
+	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	goto error;
     }
     if ( cksum ) {
 	EVP_DigestUpdate( &mdctx, (char *)&afinfo->as_ents,
@@ -300,8 +313,9 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
     /* snet_write finder info data to server */
     tv = timeout;
     if ( snet_write( sn, afinfo->fi.fi_data, FINFOLEN, &tv ) != FINFOLEN ) {
-	perror( "snet_write" );
-	goto error2;
+	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	goto error;
     }
     if ( cksum ) {
 	EVP_DigestUpdate( &mdctx, afinfo->fi.fi_data, FINFOLEN );
@@ -313,8 +327,9 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
 	while (( rc = read( rfd, buf, sizeof( buf ))) > 0 ) {
 	    tv = timeout;
 	    if ( snet_write( sn, buf, rc, &tv ) != rc ) {
-		perror( "snet_write" );
-		goto error2;
+		fprintf( stderr, "store %s failed: %s\n", pathdesc,
+		    strerror( errno ));
+		goto error;
 	    }
 	    if ( cksum ) {
 		EVP_DigestUpdate( &mdctx, buf, (unsigned int)rc );
@@ -331,8 +346,9 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
     while (( rc = read( dfd, buf, sizeof( buf ))) > 0 ) {
 	tv = timeout;
 	if ( snet_write( sn, buf, rc, &tv ) != rc ) {
-	    perror( "snet_write" );
-	    goto error2;
+	    fprintf( stderr, "store %s failed: %s\n", pathdesc,
+		strerror( errno ));
+	    goto error;
 	}
 	if ( cksum ) {
 	    EVP_DigestUpdate( &mdctx, buf, (unsigned int)rc );
@@ -340,8 +356,9 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
     	if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
     }
     if ( snet_writef( sn, ".\r\n" ) < 0 ) {
-        perror( "snet_writef" );
-        return( -1 );
+	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	exit( 1 );
     }
     if ( verbose ) fputs( "\n>>> .\n", stdout );
 
@@ -352,8 +369,9 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
 
     tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-        perror( "snet_getline_multi" );
-        return( -1 );
+	fprintf( stderr, "store %s failed: %s\n", pathdesc,
+	    strerror( errno ));
+	exit( 1 );
     }
     if ( *line != '2' ) {
         fprintf( stderr, "%s\n", line );
@@ -372,20 +390,19 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
     if ( !quiet && !verbose ) printf( "%s: stored\n", decode( path ));
     return( 0 );
 
-error1:
-    return( -1 );
-error2:
+error:
     if ( close( rfd ) < 0 ) {
 	perror( afinfo->rsrc_path );
 	exit( 1 );
     }
-    return( -1 );
+    exit( 1 );
 }
 #else !__APPLE__
     int
 stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize, 
     char *trancksum, struct applefileinfo *afinfo )
 {
+    errno = ENOTSUP;
     return( -1 );
 }
 #endif __APPLE__
