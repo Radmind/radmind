@@ -4,7 +4,8 @@ BINDIR=${DESTDIR}/bin
 SBINDIR=${DESTDIR}/sbin
 
 # For server
-VARDIR=/var/radmind
+# Do not use sym links when creating packages for OS X
+VARDIR=/private/var/radmind
 CONFIGFILE=${VARDIR}/config
 TRANSCRIPTDIR=${VARDIR}/transcript
 
@@ -16,18 +17,18 @@ RADMIND_HOST=radmind
 RADMINDSYSLOG=LOG_LOCAL7
 
 # Solaris
-CC=	gcc
-CWARN=	-Wall -Wmissing-prototypes -Wconversion
-ADDLIBS=	-lnsl -lsocket
-INSTALL=	/usr/ucb/install
-OPENSSL=	/usr/local/openssl
+#CC=	gcc
+#CWARN=	-Wall -Wmissing-prototypes -Wconversion
+#ADDLIBS=	-lnsl -lsocket
+#INSTALL=	/usr/ucb/install
+#OPENSSL=	/usr/local/openssl
 
 # MacOSX
-#CC=	cc
-#CWARN=	-Wall -Wmissing-prototypes -Wconversion
-#ADDLIBS=
-#INSTALL=	install
-#OPENSSL=
+CC=	cc
+CWARN=	-Wall -Wmissing-prototypes -Wconversion
+ADDLIBS=
+INSTALL=	install
+OPENSSL=
 
 #
 # Should not need to edit anything after here.
@@ -176,7 +177,7 @@ install	: all
 	    ${INSTALL} -m 0644 -c $$i ${MANDIR}/man1/; \
 	done
 
-STARTUPDIR=/Library/StartupItems
+STARTUPDIR=/Library/StartupItems/RadmindServer
 
 package : all
 	-mkdir -p ${DISTDIR}${SBINDIR}
@@ -190,11 +191,12 @@ package : all
 	    ${INSTALL} -m 0444 -c $$i ${DISTDIR}${MANDIR}/man1/; \
 	done 
 	-mkdir -p ${DISTDIR}${VARDIR}/client
+	${INSTALL} -m 0755 -c OS_X/command.K ${DISTDIR}${VARDIR}/client
 	-mkdir -p ${DISTDIR}${STARTUPDIR}
-	${INSTALL} -m 0755 -c OS_X/RadmindServer ${DISTDIR}${STARTUPDIR};
+	${INSTALL} -m 0755 -c OS_X/RadmindServer ${DISTDIR}${STARTUPDIR}
 	${INSTALL} -m 0644 -c OS_X/StartupParameters.plist \
 	    ${DISTDIR}${STARTUPDIR};
-	package ${DISTDIR} OS_X/radmind.info -d ..
+	package ${DISTDIR} OS_X/radmind.info -d .. 
 	cd ..; tar zvcf radmind.pkg.tgz radmind.pkg/*
 
 clean :

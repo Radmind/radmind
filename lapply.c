@@ -25,8 +25,6 @@
 #include "pathcmp.h"
 #include "update.h"
 
-int apply( FILE *f, char *parent, SNET *sn );
-void output( char *string);
 
 void		(*logger)( char * ) = NULL;
 int		linenum = 0;
@@ -43,41 +41,38 @@ const EVP_MD    *md;
 
 struct node {
     char                *path;
+    int			doline;
+    char		tline[ MAXPATHLEN * 2 ];
     struct node         *next;
 };
 
-struct node* create_node( char *path );
+struct node* create_node( char *path, char *tline );
 void free_node( struct node *node );
-void free_list( struct node *head );
+int do_line( char *tline, int present, SNET *sn );
+void output( char *string);
 
    struct node *
-create_node( char *path )
+create_node( char *path, char *tline )
 {
     struct node         *new_node;
 
-    new_node = (struct node *) malloc( sizeof( struct node ) );
+    new_node = (struct node *) malloc( sizeof( struct node ));
     new_node->path = strdup( path );
+    if ( tline != NULL ) {
+	sprintf( new_node->tline, "%s", tline );
+	new_node->doline = 1;
+    } else {
+	new_node->doline = 0;
+    }
 
     return( new_node );
 }
 
-    void
+    void 
 free_node( struct node *node )
 {
     free( node->path );
     free( node );
-}
-
-    void
-free_list( struct node *head )
-{
-    struct node *node;
-
-    while ( head != NULL ) {
-        node = head;
-        head = head->next;
-        free_node( node );
-    }
 }
 
     static int
@@ -108,249 +103,88 @@ output( char *string )
     return;
 }
 
-/*
- * Never exit.  Must return so main can close network connection.
- */
-
-    int 
-apply( FILE *f, char *parent, SNET *sn )
+    int
+do_line( char *tline, int present, SNET *sn )
 {
-    char		tline[ 2 * MAXPATHLEN ];
-    char		path[ 2 * MAXPATHLEN ];
+    char                fstype;
+    char                *command = "";
+    ACAV                *acav;
+    int			tac;
+    char                **targv;
+    struct stat         st;
+    struct applefileinfo        afinfo;
+    char                path[ 2 * MAXPATHLEN ];
     char		temppath[ 2 * MAXPATHLEN ];
     char		pathdesc[ 2 * MAXPATHLEN ];
     char		cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
-    struct applefileinfo	afinfo;
-    int			tac, present, len;
-    char		**targv;
-    char		*command = "";
-    char		fstype;
-    struct stat		st;
-    struct node		*head= NULL, *new_node, *node;
-    ACAV		*acav;
 
-    acav = acav_alloc( );
-
-    while ( fgets( tline, MAXPATHLEN, f ) != NULL ) {
-	linenum++;
-
-	len = strlen( tline );
-        if (( tline[ len - 1 ] ) != '\n' ) {
-	    fprintf( stderr, "%s: line %d: line too long\n", tline, linenum  );
-	    return( 1 );
-	}
-
-	tac = acav_parse( acav, tline, &targv );
-
-	if ( tac == 1 ) {
-	    strcpy( transcript, targv[ 0 ] );
-	    len = strlen( transcript );
-	    if ( transcript[ len - 1 ] != ':' ) { 
-		fprintf( stderr, "%s: line %d: invalid transcript name\n",
-		    transcript, linenum );
-		return( 1 );
-	    }
-	    transcript[ len - 1 ] = '\0';
-	    if ( strcmp( transcript, "special.T" ) == 0 ) {
-		special = 1;
-	    } else {
-		special = 0;
-	    }
-	    if ( verbose ) printf( "Transcript: %s\n", transcript );
-	    continue;
-	}
-
-	/* Get argument offset */
-	if (( *targv[ 0 ] ==  '+' )
-		|| ( *targv[ 0 ] == '-' )) {
-	    command = targv[ 0 ];
-	    targv++;
-	    tac--;
-	}
-
-	if (( *command == '+' ) && ( !network )) {
-	    continue;
-	}
-
-	strcpy( path, decode( targv[ 1 ] ));
-
-	/* Check transcript order */
-	if ( prepath != 0 ) {
-	    if ( pathcmp( path, prepath ) < 0 ) {
-		fprintf( stderr, "%s: line %d: bad sort order\n",
-			    transcript, linenum );
-		return( 1 );
-	    }
-	}
-	len = strlen( path );
-	if ( snprintf( prepath, MAXPATHLEN, "%s", path) > MAXPATHLEN ) { 
-	    fprintf( stderr, "%s: line %d: path too long\n",
-		    transcript, linenum );
-	    return( 1 );
-	}
-
-	/* Do type check on local file */
-	switch ( radstat( path, &st, &fstype, &afinfo )) {
-	case 0:
-	    present = 1;
-	    break;
-	case 1:
-	    fprintf( stderr, "%s is of an unknown type\n", path );
-	    return( 1 );
-	default:
-	    if ( errno == ENOENT ) { 
-		present = 0;
-	    } else {
-		perror( path );
-		return( 1 );
-	    }
-	    break;
-	}
-
-	if ( *command == '-'
-		|| ( present && fstype != *targv[ 0 ] )) {
-	    if ( fstype == 'd' ) {
-dirchecklist:
-		if ( head == NULL ) {
-		    /* Add dir to empty list */
-		    head = create_node( path );
-		    continue;
-		} else {
-		    if ( ischild( path, head->path)) {
-			/* Add dir to list */
-			new_node = create_node( path );
-			new_node->next = head;
-			head = new_node;
-		    } else {
-			/* remove head */
-			if ( rmdir( head->path ) != 0 ) {
-			     perror( head->path );
-			     return( 1 );
-			}
-			if ( !quiet ) printf( "%s: deleted\n", path );
-			node = head;
-			head = node->next;
-			free_node( node );
-			goto dirchecklist;
-		    }
-		}
-	    } else {
-filechecklist:
-		if ( head == NULL ) {
-		    if ( unlink( path ) != 0 ) {
-			perror( path );
-			return( 1 );
-		    }
-		    if ( !quiet ) printf( "%s: deleted\n", path );
-		} else {
-		    if ( ischild( path, head->path)) {
-			if ( unlink( path ) != 0 ) {
-			    perror( path );
-			    return( 1 );
-			}
-			if ( !quiet ) printf( "%s: deleted\n", path );
-		    } else {
-			/* remove head */
-			if ( rmdir( head->path ) != 0 ) {
-			     perror( head->path );
-			     return( 1 );
-			}
-			if ( !quiet ) printf( "%s: deleted\n", path );
-			node = head;
-			head = node->next;
-			free_node( node );
-			goto filechecklist;
-		    }
-		}
-	    }
-	    present = 0;
-
-	    if ( *command == '-' ) {
-		continue;
-	    }
-	}
-
-	/* DOWNLOAD */
-	if ( *command == '+' ) {
-	    if (( *targv[ 0 ] != 'f' ) && ( *targv[ 0 ] != 'a' )) {
-		fprintf( stderr, "line %d: \"%c\" invalid download type\n",
-			linenum, *targv[ 0 ] );
-		return( 1 );
-	    }
-
-	    strcpy( cksum_b64, targv[ 7 ] );
-
-	    if ( special ) {
-		if ( snprintf( pathdesc, MAXPATHLEN * 2, "SPECIAL %s",
-			encode( path )) > ( MAXPATHLEN * 2 ) - 1 ) {
-		    fprintf( stderr, "SPECIAL %s: too long\n", encode( path ));
-		    return( 1 );
-		}
-	    } else {
-		if ( snprintf( pathdesc, MAXPATHLEN * 2, "FILE %s %s",
-			transcript, encode( path )) > ( MAXPATHLEN * 2 ) -1 ) {
-		    fprintf( stderr, "FILE %s %s: command too long\n",
-			transcript, encode( path ));
-		    return( 1 );
-		}
-	    }
-
-	    if ( *targv[ 0 ] == 'a' ) {
-		if ( retr_applefile( sn, pathdesc, path, temppath,
-			(size_t)atol( targv[ 6 ] ), cksum_b64 ) != 0 ) {
-		    return( 1 );
-		}
-	    } else {
-		if ( retr( sn, pathdesc, path, (char *)&temppath,
-			(size_t)atol( targv[ 6 ] ), cksum_b64 ) != 0 ) {
-		    return( 1 );
-		}
-	    }
-
-	    if ( radstat( temppath, &st, &fstype, &afinfo ) < 0 ) {
-		perror( temppath );
-		return( 1 );
-	    }
-
-	    /* Update temp file*/
-	    if ( update( temppath, path, present, 1, st, tac, targv )
-		    != 0 ) {
-		perror( "update" );
-		return( 1 );
-	    }
-	    
-	    /*
-	     * rename doesn't mangle meta-data on HFS+, no need
-	     * to change this around for HFS+ formatted Darwin volumes
-	     */
-	    if ( rename( temppath, path ) != 0 ) {
-		perror( temppath );
-		return( 1 );
-	    }
-
-	} else { 
-	    /* UPDATE */
-	    if ( update( path, path, present, 0, st, tac, targv ) != 0 ) {
-		perror( "update" );
-		return( 1 );
-	    }
-	}
-
+    tac = acav_parse( acav, tline, &targv );
+    /* Get argument offset */
+    if (( *targv[ 0 ] ==  '+' ) || ( *targv[ 0 ] == '-' )) {
+	command = targv[ 0 ];
+	targv++;
+	tac--;
     }
-    /* Clear out dir list */ 
-    while ( head != NULL ) {
-	/* remove head */
-	if ( rmdir( head->path ) != 0 ) {
-	     perror( head->path );
-	     return( 1 );
-	}
-	if ( !quiet ) printf( "%s: deleted\n", path );
-	node = head;
-	head = node->next;
-	free_node( node );
-    }
+    strcpy( path, decode( targv[ 1 ] ));
 
-    acav_free( acav ); 
+    /* DOWNLOAD */
+    if ( *command == '+' ) {
+	if (( *targv[ 0 ] != 'f' ) && ( *targv[ 0 ] != 'a' )) {
+	    fprintf( stderr, "line %d: \"%c\" invalid download type\n",
+		    linenum, *targv[ 0 ] );
+	    return( 1 );
+	}
+	strcpy( cksum_b64, targv[ 7 ] );
+	if ( special ) {
+	    if ( snprintf( pathdesc, MAXPATHLEN * 2, "SPECIAL %s",
+		    encode( path )) > ( MAXPATHLEN * 2 ) - 1 ) {
+		fprintf( stderr, "SPECIAL %s: too long\n", encode( path ));
+		return( 1 );
+	    }
+	} else {
+	    if ( snprintf( pathdesc, MAXPATHLEN * 2, "FILE %s %s",
+		    transcript, encode( path )) > ( MAXPATHLEN * 2 ) -1 ) {
+		fprintf( stderr, "FILE %s %s: command too long\n",
+		    transcript, encode( path ));
+		return( 1 );
+	    }
+	}
+	if ( *targv[ 0 ] == 'a' ) {
+	    if ( retr_applefile( sn, pathdesc, path, temppath,
+		    (size_t)atol( targv[ 6 ] ), cksum_b64 ) != 0 ) {
+		return( 1 );
+	    }
+	} else {
+	    if ( retr( sn, pathdesc, path, (char *)&temppath,
+		    (size_t)atol( targv[ 6 ] ), cksum_b64 ) != 0 ) {
+		return( 1 );
+	    }
+	}
+	if ( radstat( temppath, &st, &fstype, &afinfo ) < 0 ) {
+	    perror( temppath );
+	    return( 1 );
+	}
+	/* Update temp file*/
+	if ( update( temppath, path, present, 1, st, tac, targv )
+		!= 0 ) {
+	    perror( "update" );
+	    return( 1 );
+	}
+	/*
+	 * rename doesn't mangle meta-data on HFS+, no need
+	 * to change this around for HFS+ formatted Darwin volumes
+	 */
+	if ( rename( temppath, path ) != 0 ) {
+	    perror( temppath );
+	    return( 1 );
+	}
+    } else { 
+	/* UPDATE */
+	if ( update( path, path, present, 0, st, tac, targv ) != 0 ) {
+	    perror( "update" );
+	    return( 1 );
+	}
+    }
     return( 0 );
 }
 
@@ -362,6 +196,18 @@ main( int argc, char **argv )
     FILE		*f; 
     char		*host = _RADMIND_HOST;
     struct servent	*se;
+
+    char		tline[ 2 * MAXPATHLEN ];
+    char		targvline[ 2 * MAXPATHLEN ];
+    char		path[ 2 * MAXPATHLEN ];
+    struct applefileinfo	afinfo;
+    int			tac, present, len;
+    char		**targv;
+    char		*command = "";
+    char		fstype;
+    struct stat		st;
+    struct node		*head= NULL, *new_node, *node;
+    ACAV		*acav;
     SNET		*sn;
 
     while (( c = getopt ( argc, argv, "c:h:np:qVv" )) != EOF ) {
@@ -447,9 +293,210 @@ main( int argc, char **argv )
 	if ( !quiet ) printf( "No network connection\n" );
     }
 
-    if ( apply( f, NULL, sn ) != 0 ) {
-	goto error2;
+    acav = acav_alloc( );
+
+    while ( fgets( tline, MAXPATHLEN, f ) != NULL ) {
+	linenum++;
+
+	len = strlen( tline );
+        if (( tline[ len - 1 ] ) != '\n' ) {
+	    fprintf( stderr, "%s: line %d: line too long\n", tline, linenum  );
+	    goto error2;
+	}
+	if ( snprintf( targvline, MAXPATHLEN * 2, "%s", tline )
+		>= MAXPATHLEN * 2 ) {
+	    fprintf( stderr, "line %d: too long\n", linenum );
+	    goto error2;
+	}
+
+	tac = acav_parse( acav, targvline, &targv );
+
+	if ( tac == 1 ) {
+	    strcpy( transcript, targv[ 0 ] );
+	    len = strlen( transcript );
+	    if ( transcript[ len - 1 ] != ':' ) { 
+		fprintf( stderr, "%s: line %d: invalid transcript name\n",
+		    transcript, linenum );
+		goto error2;
+	    }
+	    transcript[ len - 1 ] = '\0';
+	    if ( strcmp( transcript, "special.T" ) == 0 ) {
+		special = 1;
+	    } else {
+		special = 0;
+	    }
+	    if ( verbose ) printf( "Transcript: %s\n", transcript );
+	    continue;
+	}
+
+	/* Get argument offset */
+	if (( *targv[ 0 ] ==  '+' )
+		|| ( *targv[ 0 ] == '-' )) {
+	    command = targv[ 0 ];
+	    targv++;
+	    tac--;
+	}
+
+	if (( *command == '+' ) && ( !network )) {
+	    continue;
+	}
+
+	strcpy( path, decode( targv[ 1 ] ));
+
+	/* Check transcript order */
+	if ( prepath != 0 ) {
+	    if ( pathcmp( path, prepath ) < 0 ) {
+		fprintf( stderr, "%s: line %d: bad sort order\n",
+			    transcript, linenum );
+		goto error2;
+	    }
+	}
+	len = strlen( path );
+	if ( snprintf( prepath, MAXPATHLEN, "%s", path) > MAXPATHLEN ) { 
+	    fprintf( stderr, "%s: line %d: path too long\n",
+		    transcript, linenum );
+	    goto error2;
+	}
+
+	/* Do type check on local file */
+	switch ( radstat( path, &st, &fstype, &afinfo )) {
+	case 0:
+	    present = 1;
+	    break;
+	case 1:
+	    fprintf( stderr, "%s is of an unknown type\n", path );
+	    goto error2;
+	default:
+	    if ( errno == ENOENT ) { 
+		present = 0;
+	    } else {
+		perror( path );
+		goto error2;
+	    }
+	    break;
+	}
+
+	if ( *command == '-'
+		|| ( present && fstype != *targv[ 0 ] )) {
+	    if ( fstype == 'd' ) {
+dirchecklist:
+		if ( head == NULL ) {
+		    /* Add dir to empty list */
+		    if ( present && fstype != *targv[ 0 ] ) {
+		    	head = create_node( path, tline );
+		    } else {
+			head = create_node( path, NULL);
+		    }
+		    continue;
+		} else {
+		    if ( ischild( path, head->path)) {
+			/* Add dir to list */
+			if ( present && fstype != *targv[ 0 ] ) {
+			    new_node = create_node( path, tline );
+			} else {
+			    new_node = create_node( path, NULL);
+			}
+			new_node->next = head;
+			head = new_node;
+		    } else {
+			/* remove head */
+			if ( rmdir( head->path ) != 0 ) {
+			    perror( head->path );
+			    goto error2;
+			}
+			if ( !quiet ) printf( "%s: deleted\n", path );
+			node = head;
+			head = node->next;
+			if ( node->doline ) {
+			    if ( do_line( node->tline, 0, sn ) != 0 ) {
+				goto error2;
+			    }
+			}
+			free_node( node );
+			goto dirchecklist;
+		    }
+		}
+	    } else {
+filechecklist:
+		if ( head == NULL ) {
+		    if ( unlink( path ) != 0 ) {
+			perror( path );
+			goto error2;
+		    }
+		    if ( !quiet ) printf( "%s: deleted\n", path );
+		} else {
+		    if ( ischild( path, head->path)) {
+			if ( unlink( path ) != 0 ) {
+			    perror( path );
+			    goto error2;
+			}
+			if ( !quiet ) printf( "%s: deleted\n", path );
+		    } else {
+			/* remove head */
+			if ( rmdir( head->path ) != 0 ) {
+			    perror( head->path );
+			    goto error2;
+			}
+			if ( !quiet ) printf( "%s: deleted\n", path );
+			node = head;
+			head = node->next;
+			if ( node->doline ) {
+			    if ( do_line( node->tline, 0, sn ) != 0 ) {
+				goto error2;
+			    }
+			}
+			free_node( node );
+			goto filechecklist;
+		    }
+		}
+	    }
+	    present = 0;
+
+	    if ( *command == '-' ) {
+		continue;
+	    }
+	}
+	/* Minimize remove list */
+	while ( head != NULL && !ischild( path, head->path )) {
+	    /* remove head */
+	    if ( rmdir( head->path ) != 0 ) {
+		perror( head->path );
+		goto error2;
+	    }
+	    if ( !quiet ) printf( "%s: deleted\n", head->path );
+	    node = head;
+	    head = node->next;
+	    if ( node->doline ) {
+		if ( do_line( node->tline, 0, sn ) != 0 ) {
+		    goto error2;
+		}
+	    }
+	    free_node( node );
+	}
+
+	if ( do_line( tline, present, sn ) != 0 ) {
+	    goto error2;
+	}
     }
+
+    /* Clear out remove list */ 
+    while ( head != NULL ) {
+	/* remove head */
+	if ( rmdir( head->path ) != 0 ) {
+	    perror( head->path );
+	    goto error2;
+	}
+	if ( !quiet ) printf( "%s: deleted\n", head->path );
+	node = head;
+	head = node->next;
+	if ( node->doline ) {
+	    if ( do_line( node->tline, 0, sn ) != 0 ) {
+		goto error2;
+	    }
+	}
+	free_node( node );
+    }
+    acav_free( acav ); 
     
     if ( fclose( f ) != 0 ) {
 	perror( argv[ optind ] );
