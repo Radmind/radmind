@@ -177,8 +177,7 @@ f_noauth( sn, ac, av )
     char	*av[];
 {
     snet_writef( sn, "%d No access for %s\r\n", 500, remote_host );
-
-    return( 0 );
+    exit( 1 );
 }
 
     int
