@@ -169,13 +169,14 @@ man :
 	done
 
 install	: all man
-	-mkdir -p ${DESTDIR}
+	-mkdir -p ${exec_prefix}
 	-mkdir -p ${SBINDIR}
 	${INSTALL} -m 0755 -c radmind ${SBINDIR}/
 	-mkdir -p ${BINDIR}
 	for i in ${BINTARGETS}; do \
 	    ${INSTALL} -m 0755 -c $$i ${BINDIR}/; \
 	done
+	-mkdir -p ${prefix}
 	-mkdir -p ${MANDIR}
 	-mkdir ${MANDIR}/man1
 	for i in ${MAN1TARGETS}; do \
