@@ -1,8 +1,10 @@
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/param.h>
+#ifdef __APPLE__
 #include <sys/paths.h>
 #include <sys/attr.h>
+#endif __APPLE__
 #include <sys/uio.h>
 #include <errno.h>
 #include <snet.h>
