@@ -21,7 +21,7 @@ RADMIND_HOST=@server@
 
 RADMINDSYSLOG=LOG_LOCAL7
 
-CWARN=		-Wall -Wmissing-prototypes -Wconversion
+CWARN=		-Wall -Wmissing-prototypes 
 CC=		@CC@
 LIBS=		@LIBS@
 LDFLAGS=	@LDFLAGS@ ${LIBS}
