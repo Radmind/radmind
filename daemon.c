@@ -34,7 +34,7 @@ int		backlog = 5;
 char		*path_radmind = _PATH_RADMIND;
 char		*remote_host;
 
-char		*version = VERSION;
+extern char	*version;
 
 void		hup ___P(( int ));
 void		chld ___P(( int ));
