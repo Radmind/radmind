@@ -29,8 +29,8 @@ incoming connections.  Radmind forks a child for each connection.
 
 The file _PATH_RADMIND/config contains the list of known clients that
 can connect to radmind, one per line.  Each line contains the fully
-qualified domain name and command file of the client.  Lines that are
-blank or begin with '#' are ignored.
+qualified domain name or IP address of the client and the client's command file.
+Lines that are blank or begin with '#' are ignored.
 
 Radmind currently supports the following radmind access protocol
 requests:
