@@ -251,7 +251,7 @@ main( int argc, char **argv )
 	    /*
 	     * Assume that directory structure is present so the entire path
 	     * is not recreated for every file.  Only if link fails is
-	     * create_direcetories() called.
+	     * mkdirs() called.
 	     */
 
 	    /* First try to link file */
@@ -262,8 +262,8 @@ main( int argc, char **argv )
 			!= NULL ) {
 		    sprintf( npath, "%s/../file/%s.%d/%s", tpath,
 			tname, (int)getpid(), trans[ candidate ]->targv[ 1 ] ); 
-		    if ( create_directories( npath ) != 0 ) {
-			fprintf( stderr, "create_dirs\n" );
+		    if ( mkdirs( npath ) != 0 ) {
+			fprintf( stderr, "%s: mkdirs failed\n", npath );
 			exit( 1 );
 		    }
 		} 
@@ -276,8 +276,8 @@ main( int argc, char **argv )
 		    exit( 1 );
 		}
 	    }
-	    if ( verbose ) printf( "*** %d: linked %s/%s\n",
-		trans[ fileloc ]->num, tname, trans[ candidate ]->targv[ 1 ]);
+	    if ( verbose ) printf( "*** linked %s/%s\n",
+		tname, trans[ candidate ]->targv[ 1 ]);
 		
 outputline:
 	    if ( fputs( trans[ candidate ]->line, ofs ) == EOF ) {
