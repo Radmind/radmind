@@ -200,12 +200,13 @@ install	: all man
 	    ${INSTALL} -m 0644 -c tmp/man/$$i ${MANDIR}/man8/; \
 	done
 
-CLIENTBINPKGDIR=${DISTDIR}/client-bin
-CLIENTMANPKGDIR=${DISTDIR}/client-man
-CLIENTVARPKGDIR=${DISTDIR}/client-var
-SERVERSTARTUPPKGDIR=${DISTDIR}/server-startup
-SERVERSBINPKGDIR=${DISTDIR}/server-sbin
-SERVERMANPKGDIR=${DISTDIR}/server-man
+MPKGDIR=${DISTDIR}-MPKG
+CLIENTBINPKGDIR=${MPKGDIR}/client-bin
+CLIENTMANPKGDIR=${MPKGDIR}/client-man
+CLIENTVARPKGDIR=${MPKGDIR}/client-var
+SERVERSTARTUPPKGDIR=${MPKGDIR}/server-startup
+SERVERSBINPKGDIR=${MPKGDIR}/server-sbin
+SERVERMANPKGDIR=${MPKGDIR}/server-man
 INFOLIST=	$(wildcard OS_X/*.info)	
 
 info :
@@ -252,23 +253,23 @@ package : all man info
 	    ${CLIENTVARPKGDIR}
 	${INSTALL} -o root -g staff -m 0755 -c OS_X/apple-neg.T \
 	    ${CLIENTVARPKGDIR}
-	chown root:wheel ${DISTDIR}
-	find ${DISTDIR}/* -exec chown root:wheel {} \;
-	package ${CLIENTBINPKGDIR} tmp/OS_X/client-bin.info -d ${DISTDIR}
-	package ${CLIENTMANPKGDIR} tmp/OS_X/client-man.info -d ${DISTDIR}
-	package ${CLIENTVARPKGDIR} tmp/OS_X/client-var.info -d ${DISTDIR}
+	chown root:wheel ${MPKGDIR}
+	find ${MPKGDIR}/* -exec chown root:wheel {} \;
+	package ${CLIENTBINPKGDIR} tmp/OS_X/client-bin.info -d ${MPKGDIR}
+	package ${CLIENTMANPKGDIR} tmp/OS_X/client-man.info -d ${MPKGDIR}
+	package ${CLIENTVARPKGDIR} tmp/OS_X/client-var.info -d ${MPKGDIR}
 	package ${SERVERSTARTUPPKGDIR} tmp/OS_X/server-startup.info -d \
-	    ${DISTDIR}
-	package ${SERVERSBINPKGDIR} tmp/OS_X/server-sbin.info -d ${DISTDIR}
-	package ${SERVERMANPKGDIR} tmp/OS_X/server-man.info -d ${DISTDIR}
-	cp tmp/OS_X/radmind.info ${DISTDIR}/radmind-${VERSION}.info
-	cp OS_X/radmind.list ${DISTDIR}/radmind-${VERSION}.list
-	cp OS_X/License.rtf ${DISTDIR}
-	cp OS_X/ReadMe.rtf ${DISTDIR}
-	cp OS_X/Welcome.rtf ${DISTDIR}
+	    ${MPKGDIR}
+	package ${SERVERSBINPKGDIR} tmp/OS_X/server-sbin.info -d ${MPKGDIR}
+	package ${SERVERMANPKGDIR} tmp/OS_X/server-man.info -d ${MPKGDIR}
+	cp tmp/OS_X/radmind.info ${MPKGDIR}/radmind-${VERSION}.info
+	cp OS_X/radmind.list ${MPKGDIR}/radmind-${VERSION}.list
+	cp OS_X/License.rtf ${MPKGDIR}
+	cp OS_X/ReadMe.rtf ${MPKGDIR}
+	cp OS_X/Welcome.rtf ${MPKGDIR}
 	rm -rf ${CLIENTBINPKGDIR} ${CLIENTMANPKGDIR} ${CLIENTVARPKGDIR} \
 	    ${SERVERSTARTUPPKGDIR} ${SERVERSBINPKGDIR} ${SERVERMANPKGDIR} tmp
-	mv ${DISTDIR} ../radmind-${VERSION}.mpkg
+	mv ${MPKGDIR} ../radmind-${VERSION}.mpkg
 	cd ..; tar zvcf radmind-${VERSION}.mpkg.tgz radmind-${VERSION}.mpkg/*
 
 clean :
