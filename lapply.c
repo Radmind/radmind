@@ -372,6 +372,10 @@ main( int argc, char **argv )
 	exit( 2 );
     }
 
+    if ( !network ) {
+	authlevel = 0;
+    }
+
     if ( authlevel != 0 ) {
         if ( tls_client_setup( use_randfile, authlevel, ca, cert, 
                 privatekey ) != 0 ) {
