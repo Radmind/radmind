@@ -188,10 +188,6 @@ apply( FILE *f, char *parent, SNET *sn )
 		perror( "download" );
 		return( 1 );
 	    }
-	    if ( rename( temppath, path ) != 0 ) {
-		perror( temppath );
-		return( 1 );
-	    }
 	    if ( present && !safe && ( st.st_nlink > 1 )) {
 		if ( copyover( temppath, path ) != 0 ) {
 		    fprintf( stderr, "copyover: %s %s\n", temppath, path );
