@@ -47,13 +47,13 @@ TARGETS=        radmind ${BINTARGETS}
 
 RADMIND_OBJ=    version.o daemon.o command.o argcargv.o code.o \
                 cksum.o base64.o mkdirs.o applefile.o connect.o \
-		list.o wildcard.o logname.o
+		list.o wildcard.o logname.o pathcmp.o
 
 FSDIFF_OBJ=     version.o fsdiff.o argcargv.o transcript.o llist.o code.o \
                 hardlink.o cksum.o base64.o pathcmp.o radstat.o applefile.o
 
 KTCHECK_OBJ=    version.o ktcheck.o argcargv.o retr.o base64.o code.o \
-                cksum.o list.o connect.o applefile.o tls.o
+                cksum.o list.o connect.o applefile.o tls.o pathcmp.o
 
 LAPPLY_OBJ=     version.o lapply.o argcargv.o code.o base64.o retr.o \
                 radstat.o update.o cksum.o connect.o pathcmp.o \
