@@ -688,6 +688,12 @@ f_stor( SNET *sn, int ac, char *av[] )
 	}
     }
 
+    if ( len != 0 ) {
+	syslog( LOG_ERR, "f_stor: len is %d", len );
+	snet_writef( sn, "%d %s: internal error!\r\n", 555, upload );
+	exit( 1 );
+    }
+
     if ( close( fd ) < 0 ) {
 	snet_writef( sn, "%d %s: %s\r\n", 555, upload, strerror( errno ));
 	exit( 1 );
@@ -704,6 +710,7 @@ f_stor( SNET *sn, int ac, char *av[] )
 
     /* make sure client agrees we're at the end */
     if ( strcmp( line, "." ) != 0 ) {
+        syslog( LOG_ERR, "f_stor: line is: %s", line );
 	snet_writef( sn, "%d Length doesn't match sent data %s\r\n",
 		555, upload );
 	(void)unlink( upload );
