@@ -1,1 +1,2 @@
-int download( SNET *sn, char *transcript, char *path, char *chksumval ); 
+int get( SNET *sn, char *pathdesc, char *path, char *chksumval );
+char * download( SNET *sn, char *pathdesc, char *path, char *chksumval ); 
