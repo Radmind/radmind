@@ -38,7 +38,7 @@ char		transcript[ 2 * MAXPATHLEN ];
 extern char	*version;
 
 int apply( FILE *f, char *parent, SNET *sn );
-void output( char* string);
+void output( char *string);
 
     static int
 ischild( const char *parent, const char *child)
@@ -62,8 +62,9 @@ ischild( const char *parent, const char *child)
 }
 
     void
-output( char *string ) {
-    fprintf( stderr, "<<< %s\n", string );
+output( char *string )
+{
+    printf( "<<< %s\n", string );
     return;
 }
 
