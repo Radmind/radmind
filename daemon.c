@@ -97,7 +97,6 @@ main( ac, av )
     struct servent	*se;
     int			c, s, err = 0, fd, sinlen, trueint;
     int			dontrun = 0;
-    int			use_randfile = 0;
     int			ssl_mode = 0;
     char		*prog;
     unsigned short	port = 0;
@@ -245,26 +244,6 @@ main( ac, av )
 
         SSL_load_error_strings();
         SSL_library_init();    
-
-        if ( use_randfile ) {
-            char        randfile[ MAXPATHLEN ];      
-
-            if ( RAND_file_name( randfile, sizeof( randfile )) == NULL ) {
-                fprintf( stderr, "RAND_file_name: %s\n",
-                        ERR_error_string( ERR_get_error(), NULL ));
-                exit( 1 );
-            }
-            if ( RAND_load_file( randfile, -1 ) <= 0 ) {
-                fprintf( stderr, "RAND_load_file: %s: %s\n", randfile,
-                        ERR_error_string( ERR_get_error(), NULL ));
-                exit( 1 );
-            }
-            if ( RAND_write_file( randfile ) < 0 ) {
-                fprintf( stderr, "RAND_write_file: %s: %s\n", randfile,
-                        ERR_error_string( ERR_get_error(), NULL ));
-                exit( 1 );
-            }
-        }
 
         if (( ctx = SSL_CTX_new( SSLv23_server_method())) == NULL ) {
             fprintf( stderr, "SSL_CTX_new: %s\n",
