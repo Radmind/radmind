@@ -9,9 +9,37 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <strings.h>
+#include <utime.h>
 
 #include "snet.h"
 #include "argcargv.h"
+
+    static char
+t_convert( int type )
+{
+    switch( type ) {
+    case S_IFREG:
+	return ( 'f' );
+    case S_IFDIR:
+	return ( 'd' );
+    case S_IFLNK:
+	return ( 'l' );
+    case S_IFCHR:
+	return ( 'c' );
+    case S_IFBLK:
+	return ( 'b' );
+#ifdef SOLARIS
+    case S_IFDOOR:
+	return ( 'D' );
+#endif
+    case S_IFIFO:
+	return ( 'p' );
+    case S_IFSOCK:
+	return ( 's' );
+    default:
+	return ( 0 );
+    }
+}
 
     int
 main( int argc, char **argv )
@@ -19,12 +47,15 @@ main( int argc, char **argv )
     int			tac, fd;
     int			exitcode = 0;
     int			optind = 1;
-    int			rval = 0;
     char		**targv;
     char		tline[ 2 * MAXPATHLEN ];
     extern char		*optarg;
     FILE		*fdiff; 
     struct stat		fileinfo;
+    mode_t	   	mode;
+    struct utimbuf	times;
+    uid_t		uid;
+    gid_t		gid;
 
     if (( fd = open( argv[ optind ], O_RDONLY, 0 )) < 0 ) {
 	perror( argv[ optind ] );
@@ -42,74 +73,78 @@ main( int argc, char **argv )
 	    printf( "Command file: %s\n", targv[ 0 ] );
 	}
 	else {
-	    switch( *targv[ 0 ] )
-	    {
-		case '+':
-		    printf( "Have to download something\n" );
-		    break;
-		case '-':
-		    printf( "Deleting %s ", targv[ 2 ] );
-		    switch( *targv[ 1 ] )
-		    {
-			case 'f':
-			case 'l':
-			case 'h':
-			case 'b':
-			case 'c':
-			    printf( "using unlink\n" );
-			    if ( unlink( targv[ 2 ] ) != 0 ) {
-				perror( "Unlink" );
-				goto done;
-			    }
-			    break;
-			case 'd':
-			    printf( "using rmdir\n" );
-			    if ( rmdir( targv[ 2 ] != 0 ) ) {
-				perror( "rmdir" );
-				goto done;
-			    }
-			    break;
-			default:
-			    printf( "Don't know how to delete %s\n", targv[ 1 ] );
-			    break;
-		    }
-		    break;
-		case 'h':
-		    printf( "Update hard link\n" );
-		    break;
-		case 'l':
-		    printf( "Update symbolic link\n" );
-		    break;
-		case 'd':
-		    printf( "Update directory\n" );
-		    break;
-		case 'c':
-		    printf( "Update a character special file\n" );
-		    break;
-		case 'b':
-		    printf( "Update a block special file\n" );
-		    break;
-		case 'p':
-		    printf( "Update a named pipe\n" );
-		    break;
-		case 's':
-		    printf( "Update a socket\n" );
-		    break;
-		case 'D':
-		    printf( "Update a door\n" );
-		    break;
-		case 'f':
-		    printf( "Update a file\n" );
-		    break;
-		default:
-		    printf( "Don't know what to do with line\n" );
+	    switch( *targv[ 0 ] ) {
+	    case '+':
+		printf( "Have to download something\n" );
+		break;
+	    case '-':
+		printf( "Deleting %s ", targv[ 2 ] );
+		if ( lstat( targv[ 2 ], &fileinfo ) != 0 ) {
+		    perror( "lstat" );
 		    goto done;
+		}
+		if ( S_ISDIR( fileinfo.st_mode ) ) {
+		    printf( "using rmdir\n" );
+		    if ( rmdir( targv[ 2 ] ) != 0 ) {
+			perror( "rmdir" );
+			goto done;
+		    }
+		} else {
+		    printf( "using unlink\n" );
+		    if ( unlink( targv[ 2 ] ) != 0 ) {
+			perror( "Unlink" );
+			goto done;
+		    }
+		}
+		break;
+	    default:
+
+		printf( "updating %s\n", targv[ 1 ] );
+
+		mode = strtol( targv[ 2 ], (char **)NULL, 8 );
+		uid = atoi( targv[ 3 ] );
+		gid = atoi( targv[ 4 ] );
+		times.modtime = atoi( targv[ 5 ] );
+
+		if ( lstat( targv[ 1 ], &fileinfo ) != 0 ) {
+		    perror( "lstat" );
+		    goto done;
+		}
+
+		/* check mode */
+
+		if( mode != fileinfo.st_mode ) {
+		    printf( "  mode -> %o\n", mode );
+		    if ( chmod( targv[ 1 ], mode ) != 0 ) {
+			perror( "chmod" );
+			goto done;
+		    }
+		}
+
+		/* check uid & gid */
+
+		if( uid != fileinfo.st_uid  || gid != fileinfo.st_gid ) {
+		    if ( uid != fileinfo.st_uid ) printf( "  uid -> %i\n", (int)uid );
+		    if ( gid != fileinfo.st_gid ) printf( "  gid -> %i\n", (int)gid );
+		    if ( lchown( targv[ 1 ], uid, gid ) != 0 ) {
+			perror( "lchown" );
+			goto done;
+		    }
+		}
+
+		/* check modification time */
+
+		if( times.modtime != fileinfo.st_mtime ) {
+		    printf( "%s time -> %i\n", targv[ 1 ], (int)times.modtime );
+		    times.actime = fileinfo.st_atime;
+		    if ( utime( targv[ 1 ], &times ) != 0 ) {
+			perror( "utime" );
+			goto done;
+		    }
+		}
 	    }
-	
 	}
-
     }
-
 done:
 
     fclose( fdiff );
