@@ -80,14 +80,15 @@ apply( FILE *f, char *parent, SNET *sn )
     char		*command = "";
     char		fstype;
     struct stat		st;
-    ACAV		acav;
+    ACAV		*acav;
 
+    if ( parent != NULL ) printf( "Called from %s\n", parent );
     acav = acav_alloc( );
 
     while ( fgets( tline, MAXPATHLEN, f ) != NULL ) {
 	linenum++;
 
-	//if ( verbose ) printf( "\n%d: %s", linenum, tline );
+	if ( verbose ) printf( "\n%d %s", linenum, tline );
 
 	len = strlen( tline );
         if (( tline[ len - 1 ] ) != '\n' ) {
@@ -98,7 +99,7 @@ apply( FILE *f, char *parent, SNET *sn )
 	tac = acav_parse( acav, tline, &targv );
 
 	if ( tac == 1 ) {
-	    strcpy( transcript, acav->acv_argv[ 0 ] );
+	    strcpy( transcript, targv[ 0 ] );
 	    len = strlen( transcript );
 	    if ( transcript[ len - 1 ] != ':' ) { 
 		fprintf( stderr, "%s: invalid transcript name\n", transcript );
@@ -110,14 +111,14 @@ apply( FILE *f, char *parent, SNET *sn )
 	}
 
 	/* Get argument offset */
-	if ( ( *(acav->acv_argv[ 0 ]) ==  '+' )
-		|| ( *(acav->acv_argv[ 0 ]) == '-' ) ) {
-	    command = acav->acv_argv[ 0 ];
-	    acav->acv_argv++;
+	if ( ( *targv[ 0 ] ==  '+' )
+		|| ( *targv[ 0 ] == '-' ) ) {
+	    command = targv[ 0 ];
+	    targv++;
 	    tac--;
 	}
 
-	strcpy( path, decode( acav->acv_argv[ 1 ] ) );
+	strcpy( path, decode( targv[ 1 ] ) );
 
 	/* Do type check on local file */
 	if ( lstat( path, &st ) ==  0 ) {
@@ -131,7 +132,7 @@ apply( FILE *f, char *parent, SNET *sn )
 	}
 
 	if ( *command == '-'
-		|| ( present && fstype != *(acav->acv_argv[ 0 ]) ) ) {
+		|| ( present && fstype != *targv[ 0 ] ) ) {
 	    if ( fstype == 'd' ) {
 
 		/* Recurse */
@@ -161,7 +162,7 @@ apply( FILE *f, char *parent, SNET *sn )
 
 	/* DOWNLOAD */
 	if ( *command == '+' ) {
-	    strcpy( chksum_b64, acav->acv_argv[ 7 ] );
+	    strcpy( chksum_b64, targv[ 7 ] );
 
 	    if ( download( sn, transcript, path, chksum_b64 ) != 0 ) {
 		perror( "download" );
