@@ -45,12 +45,12 @@ t_parse( struct transcript *tran )
      * char long, print an error.
      */
     if ( strcmp( argv[0], "-" ) == 0 ) {
-	fprintf( stderr, "ERROR: Incorrect type of transcript\n" );
+	fprintf( stderr, "ERROR: Leading -'s are not allowed: %s\n", line );
 	exit( 1 );
     }
 
     if ( strlen( argv[ 0 ] ) != 1 ) {
-	fprintf( stderr, "ERROR: Incorrect form of transcript\n" );
+	fprintf( stderr, "ERROR: First argument in transcript is too long: %s\n"		, argv[ 0 ] );
 	exit( 1 );
     }
 
@@ -116,7 +116,7 @@ t_parse( struct transcript *tran )
 	break;
 
     default:
-	fprintf( stderr, "ERROR: Unknown file type!\n" );
+	fprintf( stderr, "ERROR: Unknown file type: %c\n", *argv[ 0 ] );
 	break;
     }
 
@@ -322,7 +322,7 @@ t_compare( struct info *cur, struct transcript *tran, FILE *outtran )
 	}	
 	break;
     default:
-	fprintf( stderr, "ERROR: Unknown file type\n" );
+	fprintf( stderr, "ERROR: Unknown file type: %c\n", cur->i_type );
 	break;
     }
 
@@ -453,7 +453,7 @@ t_new( char *name, struct transcript *head )
 }
 
     void
-transcript_init( )
+transcript_init( int flag )
 {
     char	**av;
     char	line[ MAXPATHLEN ];
@@ -467,7 +467,7 @@ transcript_init( )
      * open the command file.  read in each line of the file and determine 
      *  which type of transcript it is.
      */
-    if (( com = fopen( "command", "r" )) != NULL ) {
+    if ( !( flag & FLAG_SKIP ) && (( com = fopen( "command", "r" )) != NULL )) {
 	while ( fgets( line, sizeof( line ), com ) != NULL ) {
     		length = strlen( line );
     		if ( line[ length - 1 ] != '\n' ) {
@@ -497,7 +497,8 @@ transcript_init( )
 			exit( 1 );
     		}
 		if ( strlen( av[ 1 ] ) > MAXPATHLEN ) {
-			fprintf( stderr, "ERROR: argument is too large\n" );
+			fprintf( stderr, "ERROR: tran name is too large: %s\n",
+					av[ 1 ] );
 			exit( 1 );
 		}
 		strcpy( tran_head->t_name, av[ 1 ] );
