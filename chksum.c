@@ -187,7 +187,7 @@ do_achksum( char *path, char *chksum_b64, char *finfo_buf )
 }
 #else __APPLE__
     int
-do_achksum( char *path, char *chksum_b64 )
+do_achksum( char *path, char *chksum_b64, char *finfo_buf )
 {
     return( -1 );
 }
