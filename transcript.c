@@ -32,7 +32,6 @@ int read_kfile( char *kfile, int location );
 struct transcript		*tran_head = NULL;
 static struct transcript	*prev_tran = NULL;
 extern int			edit_path;
-char				*prefix = NULL;
 static int			foundspecial = 0;
 static char			*kdir;
 static struct list		*kfile_list;
@@ -216,16 +215,10 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
     static char         null_buf[ 32 ] = { 0 };
 #endif /* __APPLE__ */
 
-    if ( edit_path == APPLICABLE || !fs ) {
+    if ( edit_path == APPLICABLE ) {
 	cur = &tran->t_pinfo;
     } else {
-	cur = fs;
-    }
-
-    if ( prefix ) {
-	if ( ! ischild( cur->pi_name, prefix )) {
-	    return;
-	}
+	cur = fs;	/* What if this is NULL? */
     }
 
     /* Print name of transcript if it changed since the last t_print */
