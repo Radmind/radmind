@@ -46,6 +46,8 @@ extern char	*version, *checksumlist;
 const EVP_MD    *md;
 SSL_CTX  	*ctx;
 
+extern char             *ca, *cert, *privatekey;
+
 struct node {
     char                *path;
     int			doline;
@@ -247,9 +249,6 @@ main( int argc, char **argv )
     SNET		*sn = NULL;
     int			authlevel = 0;
     int			use_randfile = 0;
-    char                *ca = _RADMIND_TLS_CA;
-    char                *cert = _RADMIND_TLS_CERT;
-    char                *privatekey = _RADMIND_TLS_CERT;
 
     while (( c = getopt ( argc, argv, "c:h:np:qVvw:x:y:z:" )) != EOF ) {
 	switch( c ) {

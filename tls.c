@@ -13,6 +13,10 @@ extern void            (*logger)( char * );
 extern int		verbose;
 extern SSL_CTX		*ctx;
 extern struct timeval	timeout;
+
+char 			*ca = _RADMIND_TLS_CA;
+char 			*cert = _RADMIND_TLS_CERT;
+char 			*privatekey = _RADMIND_TLS_CERT;
     
     int
 tls_client_setup( int use_randfile, int authlevel, char *ca, char *cert, char *privatekey )

@@ -50,6 +50,7 @@ SSL_CTX  		*ctx;
 
 extern struct timeval	timeout;
 extern char		*version, *checksumlist;
+extern char             *ca, *cert, *privatekey; 
 
     int 
 getstat( SNET *sn, char *description, char *stats ) 
@@ -315,9 +316,6 @@ main( int argc, char **argv )
     FILE		*f;
     struct node		*head = NULL;
     struct stat		tst, lst;
-    char                *ca = _RADMIND_TLS_CA;
-    char                *cert = _RADMIND_TLS_CERT;
-    char                *privatekey = _RADMIND_TLS_CERT;
 
     while (( c = getopt ( argc, argv, "c:h:K:np:qvVw:x:y:z:" )) != EOF ) {
 	switch( c ) {

@@ -36,6 +36,8 @@ int			cksum = 0;
 const EVP_MD    	*md;
 SSL_CTX  		*ctx;
 
+extern char             *ca, *cert, *privatekey;
+
     void
 output( char *string )
 {
@@ -72,9 +74,6 @@ main( int argc, char **argv, char **envp )
     SNET		*sn;
     int                 authlevel = 0;
     int                 use_randfile = 0;
-    char                *ca = _RADMIND_TLS_CA;
-    char                *cert = _RADMIND_TLS_CERT;
-    char                *privatekey = _RADMIND_TLS_CERT;
 
     /* create argv to pass to diff */
     if (( diffargv = (char **)malloc( 1  * sizeof( char * ))) == NULL ) {

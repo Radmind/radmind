@@ -7,15 +7,14 @@ MANDIR=@mandir@
 BINDIR=@bindir@
 SBINDIR=@sbindir@
 
-CERTDIR=@certdir@
-TLS_CA=${CERTDIR}/ca.pem
-TLS_CERT=${CERTDIR}/cert.pem
-
 # For server
 RADMINDDIR=@radminddir@
 
 # For client
 COMMANDFILE=${RADMINDDIR}/client/command.K
+CERTDIR=${RADMINDDIR}/cert
+TLS_CA=${CERTDIR}/ca.pem
+TLS_CERT=${CERTDIR}/cert.pem
 GNU_DIFF=@diffpath@
 RADMIND_HOST=@server@
 
@@ -78,8 +77,6 @@ daemon.o : daemon.c
 	${CC} ${CFLAGS} \
 		-D_RADMIND_PATH=\"${RADMINDDIR}\" \
 		-D_RADMIND_LOG=${RADMINDSYSLOG} \
-		-D_RADMIND_TLS_CA=\"${TLS_CA}\" \
-		-D_RADMIND_TLS_CERT=\"${TLS_CERT}\" \
 		-c daemon.c
 
 command.o : command.c
@@ -95,36 +92,34 @@ lfdiff.o : lfdiff.c
 	${CC} ${CFLAGS} \
 		-D_PATH_GNU_DIFF=\"${GNU_DIFF}\" \
 		-D_RADMIND_HOST=\"${RADMIND_HOST}\" \
-		-D_RADMIND_TLS_CA=\"${TLS_CA}\" \
-		-D_RADMIND_TLS_CERT=\"${TLS_CERT}\" \
 		-c lfdiff.c
 
 ktcheck.o : ktcheck.c
 	${CC} ${CFLAGS} \
 		-D_RADMIND_HOST=\"${RADMIND_HOST}\" \
 		-D_RADMIND_COMMANDFILE=\"${COMMANDFILE}\" \
-		-D_RADMIND_TLS_CA=\"${TLS_CA}\" \
-		-D_RADMIND_TLS_CERT=\"${TLS_CERT}\" \
 		-c ktcheck.c
 
 lapply.o : lapply.c
 	${CC} ${CFLAGS} \
 		-D_RADMIND_HOST=\"${RADMIND_HOST}\" \
-		-D_RADMIND_TLS_CA=\"${TLS_CA}\" \
-		-D_RADMIND_TLS_CERT=\"${TLS_CERT}\" \
 		-c lapply.c
 
 lcreate.o : lcreate.c
 	${CC} ${CFLAGS} \
 		-D_RADMIND_HOST=\"${RADMIND_HOST}\" \
-		-D_RADMIND_TLS_CA=\"${TLS_CA}\" \
-		-D_RADMIND_TLS_CERT=\"${TLS_CERT}\" \
 		-c lcreate.c
 
 twhich.o : twhich.c
 	${CC} ${CFLAGS} \
 		-D_RADMIND_COMMANDFILE=\"${COMMANDFILE}\" \
 		-c twhich.c
+
+tls.o : tls.c
+	${CC} ${CFLAGS} \
+		-D_RADMIND_TLS_CA=\"${TLS_CA}\" \
+		-D_RADMIND_TLS_CERT=\"${TLS_CERT}\" \
+		-c tls.c
 
 radmind : libsnet/libsnet.a ${RADMIND_OBJ} Makefile
 	${CC} ${CFLAGS} -o radmind ${RADMIND_OBJ} ${LDFLAGS}
