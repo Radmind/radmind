@@ -1,4 +1,4 @@
-.TH fsdiff "1" "15 November 2000" "RSUG" "User Commands"
+.TH fsdiff "1" "27 March 2001" "RSUG" "User Commands"
 .SH NAME
 .B fsdiff
 \- compare filesystem to transcripts
@@ -36,14 +36,16 @@ walks the filesystem starting at
 and compares the filesystem to the transcripts.
 .sp
 If a transcript is
+.B positive,
+.B fsdiff
+checks all attributes of each file system object
+( i.e. file, directory, link, etc ).
+If the -c option is given, checksums are also compared.
+If a transcript is
 .B negative,
 .B fsdiff
-checks to make sure the files or directories exist and that the mode,
-owner and group match.
-.B fsdiff
-additionally compares size, time and (checksum with the -c option) if a
-transcript is
-.B positive.
+checks only some of the attributes of the file system objects ( see
+TRANSCRIPTS section below ). 
 There is only one
 .B special
 transcript,
@@ -93,7 +95,11 @@ Type 'd' is a directory, 'D' is a door, 's' is a socket and 'p' is a named
 pipe. Mode is a 4 digit octal representation of the permissions. 
 ( see
 .BR chmod(1).
-) uid and gid are the user and group ids in decimal format.
+) uid and gid are the user and group ids in decimal format. If a
+directory is listed in a 
+.B negative
+transcript, mode, uid and gid will be checked, but the directory itself
+will not be read.
 .sp
 .br
 b       path    mode    uid     gid     major   minor
@@ -102,7 +108,11 @@ c       path    mode    uid     gid     major   minor
 .br
 .sp
 Type 'b' is a block special file, 'c' is a character special file. Major
-and minor are the major and minor device numbers in decimal.
+and minor are the major and minor device numbers in decimal. If a
+character special file is listed in a 
+.B negative 
+transcript, only major
+and minor device number will be checked.
 .sp
 .br
 f       path    mode    uid     gid     mtime   size    checksum
@@ -110,7 +120,9 @@ f       path    mode    uid     gid     mtime   size    checksum
 .sp
 Type 'f' is a file. Mtime is a decimal number of seconds since 1970 GMT.
 Size is the size of the file in bytes. Checksum is the base64 encoded
-checksum if enabled, otherwise it is "-".
+checksum if enabled, otherwise it is "-". If a file is listed in a 
+.B negative
+transcript, only mode, uid and gid will be checked.
 .sp
 Transcripts are sorted in depth first order, which means subdirectories have
 precedence over files in the same directory. This means that "/" has
