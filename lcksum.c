@@ -193,6 +193,8 @@ main( int argc, char **argv )
     /* calculate the loadset size */
     if ( verbose == 2 ) {
 	while ( fgets( tline, MAXPATHLEN, f ) != NULL ) {
+	    linenum++;
+
 	    tac = argcargv( tline, &targv );
 	    if ( tac != 8 ) {
 		continue;
@@ -201,8 +203,15 @@ main( int argc, char **argv )
 	    switch ( *targv[ 0 ] ) {
 	    case 'a':
 	    case 'f':
-		if ( tac != 8 ) {
-		    continue;
+		if ( prefix != NULL ) {
+		    if (( d_path = decode( targv[ 1 ] )) == NULL ) {
+			fprintf( stderr, "%d: path too long\n", linenum );
+			exit( 2 );
+		    }
+			
+		    if ( strncmp( d_path, prefix, strlen( prefix )) != 0 ) {
+			continue;
+		    }
 		}
 
 		lsize += strtoofft( targv[ 6 ], NULL, 10 );
@@ -213,6 +222,7 @@ main( int argc, char **argv )
 	    }
 	}
 
+	linenum = 0;
 	rewind( f );
     }
 
