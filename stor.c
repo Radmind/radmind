@@ -426,7 +426,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 	    strerror( errno ));
 	return( -1 );
     }
-    if ( showprogress ) fputs( "\n>>> .\n", stdout );
+    if ( verbose ) fputs( "\n>>> .\n", stdout );
 
     /* Close file descriptors */
     if ( close( dfd ) < 0 ) {
