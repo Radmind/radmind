@@ -21,6 +21,7 @@
 
 int		chksum = 1;
 int		verbose = 0;
+extern char   	*version;
 
     int
 getnextline( struct tran *tran )
@@ -68,7 +69,7 @@ main( int argc, char **argv )
     int			c, i, j, cmpval, err = 0, tcount = 0, canidate = NULL;
     int			ofd;
 int	ccount = 0;
-    char		*tname = NULL, *version = "1.0", *file = NULL;
+    char		*tname = NULL, *file = NULL;
     char		*tpath = NULL;
     char		npath[ 2 * MAXPATHLEN ];
     char		opath[ 2 * MAXPATHLEN ];

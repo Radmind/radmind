@@ -27,7 +27,7 @@
 
 void		(*logger)( char * ) = NULL;
 int		verbose = 0;
-char		*version = VERSION;
+extern char	*version;
 
     static void
 v_logger( char *line )

@@ -21,6 +21,7 @@
 int		linenum = 0;
 int		chksum = 1;
 int		verbose = 0;
+extern char    	*version;
 
 /*
  * exit codes:
@@ -35,7 +36,6 @@ main( int argc, char **argv )
     int			ufd, c, err = 0, updatetran = 0, updateline = 0;
     int			ucount = 0, len, tac, amode = R_OK;
     extern int          optind;
-    char		*version = "1.0";
     char		*transcript = NULL, *tpath = NULL, *line;
     char                **targv;
     char                tline[ 2 * MAXPATHLEN ];
