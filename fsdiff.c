@@ -121,7 +121,7 @@ main( int argc, char **argv )
     cksum = 0;
     outtran = stdout;
 
-    while (( c = getopt( argc, argv, "Ac:Co:K:T1V" )) != EOF ) {
+    while (( c = getopt( argc, argv, "Ac:Co:K:1V" )) != EOF ) {
 	switch( c ) {
 	case 'c':
             OpenSSL_add_all_digests();
@@ -152,7 +152,6 @@ main( int argc, char **argv )
 	    break;	
 
 	case 'A':
-	case 'T':		/* want to record differences from tran */
 	    edit_path_change++;
 	    edit_path = APPLICABLE;
 	    break;
