@@ -232,8 +232,8 @@ main( int argc, char **argv )
 	if ( updatetran ) {
 	    if ( updateline ) {
 		/* use local mtime */
-		fprintf( ufs, "f %-37s %4s %5s %5s %9d %7d %s\n",
-		    targv[ 1 ], targv[ 2 ], targv[ 3 ], targv[ 4 ],
+		fprintf( ufs, "%s %-37s %4s %5s %5s %9d %7d %s\n",
+		    targv[ 0 ], targv[ 1 ], targv[ 2 ], targv[ 3 ], targv[ 4 ],
 		    (int)st.st_mtime, (int)st.st_size, lchksum );
 	    } else {
 		/* use transcript mtime */
