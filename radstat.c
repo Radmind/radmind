@@ -133,7 +133,7 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 	afinfo->as_ents[ AS_DFE ].ae_offset =
 	    ( afinfo->as_ents[ AS_RFE ].ae_offset
 	    + afinfo->as_ents[ AS_RFE ].ae_length );
-	afinfo->as_ents[ AS_DFE ].ae_length = (long)st->st_size;
+	afinfo->as_ents[ AS_DFE ].ae_length = (u_int32_t)st->st_size;
 
 	afinfo->as_size = afinfo->as_ents[ AS_DFE ].ae_offset
 	    + afinfo->as_ents[ AS_DFE ].ae_length;
