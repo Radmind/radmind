@@ -56,7 +56,7 @@ LMERGE_OBJ=	version.o lmerge.o argcargv.o pathcmp.o mkdirs.o list.o
 LFDIFF_OBJ=	version.o lfdiff.o argcargv.o connect.o download.o chksum.o \
 		base64.o
 
-TWHICH_OBJ=	version.o argcargv.o lifo.o twhich.o
+TWHICH_OBJ=	version.o argcargv.o twhich.o
 
 all : ${TARGETS}
 
