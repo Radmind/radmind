@@ -20,7 +20,6 @@ RADMINDSYSLOG=LOG_LOCAL7
 CC=	gcc
 CWARN=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wconversion -Werror
 ADDLIBS=	-lnsl -lsocket
-OSNAME=		-DSOLARIS
 INSTALL=	/usr/ucb/install
 #INSTALL=	install
 OPENSSL=	/usr/local/openssl
