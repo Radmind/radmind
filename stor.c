@@ -43,6 +43,7 @@ extern int		dodots;
 extern int		cksum;
 extern int		linenum;
 extern int		force;
+extern int		showprogress;
 extern off_t		lsize, total;
 extern void            	(*logger)( char * );
 extern SSL_CTX  	*ctx;
@@ -103,7 +104,7 @@ n_stor_file( SNET *sn, char *pathdesc, char *path )
 	    strerror( errno ));
 	exit( 2 );
     }
-    if ( verbose == 2 ) printf( ">>> %s\n", pathdesc );
+    if ( verbose ) printf( ">>> %s\n", pathdesc );
 
     /* tell server how much data to expect and send '.' */
     if ( snet_writef( sn, "0\r\n.\r\n" ) < 0 ) {
@@ -111,9 +112,9 @@ n_stor_file( SNET *sn, char *pathdesc, char *path )
 	    strerror( errno ));
 	exit( 2 );
     }
-    if ( verbose == 2 ) fputs( ">>> 0\n>>> .\n", stdout );
+    if ( verbose ) fputs( ">>> 0\n>>> .\n", stdout );
 
-    if ( verbose == 1 ) {
+    if ( !quiet && !showprogress ) {
         printf( "%s: stored as zero length file\n", path );
     }
     return( 0 );
@@ -175,7 +176,7 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
 	    strerror( errno ));
 	exit( 2 );
     }
-    if ( verbose == 2 ) printf( ">>> %s\n", pathdesc );
+    if ( verbose ) printf( ">>> %s\n", pathdesc );
 
     /* tell server how much data to expect */
     if ( snet_writef( sn, "%" PRIofft "d\r\n", st.st_size ) < 0 ) {
@@ -183,7 +184,7 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
 	    strerror( errno ));
 	exit( 2 );
     }
-    if ( verbose == 2 ) printf( ">>> %" PRIofft "d\n", st.st_size );
+    if ( verbose ) printf( ">>> %" PRIofft "d\n", st.st_size );
 
     /* write file to server */
     while (( rr = read( fd, buf, sizeof( buf ))) > 0 ) {
@@ -199,7 +200,7 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
 	    EVP_DigestUpdate( &mdctx, buf, (unsigned int)rr );
 	}
 	
-	if ( ! verbose && ! quiet ) {
+	if ( showprogress ) {
 	    progressupdate( rr, path );
 	}
     }
@@ -222,7 +223,7 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
 	    strerror( errno ));
 	return( -1 );
     }
-    if ( verbose == 2 ) fputs( "\n>>> .\n", stdout );
+    if ( verbose ) fputs( "\n>>> .\n", stdout );
 
     if ( close( fd ) < 0 ) {
 	perror( path );
@@ -240,7 +241,7 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
         }
     }
 
-    if ( verbose == 1 ) printf( "%s: stored\n", path );
+    if ( !quiet && !showprogress ) printf( "%s: stored\n", path );
     return( 0 );
 }
 
@@ -298,7 +299,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 	    strerror( errno ));
 	exit( 2 );
     }
-    if ( verbose == 2 ) {
+    if ( verbose ) {
 	printf( ">>> %s\n", pathdesc );
     }
 
@@ -309,7 +310,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 	    strerror( errno ));
 	exit( 2 );
     }
-    if ( verbose == 2 ) printf( ">>> %" PRIofft "d\n", afinfo->as_size );
+    if ( verbose ) printf( ">>> %" PRIofft "d\n", afinfo->as_size );
 
     /* write applesingle header to server */
     tv = timeout;
@@ -324,7 +325,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 	EVP_DigestUpdate( &mdctx, (char *)&as_header, AS_HEADERLEN );
     }
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
-    if ( ! verbose && ! quiet ) {
+    if ( showprogress ) {
 	progressupdate( AS_HEADERLEN, path );
     }
 
@@ -343,7 +344,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 	    (unsigned int)( 3 * sizeof( struct as_entry )));
     }
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
-    if ( ! verbose && ! quiet ) {
+    if ( showprogress ) {
 	progressupdate(( 3 * sizeof( struct as_entry )), path );
     }
 
@@ -359,7 +360,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 	EVP_DigestUpdate( &mdctx, afinfo->ai.ai_data, FINFOLEN );
     }
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
-    if ( ! verbose && ! quiet ) {
+    if ( showprogress ) {
 	progressupdate( FINFOLEN, path );
     }
 
@@ -377,7 +378,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 		EVP_DigestUpdate( &mdctx, buf, (unsigned int)rc );
 	    } 
 	    if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
-	    if ( ! verbose && ! quiet ) {
+	    if ( showprogress ) {
 		progressupdate( rc, path );
 	    }
 	}
@@ -401,7 +402,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 	    EVP_DigestUpdate( &mdctx, buf, (unsigned int)rc );
 	}
     	if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
-	if ( ! verbose && ! quiet ) {
+	if ( showprogress ) {
 	    progressupdate( rc, path );
         }
     }
@@ -425,7 +426,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 	    strerror( errno ));
 	return( -1 );
     }
-    if ( verbose == 2 ) fputs( "\n>>> .\n", stdout );
+    if ( showprogress ) fputs( "\n>>> .\n", stdout );
 
     /* Close file descriptors */
     if ( close( dfd ) < 0 ) {
@@ -453,7 +454,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
         }
     }
 
-    if ( verbose == 1 ) printf( "%s: stored\n", path );
+    if ( !quiet && !showprogress ) printf( "%s: stored\n", path );
     return( 0 );
 }
 
@@ -498,7 +499,7 @@ n_stor_applefile( SNET *sn, char *pathdesc, char *path )
 	    strerror( errno ));
 	exit( 2 );
     }
-    if ( verbose == 2 ) printf( ">>> %s\n", pathdesc );
+    if ( verbose ) printf( ">>> %s\n", pathdesc );
 
     /* tell server how much data to expect and send '.' */
     if ( snet_writef( sn, "%" PRIofft "d\r\n", afinfo.as_size ) < 0 ) {
@@ -506,7 +507,7 @@ n_stor_applefile( SNET *sn, char *pathdesc, char *path )
 	    strerror( errno ));
 	exit( 2 );
     }
-    if ( verbose == 2 ) printf( ">>> %" PRIofft "d\n", afinfo.as_size );
+    if ( verbose ) printf( ">>> %" PRIofft "d\n", afinfo.as_size );
 
     /* write applesingle header to server */
     tv = timeout;
@@ -555,10 +556,10 @@ n_stor_applefile( SNET *sn, char *pathdesc, char *path )
 	    strerror( errno ));
 	return( -1 );
     }
-    if ( verbose == 2 ) fputs( "\n>>> .\n", stdout );
+    if ( verbose ) fputs( "\n>>> .\n", stdout );
 
-    if ( !quiet && !verbose ) {
-        printf( "%s: stored as zero length applefile\n", path );
+    if ( !quiet && !showprogress ) {
+	printf( "%s: stored as zero length applefile\n", path );
     }
     return( 0 );
 }

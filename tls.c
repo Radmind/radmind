@@ -114,7 +114,7 @@ tls_client_start( SNET *sn, char *host, int authlevel )
 	perror( "snet_writef" );
 	return( -1 );
     }
-    if ( verbose >= 2 ) printf( ">>> STARTTLS\n" );
+    if ( verbose ) printf( ">>> STARTTLS\n" );
 
     /* Check to see if command succeeded */
     tv = timeout;      
