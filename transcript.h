@@ -56,6 +56,7 @@ void			transcript_init( char * );
 struct transcript	*transcript_select( void );
 void			transcript_parse( struct transcript * );
 void			transcript_free( void );
+void			t_print( struct pathinfo *, struct transcript *, int );
 char			*hardlink( struct pathinfo * );
 int			hardlink_changed( struct pathinfo *, int );
 void			hardlink_free( void );

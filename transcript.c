@@ -203,7 +203,7 @@ transcript_parse( struct transcript *tran )
     return;
 }
 
-    static void
+    void
 t_print( struct pathinfo *fs, struct transcript *tran, int flag ) 
 {
     struct pathinfo	*cur;
