@@ -479,9 +479,7 @@ f_stat( SNET *sn, int ac, char *av[] )
 	} 
 
 	/* Check for access */
-	if ( list_check( tran_list, d_tran )) {
-	    break;
-	} else {
+	if ( !list_check( tran_list, d_tran )) {
 	    syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s", d_tran );
 	    snet_writef( sn, "%d No access for %s\r\n", 540, d_tran );
 	    return( 1 );
