@@ -21,7 +21,7 @@ static int			linenum = 0;
 
 /* Just like strcmp(), but pays attention to the meaning of '/'.  */
     static int
-pathcmp( const char *p1, const char *p2 )
+pathcmp( const unsigned char *p1, const unsigned char *p2 )
 {
     int		rc;
 
