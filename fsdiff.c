@@ -26,6 +26,7 @@ extern char	*version, *checksumlist;
 void		fs_walk( struct llist *, float, float );
 int		verbose = 0;
 int		dodots = 0;
+float		curpos = 0;
 const EVP_MD    *md;
 
     void
@@ -42,8 +43,11 @@ fs_walk( struct llist *path, float start, float finish )
     char		temp[ MAXPATHLEN ];
 
     if (( int )finish > ( int )start ) {
-	printf( "%%%.3d %s\n", ( int )start, path->ll_pinfo.pi_name );
-	fflush( stdout );
+	if (( int )start > ( int )curpos ) {
+	    curpos = start;
+	    printf( "%%%.3d %s\n", ( int )start, path->ll_pinfo.pi_name );
+	    fflush( stdout );
+	}
     }
 
     /* call the transcript code */
@@ -107,7 +111,8 @@ fs_walk( struct llist *path, float start, float finish )
 
     /* call fswalk on each element in the sorted list */
     for ( cur = head; cur != NULL; cur = cur->ll_next ) {
-	fs_walk ( cur, start, start + chunk );
+	fs_walk( cur, start, start + chunk );
+	curpos = start;
 	start += chunk;
     }
 
