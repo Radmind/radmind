@@ -81,7 +81,8 @@ ischild( const unsigned char *child, const unsigned char *parent )
 	return( '/' == *child );
     }
     if (( strncmp( parent, child, parentlen ) == 0 ) &&
-	    ( '/' == child[ parentlen ] )) {
+	    (( '/' == child[ parentlen ] ) ||
+	    ( '\0' == child[ parentlen ] ))) {
 	return( 1 );
     }
     return( 0 );
