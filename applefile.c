@@ -56,7 +56,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *location,
     size_t		size;
     unsigned char	finfo[ 32 ];
     char		as_buf[ 8192 ];
-    char		*rsrc_path;
+    char		rsrc_path[ MAXPATHLEN ];
     const char		*rsrc_suffix = _PATH_RSRCFORKSPEC;
     struct as_header	as_dest;
     struct as_entry	ae_finfo;
@@ -138,7 +138,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *location,
 	exit( 1 );
     }
     if ( chksum ) SHA1_Update( &sha_ctx, ( char * )&as_dest, (size_t)as_cc );
-	
+    if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
     size -= as_cc;
 
     if ( as_dest.ah_magic != AS_MAGIC 
@@ -156,6 +156,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *location,
 	exit( 1 );
     }
     if ( chksum ) SHA1_Update( &sha_ctx, ( char * )&ae_finfo, (size_t)as_cc );
+    if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 
     size -= as_cc;
 
@@ -167,6 +168,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *location,
 	exit( 1 );
     }
     if ( chksum ) SHA1_Update( &sha_ctx, ( char * )&ae_rfork, (size_t)as_cc );
+    if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 
     size -= as_cc;
 
@@ -178,6 +180,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *location,
 	exit( 1 );
     }
     if ( chksum ) SHA1_Update( &sha_ctx, ( char * )&ae_dfork, (size_t)as_cc );
+    if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 
     size -= as_cc;
 
@@ -192,15 +195,14 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *location,
 	exit( 1 );
     }
     if ( chksum ) SHA1_Update( &sha_ctx, finfo, (size_t)as_cc );
+    if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
     size -= as_cc;
 
-    if (( rsrc_path = ( char * )malloc( strlen( path )
-		+ strlen( rsrc_suffix ))) == NULL ) {
-        perror( "malloc" );
-        exit( 1 );
+    if ( snprintf( rsrc_path, MAXPATHLEN, "%s%s", temppath, rsrc_suffix ) >
+		MAXPATHLEN ) {
+	fprintf( stderr, "%s%s: path too long\n", temppath, rsrc_suffix );
+	exit( 1 );
     }
-
-    snprintf( rsrc_path, MAXPATHLEN, "%s%s", temppath, rsrc_suffix );
         
     if (( rsrcfd = open( rsrc_path, O_WRONLY, 0 )) < 0 ) {
         perror( rsrc_path );
@@ -290,7 +292,6 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *location,
         }
     }
 
-    free( rsrc_path );
     return( 0 );
 }
 
