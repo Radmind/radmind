@@ -35,7 +35,7 @@ int		special = 0;
 int		safe = 0;
 int		network = 1;
 char		transcript[ 2 * MAXPATHLEN ] = { 0 };
-char		*prepath = NULL;
+char		prepath[ MAXPATHLEN ]  = { 0 };
 extern char	*version, *checksumlist;
 
 int apply( FILE *f, char *parent, SNET *sn );
@@ -134,20 +134,19 @@ apply( FILE *f, char *parent, SNET *sn )
 	strcpy( path, decode( targv[ 1 ] ));
 
 	/* Check transcript order */
-	if ( prepath != NULL ) {
+	if ( prepath != 0 ) {
 	    if ( pathcmp( path, prepath ) < 0 ) {
 		fprintf( stderr, "%s: line %d: bad sort order\n",
 			    transcript, linenum );
 		return( 1 );
 	    }
-	    free( prepath );
 	}
-	if (( prepath = strdup( path )) == NULL ) {
-	    fprintf( stderr, "strdup failed!\n" );
+	len = strlen( path );
+	if ( snprintf( prepath, MAXPATHLEN, "%s", path) > MAXPATHLEN ) { 
+	    fprintf( stderr, "%s: line %d: path too long\n",
+		    transcript, linenum );
 	    return( 1 );
 	}
-	    
-
 
 	/* Do type check on local file */
 	if ( lstat( path, &st ) ==  0 ) {
@@ -190,6 +189,12 @@ apply( FILE *f, char *parent, SNET *sn )
 
 	/* DOWNLOAD */
 	if ( *command == '+' ) {
+	    if ( *targv[ 0 ] != 'f' ) {
+		fprintf( stderr, "line %d: \"%c\" invalid download type\n",
+			linenum, *targv[ 0 ] );
+		return( 1 );
+	    }
+		
 	    strcpy( chksum_b64, targv[ 7 ] );
 
 	    if ( special ) {
