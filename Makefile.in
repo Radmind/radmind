@@ -17,13 +17,16 @@ RADMIND_HOST=@server@
 
 RADMINDSYSLOG=LOG_LOCAL7
 
+LIBS="$LIBS -lsnet";
+	LDFLAGS="$LDFLAGS -L$snetdir"
+
 CWARN=		-Wall -Wmissing-prototypes 
 CC=		@CC@
-LIBS=		@LIBS@
-LDFLAGS=	@LDFLAGS@ ${LIBS}
+LIBS=		@LIBS@ -lsnet
+LDFLAGS=	-Llibsnet @LDFLAGS@ ${LIBS}
 INSTALL=	@INSTALL@
 
-CFLAGS=		${CWARN} @CFLAGS@
+CFLAGS=		${CWARN} -Ilibsnet @CFLAGS@
 
 BINTARGETS=     fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff twhich
 MAN1TARGETS=    fsdiff.1 ktcheck.1 lapply.1 lcksum.1 lcreate.1 lfdiff.1 \
