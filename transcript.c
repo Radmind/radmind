@@ -19,6 +19,29 @@ static struct transcript	*tran_head = NULL;
 static struct transcript	*prev_tran = NULL;
 static int			linenum = 0;
 
+/* Just like strcmp(), but pays attention to the meaning of '/'.  */
+    static int
+pathcmp( const char *p1, const char *p2 )
+{
+    int		rc;
+
+    do {
+	if (( rc = ( *p1 - *p2 )) != 0 ) {
+	    if (( *p2 != '\0' ) && ( *p1 == '/' )) {
+		return( -1 );
+	    } else if (( *p1 != '\0' ) && ( *p2 == '/' )) {
+		return( 1 );
+	    } else {
+		return( rc );
+	    }
+	}
+	p1++;
+	p2++;
+    } while ( *p1 != '\0' );
+
+    return( 0 );
+}
+
     static void 
 t_parse( struct transcript *tran ) 
 {
@@ -56,19 +79,11 @@ t_parse( struct transcript *tran )
 
     epath = decode( argv[ 1 ] );
 
-#ifdef notdef
-    /*
-     * catches "bad sort order" but:
-     * ~canna/Mail/oncall/9 should come before ~canna/Mail/oncall.comps,
-     * however strcmp thinks . comes before / 'alphabetically'. This
-     * means we need a 'smarter' test.
-     */
-    if ( strcmp( epath, tran->t_pinfo.pi_name ) < 0 ) {
+    if ( pathcmp( epath, tran->t_pinfo.pi_name ) < 0 ) {
 	printf( "%s: line %d: bad sort order\n",
 		tran->t_name, tran->t_linenum );
 	exit ( 1 );
     }
-#endif notdef
 
     strcpy( tran->t_pinfo.pi_name, epath );
 
@@ -274,7 +289,7 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
     if ( tran->t_eof ) {
 	ret = -1;
     } else {
-	ret = strcmp( cur->pi_name, tran->t_pinfo.pi_name );
+	ret = pathcmp( cur->pi_name, tran->t_pinfo.pi_name );
     }
 
     if ( ret > 0 ) {
@@ -419,7 +434,7 @@ transcript( struct pathinfo *new )
 		continue;
 	    }
 	    if ( ! next_tran->t_eof ) {
-		if ( strcmp( next_tran->t_pinfo.pi_name,
+		if ( pathcmp( next_tran->t_pinfo.pi_name,
 			begin_tran->t_pinfo.pi_name ) < 0 ) {
 		    begin_tran = next_tran;
 		}
@@ -429,27 +444,18 @@ transcript( struct pathinfo *new )
 	/* move ahead other transcripts that match */
 	for ( next_tran = begin_tran->t_next; next_tran != NULL;
 		next_tran = next_tran->t_next ) {
-	    if ( strcmp( begin_tran->t_pinfo.pi_name,
+	    if ( pathcmp( begin_tran->t_pinfo.pi_name,
 		    next_tran->t_pinfo.pi_name ) == 0 ) {
 		t_parse( next_tran );
 	    }
 	}
 
-	/*
-	 * t_compare returns similar values as strcmp depending on
-	 * what the return value of the internal strcmp is.
-	 */
 	ret = t_compare( new, begin_tran );
-
 	switch ( ret ) {
-	case T_MOVE_FS :	   /*
-				    * either there is no transcript, or the
-				    * fs value is alphabetically before the
-				    * transcript value. move the fs forward. 
-				    */
+	case T_MOVE_FS :
 	    return( move );
 
-	case T_MOVE_BOTH :	  /* the two values match. move ahead in both */
+	case T_MOVE_BOTH :
 	    t_parse( begin_tran );
 	    if ( begin_tran->t_type == T_NEGATIVE ) {
 		return( 0 );
@@ -457,11 +463,7 @@ transcript( struct pathinfo *new )
 		return( move );
 	    }
 
-	case T_MOVE_TRAN :	   /*
-				    * the fs value is alphabetically after the
-				    * transcript value.  move the transcript
-				    * forward 
-				    */
+	case T_MOVE_TRAN :
 	    t_parse( begin_tran );
 	    break;
 
