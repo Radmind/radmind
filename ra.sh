@@ -23,7 +23,7 @@
 SERVER="-h _RADMIND_HOST"
 AUTHLEVEL="-w _RADMIND_AUTHLEVEL"
 EDITOR=${EDITOR:-vi}
-DEFAULTS="/etc/radmind.defaults"
+DEFAULTS="/etc/defaults/radmind"
 FSDIFFROOT="."
 FLAG="/var/radmind/client/.RadmindRunning"
 
@@ -45,6 +45,14 @@ FTMP="${TMPDIR}/fsdiff.out"
 
 PREAPPLY="/var/radmind/preapply"
 POSTAPPLY="/var/radmind/postapply"
+
+# different systems use different default dirs
+if [ ! -f "${DEFAULTS}" ]; then
+    DEFAULTS="/etc/default/radmind"
+    if [ ! -f "${DEFAULTS}" ]; then
+	DEFAULTS="/etc/radmind.defaults"
+    fi
+fi
 
 Yn() {
     echo -n "$*" "[Yn] "
