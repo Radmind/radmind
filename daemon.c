@@ -38,6 +38,7 @@
 
 #include "command.h"
 #include "logname.h"
+#include "tls.h"
 
 void            (*logger)( char * ) = NULL;
 
@@ -119,7 +120,6 @@ main( int ac, char **av )
     struct servent	*se;
     int			c, s, err = 0, fd, sinlen, trueint;
     int			dontrun = 0;
-    int			ssl_mode = 0;
     int			use_randfile = 0;
     char		*prog;
     unsigned short	port = 0;
@@ -301,76 +301,10 @@ main( int ac, char **av )
     }
 
     if ( authlevel != 0 ) {
-
-        SSL_load_error_strings();
-        SSL_library_init();    
-
-	if ( use_randfile ) {
-	    char        randfile[ MAXPATHLEN ];
-
-	    /* generates a default path for the random seed file */
-	    if ( RAND_file_name( randfile, sizeof( randfile )) == NULL ) {
-		fprintf( stderr, "RAND_file_name: %s\n",
-			ERR_error_string( ERR_get_error(), NULL ));
-		exit( 1 );
-	    }
-
-	    /* reads the complete randfile and adds them to the PRNG */
-	    if ( RAND_load_file( randfile, -1 ) <= 0 ) {
-		fprintf( stderr, "RAND_load_file: %s: %s\n", randfile,
-			ERR_error_string( ERR_get_error(), NULL ));
-		exit( 1 );
-	    }
-
-	    /* writes a number of random bytes (currently 1024) to randfile */
-	    if ( RAND_write_file( randfile ) < 0 ) {
-		fprintf( stderr, "RAND_write_file: %s: %s\n", randfile,
-			ERR_error_string( ERR_get_error(), NULL ));
-		exit( 1 );
-	    }
-	}
-
-	/* Setup SSL */
-        if (( ctx = SSL_CTX_new( SSLv23_server_method())) == NULL ) {
-            fprintf( stderr, "SSL_CTX_new: %s\n",
-                    ERR_error_string( ERR_get_error(), NULL ));
-            exit( 1 );
-        }
-
-	if ( SSL_CTX_use_PrivateKey_file( ctx, privatekey,
-		SSL_FILETYPE_PEM ) != 1 ) {
-	    fprintf( stderr, "SSL_CTX_use_PrivateKey_file: %s: %s\n",
-		    privatekey, ERR_error_string( ERR_get_error(), NULL ));
+	if ( tls_server_setup( use_randfile, authlevel, ca, cert,
+		privatekey ) != 0 ) {
 	    exit( 1 );
 	}
-	if ( SSL_CTX_use_certificate_chain_file( ctx, cert ) != 1 ) {
-	    fprintf( stderr, "SSL_CTX_use_certificate_chain_file: %s: %s\n",
-		    cert, ERR_error_string( ERR_get_error(), NULL ));
-	    exit( 1 );
-	}
-	/* Verify that private key matches cert */
-	if ( SSL_CTX_check_private_key( ctx ) != 1 ) {
-	    fprintf( stderr, "SSL_CTX_check_private_key: %s\n",
-		    ERR_error_string( ERR_get_error(), NULL ));
-	    exit( 1 );
-	}
-
-	if ( authlevel == 2 ) {
-        /* Load CA */
-	    if ( SSL_CTX_load_verify_locations( ctx, ca, NULL ) != 1 ) {
-		fprintf( stderr, "SSL_CTX_load_verify_locations: %s: %s\n",
-			ca, ERR_error_string( ERR_get_error(), NULL ));
-		exit( 1 );
-	    }
-	}
-        /* Set level of security expecations */
-	if ( authlevel == 1 ) {
-	    ssl_mode = SSL_VERIFY_NONE; 
-	} else {
-	    /* authlevel == 2 */
-	    ssl_mode = SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
-	}
-        SSL_CTX_set_verify( ctx, ssl_mode, NULL );
     }
 
     if ( port == 0 ) {
