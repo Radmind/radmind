@@ -1,0 +1,49 @@
+
+Response codes of x0x are for general commands, e.g. QUIT, NOOP.  x3x
+are for STAT, x4x are for RETR, x5x for STOR.
+
+BANNER
+
+QUIT causes the server to close the connection.
+
+    C:	QUIT "\r\n"
+    S:	201 QUIT OK, closing connection "\r\n"
+
+NOOP does nothing, but should generate a valid response.
+
+    C:	NOOP "\r\n"
+    S:	202 NOOP OK "\r\n"
+
+All of STAT, RETR, and STOR take similar arguments.
+
+	<path-description> ::=	"COMMAND"			|
+				"TRANSCRIPT" <transcript-name>	|
+				"SPECIAL" <path>		|
+				"FILE" <transcript-name> <path>
+
+	<path> ::=		encoded ascii blah blah blah
+
+STAT does not allow a "FILE" <path-description>.
+
+    C: STAT <path-description> "\r\n"
+    S: 230 Returning STAT information "\r\n"
+    S: f <path> <mode> <uid> <gid> <modified-time> <size> <checksum> "\r\n"
+
+RETR
+
+    C: RETR <path-decription> "\r\n"
+    S: 240 Retrieving file "\r\n"
+    S: <size> "\r\n"
+    S: <size bytes of file data>
+    S: ".\r\n"
+
+STOR
+
+    C: STOR <path-decription> "\r\n"
+    S: 350 Storing file "\r\n"
+    C: <size> "\r\n"
+    C: <size bytes of file data>
+    C: ".\r\n"
+    S: 250 File stored "\r\n"
+
+AUTH works per rfc2222 SASL.
