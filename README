@@ -60,6 +60,11 @@ source. This file may be double-clicked in the Finder to launch the Installer.
 
 This target will fail if it is used on a system other than Mac OS X.
 
+------------
+Known Issues
+------------
+On OpenDarwin based systems, the message "hfs_bwrite: called with lock bit set" is logged when you are doing a high volume of writes to a volume.
+
 ----------------
 More Information
 ----------------
