@@ -21,16 +21,13 @@ RADMIND_HOST=radmind
 
 RADMINDSYSLOG=LOG_LOCAL7
 
-CWARN=	-Wall -Wmissing-prototypes -Wconversion
-OPENSSL=	/usr/local/openssl
-CC = @CC@
-LDFLAGS = @LDFLAGS@
-LIBS = @LIBS@
-INSTALL = @INSTALL@
+CWARN=		-Wall -Wmissing-prototypes -Wconversion
+CC=		@CC@
+LIBS=		@LIBS@
+LDFLAGS=	${LIBS} @LDFLAGS@
+INSTALL=	@INSTALL@
 
-INCPATH=	-I${OPENSSL}/include -Ilibsnet
-CFLAGS=		${CWARN} ${INCPATH} @CFLAGS@
-LDFLAGS=	-L${OPENSSL}/lib -Llibsnet ${LIBS} -lsnet -lcrypto
+CFLAGS=		${CWARN} @CFLAGS@
 
 BINTARGETS=     fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff twhich
 MAN1TARGETS=    fsdiff.1 ktcheck.1 lapply.1 lcksum.1 lcreate.1 lfdiff.1 \

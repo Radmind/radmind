@@ -829,6 +829,12 @@ if test -n "$ac_init_help"; then
    esac
   cat <<\_ACEOF
 
+Optional Packages:
+  --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
+  --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-ssl=DIR          path to ssl
+  --with-snet=DIR         path to snet
+
 Some influential environment variables:
   diffpath    path to diff utility
   CC          C compiler command
@@ -2337,71 +2343,6 @@ _ACEOF
 fi
 
 
-echo "$as_me:$LINENO: checking for snet_getline in -lsnet" >&5
-echo $ECHO_N "checking for snet_getline in -lsnet... $ECHO_C" >&6
-if test "${ac_cv_lib_snet_snet_getline+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lsnet  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char snet_getline ();
-#ifdef F77_DUMMY_MAIN
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-#endif
-int
-main ()
-{
-snet_getline ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_snet_snet_getline=yes
-else
-  echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-ac_cv_lib_snet_snet_getline=no
-fi
-rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_snet_snet_getline" >&5
-echo "${ECHO_T}$ac_cv_lib_snet_snet_getline" >&6
-if test $ac_cv_lib_snet_snet_getline = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBSNET 1
-_ACEOF
-
-  LIBS="-lsnet $LIBS"
-
-fi
-
-
 echo "$as_me:$LINENO: checking for socket in -lsocket" >&5
 echo $ECHO_N "checking for socket in -lsocket... $ECHO_C" >&6
 if test "${ac_cv_lib_socket_socket+set}" = set; then
@@ -2465,6 +2406,73 @@ _ACEOF
   LIBS="-lsocket $LIBS"
 
 fi
+
+
+
+    echo "$as_me:$LINENO: checking for ssl" >&5
+echo $ECHO_N "checking for ssl... $ECHO_C" >&6
+    ssldirs="/usr/local/openssl /usr/lib/openssl /usr/openssl \
+	    /usr/local/ssl /usr/lib/ssl /usr/ssl \
+	    /usr/pkg /usr/local /usr"
+
+# Check whether --with-ssl or --without-ssl was given.
+if test "${with_ssl+set}" = set; then
+  withval="$with_ssl"
+  ssldirs="$withval"
+fi;
+    for dir in $ssldirs; do
+	ssldir="$dir"
+	if test -f "$dir/include/openssl/ssl.h"; then
+	    found_ssl="yes";
+	    CFLAGS="$CFLAGS -I$ssldir/include";
+	    break;
+	fi
+	if test -f "$dir/include/ssl.h"; then
+	    found_ssl="yes";
+	    CFLAGS="$CFLAGS -I$ssldir/include";
+	    break
+	fi
+    done
+    if test x_$found_ssl != x_yes; then
+	{ { echo "$as_me:$LINENO: error: cannot find ssl libraries" >&5
+echo "$as_me: error: cannot find ssl libraries" >&2;}
+   { (exit 1); exit 1; }; }
+    else
+	LIBS="$LIBS -lssl -lcrypto";
+	LDFLAGS="$LDFLAGS -L$ssldir/lib";
+	HAVE_SSL=yes
+    fi
+
+    echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+
+
+    echo "$as_me:$LINENO: checking for snet" >&5
+echo $ECHO_N "checking for snet... $ECHO_C" >&6
+    snetdir="libsnet"
+
+# Check whether --with-snet or --without-snet was given.
+if test "${with_snet+set}" = set; then
+  withval="$with_snet"
+  snetdir="$withval"
+fi;
+    if test -f "$snetdir/snet.h"; then
+	found_snet="yes";
+	CFLAGS="$CFLAGS -I$snetdir";
+	break;
+    fi
+    if test x_$found_snet != x_yes; then
+	{ { echo "$as_me:$LINENO: error: cannot find snet libraries" >&5
+echo "$as_me: error: cannot find snet libraries" >&2;}
+   { (exit 1); exit 1; }; }
+    else
+	LIBS="$LIBS -lsnet";
+	LDFLAGS="$LDFLAGS -L$snetdir";
+	HAVE_SNET=yes
+    fi
+
+    echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
 
 
 # Checks for header files.
@@ -5146,6 +5154,8 @@ s,@OBJEXT@,$OBJEXT,;t t
 s,@INSTALL_PROGRAM@,$INSTALL_PROGRAM,;t t
 s,@INSTALL_SCRIPT@,$INSTALL_SCRIPT,;t t
 s,@INSTALL_DATA@,$INSTALL_DATA,;t t
+s,@HAVE_SSL@,$HAVE_SSL,;t t
+s,@HAVE_SNET@,$HAVE_SNET,;t t
 s,@CPP@,$CPP,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 CEOF

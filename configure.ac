@@ -20,8 +20,10 @@ AC_CHECK_LIB([crypto], [main])
 # FIXME: Replace `main' with a function in `-ld':
 AC_CHECK_LIB([d], [main])
 AC_CHECK_LIB([nsl], [inet_ntoa])
-AC_CHECK_LIB([snet], [snet_getline])
 AC_CHECK_LIB([socket], [socket])
+
+CHECK_SSL
+CHECK_SNET
 
 # Checks for header files.
 #AC_HEADER_DIRENT
