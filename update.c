@@ -279,8 +279,14 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    if ( !quiet && verbose ) printf( " gid" );
 	}
     }
-    /* chmod after chown to preserve S_ISUID and S_ISGID mode bits */
-    if ( mode != ( T_MODE & st->st_mode )) {
+    /*
+     * chmod after chown to preserve S_ISUID and S_ISGID mode bits
+     * We also need an extra chmod if we did a chown on a set-uid or -gid
+     * file.
+     */
+    if (( mode != ( T_MODE & st->st_mode )) ||
+	    (( uid != st->st_uid || gid != st->st_gid ) &&
+	    (( mode & ( S_ISUID | S_ISGID )) != 0 ))) {
 	if ( chmod( path, mode ) != 0 ) {
 	    perror( path );
 	    return( 1 );
