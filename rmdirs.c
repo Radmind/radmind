@@ -7,8 +7,11 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 #include <errno.h>
-#include <fts.h>
+#include <dirent.h>
+#include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "rmdirs.h"
@@ -16,55 +19,80 @@
     int
 rmdirs( char *path )
 {
-    int		i;
-    char	*pathargv[ 2 ];
-    FTS		*fts;
-    FTSENT	*file;
+    int			i, len;
+    char		temp[ MAXPATHLEN ];
+    DIR			*dir;
+    struct dirent	*dirent;
+    struct stat		st;
 
-    pathargv[ 0 ] = path;
-    pathargv[ 1 ] = NULL;
+    printf( "rmdir on: %s\n", path );
 
-    if (( fts = fts_open( pathargv, FTS_PHYSICAL | FTS_NOSTAT,
-	    NULL )) == NULL ) {
+    if (( dir = opendir( path )) == NULL ) {
 	return( -1 );
     }
 
-    while (( file = fts_read( fts )) != NULL ) {
-	switch( file->fts_info ) {
-	case FTS_DNR:
-	case FTS_ERR:
-	    /* XXX - how should we report path of error? */
-	    errno = file->fts_errno;
-	    goto error;
+    while (( dirent = readdir( dir )) != NULL ) {
 
-	case FTS_D:				/* pre-order */
+	/* don't include . and .. */
+	if (( strcmp( dirent->d_name, "." ) == 0 ) ||
+		( strcmp( dirent->d_name, ".." ) == 0 )) {
 	    continue;
+	} 
 
-	case FTS_DP:				/* post-order */
-	    if ( rmdir( file->fts_accpath ) != 0 ) {
-		goto error;
-	    }
-	    break;
+	len = strlen( path );
 
-	default:
-	    if ( unlink( file->fts_accpath ) != 0 ) {
+        /* absolute pathname. add 2 for / and NULL termination.  */
+        if (( len + strlen( dirent->d_name ) + 2 ) > MAXPATHLEN ) {
+            fprintf( stderr, "Absolute pathname too long\n" );
+	    goto error;
+        }
+    
+        if ( path[ len - 1 ] == '/' ) {
+            if ( snprintf( temp, MAXPATHLEN, "%s%s", path, dirent->d_name )
+                    > MAXPATHLEN ) {
+                fprintf( stderr, "%s%s: path too long\n", path,
+		    dirent->d_name );
 		goto error;
-	    }
-	    break;
+            }           
+        } else {
+            if ( snprintf( temp, MAXPATHLEN, "%s/%s", path, dirent->d_name )
+                    > MAXPATHLEN ) {
+                fprintf( stderr, "%s/%s: path too long\n", path,
+		    dirent->d_name );
+		goto error;
+            }
+        }
+
+	if ( lstat( temp, &st ) != 0 ) {
+	    /* XXX - how to return path that gave error? */
+	    fprintf( stderr, "%s: %s\n", temp, strerror( errno ));
+	    goto error;
 	}
-	    
+	if ( S_ISDIR( st.st_mode )) {
+	    if ( rmdirs( temp ) != 0 ) {
+		fprintf( stderr, "%s: %s\n", temp, strerror( errno ));
+		goto error;
+	    }
+	}
+	if ( unlink( temp ) != 0 ) {
+	    fprintf( stderr, "%s: %s\n", temp, strerror( errno ));
+	    goto error;
+	}
+	printf( "unlinking %s\n", temp );
     }
-    if ( errno ) {
-	goto error;
-    }
-    if ( fts_close( fts ) != 0 ) {
+
+    if ( closedir( dir ) != 0 ) {
 	return( -1 );
     }
+    if ( unlink( path ) != 0 ) {
+	return( -1 );
+    }
+
     return ( 0 );
 
 error:
     i = errno;
-    if ( fts_close( fts ) != 0 ) {
+    if ( closedir( dir ) != 0 ) {
 	errno = i;
     }
     return( -1 );
