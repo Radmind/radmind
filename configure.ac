@@ -1,6 +1,7 @@
 
 # Process this file with autoconf to produce a configure script.
 AC_INIT(radmind, VERSION, radmind@umich.edu)
+AC_CONFIG_HEADER(config.h)
 AC_PREREQ(2.52)
 AC_COPYRIGHT([Copyright (c) 2003 Regents of The University of Michigan.  All Rights Reserved.])
 AC_CONFIG_SRCDIR([applefile.c])
