@@ -561,24 +561,24 @@ transcript_select( void )
 	}
 
 	/* This is presumably the NULL transcript. */
-	if ( begin_tran->t_eof ) {
-	    return( begin_tran );
+	if ( !begin_tran->t_eof ) {
+	    /*
+	     * If the highest precedence transcript line has a leading '-',
+	     * then just pretend it's not there.
+	     */
+	    if ( begin_tran->t_pinfo.pi_minus ) {
+		transcript_parse( begin_tran );
+		continue;
+	    }
+
+	    /* Don't look outside of the initial path. */
+	    if ( !ischild( begin_tran->t_pinfo.pi_name, path_prefix )) {
+		transcript_parse( begin_tran );
+		continue;
+	    }
 	}
 
-	/*
-	 * If the highest precedence transcript line has a leading '-',
-	 * then just pretend it's not there.
-	 */
-	if ( begin_tran->t_pinfo.pi_minus ) {
-	    continue;
-	}
-
-	/* Don't look outside of the initial path. */
-	if ( !ischild( begin_tran->t_pinfo.pi_name, path_prefix )) {
-	    continue;
-	}
-
-	transcript_parse( begin_tran );
+	return( begin_tran );
     }
 }
 
