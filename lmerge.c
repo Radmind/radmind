@@ -15,7 +15,6 @@
 
 #include "argcargv.h"
 #include "code.h"
-#include "list.h"
 #include "mkdirs.h"
 #include "pathcmp.h"
 
@@ -23,6 +22,37 @@ int		cksum = 1;
 int		verbose = 0;
 int		noupload = 0;
 extern char   	*version;
+
+struct node {
+    char                path[ MAXPATHLEN ];
+    struct node         *next;
+};
+
+struct node* create_node( char *path );
+void free_node( struct node *node );
+
+   struct node *
+create_node( char *path )
+{
+    struct node         *new_node;
+
+    if (( new_node = (struct node *) malloc( sizeof( struct node ))) == NULL ) {
+	perror( "malloc" );
+	return( NULL );
+    }
+    if ( snprintf( new_node->path, MAXPATHLEN, "%s", path ) >= MAXPATHLEN ) {
+	fprintf( stderr, "%s: path too long\n", path );
+	return( NULL );
+    }
+
+    return( new_node );
+}
+
+    void
+free_node( struct node *node )
+{
+    free( node );
+}
 
 struct tran {
     int                 num;
@@ -69,7 +99,8 @@ getline:
     /* Check line length */
     len = strlen( tran->tline );
     if ( ( tran->tline[ len - 1 ] ) != '\n' ) {
-	fprintf( stderr, "%s: line too long\n", tran->tline );
+	fprintf( stderr, "%s: %d: %s: line too long\n", tran->name,
+	    tran->linenum, tran->tline );
 	return( -1 );
     }
     if ( ( tran->tac = acav_parse( tran->acav,
@@ -131,6 +162,8 @@ main( int argc, char **argv )
     char		npath[ 2 * MAXPATHLEN ];
     char		opath[ 2 * MAXPATHLEN ];
     struct tran		**trans = NULL;
+    struct node		*new_node = NULL;
+    struct node		*node = NULL;
     struct node		*dirlist = NULL;
     FILE		*ofs;
     mode_t		mask;
@@ -361,7 +394,9 @@ main( int argc, char **argv )
 		    ( ( noupload ) && ( candidate == 0 ) &&
 			( fileloc == 0 ) ) ) {
 		if ( force && ( *trans[ candidate ]->targv[ 0 ] == 'd' ) ) {
-		    insert_node( trans[ candidate ]->targv[ 1 ], &dirlist );
+		    new_node = create_node( trans[ candidate ]->targv[ 1 ] );
+		    new_node->next = dirlist;
+		    dirlist = new_node;
 		}
 		goto skipline;
 	    }
@@ -463,20 +498,22 @@ skipline:
 	}
     }
 
-    if ( force && ( dirlist != NULL ) ) {
+    if ( force ) {
 	while ( dirlist != NULL ) {
+	    node = dirlist;
+	    dirlist = node->next;
 	    if ( snprintf( opath, MAXPATHLEN, "%s/../file/%s/%s", tpath,
-		    tname, dirlist->path ) >= MAXPATHLEN ) {
+		    tname, node->path ) >= MAXPATHLEN ) {
 		fprintf( stderr, "%s/../file/%s/%s: path too long\n", 
-		    tpath, tname, dirlist->path );
+		    tpath, tname, node->path );
 		exit( 1 );
 	    }
-	    if ( unlink( opath ) != 0 ) {
+	    if ( rmdir( opath ) != 0 ) {
 		perror( opath );
 		exit( 1 );
 	    }
-	    if ( verbose ) printf( "%s: %s: unlinked\n", tname, dirlist->path );
-	    dirlist = dirlist->next;
+	    if ( verbose ) printf( "%s: %s: unlinked\n", tname, node->path );
+	    free_node( node );
 	}
     }
 

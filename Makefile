@@ -17,18 +17,18 @@ RADMIND_HOST=radmind
 RADMINDSYSLOG=LOG_LOCAL7
 
 # Solaris
-#CC=	gcc
-#CWARN=	-Wall -Wmissing-prototypes -Wconversion
-#ADDLIBS=	-lnsl -lsocket
-#INSTALL=	/usr/ucb/install
-#OPENSSL=	/usr/local/openssl
+CC=	gcc
+CWARN=	-Wall -Wmissing-prototypes -Wconversion
+ADDLIBS=	-lnsl -lsocket
+INSTALL=	/usr/ucb/install
+OPENSSL=	/usr/local/openssl
 
 # MacOSX
-CC=	cc
-CWARN=	-Wall -Wmissing-prototypes -Wconversion
-ADDLIBS=
-INSTALL=	install
-OPENSSL=
+#CC=	cc
+##CWARN=	-Wall -Wmissing-prototypes -Wconversion
+#ADDLIBS=
+#INSTALL=	install
+#OPENSSL=
 
 #
 # Should not need to edit anything after here.
@@ -63,7 +63,7 @@ LCREATE_OBJ=    version.o lcreate.o argcargv.o code.o connect.o \
 LCKSUM_OBJ=     version.o lcksum.o argcargv.o cksum.o base64.o code.o \
                 pathcmp.o applefile.o connect.o
 
-LMERGE_OBJ=     version.o lmerge.o argcargv.o code.o pathcmp.o mkdirs.o list.o
+LMERGE_OBJ=     version.o lmerge.o argcargv.o code.o pathcmp.o mkdirs.o
 
 LFDIFF_OBJ=     version.o lfdiff.o argcargv.o connect.o retr.o cksum.o \
                 base64.o applefile.o code.o
