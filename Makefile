@@ -57,7 +57,7 @@ LAPPLY_OBJ=     version.o lapply.o argcargv.o code.o base64.o retr.o \
                 applefile.o
 
 LCREATE_OBJ=    version.o lcreate.o argcargv.o code.o connect.o \
-                stor.o applefile.o base64.o cksum.o
+                stor.o applefile.o base64.o cksum.o radstat.o
 
 LCKSUM_OBJ=     version.o lcksum.o argcargv.o cksum.o base64.o code.o \
                 pathcmp.o applefile.o connect.o
