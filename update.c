@@ -338,7 +338,7 @@ update( const char *path, char *displaypath, int present, int newfile,
 	}
 	break;
     default :
-	printf( "%d: Unkown type %s\n", linenum, targv[ 0 ] );
+	fprintf( stderr, "%d: Unkown type %s\n", linenum, targv[ 0 ] );
 	return( 1 );
     }
 
