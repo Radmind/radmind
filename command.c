@@ -294,7 +294,7 @@ f_retr( sn, ac, av )
 	return( -1 );
     }
 
-    syslog( LOG_INFO, "f_retr: 'file' %s retrieved", path );
+    syslog( LOG_DEBUG, "f_retr: 'file' %s retrieved", path );
 
     return( 0 );
 }
@@ -376,7 +376,7 @@ f_stat( SNET *sn, int ac, char *av[] )
 	return( 1 );
     }
         
-    syslog( LOG_INFO, "f_stat: returning infomation for %s", path );
+    syslog( LOG_DEBUG, "f_stat: returning infomation for %s", path );
 
     if ( stat( path, &st ) < 0 ) {
         syslog( LOG_ERR, "f_stat: stat: %m" );
@@ -576,7 +576,7 @@ f_stor( SNET *sn, int ac, char *av[] )
 	return( 1 );
     }
 
-    syslog( LOG_INFO, "f_stor: file %s stored", upload );
+    syslog( LOG_DEBUG, "f_stor: file %s stored", upload );
 
     tv.tv_sec = 60 * 60;
     tv.tv_usec = 0;
@@ -651,7 +651,7 @@ command_k( char *path_config )
     /* If we get here, the host that connected is not in the config
        file. So screw him. */
 
-    syslog( LOG_INFO, "host not in config file: %s", remote_host );
+    syslog( LOG_ERR, "host not in config file: %s", remote_host );
     return( -1 );
 }
 
