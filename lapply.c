@@ -368,7 +368,7 @@ main( int argc, char **argv )
 	fprintf( stderr, "usage: %s [ -FinrV ] [ -%% | -q | -v ] ",
 	    argv[ 0 ] );
 	fprintf( stderr, "[ -c checksum ] [ -h host ] [ -p port ] " );
-	fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );
+	fprintf( stderr, "[ -w auth-level ] [ -x ca-pem-file ] " );
 	fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ] " );
 	fprintf( stderr, "[ appliable-transcript ]\n" );
 	exit( 2 );

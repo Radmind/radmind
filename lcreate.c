@@ -225,7 +225,7 @@ main( int argc, char **argv )
 	fprintf( stderr, "[ -c checksum ] " );
 	fprintf( stderr, "[ -h host ] [ -p port ] " );
 	fprintf( stderr, "[ -t stored-name ] [ -U user ] " );
-        fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );
+        fprintf( stderr, "[ -w auth-level ] [ -x ca-pem-file ] " );
         fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ] " );
 	fprintf( stderr, "create-able-transcript\n" );
 	exit( 2 );

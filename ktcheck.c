@@ -472,7 +472,7 @@ main( int argc, char **argv )
 	fprintf( stderr, "[ -inrV ] [ -q | -v ] " );
 	fprintf( stderr, "[ -c checksum ] [ -K command file ] " );
 	fprintf( stderr, "[ -h host ] [ -p port ] " );
-	fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );
+	fprintf( stderr, "[ -w auth-level ] [ -x ca-pem-file ] " );
 	fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ]\n" );
 	exit( 2 );
     }

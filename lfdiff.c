@@ -222,7 +222,7 @@ main( int argc, char **argv, char **envp )
 	fprintf( stderr, "[ -rvV ] " );
 	fprintf( stderr, "[ -T transcript | -S ] " );
 	fprintf( stderr, "[ -h host ] [ -p port ] " );
-        fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );
+        fprintf( stderr, "[ -w auth-level ] [ -x ca-pem-file ] " );
         fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ] " );
 	fprintf( stderr, "[ supported diff options ] " );
 	fprintf( stderr, "[ -X \"unsupported diff options\" ] " );
