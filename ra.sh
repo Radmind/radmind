@@ -239,7 +239,6 @@ while getopts %ch:ltVw: opt; do
     V)	echo ${VERSION}
 	exit 0
 	;;
-	
 
     w)	TLSLEVEL="$OPTARG"
     	;;
