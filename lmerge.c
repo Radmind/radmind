@@ -380,13 +380,14 @@ main( int argc, char **argv )
 	while ( !(trans[ i ]->t_eof)) {
 	    candidate = i;
 	    fileloc = i;
+	    match = 0;
 
 	    if ( force && ( candidate == ( tcount - 1 ))) {
+		match = 1;
 		goto outputline;
 	    }
 
 	    /* Compare candidate to other transcripts */
-	    match = 0;
 	    for ( j = i + 1; j < tcount; j++ ) {
 		if ( trans[ j ]->t_eof ) {
 		    continue;
