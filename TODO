@@ -1,15 +1,6 @@
-ktcheck must check that command file isn't a dir so when rename is called we
-don't blow away a directory.
-
-* try to recreate on eyeswide shut with ktcheck -K /tmp
-
-Do we need to check that <serverpath>/<filepath> is longer then MAXPATHLEN
 
 * not a big deal
 
-Should we use "snet.h" or <snet.h>
-
-* make all <snet.h>
 * anything that is in a -L dir should be with <include.h> not "include.h"
 which is for local dir.
 
@@ -19,13 +10,6 @@ Have Makefile update man pages with correct DEFAULTHOST info.
 man pages have marker, and install script runs sed to replace defines in
 make file
 
-Should ktcheck -v or lcksum -v print success/fail message after running?
-
-* add one more line to be chatty
-
 * Set Makefile to take on path to command file, then -K code just resets
 this sting.  Then, add code to parse the string every time.  Make this code
 shared.
-
-* twhich read command.K for file, and list highest prec. transcript it's found
-in.  With -a option, list all transcripts it's found in.  Also takes -K.

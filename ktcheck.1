@@ -34,6 +34,11 @@ Each special file listed in the command file is converted into a
 transcript line in special.T with information provided by 
 .I host. 
 
+Files updated by
+.B ktcheck
+must be regular files and the user must have access to modify them.
+
+
 When run with the \-n option,
 .B ktcheck
 verifies but never downloads the command file or transcripts.  A tempory 
@@ -46,12 +51,12 @@ enables checksuming. sha1 is the only currently supported checksuming
 algorythim.
 .TP 19
 .BI \-K\  command
-specifies a command
-file name, by default
-.BR command.K .
+specifies a command file name, by default
+.BR _RADMIND_COMMANDFILE .
 .TP 19
 .BI \-h\  host
-specifies the radmind server, by default _RADMIND_HOST.
+specifies the radmind server, by default
+.BR _RADMIND_HOST .
 .TP 19
 .BI \-p\  port
 specifies a port, by default 6662.
