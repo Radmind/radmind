@@ -263,7 +263,7 @@ filechecklist:
 	/* DOWNLOAD */
 	if ( *command == '+' ) {
 #ifdef __APPLE__
-	    if (( *targv[ 0 ] != 'f' ) || ( *targv[ 0 ] != 'a' )) {
+	    if (( *targv[ 0 ] != 'f' ) && ( *targv[ 0 ] != 'a' )) {
 #else !__APPLE__
 	    if ( *targv[ 0 ] != 'f' ) {
 #endif __APPLE__
