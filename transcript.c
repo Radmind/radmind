@@ -205,6 +205,9 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 		prev_tran = tran;
 	    }
 	    fprintf( outtran, "+ " );
+	    if ( fs->pi_stat.st_nlink > 1 ) {
+		hardlink_set_changed( fs );
+	    }
 	}
 	fprintf( outtran, "f %-37s\t%.4lo %5d %5d %9d %7d %s\n", epath,
 		(unsigned long)( T_MODE & cur->pi_stat.st_mode ), 
@@ -336,10 +339,16 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
 	break;
 
     case 'l':			    /* link */
-    case 'h':			    /* hard */
 	if ( strcmp( cur->pi_link, tran->t_pinfo.pi_link ) != 0 ) {
 	    t_print( cur, tran, PR_STATUS );
-	} 
+	}
+	break;
+
+    case 'h':			    /* hard */
+	if (( strcmp( cur->pi_link, tran->t_pinfo.pi_link ) != 0 ) ||
+		( hardlink_get_changed( cur ) != 0 )) {
+	    t_print( cur, tran, PR_STATUS );
+	}
 	break;
 
     case 'c':

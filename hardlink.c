@@ -19,6 +19,7 @@ struct inolist {
     struct inolist	*i_next;
     ino_t		i_ino;
     char		*i_name;
+    int			i_flag;
 };
 
 
@@ -50,7 +51,7 @@ d_insert( struct devlist **dev_head, struct pathinfo *pinfo )
 	    break;
 	}
     }
-    
+
     if (( (*cur) != NULL ) && ( pinfo->pi_stat.st_dev == (*cur)->d_dev )) {
 	return( *cur );
     }
@@ -83,7 +84,7 @@ i_insert( struct devlist *dev_head, struct pathinfo *pinfo )
     if (( (*cur) != NULL ) && ( pinfo->pi_stat.st_ino == (*cur)->i_ino )) {
 	return( (*cur)->i_name );
     }
-    
+
     if (( new = ( struct inolist * ) malloc( sizeof( struct inolist ))) 
 	    == NULL ) {
 	perror( "i_insert malloc" );
@@ -98,6 +99,7 @@ i_insert( struct devlist *dev_head, struct pathinfo *pinfo )
 
     strcpy( new->i_name, pinfo->pi_name );
     new->i_ino = pinfo->pi_stat.st_ino;
+    new->i_flag = 0;
 
     new->i_next = *cur;
     *cur = new;
@@ -124,4 +126,68 @@ hardlink_free( )
 	free( dev_head );
 	dev_head = dev_next;
     }
+}
+
+    void
+hardlink_set_changed( struct pathinfo *pinfo )
+{
+    struct devlist	*dcur;
+    struct inolist	*icur;
+
+    for ( dcur = dev_head; dcur != NULL; dcur = dcur->d_next ) {
+	if ( pinfo->pi_stat.st_dev <= dcur->d_dev ) {
+	    break;
+	}
+    }
+    
+    if (( dcur == NULL ) || ( pinfo->pi_stat.st_dev != dcur->d_dev )) {
+	fprintf( stderr, "hardlink_set_changed: oops 1!\n" );
+	exit( 1 );
+    }
+
+    for ( icur = dcur->d_ilist; icur != NULL; icur = icur->i_next ) {
+	if ( pinfo->pi_stat.st_ino <= icur->i_ino ) {
+	    break;
+	}
+    }
+
+    if (( icur == NULL ) || ( pinfo->pi_stat.st_ino != icur->i_ino )) {
+	fprintf( stderr, "hardlink_set_changed: oops 2!\n" );
+	exit( 1 );
+    }
+
+    icur->i_flag = 1;
+
+    return;
+}
+
+    int
+hardlink_get_changed( struct pathinfo *pinfo )
+{
+    struct devlist	*dcur;
+    struct inolist	*icur;
+
+    for ( dcur = dev_head; dcur != NULL; dcur = dcur->d_next ) {
+	if ( pinfo->pi_stat.st_dev <= dcur->d_dev ) {
+	    break;
+	}
+    }
+    
+    if (( dcur == NULL ) || ( pinfo->pi_stat.st_dev != dcur->d_dev )) {
+	fprintf( stderr, "hardlink_set_changed: oops 1!\n" );
+	exit( 1 );
+    }
+
+    for ( icur = dcur->d_ilist; icur != NULL; icur = icur->i_next ) {
+	if ( pinfo->pi_stat.st_ino <= icur->i_ino ) {
+	    break;
+	}
+    }
+
+    if (( icur == NULL ) || ( pinfo->pi_stat.st_ino != icur->i_ino )) {
+	fprintf( stderr, "hardlink_set_changed: oops 2!\n" );
+	exit( 1 );
+    }
+
+    return( icur->i_flag );
 }
