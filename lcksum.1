@@ -1,0 +1,56 @@
+.TH lcksum "1" "6 November 2001" "RSUG" "User Commands"
+.SH NAME
+.B lcreate
+\- verifies transcript 
+.SH SYNOPSIS
+.B lcksum 
+[
+.B -n
+] [
+.B -v
+] [
+.B -V
+] [
+.BI \-f\ filter 
+]
+.I transcript 
+.sp
+.SH DESCRIPTION
+lcksum verifies the checksums and file size listed in transcript.  If there
+is a discrpency, transcript is updated with the correct checksum and file size.
+
+Transcript must be an applicable transcript.  Files listed in transcript must
+be in the directory ../file relative to the location of transcript.
+
+The user running lcksum must have read and write access to make updates
+to transcript or only read access when using the -n option.
+
+Given the -f option, lcksum will only verify files with paths starting
+with filter.  All other transcript lines are not verified. 
+.sp
+.SH OPTIONS
+.TP 19
+.BI \-f\ filter
+only verify transcript lines with paths the begin with filter.
+.TP 19
+.B \-n
+don't modify transcript
+.TP 19
+.B \-v
+displays update information to standard out. 
+.TP 19
+.B \-V
+displays the version of lcksum and exits.
+.sp
+.SH DIAGNOSTICS
+An exit code of 0 means no differences were found, 1 means differences were
+found and 2 means trouble.
+.sp
+.SH SEE ALSO
+.BR ktcheck(1),
+.BR fsdiff(1),
+.BR lapply(1),
+.BR lcreate(1),
+.BR lfdiff(1),
+.BR lmerge(1),
+.BR radmind(8).
