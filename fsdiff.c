@@ -28,6 +28,7 @@ void		fs_walk( char *, int, int );
 int		dodots = 0;
 int		lastpercent = -1;
 const EVP_MD    *md;
+extern char    *prefix;
 
     void
 fs_walk( char *path, int start, int finish ) 
@@ -163,7 +164,7 @@ main( int argc, char **argv )
     cksum = 0;
     outtran = stdout;
 
-    while (( c = getopt( argc, argv, "%Ac:Co:K:1Vv" )) != EOF ) {
+    while (( c = getopt( argc, argv, "%Ac:Co:K:P:1Vv" )) != EOF ) {
 	switch( c ) {
 	case '%':
 	case 'v':
@@ -202,6 +203,15 @@ main( int argc, char **argv )
 	case 'A':
 	    edit_path_change++;
 	    edit_path = APPLICABLE;
+	    break;
+
+	case 'P':
+	    prefix = optarg;
+	    /* Clip trailing '/' */
+	    len = strlen( prefix );
+	    if (( len > 1 ) && ( prefix[ len -1 ] == '/' )) {
+		prefix[ len -1 ] = '\0';
+	    {
 	    break;
 
 	case 'V':		
