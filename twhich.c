@@ -146,13 +146,15 @@ main( int argc, char **argv )
 		exit( 2 );
 	    }
 
-	    if ( !tran->t_pinfo.pi_minus ) {
-		if ( tran->t_pinfo.pi_type == 'd' ) {
-		    /* t_print won't display the transcript if it's a dir */
-		    printf( "%s:\n", tran->t_shortname );
-		}
-		t_print( NULL, tran, PR_TRAN_ONLY );
+	    if (( tran->t_pinfo.pi_type != 'a' ) &&
+		    ( tran->t_pinfo.pi_type != 'f' )) {
+		/* t_print only shows tran name for f and a */
+		printf( "%s:\n", tran->t_shortname );
 	    }
+	    if ( tran->t_pinfo.pi_minus ) {
+		printf( "- " );
+	    }
+	    t_print( NULL, tran, PR_TRAN_ONLY );
 
 	    if ( !displayall ) {
 		goto done;
