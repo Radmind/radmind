@@ -6,7 +6,7 @@
 .B lcreate
 .RB [ \-LnNTV ]
 [
-.RB \-q\ |\ \-v
+.RB \-q\ |\ \-v\ |\ \-i 
 ] [
 .BI \-c\  checksum
 ] [
@@ -64,6 +64,9 @@ enables checksuming.
 .BI \-h\  hostname
 specifies the radmind server, by default
 .BR _RADMIND_HOST .
+.TP 19
+.BI \-i
+force output linebuffering.
 .TP 19
 .B \-L
 Turn on user authentication.
