@@ -72,7 +72,7 @@ free_list( struct node *head )
 }
 
     static int
-ischild( const char *parent, const char *child)
+ischild( const char *child, const char *parent )
 {
     size_t parentlen;
 
@@ -294,12 +294,12 @@ filechecklist:
 		return( 1 );
 	    }
 
-	}
-
-	/* UPDATE */
-	if ( update( path, present, st, tac, targv ) != 0 ) {
-	    perror( "update" );
-	    return( 1 );
+	} else { 
+	    /* UPDATE */
+	    if ( update( path, present, st, tac, targv ) != 0 ) {
+		perror( "update" );
+		return( 1 );
+	    }
 	}
 
     }
