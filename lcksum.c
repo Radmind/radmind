@@ -201,11 +201,11 @@ main( int argc, char **argv )
 
 	/* check chksum */
 	if ( strcmp( lchksum, targv[ 7 ] ) != 0 ) {
-	    if ( verbose && !updatetran ) printf( "*** %s: chksum wrong\n",
+	    if ( verbose && !updatetran ) printf( "%s: chksum wrong\n",
 		    targv[ 1 ] );
 	    ucount++;
 	    if ( updatetran ) {
-		if ( verbose && updatetran ) printf( "*** %s: chksum updated\n",
+		if ( verbose && updatetran ) printf( "%s: chksum updated\n",
 		    targv[ 1 ] ); 
 	    }
 	    updateline = 1;
@@ -217,11 +217,11 @@ main( int argc, char **argv )
 	    exit( 2 );
 	}
 	if ( st.st_size != atoi( targv[ 6 ] ) ) {
-	    if ( verbose && !updatetran ) printf( "*** %s: size wrong\n",
+	    if ( verbose && !updatetran ) printf( "%s: size wrong\n",
 		    targv[ 1 ] );
 	    ucount++;
 	    if ( updatetran ) {
-		if ( verbose && updatetran ) printf( "*** %s: size updated\n",
+		if ( verbose && updatetran ) printf( "%s: size updated\n",
 			targv[ 1 ] );
 	    }
 	    updateline = 1;
@@ -256,20 +256,20 @@ done:
 		fprintf( stderr, "rename: %s %s\n", upath, tpath );
 		exit( 2 );
 	    }
-	    if ( verbose ) printf( "*** %s updated\n", transcript );
+	    if ( verbose ) printf( "%s: updated\n", transcript );
 	} else {
 	    if ( unlink( upath ) != 0 ) {
 		perror( upath );
 		exit( 2 );
 	    }
-	    if ( verbose ) printf( "*** %s verified\n", transcript );
+	    if ( verbose ) printf( "%s: verified\n", transcript );
 	}
     } else {
 	if ( ucount ) {
-	    if ( verbose ) printf( "*** %s incorrect\n", transcript );
+	    if ( verbose ) printf( "%s: incorrect\n", transcript );
 	    exit( 1 );
 	} else {
-	    if ( verbose ) printf( "*** %s verified\n", transcript );
+	    if ( verbose ) printf( "%s: verified\n", transcript );
 	    exit( 0 );
 	}
     }

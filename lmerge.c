@@ -315,7 +315,8 @@ main( int argc, char **argv )
 			    perror( opath );
 			    exit( 1 );
 			}
-			if ( verbose ) printf( "unlinked %s\n", opath );
+			if ( verbose ) printf( "%s: %s: unlinked\n",
+			    trans[ j ]->name, trans[ j ]->filepath);
 		    }
 		    /* Advance lower precedence transcript */
 		    if ( getnextline( trans[ j ] ) < 0 ) {
@@ -418,8 +419,9 @@ main( int argc, char **argv )
 		    exit( 1 );
 		}
 	    }
-	    if ( verbose ) printf( "*** linked %s/%s\n",
-		tname, trans[ candidate ]->filepath );
+	    if ( verbose ) printf( "%s: %s: merged into: %s\n",
+		trans[ candidate ]->name, trans[ candidate ]->filepath,
+		tname );
 		
 outputline:
 	    /* Output line */
@@ -446,7 +448,7 @@ skipline:
 		perror( opath );
 		exit( 1 );
 	    }
-	    if ( verbose ) printf( "unlinked %s\n", opath );
+	    if ( verbose ) printf( "%s: %s: unlinked\n", tname, dirlist->path );
 	    dirlist = dirlist->next;
 	}
     }
