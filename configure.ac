@@ -31,6 +31,9 @@ AC_PROG_INSTALL
 AC_PATH_PROG(diffpath, diff)
 AC_SYS_LARGEFILE
 
+# Check sizes
+AC_CHECK_SIZEOF(off_t)
+
 # Checks for libraries.
 AC_CHECK_LIB([nsl], [inet_ntoa])
 AC_CHECK_LIB([socket], [socket])
