@@ -1,0 +1,83 @@
+#include <stdlib.h>
+#include <sys/param.h>
+
+    char *
+encode( char *line )
+{
+    /* static */
+    static char	    buf[ 2 * MAXPATHLEN ];
+    char	    *temp;    
+
+    temp = buf;
+
+    for ( ; *line != '\0'; line++, temp++ ) {
+	switch ( *line ) {
+	case ' ' :
+	    *temp = '\\';
+	    temp++;
+	    *temp = 'b';
+	    break;
+	case '\t' :
+	    *temp = '\\';
+	    temp++;
+	    *temp = 't';
+	    break;
+	case '\n':
+	    *temp = '\\';
+	    temp++;
+	    *temp = 'n';
+	    break;
+	case '\\':
+	    *temp = '\\';
+	    temp++;
+	    *temp = '\\';
+	    break;
+	default :
+	    *temp = *line;
+	    break;
+	}
+    }
+
+    *temp = '\0';
+    return( buf );
+}
+
+    char *
+decode( char *line ) 
+{
+    /* static */
+    static char     buf[ MAXPATHLEN ];
+    char            *temp;
+
+    temp = buf;
+
+    for ( ; *line != '\0'; line++, temp++ ) {
+	switch( *line ) {
+	case '\\':
+	    line++;
+	    switch( *line ) {
+	    case 'n':
+		*temp = '\n';
+		break;
+	    case 't':
+		*temp = '\t';
+		break;
+	    case 'b':
+		*temp = ' ';
+		break;
+	    case '\\':
+		*temp = '\\';
+		break;
+	    default:
+		break;
+	    }
+	    break;
+	default:
+	    *temp = *line;
+	    break;
+	}
+    }
+
+    *temp = '\0';
+    return( buf );
+}
