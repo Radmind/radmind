@@ -254,7 +254,7 @@ stor_file( SNET *sn, char *pathdesc, char *path, size_t transize,
 	base64_e( ( char*)&md_value, md_len, cksum_b64 );
         if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
 	    fprintf( stderr,
-		"line %d: checksum list in transcript wrong\n", linenum );
+		"line %d: checksum listed in transcript wrong\n", linenum );
             return( -1 );
         }
     }
@@ -498,7 +498,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
         base64_e( ( char*)&md_value, md_len, cksum_b64 );
         if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
 	    fprintf( stderr,
-		"line %d: checksum list in transcript wrong\n", linenum );
+		"line %d: checksum listed in transcript wrong\n", linenum );
             return( -1 );
         }
     }
