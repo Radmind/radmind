@@ -34,7 +34,7 @@ int			linenum = 0;
 int			chksum = 1;
 int			verbose = 0;
 int			update = 1;
-char			*command = "command.K";
+char			*command = _RADMIND_COMMANDFILE;
 char			*commandpath = ".";
 char			fullpath[ MAXPATHLEN ];
 

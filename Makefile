@@ -6,6 +6,7 @@ SBINDIR=${DESTDIR}/sbin
 VARDIR=/var/radmind
 CONFIGFILE=${VARDIR}/config
 TRANSCRIPTDIR=${VARDIR}/transcript
+COMMANDFILE=${VARDIR}/client/command.K
 GNU_DIFF=/usr/local/gnu/bin/diff
 RADMIND_HOST=radmind
 
@@ -72,6 +73,11 @@ command.o : command.c
 		-D_PATH_TRANSCRIPTS=\"${TRANSCRIPTDIR}\" \
 		-c command.c
 
+fsdiff.o : fsdiff.c
+	${CC} ${CFLAGS} \
+		-D_RADMIND_COMMANDFILE=\"${COMMANDFILE}\" \
+		-c fsdiff.c
+
 lfdiff.o : lfdiff.c
 	${CC} ${CFLAGS} \
 		-D_PATH_GNU_DIFF=\"${GNU_DIFF}\" \
@@ -81,6 +87,7 @@ lfdiff.o : lfdiff.c
 ktcheck.o : ktcheck.c
 	${CC} ${CFLAGS} \
 		-D_RADMIND_HOST=\"${RADMIND_HOST}\" \
+		-D_RADMIND_COMMANDFILE=\"${COMMANDFILE}\" \
 		-c ktcheck.c
 
 lapply.o : lapply.c

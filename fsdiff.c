@@ -99,7 +99,7 @@ main( int argc, char **argv )
 #ifndef linux
     extern int		errno;
 #endif
-    char		*cmd = "command.K";
+    char		*cmd = _RADMIND_COMMANDFILE;
     char		*prepath = "./";
     int 		c;
     int 		errflag = 0;
