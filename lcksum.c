@@ -126,6 +126,7 @@ main( int argc, char **argv )
     char		*tpath = NULL, *line = NULL;
     char		*prefix = NULL, *d_path = NULL;
     char                **targv;
+    char		*radmind_path = _RADMIND_PATH;
     char		cwd[ MAXPATHLEN ];
     char		temp[ MAXPATHLEN ];
     char		file_root[ MAXPATHLEN ];
@@ -139,7 +140,7 @@ main( int argc, char **argv )
     struct stat		st;
     off_t		cksumsize;
 
-    while ( ( c = getopt ( argc, argv, "%Aac:inP:qV" ) ) != EOF ) {
+    while ( ( c = getopt ( argc, argv, "%Aac:D:inP:qV" ) ) != EOF ) {
 	switch( c ) {
 	case 'a':
 	    checkall = 1;
@@ -165,6 +166,10 @@ main( int argc, char **argv )
 
 	case 'i':
 	    setvbuf( stdout, ( char * )NULL, _IOLBF, 0 );
+	    break;
+
+	case 'D':
+	    radmind_path = optarg;
 	    break;
 
 	case 'P':
@@ -206,7 +211,8 @@ main( int argc, char **argv )
     tpath = argv[ optind ];
 
     if ( err || ( argc - optind != 1 ) ) {
-	fprintf( stderr, "usage: %s [ -%%AqV ] ", argv[ 0 ] );
+	fprintf( stderr, "usage: %s [ -%%AiqV ] ", argv[ 0 ] );
+	fprintf( stderr, "[ -D path ] " );
 	fprintf( stderr, "[ -n [ -a ] ] " );
 	fprintf( stderr, "[ -P prefix ] " );
 	fprintf( stderr, "-c checksum transcript\n" );
@@ -230,7 +236,7 @@ main( int argc, char **argv )
 	}
 	strcpy( cwd, temp );
     }
-    if ( get_root( cwd, file_root, tran_root, tran_name ) != 0 ) {
+    if ( get_root( radmind_path, cwd, file_root, tran_root, tran_name ) != 0 ) {
 	exit( 2 );
     }
 

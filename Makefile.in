@@ -106,6 +106,11 @@ lcksum.o : lcksum.c
 		-D_RADMIND_PATH=\"${RADMINDDIR}\" \
 		-c ${srcdir}/lcksum.c
 
+lmerge.o : lmerge.c
+	${CC} ${CFLAGS} \
+		-D_RADMIND_PATH=\"${RADMINDDIR}\" \
+		-c ${srcdir}/lmerge.c
+
 command.o : command.c
 	${CC} ${CFLAGS} \
 		-c ${srcdir}/command.c
@@ -147,7 +152,6 @@ progress.o : progress.c
 
 root.o : root.c
 	${CC} ${CFLAGS} \
-		-D_RADMIND_PATH=\"${RADMINDDIR}\" \
 		-c ${srcdir}/root.c
 
 twhich.o : twhich.c

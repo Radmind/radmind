@@ -178,6 +178,7 @@ main( int argc, char **argv )
     char		*file = NULL;
     char		npath[ 2 * MAXPATHLEN ];
     char		opath[ 2 * MAXPATHLEN ];
+    char		*radmind_path = _RADMIND_PATH;
     char		cwd[ MAXPATHLEN ];
     char		file_root[ MAXPATHLEN ];
     char		tran_root[ MAXPATHLEN ];
@@ -190,8 +191,11 @@ main( int argc, char **argv )
     FILE		*ofs;
     mode_t		mask;
 
-    while ( ( c = getopt( argc, argv, "fnu:Vv" ) ) != EOF ) {
+    while ( ( c = getopt( argc, argv, "D:fnu:Vv" ) ) != EOF ) {
 	switch( c ) {
+	case 'D':
+	    radmind_path = optarg;
+	    break;
 	case 'f':
 	    force = 1;
 	    break;
@@ -236,11 +240,14 @@ main( int argc, char **argv )
     }
 
     if ( err ) {
-	fprintf( stderr, "Usage: %s [-vV] [ -u umask ] ", argv[ 0 ] );
+	fprintf( stderr, "Usage: %s [-vV] [ -D path ] [ -u umask ] ",
+	    argv[ 0 ] );
 	fprintf( stderr, "transcript... dest\n" );
-	fprintf( stderr, "       %s -f [-vV] [ -u umask ] ", argv[ 0 ] );
+	fprintf( stderr, "       %s -f [-vV] [ -D path ] [ -u umask ] ",
+	    argv[ 0 ] );
 	fprintf( stderr, "transcript1 transcript2\n" );
-	fprintf( stderr, "       %s -n [-vV] [ -u umask ] ", argv[ 0 ] );
+	fprintf( stderr, "       %s -n [-vV] [ -D path ] [ -u umask ] ",
+	    argv[ 0 ] );
 	fprintf( stderr, "transcript1 transcript2 dest\n" );
 	exit( 2 );
     }
@@ -277,7 +284,7 @@ main( int argc, char **argv )
 	trans[ i ]->t_num = i;
 	trans[ i ]->t_path = argv[ i + optind ];
 
-	if ( get_root( trans[ i ]->t_path, trans[ i ]->t_file_root,
+	if ( get_root( radmind_path, trans[ i ]->t_path, trans[ i ]->t_file_root,
 		trans[ i ]->t_tran_root, trans[ i ]->t_tran_name ) != 0 ) {
 	    exit( 2 );
 	}
@@ -341,7 +348,7 @@ main( int argc, char **argv )
 	    }
 	    strcpy( cwd, temp );
 	}
-	if ( get_root( cwd, file_root, tran_root, tran_name ) != 0 ) {
+	if ( get_root( radmind_path, cwd, file_root, tran_root, tran_name ) != 0 ) {
 	    exit( 2 );
 	}
 

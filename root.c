@@ -7,14 +7,14 @@
 #include "root.h"
 
     int
-get_root( char *path, char *file_root, char *tran_root, char *tran_name )
+get_root( char *radmind_path, char *path, char *file_root, char *tran_root, char *tran_name )
 {
     char		real_path[ PATH_MAX ];
     char		test_path[ MAXPATHLEN ];
     char                radmind_real_path[ PATH_MAX ];
     char		*p;
 
-    if ( realpath( _RADMIND_PATH, radmind_real_path ) == NULL ) {
+    if ( realpath( radmind_path, radmind_real_path ) == NULL ) {
         perror( radmind_real_path );
         return( -1 );
     }

@@ -6,6 +6,8 @@
 .B lmerge
 .RB [ \-vV ]
 [
+.BI \-D\  path
+] [
 .BI \-u\  umask 
 ]
 .IR transcript ...
@@ -15,6 +17,8 @@
 .B \-f
 .RB [ \-vV ]
 [
+.BI \-D\  path
+] [
 .BI \-u\  umask
 ]
 .I transcript1 transcript2 
@@ -23,6 +27,8 @@
 .B \-n
 .RB [ \-vV ]
 [
+.BI \-D\  path
+] [
 .BI \-u\  umask
 ]
 .I transcript1 transcript2 dest 
@@ -81,6 +87,9 @@ merge
 .B transcript1
 into
 .IR transcript2 .
+.TP 19
+.BI \-D\  path
+specifies the radmind working directory, by default _RADMIND_PATH
 .TP 19
 .B \-n
 merge two transcripts linking all files from the lowest precedence
