@@ -839,13 +839,15 @@ f_login( snet, ac, av )
     };
 
     if ( !checkuser ) {
-	snet_writef( snet, "%d Users not enabled\r\n", 502 );
+	snet_writef( snet, "%d login not enabled\r\n", 502 );
 	return( 1 );
     }
+    /*
     if ( authlevel < 1 ) {
-	snet_writef( snet, "%d Command requires TLS\r\n", 503 );
+	snet_writef( snet, "%d login requires TLS\r\n", 503 );
 	return( 1 );
     }
+    */
     if ( ac != 3 ) {  
         snet_writef( snet, "%d Syntax error\r\n", 501 );
         return( 1 );
