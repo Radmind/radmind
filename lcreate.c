@@ -21,6 +21,7 @@
 #include <strings.h>
 
 #include "snet.h"
+#include "code.h"
 #include "argcargv.h"
 
 void		(*logger)( char * ) = NULL;
@@ -127,7 +128,7 @@ main( int argc, char **argv )
     struct sockaddr_in	sin;
     SNET          	*sn;
     char		*tname = NULL, *host = "rsug.itd.umich.edu"; 
-    char		*p,*line, tline[ 2 * MAXPATHLEN ];
+    char		*p,*line, *dpath, tline[ 2 * MAXPATHLEN ];
     char		**targv;
     extern char		*optarg;
     FILE		*fdiff; 
@@ -282,14 +283,15 @@ main( int argc, char **argv )
 	}
 	tac = argcargv( tline, &targv );
 	if ( *targv[ 0 ] == 'f' && tac >= 2 ) {
+	    dpath = decode( targv[ 1 ] );
 	    if ( !network ) {
-		if ( access( targv[ 1 ],  R_OK ) < 0 ) {
-		    perror( targv[ 1 ] );
+		if ( access( dpath,  R_OK ) < 0 ) {
+		    perror( dpath );
 		    exitcode = 1;
 		}
 	    } else {
-		if (( fdt = open( targv[ 1 ], O_RDONLY, 0 )) < 0 ) {
-		    perror( targv[ 1 ] );
+		if (( fdt = open( dpath, O_RDONLY, 0 )) < 0 ) {
+		    perror( dpath );
 		    exitcode = 1;
 		    break;
 		} 
@@ -297,7 +299,7 @@ main( int argc, char **argv )
 		rc = store_file( fdt, sn, targv[ 1 ], tname ); 
 		(void)close( fdt ); 
 		if ( rc != 0 ) {
-		    fprintf( stderr, "failed to store file %s\n", targv[ 1 ] );
+		    fprintf( stderr, "failed to store file %s\n", dpath );
 		    exitcode = 1;
 		    break;
 		}
