@@ -214,7 +214,7 @@ check( SNET *sn, char *type, char *file )
 	    /* Local file is missing */
 	    if ( update ) {
 		if ( retr( sn, pathdesc, path, (char *)&tempfile,
-			(size_t)atoi( targv[ 6 ] ), targv[ 7 ] ) != 0 ) {
+			(ssize_t)atoi( targv[ 6 ] ), targv[ 7 ] ) != 0 ) {
 		    return( 2 );
 		}
 		if ( utime( tempfile, &times ) != 0 ) {
@@ -261,7 +261,7 @@ check( SNET *sn, char *type, char *file )
 		return( 2 );
 	    }
 	    if ( retr( sn, pathdesc, path, (char *)&tempfile,
-		    (size_t)atol( targv[ 6 ] ), targv[ 7 ] ) != 0 ) {
+		    (ssize_t)atol( targv[ 6 ] ), targv[ 7 ] ) != 0 ) {
 		return( 2 );
 	    }
 	    if ( utime( tempfile, &times ) != 0 ) {

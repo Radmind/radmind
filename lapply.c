@@ -154,12 +154,12 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
 	}
 	if ( *targv[ 0 ] == 'a' ) {
 	    if ( retr_applefile( sn, pathdesc, path, temppath,
-		    (size_t)atol( targv[ 6 ] ), cksum_b64 ) != 0 ) {
+		    (ssize_t)atol( targv[ 6 ] ), cksum_b64 ) != 0 ) {
 		return( 1 );
 	    }
 	} else {
 	    if ( retr( sn, pathdesc, path, (char *)&temppath,
-		    (size_t)atol( targv[ 6 ] ), cksum_b64 ) != 0 ) {
+		    (ssize_t)atol( targv[ 6 ] ), cksum_b64 ) != 0 ) {
 		return( 1 );
 	    }
 	}
