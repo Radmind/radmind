@@ -31,6 +31,9 @@ TMPDIR="/tmp/.ra.$$"
 LTMP="${TMPDIR}/lapply.out"
 FTMP="${TMPDIR}/fsdiff.out"
 
+PREAPPLY="/var/radmind/preapply"
+POSTAPPLY="/var/radmind/postapply"
+
 Yn() {
     echo -n "$*" "[Yn] "
     read ans
@@ -49,6 +52,18 @@ cleanup() {
     if [ "$TEMPFILES" = FALSE ]; then
 	rm -fr $TMPDIR
     fi
+}
+
+dopreapply() {
+    for script in ${PREAPPLY}/*; do
+	${script} "$1"
+    done
+}
+
+dopostapply() {
+    for script in ${POSTAPPLY}/*; do
+	${script} "$1"
+    done
 }
 
 while getopts ch:tw: opt; do
@@ -129,6 +144,12 @@ update)
     if [ $? -eq 1 ]; then
 	${EDITOR} ${FTMP}
     fi
+    if [ -d "${PREAPPLY}" ]; then
+	Yn "Run pre-apply scripts on difference transcript?"
+	if [ $? -eq 1 ]; then
+	    dopreapply ${FTMP}
+	fi
+    fi
     Yn "Apply difference transcript?"
     if [ $? -eq 1 ]; then
 	lapply ${AUTHLEVEL} ${SERVER} ${CHECKSUM} ${FTMP}
@@ -139,6 +160,12 @@ update)
 		exit $?
 		;;
 	esac
+    fi
+    if [ -d "${POSTAPPLY}" ]; then
+	Yn "Run post-apply scripts on difference transcript?"
+	if [ $? -eq 1 ]; then
+	    dopostapply ${FMTP}
+	fi
     fi
     cleanup
     ;;
