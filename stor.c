@@ -41,6 +41,7 @@ extern int		quiet;
 extern int		dodots;
 extern int		cksum;
 extern int		linenum;
+extern int		force;
 extern void            	(*logger)( char * );
 extern SSL_CTX  	*ctx;
 
@@ -153,8 +154,10 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
 	    fprintf( stderr,
 		"line %d: size in transcript does not match size of file\n",
 		linenum );
-	    close( fd );
-	    return( -1 );
+	    if ( ! force ) {
+		close( fd );
+		return( -1 );
+	    }
 	}
     }
     size = st.st_size;
@@ -258,7 +261,7 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
         if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
 	    fprintf( stderr,
 		"line %d: checksum listed in transcript wrong\n", linenum );
-            return( -1 );
+	    if ( ! force ) return( -1 );
         }
     }
 
@@ -302,7 +305,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 	    fprintf( stderr,
 		"%s: size in transcript does not match size of file\n",
 		decode( path ));
-	    return( -1 );
+	    if ( ! force ) return( -1 );
 	}
     }
     size = afinfo->as_size;
@@ -500,7 +503,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
         if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
 	    fprintf( stderr,
 		"line %d: checksum listed in transcript wrong\n", linenum );
-            return( -1 );
+	    if ( ! force ) return( -1 );
         }
     }
 

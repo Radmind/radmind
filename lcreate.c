@@ -50,6 +50,7 @@ int		dodots = 0;
 int		cksum = 0;
 int		quiet = 0;
 int		linenum = 0;
+int		force = 0;
 extern char	*version;
 extern char	*checksumlist;
 extern struct timeval   timeout;   
@@ -91,7 +92,7 @@ main( int argc, char **argv )
     char                *user = NULL;
     char                *password = NULL;
 
-    while (( c = getopt( argc, argv, "c:h:ilnNp:P:qrt:TU:vVw:x:y:z:" ))
+    while (( c = getopt( argc, argv, "c:Fh:ilnNp:P:qrt:TU:vVw:x:y:z:" ))
 	    != EOF ) {
 	switch( c ) {
         case 'c':
@@ -103,6 +104,10 @@ main( int argc, char **argv )
             }
             cksum = 1;
             break;
+
+	case 'F':
+	    force = 1;
+	    break;
 
 	case 'h':
 	    host = optarg; 
