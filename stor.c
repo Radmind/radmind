@@ -670,7 +670,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 }
 
     int
-n_stor_file( SNET *sn, char *pathdesc, char *path )
+n_stor_applefile( SNET *sn, char *pathdesc, char *path )
 {
     errno = EINVAL;
     return( -1 );

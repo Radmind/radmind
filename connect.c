@@ -86,6 +86,7 @@ connectsn( char *host, int port )
     sin.sin_family = AF_INET;
     sin.sin_port = port;
 
+#ifdef notdef
     /*
      * this code should be enabled only to deal with bugs in
      * the gethostbyname() routine
@@ -93,6 +94,7 @@ connectsn( char *host, int port )
     if (( sin.sin_addr.s_addr = inet_addr( host )) != -1 ) {
 	return( connectsn2( &sin ));
     }
+#endif // notdef
 
     if (( he = gethostbyname( host )) == NULL ) {
 	fprintf( stderr, "%s: Unknown host\n", host );
