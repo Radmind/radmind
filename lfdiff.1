@@ -1,0 +1,77 @@
+.TH lfdiff "1" "6 November 2001" "RSUG" "User Commands"
+.SH NAME
+.B lfdiff 
+\- compare files with radmind server
+.SH SYNOPSIS
+.B lfdiff 
+[
+.B -T transcript | -S
+] [
+.BI \-h\ host 
+] [
+.BI \-p\ port
+] [
+.B -v
+] [
+.B -V
+] [
+.B supported diff options
+] [
+.BI \-X\ 
+unsupported diff options
+]
+.I file 
+.sp
+.SH DESCRIPTION
+lfdiff runs diff(1) to compare
+.I file 
+with 
+.I file 
+located on the radmind server
+.Ihost.
+
+.I file 
+can be either a special file indicated using the -S option or
+associated with 
+.I transcript 
+indicated using the -T option.
+
+.I file 
+is downloaded into /tmp from the radmind server 
+.I host 
+and removed on exit. 
+.sp
+.SH OPTIONS
+.TP 19
+.BI \-h\ host
+specifies the radmind server.
+.TP 19
+.BI \-p\ port 
+specifies the port of the radmind server, by default 6662.
+.TP 19
+.B \-S
+file is a special file.
+.TP 19
+.BI \-T\ transcript 
+file is associated with transcript on the radmind server.
+.TP 19
+.B \-v
+causes lfdiff to be more verbose.
+.TP 19
+.B \-V
+displays the version of lfdiff and exits.
+.TP 19
+.BI \-X\ unsupported diff options
+passes options directly to diff 
+.sp
+.SH DIAGNOSTICS
+An exit code of -1 means trouble, otherwise see diff(1) for exit code meaning.
+.sp
+.SH SEE ALSO
+.BR ktcheck(1),
+.BR fsdiff(1),
+.BR lapply(1),
+.BR lcreate(1),
+.BR lfdiff(1),
+.BR lmerge(1),
+.BR radmind(8).
