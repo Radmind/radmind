@@ -8,6 +8,8 @@ AC_CONFIG_SRCDIR([applefile.c])
 
 # Set up variables
 AC_ARG_VAR(diffpath, [path to diff utility])
+AC_ARG_WITH(server, AC_HELP_STRING([--with-server=server], [default radmind server]), server="$withval", server="radmind" )
+AC_SUBST(server) 
 
 # Checks for programs.
 AC_PROG_AWK

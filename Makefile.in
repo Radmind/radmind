@@ -17,7 +17,7 @@ TRANSCRIPTDIR=${VARDIR}/transcript
 # For client
 COMMANDFILE=${VARDIR}/client/command.K
 GNU_DIFF=@diffpath@
-RADMIND_HOST=radmind
+RADMIND_HOST=@server@
 
 RADMINDSYSLOG=LOG_LOCAL7
 

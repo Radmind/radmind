@@ -832,6 +832,7 @@ if test -n "$ac_init_help"; then
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-server=server    default radmind server
   --with-ssl=DIR          path to ssl
   --with-snet=DIR         path to snet
 
@@ -1212,6 +1213,15 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 #AC_CONFIG_HEADER([config.h])
 
 # Set up variables
+
+
+# Check whether --with-server or --without-server was given.
+if test "${with_server+set}" = set; then
+  withval="$with_server"
+  server="$withval"
+else
+  server="radmind"
+fi;
 
 
 # Checks for programs.
@@ -5023,6 +5033,7 @@ s,@ECHO_N@,$ECHO_N,;t t
 s,@ECHO_T@,$ECHO_T,;t t
 s,@LIBS@,$LIBS,;t t
 s,@diffpath@,$diffpath,;t t
+s,@server@,$server,;t t
 s,@AWK@,$AWK,;t t
 s,@CC@,$CC,;t t
 s,@CFLAGS@,$CFLAGS,;t t
