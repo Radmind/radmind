@@ -38,9 +38,9 @@ update( const char *path, char *displaypath, int present, int newfile,
     char			fi_data[ FINFOLEN ];
     extern struct atterlist     alist;
     static char                 null_buf[ 32 ] = { 0 };
+    int				fs_finfo = 0;
+    int				tran_finfo= 0;
 #endif __APPLE__
-    int			fs_finfo = 0;
-    int			tran_finfo= 0;
 
     switch ( *targv[ 0 ] ) {
     case 'a':
