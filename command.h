@@ -12,7 +12,6 @@
 int		cmdloop ___P(( int ));
 int		command_k ___P(( char * ));
 char		**special_t ___P(( char *, char * ));
-void		do_chksum ___P(( char *, char * ));
 int		keyword ___P(( int, char*[] ));
 int		create_directories ___P (( char * ));
 extern char	*path_radmind;
