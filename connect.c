@@ -10,6 +10,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <openssl/sha.h>
@@ -22,6 +23,7 @@
 extern void            (*logger)( char * );
 extern int              verbose;
 struct timeval          timeout = { 10 * 60, 0 };
+extern int		errno;
 
     SNET *
 connectsn( char *host, int port )
@@ -35,15 +37,15 @@ connectsn( char *host, int port )
 
 
     /* Make network connection */
-    if ( ( he = gethostbyname( host ) ) == NULL ) {
-	perror( host );
-	return( NULL );
+    if (( he = gethostbyname( host )) == NULL ) {
+	fprintf( stderr, "%s: Unkown host\n", host );
+	exit( 1 );
     }
     
     for ( i = 0; he->h_addr_list[ i ] != NULL; i++ ) {
-	if ( ( s = socket( PF_INET, SOCK_STREAM, NULL ) ) < 0 ) {
-	    perror ( host );
-	    return( NULL );
+	if (( s = socket( PF_INET, SOCK_STREAM, NULL )) < 0 ) {
+	    perror( host );
+	    exit( 1 );
 	}
 	memset( &sin, 0, sizeof( struct sockaddr_in ) );
 	sin.sin_family = AF_INET;
@@ -54,35 +56,33 @@ connectsn( char *host, int port )
 		inet_ntoa( *( struct in_addr *)he->h_addr_list[ i ] ) );
 	if ( connect( s, ( struct sockaddr *)&sin,
 		sizeof( struct sockaddr_in ) ) != 0 ) {
-	    perror( "connect" );
+	    if ( verbose ) printf( "failed: %s\n", strerror( errno ));
 	    (void)close( s );
 	    continue;
 	}
 	if ( verbose ) printf( "success!\n" );
 	if ( ( sn = snet_attach( s, 1024 * 1024 ) ) == NULL ) {
-	    perror ( "snet_attach failed" );
+	    fprintf( stderr, "connection to %s failed: %s\n", host,
+		strerror( errno ));
 	    continue;
 	}
 	tv = timeout;
 	if ( ( line = snet_getline_multi( sn, logger, &tv) ) == NULL ) {
-	    perror( "snet_getline_multi" );
-	    if ( snet_close( sn ) != 0 ) {
-		perror ( "snet_close" );
-	    }
+	    fprintf( stderr, "connection to %s failed: %s\n", host,
+		strerror( errno ));
+	    snet_close( sn );
 	    continue;
 	}
 	if ( *line !='2' ) {
 	    fprintf( stderr, "%s\n", line);
-	    if ( snet_close( sn ) != 0 ) {
-		perror ( "snet_close" );
-	    }
+	    snet_close( sn );
 	    continue;
 	}
 	break;
     }
     if ( he->h_addr_list[ i ] == NULL ) {
-	perror( "connection failed" );
-	return( NULL );
+	fprintf( stderr, "%s: connection failed\n", host );
+	exit( 1 );
     }
     return( sn );
 }
@@ -96,20 +96,21 @@ closesn( SNET *sn )
 
     /* Close network connection */
     if ( snet_writef( sn, "QUIT\r\n" ) == NULL ) {
-	perror( "snet_writef" );
-	return( 1 );
+	fprintf( stderr, "close failed: %s\n", strerror( errno ));
+	exit( 1 );
     }
     tv = timeout;
     if ( ( line = snet_getline_multi( sn, logger, &tv ) ) == NULL ) {
-	perror( "snet_getline_multi" );
-	return( 1 );
+	fprintf( stderr, "close failed: %s\n", strerror( errno ));
+	exit( 1 );
     }
     if ( *line != '2' ) {
 	perror( line );
+	return( -1 );
     }
     if ( snet_close( sn ) != 0 ) {
-	perror( "snet_close" );
-	return( 1 );
+	fprintf( stderr, "close failed: %s\n", strerror( errno ));
+	exit( 1 );
     }
     return( 0 );
 }
