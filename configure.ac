@@ -37,9 +37,10 @@ AC_CHECK_SIZEOF(off_t)
 # Checks for libraries.
 AC_CHECK_LIB([nsl], [inet_ntoa])
 AC_CHECK_LIB([socket], [socket])
+AC_CHECK_LIB([ssl], [SSL_accept], , [CHECK_SSL])
+AC_CHECK_LIB([crypto], [SSLeay_version], , [CHECK_SSL])
+AC_CHECK_LIB([pam], [pam_start], , [CHECK_PAM])
 
-CHECK_SSL
-CHECK_PAM
 CHECK_ZEROCONF
 
 # Miscellaneous:

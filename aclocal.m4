@@ -61,7 +61,7 @@ AC_DEFUN([CHECK_SSL],
     AC_MSG_CHECKING(for ssl)
     ssldirs="/usr/local/openssl /usr/lib/openssl /usr/openssl \
 	    /usr/local/ssl /usr/lib/ssl /usr/ssl \
-	    /usr/pkg /usr/local /usr"
+	    /usr/pkg /usr/local"
     AC_ARG_WITH(ssl,
 	    AC_HELP_STRING([--with-ssl=DIR], [path to ssl]),
 	    ssldirs="$withval")
