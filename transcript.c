@@ -10,6 +10,7 @@
 #ifdef sun
 #include <sys/mkdev.h>
 #endif /* sun */
+#include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -429,20 +430,22 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 
     case 'd':				/* dir */
 #ifdef __APPLE__
-	if (( fs->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
-		( fs->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) ||
-		( memcmp( fs->pi_afinfo.ai.ai_data,
-		tran->t_pinfo.pi_afinfo.ai.ai_data, FINFOLEN ) != 0 ) ||
-		( mode != tran_mode )) {
-	    t_print( fs, tran, PR_STATUS );
-	}
-#else /* !__APPLE__ */
-	if (( fs->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
-		( fs->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) ||
-		( mode != tran_mode )) {
-	    t_print( fs, tran, PR_STATUS );
+	if ( tran->t_type != T_NEGATIVE ) {
+	    if (( fs->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
+		    ( fs->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) ||
+		    ( memcmp( fs->pi_afinfo.ai.ai_data,
+		    tran->t_pinfo.pi_afinfo.ai.ai_data, FINFOLEN ) != 0 ) ||
+		    ( mode != tran_mode )) {
+		t_print( fs, tran, PR_STATUS );
+	    }
+	    break;
 	}
 #endif /* __APPLE__ */
+	if (( fs->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
+		( fs->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) ||
+		( mode != tran_mode )) {
+	    t_print( fs, tran, PR_STATUS );
+	}
 	break;
 
     case 'D':
@@ -568,8 +571,14 @@ transcript( char *path )
 	    fprintf( stderr, "%s is of an unknown type\n", path );
 	    exit( 2 );
 	default:
-	    perror( path );
-	    exit( 2 );
+	    if (( errno == ENOTDIR ) || ( errno == ENOENT )) {
+		memset( &pi.pi_stat, 0, sizeof( struct stat ));
+		pi.pi_type = 'X';
+		break;
+	    } else {
+		perror( path );
+		exit( 2 );
+	    }
 	}
 
 	strcpy( pi.pi_name, path );
