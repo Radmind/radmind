@@ -50,7 +50,7 @@ LCREATE_OBJ=	version.o lcreate.o argcargv.o code.o connect.o
 LCKSUM_OBJ=	version.o lcksum.o argcargv.o chksum.o base64.o code.o \
 		pathcmp.o
 
-LMERGE_OBJ=	version.o lmerge.o argcargv.o pathcmp.o mkdirs.o list.o
+LMERGE_OBJ=	version.o lmerge.o argcargv.o code.o pathcmp.o mkdirs.o list.o
 
 LFDIFF_OBJ=	version.o lfdiff.o argcargv.o connect.o download.o chksum.o \
 		base64.o
