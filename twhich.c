@@ -111,7 +111,6 @@ main( int argc, char **argv )
     }
 
     for ( tran = tran_head; !tran->t_eof; tran = tran->t_next ) {
-
 	while (( cmp = pathcmp( tran->t_pinfo.pi_name, pattern )) < 0 ) {
 	    transcript_parse( tran );
 	    if ( tran->t_eof ) {
@@ -145,6 +144,7 @@ main( int argc, char **argv )
 		fprintf( stderr, "unknown transcript type\n" );
 		exit( 2 );
 	    }
+	    printf( "# %s:\n", tran->t_kfile );
 
 	    if (( tran->t_pinfo.pi_type != 'a' ) &&
 		    ( tran->t_pinfo.pi_type != 'f' )) {
