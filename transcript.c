@@ -336,14 +336,6 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
     if ( tran->t_eof ) {
 	cmp = -1;
     } else {
-	/*
-	 * If the highest precedence transcript line has a leading '-',
-	 * then just pretend it's not there.
-	 */
-	if ( tran->t_pinfo.pi_minus ) {
-	    return T_MOVE_TRAN;
-	}
-
 	if ( fs == NULL ) {
 	    /*
 	     * If we've exhausted the filesystem, cmp = 1 means that
@@ -522,28 +514,35 @@ transcript_select( void )
     struct transcript	*next_tran = NULL;
     struct transcript	*begin_tran = NULL;
 
-    for ( begin_tran = tran_head, next_tran = tran_head->t_next;
-	    next_tran != NULL; next_tran = next_tran->t_next ) {
-	if ( begin_tran->t_eof ) {
-	    begin_tran = next_tran;
-	    continue;
-	}
-	if ( ! next_tran->t_eof ) {
-	    if ( pathcmp( next_tran->t_pinfo.pi_name,
-		    begin_tran->t_pinfo.pi_name ) < 0 ) {
+    do {
+	for ( begin_tran = tran_head, next_tran = tran_head->t_next;
+		next_tran != NULL; next_tran = next_tran->t_next ) {
+	    if ( begin_tran->t_eof ) {
 		begin_tran = next_tran;
+		continue;
+	    }
+	    if ( ! next_tran->t_eof ) {
+		if ( pathcmp( next_tran->t_pinfo.pi_name,
+			begin_tran->t_pinfo.pi_name ) < 0 ) {
+		    begin_tran = next_tran;
+		}
 	    }
 	}
-    }
 
-    /* move ahead other transcripts that match */
-    for ( next_tran = begin_tran->t_next; next_tran != NULL;
-	    next_tran = next_tran->t_next ) {
-	if ( pathcmp( begin_tran->t_pinfo.pi_name,
-		next_tran->t_pinfo.pi_name ) == 0 ) {
-	    transcript_parse( next_tran );
+	/* move ahead other transcripts that match */
+	for ( next_tran = begin_tran->t_next; next_tran != NULL;
+		next_tran = next_tran->t_next ) {
+	    if ( pathcmp( begin_tran->t_pinfo.pi_name,
+		    next_tran->t_pinfo.pi_name ) == 0 ) {
+		transcript_parse( next_tran );
+	    }
 	}
-    }
+
+    /*
+     * If the highest precedence transcript line has a leading '-',
+     * then just pretend it's not there.
+     */
+    } while ( begin_tran->i_pinfo.pi_minus );
 
     return( begin_tran );
 }
