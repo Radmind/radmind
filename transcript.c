@@ -55,6 +55,11 @@ t_parse( struct transcript *tran )
     tran->t_pinfo.pi_type = argv[ 0 ][ 0 ];
 
     epath = decode( argv[ 1 ] );
+    if ( strcmp( epath, tran->t_pinfo.pi_name ) < 0 ) {
+	printf( "%s: line %d: bad sort order\n",
+		tran->t_name, tran->t_linenum );
+	exit ( 1 );
+    }
     strcpy( tran->t_pinfo.pi_name, epath );
 
     /* reading and parsing the line */
@@ -113,8 +118,9 @@ t_parse( struct transcript *tran )
 	break;
 
     case '-':
-	fprintf( stderr, "%s: line %d: leading '-' not allowed\n",
-		tran->t_name, tran->t_linenum );
+    case '+':
+	fprintf( stderr, "%s: line %d: leading '%c' not allowed\n",
+		tran->t_name, tran->t_linenum, *argv[ 0 ] );
 	exit( 1 );		
 
     default:
@@ -157,7 +163,7 @@ t_convert( int type )
 
 
     static void
-t_print( struct pathinfo *fs, struct transcript *tran, int change ) 
+t_print( struct pathinfo *fs, struct transcript *tran, int flag ) 
 {
     struct pathinfo	*cur;
     char		*epath;
@@ -172,7 +178,6 @@ t_print( struct pathinfo *fs, struct transcript *tran, int change )
      */
     if ( edit_path == FS2TRAN ) {
 	cur = &tran->t_pinfo;
-
 	if ( prev_tran != tran ) {
 	    fprintf( outtran, "%s:\n", tran->t_name );
 	    prev_tran = tran;
@@ -185,10 +190,10 @@ t_print( struct pathinfo *fs, struct transcript *tran, int change )
      * If a file is missing from the edit_path that was chosen, a - is 
      * printed and then the file name that is missing is printed.
      */
-    if (( edit_path == FS2TRAN ) && ( change == T_MOVE_FS )) {
+    if (( edit_path == FS2TRAN ) && ( flag == PR_FS_ONLY )) {
 	fprintf( outtran, "- " );
 	cur = fs;
-    } else if (( edit_path ==  TRAN2FS ) && ( change == T_MOVE_TRAN )) {
+    } else if (( edit_path ==  TRAN2FS ) && ( flag == PR_TRAN_ONLY )) {
 	fprintf( outtran, "- " );
 	cur = &tran->t_pinfo;
     }
@@ -214,6 +219,10 @@ t_print( struct pathinfo *fs, struct transcript *tran, int change )
 	break;
 
     case 'f':
+	if (( edit_path == FS2TRAN ) && (( flag == PR_TRAN_ONLY ) || 
+		( flag == PR_DOWNLOAD ))) {
+	    fprintf( outtran, "+ " );
+	}
 	fprintf( outtran, "f %-37s\t%.4lo %5d %5d %9d %7d %d\n", epath,
 		(unsigned long)( T_MODE & cur->pi_stat.st_mode ), 
 		(int)cur->pi_stat.st_uid, (int)cur->pi_stat.st_gid,
@@ -241,10 +250,10 @@ t_print( struct pathinfo *fs, struct transcript *tran, int change )
    static int 
 t_compare( struct pathinfo *cur, struct transcript *tran )
 {
-    int				ret = -1;
-    mode_t			mode;
-    mode_t			tran_mode;
-    dev_t			dev;
+    int			ret = -1;
+    mode_t		mode;
+    mode_t		tran_mode;
+    dev_t		dev;
 
     if ( tran->t_eof ) {
 	ret = -1;
@@ -254,12 +263,12 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
 
     if ( ret > 0 ) {
 	/* name is in the tran, but not the fs */
-	t_print( cur, tran, T_MOVE_TRAN );
+	t_print( cur, tran, PR_TRAN_ONLY ); 
 	return T_MOVE_TRAN;
     } 
     if ( ret < 0 ) {
 	/* name is in the fs, but not in the tran */
-	t_print( cur, tran, T_MOVE_FS );
+	t_print( cur, tran, PR_FS_ONLY );
 	return T_MOVE_FS;
     } 
 
@@ -269,29 +278,30 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
 
     /* the names match so check types */
     if ( cur->pi_type != tran->t_pinfo.pi_type ) {
-	t_print( cur, tran, T_MOVE_BOTH );
+	t_print( cur, tran, PR_DOWNLOAD );
 	return T_MOVE_BOTH;
     }
 
     /* compare the other components for each file type */
     switch( cur->pi_type ) {
     case 'f':			    /* file */
+	if ( tran->t_type != T_NEGATIVE ) {
+	    if ( chksum && ( cur->pi_chksum != tran->t_pinfo.pi_chksum )) {
+		t_print( cur, tran, PR_DOWNLOAD );
+		break;
+	    }
+
+	    if (( cur->pi_stat.st_mtime != tran->t_pinfo.pi_stat.st_mtime ) ||
+		    ( cur->pi_stat.st_size != tran->t_pinfo.pi_stat.st_size )) {
+		t_print( cur, tran, PR_DOWNLOAD );
+		break;
+	    }
+	}
+
 	if (( cur->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) || 
 		( cur->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) ||
 		( mode != tran_mode )) {
-			t_print( cur, tran, T_MOVE_BOTH );
-			break;
-	}
-	/* If the file is not negative, check the other components. */
-	if ( tran->t_type != T_NEGATIVE ) {
-		if (( cur->pi_stat.st_mtime != 
-				tran->t_pinfo.pi_stat.st_mtime ) ||
-		    ( cur->pi_stat.st_size != 
-				tran->t_pinfo.pi_stat.st_size ) || 
-		    ( cur->pi_chksum != tran->t_pinfo.pi_chksum ) ||
-		    ( mode != tran_mode )) {
-			t_print( cur, tran, T_MOVE_BOTH );
-		}
+	    t_print( cur, tran, PR_STATUS );
 	}
 	break;
 
@@ -302,14 +312,14 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
 	if (( cur->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
 		( cur->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) ||
 		( mode != tran_mode )) {
-			t_print( cur, tran, T_MOVE_BOTH );
+	    t_print( cur, tran, PR_STATUS );
 	}
 	break;
 
     case 'l':			    /* link */
     case 'h':			    /* hard */
 	if ( strcmp( cur->pi_link, tran->t_pinfo.pi_link ) != 0 ) {
-	    t_print( cur, tran, T_MOVE_BOTH );
+	    t_print( cur, tran, PR_STATUS );
 	} 
 	break;
 
@@ -320,7 +330,7 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
 		( cur->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) || 
 		( dev != tran->t_pinfo.pi_dev ) ||
 		( mode != tran_mode )) {
-			t_print( cur, tran, T_MOVE_BOTH );
+	    t_print( cur, tran, PR_STATUS );
 	}	
 	break;
 
