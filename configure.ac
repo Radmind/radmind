@@ -38,7 +38,11 @@ AC_SYS_LARGEFILE
 AC_CHECK_SIZEOF(off_t)
 
 # Checks for libraries.
-AC_CHECK_LIB([nsl], [inet_ntoa])
+AC_CHECK_LIB(c, inet_aton, libc_inet_aton=yes) 
+if test x$libc_inet_aton != xyes; then 
+    AC_CHECK_LIB(resolv, inet_aton) 
+fi 
+AC_CHECK_LIB(nsl, gethostbyaddr)
 AC_CHECK_LIB([socket], [socket])
 AC_CHECK_LIB([ssl], [SSL_accept], , [CHECK_SSL])
 AC_CHECK_HEADER([openssl/ssl.h], [], [AC_MSG_ERROR([header file <openssl/ssl.h>
