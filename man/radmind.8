@@ -13,7 +13,9 @@
 ] [
 .BI \-D\  path
 ] [
-.BI \-L\  syslog-facility
+.BI \-F\  syslog-facility
+] [
+.BI \-L\  syslog-level
 ] [
 .BI \-m\  max-connections 
 ] [
@@ -195,8 +197,11 @@ specifies the radmind working directory, by default _RADMIND_PATH
 .B \-d
 debug mode. Does not disassociate from controlling tty.
 .TP 19
-.BI \-L\  syslog-facility
-specifies which syslog-facilty to log messages to.
+.BI \-F\  syslog-facility
+specifies which syslog facility to log messages to.
+.TP 19
+.BI \-L\  syslog-level
+specifies at which syslog level to log messages.
 .TP 19
 .BI \-m\  max-connections 
 specifies the maximum number of simultaneous connections, by
