@@ -25,6 +25,7 @@
 #include "auth.h"
 #include "code.h"
 #include "chksum.h"
+#include "mkdirs.h"
 
 #define	DEFAULT_MODE 0444
 #define DEFAULT_UID     0
@@ -400,24 +401,6 @@ f_stat( SNET *sn, int ac, char *av[] )
     }
 }
 
-    int 
-create_directories( char *path ) 
-{
-    char 	*p;
-
-    for ( p = strchr( path, '/' ); p != NULL; p = strchr( p, '/' )) {
-	*p = '\0';
-	if ( mkdir( path, 0777 ) < 0 ) {
-	    if ( errno != EEXIST ) {
-		return( -1 );
-	    }
-	}
-	*p++ = '/';
-    }
-
-    return( 0 );
-}
-
     int
 f_stor( SNET *sn, int ac, char *av[] )
 {
@@ -480,7 +463,7 @@ f_stor( SNET *sn, int ac, char *av[] )
 
 
     if (( fd = open( upload, O_CREAT|O_EXCL|O_WRONLY, 0444 )) < 0 ) {
-	if ( create_directories( upload ) < 0 ) {
+	if ( mkdirs( upload ) < 0 ) {
 	    snet_writef( sn, "%d %s: %s\r\n", 555, upload, strerror( errno ));
 	    return( 1 );
 	}
