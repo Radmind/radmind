@@ -527,12 +527,14 @@ main( int argc, char **argv )
     switch( check( sn, "COMMAND", NULL )) { 
     case 0:
 	break;
+
     case 1:
 	change++;
 	if ( !update ) {
 	    goto done;
 	}
 	break;
+
     case 2:
 	exit( 2 );
     }
@@ -762,6 +764,9 @@ done:
     if ( acav_free( acav ) != 0 ) {
 	perror( "acav_free" );
 	return( -1 );
+    }
+    if ( !update && change ) {
+	exit( 1 );
     }
     return( 0 );
 
