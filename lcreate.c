@@ -292,6 +292,12 @@ main( int argc, char **argv )
 	}
 	tac = argcargv( tline, &targv );
 
+	if ( tac == 1 ) {
+	    fprintf( stderr, "Appliable transcripts cannot be uploaded.\n" );
+	    exitcode = 1;
+	    break;
+	}
+
 	if ( tac >= 2 && *targv[ 0 ] == 'f' ) {
 	    dpath = decode( targv[ 1 ] );
 	    if ( !network ) {
