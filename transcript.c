@@ -98,14 +98,14 @@ t_parse( struct transcript *tran )
 	break;
 
     case 'l':				    /* link */
-	if ( ac != 4 ) {
+    case 'h':				    /* hard */
+	if ( ac != 3 ) {
 	    fprintf( stderr, "Incorrect number of arguments in transcript\n" );
 	    exit( 1 );
 	}
-	tran->t_info.i_stat.st_mode = strtol( argv[ 1 ], NULL, 8 );
-	buf = decode( argv[ 2 ] );
+	buf = decode( argv[ 1 ] );
 	strcpy( tran->t_info.i_link, buf );
-	buf = decode( argv[ 3 ] );
+	buf = decode( argv[ 2 ] );
 	strcpy( tran->t_info.i_name, buf );
 	break;
 
@@ -219,9 +219,9 @@ t_print( struct info *fs, struct transcript *tran, FILE *outtran, int change )
 		(int)cur->i_stat.st_uid, (int)cur->i_stat.st_gid, buf );
 	break;
     case 'l':
+    case 'h':
 	link = encode( cur->i_link );
-	fprintf( outtran, "l %4lo %s", 
-	(unsigned long )( T_MODE & cur->i_stat.st_mode ), link );
+	fprintf( outtran, "%c %s", cur->i_type, link );
 	buf = encode( cur->i_name );
 	fprintf( outtran, " %s\n", buf );
 	break;
@@ -325,9 +325,9 @@ t_compare( struct info *cur, struct transcript *tran, FILE *outtran )
         break;
 
     case 'l':			    /* link */
-        if ((( strcmp( cur->i_link, tran->t_info.i_link )) != 0 )  ||
-		( mode != tran_mode )) {
-			t_print( cur, tran, outtran, T_MOVE_BOTH );
+    case 'h':			    /* hard */
+        if ( strcmp( cur->i_link, tran->t_info.i_link ) != 0 ) {
+	    t_print( cur, tran, outtran, T_MOVE_BOTH );
 	} 
 	break;
     case 'c':
@@ -366,6 +366,7 @@ transcript( struct info *new, char *name, FILE *outtran )
     int			move;
     int 		count;
     char		buf[ MAXPATHLEN ];
+    char		*path;
     int			ret;
     int			comp;
     int			type;
@@ -374,11 +375,19 @@ transcript( struct info *new, char *name, FILE *outtran )
 
     if ( lstat( name, &new->i_stat ) != 0 ) {
 	perror( name );
-	exit( 1 );
+	return( 0 );
     }
 
     type = ( S_IFMT & new->i_stat.st_mode );
     new->i_type = t_convert( type );
+
+    /* if it's multiply referenced, check if it's a hardlink */
+    if ( !S_ISDIR( new->i_stat.st_mode ) &&
+	    ( new->i_stat.st_nlink > 1 ) &&
+	    (( path = hardlink( new )) != NULL )) {
+	new->i_type = 'h';
+	strcpy( new->i_link, path );
+    }
 
     /* check to see if a link, then read it in */
     if ( S_ISLNK( new->i_stat.st_mode )) {
