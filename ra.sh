@@ -109,7 +109,7 @@ update)
 	    fi
 	;;
 
-    *)	clean up
+    *)	cleanup
     	exit $?
 	;;
     esac
@@ -233,7 +233,7 @@ auto)
     ktcheck ${AUTHLEVEL} ${SERVER} -q -c sha1
     if [ $? -eq 1 ]; then
 	while true; do
-	    fsdiff -A ${CHECKSUM} -o ${FTMP} .
+	    fsdiff -A ${CHECKSUM} -o ${FTMP}
 	    if [ $? -ne 0 ]; then
 		echo Auto failure: `hostname`: fsdiff
 		cleanup
