@@ -176,6 +176,10 @@ main( int argc, char **argv )
 	    }
             goto done;
         }
+	if ( tac == 1 ) {
+	    fprintf( stderr, "line %d: invalid transcript line\n", linenum );
+	    exit( 2 );
+	}
 
 	if ( *targv[ 0 ] == '-' ) {
 	    remove = 1;
