@@ -15,6 +15,7 @@
 #include "code.h"
 #include "pathcmp.h"
 #include "update.h"
+#include "applefile.h"
 
 int apply( FILE *f, char *parent, SNET *sn );
 void output( char *string);
@@ -287,7 +288,12 @@ filechecklist:
 		}
 	    }
 
-	    if ( retr( sn, pathdesc, path, NULL, chksum_b64,
+	    if ( *targv[ 0 ] == 'a' ) {
+		if ( retr_applefile( sn, pathdesc, path, NULL,
+			chksum_b64, temppath, linenum ) != 0 ) {
+		    return( 1 );
+		}
+	    } else if ( retr( sn, pathdesc, path, NULL, chksum_b64,
 		    (char *)&temppath ) != 0 ) {
 		return( 1 );
 	    }
@@ -303,9 +309,11 @@ filechecklist:
 		perror( "update" );
 		return( 1 );
 	    }
-#ifdef __APPLE__
-	    // Convert apple single -> apple file here
-#endif __APPLE__
+	    
+	    /*
+	     * rename doesn't mangle meta-data on HFS+, no need
+	     * to change this around for HFS+ formatted Darwin volumes
+	     */
 	    if ( rename( temppath, path ) != 0 ) {
 		perror( temppath );
 		return( 1 );
