@@ -134,7 +134,8 @@ tls_client_start( SNET *sn, char *host, int authlevel )
 	NID_commonName, buf, sizeof( buf ));
     X509_free( peer );
     if ( strcmp( buf, host )) {
-	fprintf( stderr, "%s: invalid server CN\n", buf );
+	fprintf( stderr, "Server's name doesn't match supplied hostname\n"
+		"%s != %s\n", buf, host );
 	return( -1 );
     }
 
