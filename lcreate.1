@@ -4,22 +4,10 @@
 \-  upload transcripts and their corresponding files
 .SH SYNOPSIS
 .B lcreate
+.RB [ \-nNTV ]
 [
-.B -n
-]
-[
-.B -N
-]
-[
-.B -T
-]
-[
-.B -v
-]
-[
-.B -V
-] 
-[
+.RB \-q\ |\ \-v
+] [
 .BI \-h\  host
 ] [
 .BI \-p\  port
@@ -59,13 +47,16 @@ uploads a
 .B negative
 transcript then uploads all corresponding files as zero length.
 .TP 19
+.B \-q
+suppress all messages.
+.TP 19
 .B \-T
 uploads the transcript only, and
 .B not
 the corresponding files.
 .TP 19
 .B \-v
-displays the protocol exchange with the radmind server.
+displays communication with the radmind server.
 .TP 19
 .B \-V
 displays the version of lcreate and exits.

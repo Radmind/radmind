@@ -5,8 +5,10 @@
 \- modify file system to match appliable-transcript 
 .SH SYNOPSIS
 .B lapply
-.RB [ \-nvV ]
+.RB [ \-nV ]
 [
+.RB \-q\ |\ \-v
+] [
 .BI \-c\  checksum
 ] [
 .BI \-h\  host
@@ -48,8 +50,11 @@ will use the standard input for reading.
 no network connection will be made, causing only file system removals and
 updates to be applied.
 .TP 19
+.B \-q
+suppress all messages.
+.TP 19
 .B \-v
-displays communication with the radmind server and update information.
+displays communication with the radmind server.
 .TP 19
 .B \-V
 displays the version of lapply and exits. 

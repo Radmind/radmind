@@ -4,8 +4,10 @@
 \- verify and download command file and transcripts
 .SH SYNOPSIS
 .B ktcheck 
-.RB [ \-nvV ]
+.RB [ \-nV ]
 [
+.RB \-q\ |\ \-v
+] [
 .BI \-c\  checksum 
 ] [
 .BI \-K\  command-file 
@@ -64,8 +66,11 @@ specifies a port, by default 6662.
 .B \-n
 no files are created or downloaded.
 .TP 19
+.B \-q
+suppress all messages.
+.TP 19
 .B \-v
-displays verification information to the standard output.
+displays communication with the radmind server.
 .TP 19
 .B \-V
 displays the version of ktcheck and exits.
