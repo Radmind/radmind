@@ -1,3 +1,10 @@
+0.7.2
+    Removed -Wconversion as a compiler option
+    Corrected spelling mistakes in Readme.rtf
+    Verbose is now the default for lcksum
+    Added work around to support broken mkdir on OS X in lmerge.
+    Continue in lmerge if dir is gone rather then exit.
+
 0.7.1
     Added fsdiff support for '-' ('+' is ignored) in overloads.
     Changed options to command line tools.
@@ -13,3 +20,12 @@
     Changed the names of the default Mac OS X negative file.
     Changed the umask that the server runs under on Mac OS X so that
     The Finder will not update, e.g. .DS_Store files.
+
+0.6.1
+    Updated example negative transcript to match tutorial.
+    Added support for IP's in config file.
+    In lcksum, if checksum is updated, use mtime from server.
+    Moved to autoconf
+
+0.6.0
+    Initial release
