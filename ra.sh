@@ -21,10 +21,15 @@
 
 SERVER="-h _RADMIND_HOST"
 AUTHLEVEL="-w _RADMIND_AUTHLEVEL"
-EDITOR="vi"
+EDITOR=${EDITOR:-vi}
 
 PATH=/usr/local/bin:/usr/bin:/bin; export PATH
 RETRY=10
+
+TEMPFILES=FALSE
+TMPDIR="/tmp/.ra.$$"
+LTMP="${TMPDIR}/lapply.out"
+FTMP="${TMPDIR}/fsdiff.out"
 
 Yn() {
     echo -n "$*" "[Yn] "
@@ -36,16 +41,25 @@ Yn() {
 }
 
 usage() {
-    echo "Usage:	$0 [ -c | -h server | -w authlevel ] { trip | update | create | auto }" >&2
+    echo "Usage:	$0 [ -ct | -h server | -w authlevel ] { trip | update | create | auto }" >&2
     exit 1
 }
 
-while getopts ch:w: opt; do
+cleanup() {
+    if [ "$TEMPFILES" = FALSE ]; then
+	rm -fr $TMPDIR
+    fi
+}
+
+while getopts ch:tw: opt; do
     case $opt in
     c)	CHECKSUM="-csha1"
 	;;
 
     h)	SERVER="-h $OPTARG"
+    	;;
+
+    t)	TEMPFILES="TRUE"
     	;;
 
     w)	AUTHLEVEL="-w $OPTARG"
@@ -58,10 +72,24 @@ done
 shift `expr $OPTIND - 1`
 
 if [ $# -ne 1 ]; then
-	usage;
+	usage
 fi
 
 cd /
+
+if ! mkdir -m 700 ${TMPDIR} ; then
+    echo "Cannot create temporary directory $TMPDIR"
+    exit 1
+fi
+
+# http://www.opengroup.org/onlinepubs/009695399/basedefs/signal.h.html
+# The following signals shall be supported on all implementations:
+# unknown: SIGPOLL 
+trap cleanup SIGABRT SIGALRM SIGBUS SIGCHLD SIGCONT SIGFPE \
+	     SIGHUP SIGILL SIGINT SIGKILL SIGPIPE \
+	     SIGPROF SIGQUIT SIGSEGV SIGSTOP SIGSYS SIGTERM \
+	     SIGTRAP SIGTSTP SIGTTIN SIGTTOU SIGURG SIGUSR1 \
+	     SIGUSR2 SIGVTALRM SIGXCPU SIGXFSZ 
 
 case "$1" in
 update)
@@ -75,40 +103,44 @@ update)
 		RC=$?
 		if [ $RC -ne 1 ]; then
 		    echo Nothing to update
+		    cleanup
 		    exit $RC
 		fi
 	    fi
 	;;
 
-    *) exit $?
+    *)	clean up
+    	exit $?
 	;;
     esac
 
-    fsdiff -A -v ${CHECKSUM} -o /tmp/ra.fsdiff.$$ .
+    fsdiff -A -v ${CHECKSUM} -o ${FTMP} .
     if [ $? -ne 0 ]; then
+	cleanup
 	exit 1
     fi
 
-    if [ ! -s /tmp/ra.fsdiff.$$ ]; then
+    if [ ! -s ${FTMP} ]; then
 	echo Nothing to apply.
-	rm /tmp/ra.fsdiff.$$
+	cleanup
 	exit 1
     fi
     Yn "Edit difference transcript?"
     if [ $? -eq 1 ]; then
-	${EDITOR} /tmp/ra.fsdiff.$$
+	${EDITOR} ${FTMP}
     fi
     Yn "Apply difference transcript?"
     if [ $? -eq 1 ]; then
-	lapply ${AUTHLEVEL} ${SERVER} ${CHECKSUM} /tmp/ra.fsdiff.$$
+	lapply ${AUTHLEVEL} ${SERVER} ${CHECKSUM} ${FTMP}
 	case "$?" in
 	0)	;;
 
-	*)	exit $?
+	*)	cleanup
+		exit $?
 		;;
 	esac
     fi
-    rm /tmp/ra.fsdiff.$$
+    cleanup
     ;;
 
 create)
@@ -121,35 +153,39 @@ create)
 	    ktcheck ${AUTHLEVEL} ${SERVER} -c sha1
 	    rc = $?
 	    if [ $rc -ne 0 ]; then
+		cleanup
 		exit $rc
 	    fi
 	fi
 	;;
 
-    *)	exit $?
+    *)	cleanup
+   	exit $?
     	;;
     esac
-    fsdiff -C -v ${CHECKSUM} -o /tmp/ra.fsdiff.$$ .
+    fsdiff -C -v ${CHECKSUM} -o ${FTMP} .
     if [ $? -ne 0 ]; then
+	cleanup
 	exit 1;
     fi
-    if [ ! -s /tmp/ra.fsdiff.$$ ]; then
+    if [ ! -s ${FTMP} ]; then
 	echo Nothing to create.
-	rm /tmp/ra.fsdiff.$$
+	cleanup
 	exit 1
     fi
     Yn "Edit difference transcript?"
     if [ $? -eq 1 ]; then
-	${EDITOR} /tmp/ra.fsdiff.$$
+	${EDITOR} ${FTMP}
     fi
     Yn "Store difference transcript?"
     if [ $? -eq 1 ]; then
-	lcreate ${CHECKSUM} /tmp/ra.fsdiff.$$
+	lcreate ${CHECKSUM} ${FTMP}
 	if [ $? -ne 0 ]; then
-	    exit 1;
+	    cleanup
+	    exit 1
 	fi
     fi
-    rm /tmp/ra.fsdiff.$$
+    cleanup
     ;;
 
 trip)
@@ -161,30 +197,35 @@ trip)
 	echo Command file and/or transcripts are out of date.
 	;;
     *)
+	cleanup
 	exit $?
 	;;
     esac
 
-    fsdiff -C ${CHECKSUM} -o /tmp/ra.fsdiff.$$ .
+    fsdiff -C ${CHECKSUM} -o ${FTMP} .
     if [ $? -ne 0 ]; then
+	cleanup
 	exit 1
     fi
-    if [ -s /tmp/ra.fsdiff.$$ ]; then
+    if [ -s ${FTMP} ]; then
 	echo Trip failure: `hostname`
-	cat /tmp/ra.fsdiff.$$
+	cat ${FTMP}
+	cleanup
 	exit 0
     fi
     ;;
 
 auto)
-    fsdiff -C ${CHECKSUM} -o /tmp/ra.fsdiff.$$ .
+    fsdiff -C ${CHECKSUM} -o ${FTMP} .
     if [ $? -ne 0 ]; then
 	echo Auto failure: `hostname` fsdiff
+	cleanup
 	exit 1
     fi
-    if [ -s /tmp/ra.fsdiff.$$ ]; then
+    if [ -s ${FTMP} ]; then
 	echo Auto failure: `hostname` trip
-	cat /tmp/ra.fsdiff.$$
+	cat ${FTMP}
+	cleanup
 	exit 1
     fi
 
@@ -192,30 +233,31 @@ auto)
     ktcheck ${AUTHLEVEL} ${SERVER} -q -c sha1
     if [ $? -eq 1 ]; then
 	while true; do
-	    fsdiff -A ${CHECKSUM} -o /tmp/ra.fsdiff.$$
+	    fsdiff -A ${CHECKSUM} -o ${FTMP}
 	    if [ $? -ne 0 ]; then
 		echo Auto failure: `hostname`: fsdiff
+		cleanup
 		exit 1
 	    fi
-	    if [ -s /tmp/ra.fsdiff.$$ ]; then
-		lapply ${AUTHLEVEL} ${SERVER} -q ${CHECKSUM} /tmp/ra.fsdiff.$$ 2>&1 > /tmp/ra.lapply.$$
+	    if [ -s ${FTMP} ]; then
+		lapply ${AUTHLEVEL} ${SERVER} -q ${CHECKSUM} ${FTMP} 2>&1 > ${LTMP}
 		case $? in
 		0)
 		    echo Auto update: `hostname`
-		    cat /tmp/ra.fsdiff.$$
-		    rm /tmp/ra.fsdiff.$$
-		    rm /tmp/ra.lapply.$$
+		    cat ${FTMP}
+		    cleanup
 		    break
 		    ;;
 
 		*)
 		    if [ ${RETRY} -gt 10000 ]; then
 			echo Auto failure: `hostname`
-			cat /tmp/ra.lapply.$$
+			cat ${LTMP}
+			cleanup
 			exit 1
 		    fi
 		    echo Auto failure: `hostname` retrying
-		    cat /tmp/ra.lapply.$$
+		    cat ${LTMP}
 		    sleep ${RETRY}
 		    RETRY=${RETRY}0
 		    ktcheck ${AUTHLEVEL} ${SERVER} -q -c sha1
@@ -232,4 +274,5 @@ auto)
 
 esac
 
+cleanup
 exit 0
