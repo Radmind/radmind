@@ -30,9 +30,9 @@
 /*
  * for zeroconf, currently only available on Mac OS X
  */
-#ifdef __APPLE__
+#ifdef ZEROCONF
 #include <DNSServiceDiscovery/DNSServiceDiscovery.h>
-#endif /* __APPLE__ */
+#endif /* ZEROCONF */
 
 #include <snet.h>
 
@@ -102,7 +102,7 @@ chld( sig )
 /*
  * Callback with return value of zeroconf name registration attempt
  */
-#ifdef __APPLE__
+#ifdef ZEROCONF
     static void
 dnsreg_reply( DNSServiceRegistrationReplyErrorType rc, void *context )
 {
@@ -132,7 +132,7 @@ register_service( unsigned int port, DNSServiceRegistrationReply callback )
 
     return( dsdref );
 }
-#endif /* __APPLE__ */
+#endif /* ZEROCONF */
 
     int
 main( ac, av )
@@ -153,10 +153,10 @@ main( ac, av )
     char		*ca = "cert/ca.pem";
     char		*cert = "cert/cert.pem";
     char		*privatekey = "cert/cert.pem";
-#ifdef __APPLE__
+#ifdef ZEROCONF
     int			regservice = 0;
     dns_service_discovery_ref	mdnsref = NULL;
-#endif /* __APPLE */
+#endif /* ZEROCONF */
 
 
     if (( prog = strrchr( av[ 0 ], '/' )) == NULL ) {
@@ -196,10 +196,10 @@ main( ac, av )
 	    break;
 
 	case 'R' :		/* register as Rendezvous service */
-#ifdef __APPLE__
+#ifdef ZEROCONF
 	    regservice = 1;
 	    break;
-#endif /* __APPLE */
+#endif /* ZEROCONF */
 	    err++;
 	    break;
 
@@ -454,14 +454,14 @@ main( ac, av )
      * We have to wait till we've started 
      * listening for this registration to work.
      */
-#ifdef __APPLE__ 
+#ifdef ZEROCONF
     if ( regservice ) {
 	mdnsref = register_service( sin.sin_port, dnsreg_reply );
 	if ( ! mdnsref ) {
 	    syslog( LOG_ERR, "Failed to register as rendezvous service." );
 	}
     }
-#endif /* __APPLE__ */
+#endif /* ZEROCONF */
 
     /*
      * Begin accepting connections.
@@ -508,8 +508,8 @@ main( ac, av )
 	}
     }
     
-#ifdef __APPLE__
+#ifdef ZEROCONF
     if ( regservice ) 
 	DNSServiceDiscoveryDeallocate( mdnsref );
-#endif /* __APPLE__ */
+#endif /* ZEROCONF */
 }
