@@ -49,6 +49,7 @@ extern SSL_CTX  *ctx;
 #include "list.h"
 #include "wildcard.h"
 #include "largefile.h"
+#include "mkdirs.h"
 
 #ifdef sun
 #define MIN(a,b)	((a)<(b)?(a):(b))
@@ -87,7 +88,7 @@ char		*password = NULL;
 char		*remote_host = NULL;
 char		*remote_addr = NULL;
 char		*remote_cn = NULL;
-char		*special_dir = NULL;
+char		special_dir[ MAXPATHLEN ];
 char		command_file[ MAXPATHLEN ];
 char		upload_xscript[ MAXPATHLEN ];
 const EVP_MD    *md = NULL;
@@ -333,7 +334,7 @@ f_retr( sn, ac, av )
 	    return( 1 );
 	} 
 
-	sprintf( path, "special/%s/%s", special_dir, d_path );
+	sprintf( path, "%s/%s", special_dir, d_path );
 	break;
 
     case K_FILE:
@@ -509,7 +510,7 @@ f_stat( SNET *sn, int ac, char *av[] )
 	    return( 1 );
 	} 
 
-	sprintf( path, "special/%s/%s", special_dir, d_path);
+	sprintf( path, "%s/%s", special_dir, d_path);
 	break;
 
     default:
@@ -1016,7 +1017,7 @@ f_login( snet, ac, av )
 command_k( char *path_config )
 {
     SNET	*sn;
-    char	**av, *line;
+    char	**av, *line, *p;
     int		ac;
     int		linenum = 0;
 
@@ -1042,19 +1043,47 @@ command_k( char *path_config )
 	    continue;
 	}
 
+	if (( p = strrchr( av[ 1 ], '/' )) == NULL ) {
+	    sprintf( special_dir, "special" );
+	} else {
+	    *p = '\0';
+	    if ( snprintf( special_dir, MAXPATHLEN, "special/%s", av[ 1 ] )
+		    > MAXPATHLEN - 1 ) {
+		syslog( LOG_ERR, "config file: line %d: path too long\n",
+		    linenum );
+		continue;
+	    }
+	    *p = '/';
+	}
+
 	if (( remote_cn != NULL ) && wildcard( av[ 0 ], remote_cn )) {
 	    sprintf( command_file, "command/%s", av[ 1 ] );
-	    special_dir = remote_cn;
+	    if ( snprintf( special_dir, MAXPATHLEN, "%s/%s", special_dir,
+		    remote_cn ) > MAXPATHLEN - 1 ) {
+		syslog( LOG_ERR, "config file: line %d: special dir too long\n",
+		    linenum );
+		continue;
+	    }
 	    return( 0 );
 	}
 	if ( wildcard( av[ 0 ], remote_host )) {
 	    sprintf( command_file, "command/%s", av[ 1 ] );
-	    special_dir = remote_host;
+	    if ( snprintf( special_dir, MAXPATHLEN, "%s/%s", special_dir,
+		    remote_host ) > MAXPATHLEN - 1 ) {
+		syslog( LOG_ERR, "config file: line %d: special dir too long\n",
+		    linenum );
+		continue;
+	    }
 	    return( 0 );
 	} 
 	if ( wildcard( av[ 0 ], remote_addr )) {
 	    sprintf( command_file, "command/%s", av[ 1 ] );
-	    special_dir = remote_addr;
+	    if ( snprintf( special_dir, MAXPATHLEN, "%s/%s", special_dir,
+		    remote_addr ) > MAXPATHLEN - 1 ) {
+		syslog( LOG_ERR, "config file: line %d: special dir too long\n",
+		    linenum );
+		continue;
+	    }
 	    return( 0 );
 	} 
     }
