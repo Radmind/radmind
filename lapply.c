@@ -49,7 +49,7 @@ ischild( const char *parent, const char *child)
 	    return 0;
 	}
 	if( ( strncmp( parent, child, parentlen ) == 0 ) &&
-		child[ parentlen + 1 ] == '/' ) {
+		child[ parentlen ] == '/' ) {
 	    return 1;
 	} else {
 	    return 0;
@@ -77,14 +77,17 @@ apply( FILE *f, char *parent, SNET *sn )
     char		chksum_b64[ 29 ];
     int			tac, present, len;
     char		**targv;
-    char		*tempparent, *command = "", *tempcommand;
+    char		*command = "";
     char		fstype;
     struct stat		st;
+    ACAV		acav;
+
+    acav = acav_alloc( );
 
     while ( fgets( tline, MAXPATHLEN, f ) != NULL ) {
 	linenum++;
 
-	if ( verbose ) printf( "\n%d: %s", linenum, tline );
+	//if ( verbose ) printf( "\n%d: %s", linenum, tline );
 
 	len = strlen( tline );
         if (( tline[ len - 1 ] ) != '\n' ) {
@@ -92,42 +95,29 @@ apply( FILE *f, char *parent, SNET *sn )
 	    return( 1 );
 	}
 
-	tac = argcargv( tline, &targv );
-
-	/*
-	 * What if the next line in a recursive call has the command
-	 * file name?  We are going to lose this when we return.  Do
-	 * we make it global?
-	 */
+	tac = acav_parse( acav, tline, &targv );
 
 	if ( tac == 1 ) {
-	    strcpy( transcript, targv[ 0 ] );
+	    strcpy( transcript, acav->acv_argv[ 0 ] );
 	    len = strlen( transcript );
-	    if ( ( transcript[ len - 1 ] != ':' )
-		    || ( transcript[ len - 2 ] != 'T' )
-		    || ( transcript[ len - 3 ] != '.' ) ) {
+	    if ( transcript[ len - 1 ] != ':' ) { 
 		fprintf( stderr, "%s: invalid transcript name\n", transcript );
 		return( 1 );
 	    }
-	    transcript[ len - 1 ] = NULL;
-	    transcript[ len - 2 ] = NULL;
-	    transcript[ len - 3 ] = NULL;
+	    transcript[ len - 1 ] = '\0';
 	    if ( verbose ) printf( "Command file: %s\n", transcript );
 	    continue;
 	}
 
 	/* Get argument offset */
-	/*
-	 * Why can't I have:
-	 * ( *targv[ 0 ] == ( '+' || '-' ) );
-	 */
-	if ( ( *targv[ 0 ] ==  '+' ) || ( *targv[ 0 ] == '-' ) ) {
-	    command = targv[ 0 ];
-	    targv++;
+	if ( ( *(acav->acv_argv[ 0 ]) ==  '+' )
+		|| ( *(acav->acv_argv[ 0 ]) == '-' ) ) {
+	    command = acav->acv_argv[ 0 ];
+	    acav->acv_argv++;
 	    tac--;
 	}
 
-	strcpy( path, decode( targv[ 1 ] ) );
+	strcpy( path, decode( acav->acv_argv[ 1 ] ) );
 
 	/* Do type check on local file */
 	if ( lstat( path, &st ) ==  0 ) {
@@ -140,21 +130,14 @@ apply( FILE *f, char *parent, SNET *sn )
 	    return( 1 );
 	}
 
-	if ( *command == '-' || ( present && fstype != *targv[ 0 ] ) ) {
+	if ( *command == '-'
+		|| ( present && fstype != *(acav->acv_argv[ 0 ]) ) ) {
 	    if ( fstype == 'd' ) {
-
-		/* Save pointers */
-		tempparent = parent;
-		tempcommand = command;
 
 		/* Recurse */
 		if ( apply( f, path, sn ) != 0 ) {
 		    return( 1 );
 		}
-
-		/* Restore pointers */
-		parent = tempparent;
-		command = tempcommand;
 
 		/* Directory is now empty */
 		if ( rmdir( path ) != 0 ) {
@@ -178,34 +161,35 @@ apply( FILE *f, char *parent, SNET *sn )
 
 	/* DOWNLOAD */
 	if ( *command == '+' ) {
-	    strcpy( chksum_b64, targv[ 7 ] );
+	    strcpy( chksum_b64, acav->acv_argv[ 7 ] );
 
 	    if ( download( sn, transcript, path, chksum_b64 ) != 0 ) {
 		perror( "download" );
-		return( -1 );
+		return( 1 );
 	    }
 
 	    /* DO LSTAT ON NEW FILE */
 	    if ( lstat( path, &st ) !=  0 ) {
 		perror( "path" );
-		return ( -1 );
+		return( 1 );
 	    }
 	    fstype = t_convert ( (int)( S_IFMT & st.st_mode ) );
 	    present = 1;
 	}
 
 	/* UPDATE */
-	if ( update( path, present, st, tac, targv ) != 0 ) {
+	if ( update( path, present, st, tac, acav->acv_argv ) != 0 ) {
 	    perror( "update" );
 	    return( 1 );
 	}
 
 linedone:
 	if ( !ischild( parent, path ) ) {
-	    return( 0 );
+	    goto done;
 	}
     }
-    
+done:
+    acav_free( acav ); 
     return( 0 );
 }
 
