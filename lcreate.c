@@ -36,6 +36,54 @@ v_logger( char *line )
 }
 
     static int
+n_store_file( SNET *sn, char *filename, char *transcript )
+{
+    struct timeval	tv;
+    char		*line;
+
+    if ( snet_writef( sn,
+                "STOR FILE %s %s\r\n", transcript, filename ) == NULL ) {
+            perror( "snet_writef" );
+            return( -1 );
+    }
+
+    if ( verbose ) {
+	fprintf( stderr, ">>> STOR FILE %s %s\n", transcript, filename );
+    }
+
+    tv.tv_sec = 120;
+    tv.tv_usec = 0;
+    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
+        perror( "snet_getline_multi" );
+        return( -1 );
+    }
+    if ( *line != '3' ) {
+        fprintf( stderr, "%s\n", line );
+        return( -1 );
+    }
+
+    if ( snet_writef( sn, "0\r\n.\r\n" ) == NULL ) {
+        perror( "snet_writef" );
+        return( -1 );
+    }
+    if ( verbose ) fputs( ">>> 0\n\n>>> .\n", stderr );
+
+    tv.tv_sec = 120;
+    tv.tv_usec = 0;
+    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
+        perror( "snet_getline_multi" );
+        return( -1 );
+    }
+    if ( *line != '2' ) {
+        fprintf( stderr, "%s\n", line );
+        return( -1 );
+    }
+
+    return( 0 );
+
+}
+
+    static int
 store_file( int fd, SNET *sn, char *filename, char *transcript ) 
 {
     struct stat 	st;
@@ -122,7 +170,8 @@ store_file( int fd, SNET *sn, char *filename, char *transcript )
 main( int argc, char **argv )
 {
     int			i, s, c, err = 0, port = htons(6662), tac, fd, fdt;
-    int			network = 1, exitcode = 0, negative = 0, len, rc;
+    int			network = 1, exitcode = 0, len, rc;
+    int			negative = 0, tran_only = 0;
     extern int		optind;
     struct hostent	*he;
     struct servent	*se;
@@ -135,7 +184,7 @@ main( int argc, char **argv )
     extern char		*optarg;
     FILE		*fdiff; 
 
-    while (( c = getopt( argc, argv, "h:nNp:t:vV" )) != EOF ) {
+    while (( c = getopt( argc, argv, "h:nNp:t:TvV" )) != EOF ) {
 	switch( c ) {
 	case 'h':
 	    host = optarg; 
@@ -161,6 +210,11 @@ main( int argc, char **argv )
 	case 't':
 	    tname = optarg;
 	    break;
+
+	case 'T':
+	    tran_only = 1;
+	    break;
+
 	case 'v':
 	    verbose = 1;
 	    logger = v_logger;
@@ -178,7 +232,7 @@ main( int argc, char **argv )
     }
 
     if ( err || ( argc - optind != 1 ))   {
-	fprintf( stderr, "usage: lcreate [ -nvN ] " );
+	fprintf( stderr, "usage: lcreate [ -nNTvV ] " );
 	fprintf( stderr, "[ -h host ] [-p port ] [ -t stored-name ] ");
 	fprintf( stderr, "difference-transcript\n" );
 	exit( 1 );
@@ -261,7 +315,7 @@ main( int argc, char **argv )
 	    goto done;
 	}
 
-	if ( negative ) {	/* don't upload files */
+	if ( tran_only ) {	/* don't upload files */
 	    (void)close( fd );
 	    goto done;
 	}
@@ -287,12 +341,19 @@ main( int argc, char **argv )
 	    break;
 	}
 	tac = argcargv( tline, &targv );
-	if ( *targv[ 0 ] == 'f' && tac >= 2 ) {
+
+	if ( tac >= 2 && *targv[ 0 ] == 'f' ) {
 	    dpath = decode( targv[ 1 ] );
 	    if ( !network ) {
 		if ( access( dpath,  R_OK ) < 0 ) {
 		    perror( dpath );
 		    exitcode = 1;
+		}
+	    } else if ( negative ) {
+		if (( rc = n_store_file( sn, targv[ 1 ], tname )) != 0 ) {
+		    fprintf( stderr, "failed to store file %s\n", dpath );
+		    exitcode = 1;
+		    break;
 		}
 	    } else {
 		if (( fdt = open( dpath, O_RDONLY, 0 )) < 0 ) {
