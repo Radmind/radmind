@@ -1,7 +1,7 @@
 .TH radmind "8" "March 2002" "RSUG" "System Manager's Manual"
 .SH NAME
 .B radmind
-\- Starts the radmind daemon
+\- Remote administration daemon
 .SH SYNOPSIS
 .B radmind
 [
@@ -17,13 +17,13 @@
 ]
 .sp
 .SH DESCRIPTION
-Radmind uses the radmind access protocal to communicate with radmind
+Radmind uses the radmind access protocol to communicate with radmind
 clients.
 
 On startup, radmind changes directory to _PATH_RADMIND, creates
 _PATH_RADMIND/command, _PATH_RADMIND/file, _PATH_RADMIND/tmp,
 _PATH_RADMIND/tmp/file, _PATH_RADMIND/tmp/transcript and
-_PATH_RADMIND/transcript ( with permissions 02750 ) if they do not
+_PATH_RADMIND/transcript ( with permissions 0750 ) if they do not
 exist, and begins listening on the radmind port ( by default 6662 ) for
 incoming connections.  Radmind forks a child for each connection.
 
@@ -32,23 +32,19 @@ can connect to radmind, one per line.  Each line contains the fully
 qualified domain name and command file of the client.  Lines that are
 blank or begin with '#' are ignored.
 
-Radmind currently supports the following radmind access protocal
+Radmind currently supports the following radmind access protocol
 requests:
-.TP 9
-QUIT
-terminate session
-.TP 9
-NOOP
-do nothing
-.TP 9
-STAT
-return information on a transcript, command or special file
-.TP 9
-RETR
-retrieve a file
-.TP 9
-STOR
-store a file
+.sp
+.br
+QUIT     terminate session
+.br
+NOOP     do nothing
+.br
+STAT     stat a transcript, command or special file
+.br
+RETR     retrieve a file
+.br
+STOR     store a file
 .sp
 .SH OPTIONS
 .TP 19
@@ -58,6 +54,7 @@ debug mode. Does not disassociate from controlling tty.
 .B \-V
 displays the version of 
 .B  radmind
+and exits.
 .TP 19
 .BI \-b\  backlog
 Defines the maximum queue of pending connections to
@@ -66,7 +63,6 @@ by default five.
 .TP 19
 .BI \-p\  port 
 specifies the port of the radmind server, by default 6662.
-and exits.
 .TP 19
 .BI \-h\  host
 specifies the radmind server, by default _RADMIND_HOST. 
@@ -80,10 +76,10 @@ each using one of three different command files.
 #
 # Client               command file
 #
-amber.umich.edu        apple
-josh.umich.edu         apple
-ben.umich.edu          apple.test
-oreo.umich.edu         solaris.8
+amber.umich.edu        apple.K
+josh.umich.edu         apple.K
+ben.umich.edu          apple-test.K
+oreo.umich.edu         solaris8.K
 .fi
 .RE
 .LP
@@ -91,11 +87,7 @@ oreo.umich.edu         solaris.8
 .SH FILES
 _PATH_RADMIND/config
 .sp
-.SH EXIT STATUS 
-The following exit values are returned: What should go here?
-.sp
 .SH SEE ALSO
-.BR diff (1),
 .BR fsdiff (1),
 .BR ktcheck (1),
 .BR lapply (1),
