@@ -321,4 +321,5 @@ clean :
 distclean: clean
 	rm -f config.log config.status Makefile config.h
 	rm -rf autom4te.cache
+	rm -rf .#*
 	cd libsnet; make distclean

@@ -1,11 +1,6 @@
-./EXCLUDE
-./CVS
-./Makefile
-./OS_X/CVS
-./configure.ac
-./config.log
-./config.status
-./libsnet/CVS
-./libsnet/profiled/CVS
-./libsnet/Makefile
-./man/CVS
+EXCLUDE
+CVS
+Makefile
+configure.ac
+config.log
+config.status
