@@ -115,7 +115,7 @@ main( int ac, char **av )
 {
     struct sigaction	sa, osahup, osachld;
     struct sockaddr_in	sin;
-    struct in_addr	b_addr = { INADDR_ANY };
+    struct in_addr	b_addr;
     struct servent	*se;
     int			c, s, err = 0, fd, sinlen, trueint;
     int			dontrun = 0;
@@ -141,6 +141,8 @@ main( int ac, char **av )
     } else {
 	prog++;
     }
+
+     b_addr.s_addr = htonl( INADDR_ANY );
 
     while (( c = getopt( ac, av, "a:b:dD:L:m:p:Ru:UVw:x:y:z:" )) != EOF ) {
 	switch ( c ) {
