@@ -59,11 +59,9 @@ ischild( const char *parent, const char *child)
     int parentlen;
 
     if ( parent == NULL ) {
-	printf( "  in root?" );
 	return 1;
     } else {
 	parentlen = strlen( parent );
-	printf( "  %s a child of %s?", child, parent );
 	if( parentlen > strlen( child ) ) {
 	    return 0;
 	}
@@ -132,20 +130,18 @@ download( SNET *sn, char *transcript, char *path, char *chksum )
 
     size = atoi( line );
     printf( "<<< %i\n", size );
-    //printf( "<<< " );
+    printf( "<<< " );
 
     SHA1_Init( &sha_ctx );
 
     /* Get file from server */
     while ( size > 0 ) {
 	tv = timeout;
-	printf( "Min is %d\n",  MIN( sizeof( buf ), size ) );
 	if ( ( rr = snet_read( sn, buf, MIN( sizeof( buf ), size ),
 		&tv ) ) <= 0 ) {
 	    perror( "snet_read" );
 	    goto error;
 	}
-	printf( "rr: %d\n", rr ); 
 	SHA1_Update( &sha_ctx, buf, rr );
 	if ( write( fd, buf, (int)rr ) != rr ) {
 	    perror( temppath );
@@ -163,8 +159,6 @@ download( SNET *sn, char *transcript, char *path, char *chksum )
     }
     SHA1_Final( md, &sha_ctx );
     base64_e( md, sizeof( md ), mde );
-    printf( "chksum: %s\n", mde );
-    printf( "match to: %s\n", chksum );
     if ( ( strcmp( chksum, mde ) ) != 0  && strcmp( chksum, "-" ) !=0 ) {
 	perror( "Chksum failed" );
 	goto error;
@@ -216,16 +210,10 @@ apply( FILE *f, char *parent, SNET *sn )
     uid_t		uid;
     gid_t		gid;
 
-    if ( parent == NULL ) {
-	printf( "\nWorking in root\n" );
-    } else {
-	printf( "\nWorking in %s\n", parent );
-    }
-
     while ( fgets( tline, MAXPATHLEN, f ) != NULL ) {
 	linenum++;
 
-	printf( "%d: %s", linenum, tline );
+	//printf( "%d: %s", linenum, tline );
 
 	len = strlen( tline );
         if (( tline[ len - 1 ] ) != '\n' ) {
@@ -292,6 +280,27 @@ apply( FILE *f, char *parent, SNET *sn )
 		}
 	    }
 
+	    if ( !present && *command != '+' ) {
+		switch ( *targv[ 0 ] ) {
+		case 'd':
+		    mode = strtol( targv[ 2 ], (char**)NULL, 8 );
+		    if ( mkdir( path, mode ) != 0 ) {
+			perror( path );
+			return( 1 );
+		    }
+		    if ( lstat( path, &st ) != 0 ) {
+			perror( path );
+			return( 1 );
+		    }
+		    present = 1;
+		    printf( "    %s created\n", path );
+		    break;
+		default:
+		    perror( "Unkown create type" );
+		    return( 1 );
+		}
+	    }
+
 	    /* DOWNLOAD */
 	    if ( *command == '+' ) {
 		strcpy( chksum_b64, targv[ 7 ] );
@@ -313,13 +322,13 @@ apply( FILE *f, char *parent, SNET *sn )
 	    if ( present ) {
 
 		/* UPDATE */
-		printf( "Updating %s...", path );
 
 		switch ( *targv[ 0 ] ) {
 		case 'f':
 
 		    if ( tac != 8 ) {
-			fprintf( stderr, "%s: incorrect number of arguments\n", tline );
+			// IS THIS OKAY FOR ERROR
+			printf( "%s: incorrect number of arguments\n", tline );
 			return( 1 );
 		    }
 
@@ -333,12 +342,19 @@ apply( FILE *f, char *parent, SNET *sn )
 			    perror( path );
 			    return( 1 );
 			}
+			printf( "    Updating %s mode\n", path );
 		    }
 
 		    if( uid != st.st_uid  || gid != st.st_gid ) {
 			if ( lchown( path, uid, gid ) != 0 ) {
 			    perror( path );
 			    return( 1 );
+			}
+			if ( uid != st.st_uid ) {
+			    printf( "    Updating %s uid\n", path );
+			}
+			if ( gid != st.st_gid ) {
+			    printf( "    Updating %s gid\n", path );
 			}
 		    }
 
@@ -350,6 +366,7 @@ apply( FILE *f, char *parent, SNET *sn )
 			    perror( path );
 			    return( 1 );
 			}
+			printf( "    Updating %s time\n", path ); 
 		    }
 		    break;
 
@@ -363,21 +380,6 @@ apply( FILE *f, char *parent, SNET *sn )
 		    mode = strtol( targv[ 2 ], (char **)NULL, 8 );
 		    uid = atoi( targv[ 3 ] );
 		    gid = atoi( targv[ 4 ] );
-
-		    if ( !present ) {
-			if ( mkdir( path, mode ) != 0 ) {
-			    perror( path );
-			    return( 1 );
-			}
-
-			printf( "Created dir %s\n", path );
-
-			if ( lstat( path, &st ) !=  0 ) {
-			    perror( path );
-			    return( 1 );
-			}
-			present = 1;
-		    }
 
 		    /* check mode */
 		    if( mode != st.st_mode ) {
@@ -497,19 +499,13 @@ apply( FILE *f, char *parent, SNET *sn )
 
 	    /* check for child */
 
-	    printf( "Checking child..." );
-
 	    if ( ! ischild( parent, path ) ) {
-		printf( "  NO!\n" );
 		return( 0 );
 	    }
-	    printf( "  YES!\n" );
 	}
-
     }
 
     return( 0 );
-
 }
 
     int
