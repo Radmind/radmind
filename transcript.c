@@ -35,9 +35,8 @@ pathcmp( const char *p1, const char *p2 )
 		return( rc );
 	    }
 	}
-	p1++;
 	p2++;
-    } while ( *p1 != '\0' );
+    } while ( *p1++ != '\0' );
 
     return( 0 );
 }
@@ -517,8 +516,13 @@ transcript_init(  char *cmd )
     extern int	edit_path;
     FILE	*fp;
 
+    /*
+     * Make sure that there's always a transcript to read, so other code
+     * doesn't have to check it.
+     */
+    t_new( T_NULL, NULL );
+
     if ( skip ) {
-	t_new( T_NULL, NULL );
 	return;
     }
 
@@ -527,7 +531,6 @@ transcript_init(  char *cmd )
 	    perror( cmd );
 	    exit( 1 );
 	}
-	t_new( T_NULL, NULL );
 	return;
     }
 
