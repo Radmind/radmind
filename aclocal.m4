@@ -42,14 +42,18 @@ AC_DEFUN([CHECK_PAM],
     done
     if test x_$found_pam != x_yes; then
 	HAVE_PAM=no
-	AC_MSG_ERROR(cannot find pam headers)
+	PAMLIBS=;
+	AC_SUBST(PAMLIBS)
+	AC_MSG_RESULT(no)
     else
 	PAMDEFS=-DPAM;
 	AC_SUBST(PAMDEFS)
+	PAMLIBS=-lpam;
+	AC_SUBST(PAMLIBS)
 	HAVE_PAM=yes
+	AC_SUBST(HAVE_PAM)
+	AC_MSG_RESULT(yes)
     fi
-    AC_SUBST(HAVE_PAM)
-    AC_MSG_RESULT(yes)
 ])
 
 AC_DEFUN([CHECK_SSL],

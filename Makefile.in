@@ -122,7 +122,7 @@ tls.o : tls.c
 		-c tls.c
 
 radmind : libsnet/libsnet.la ${RADMIND_OBJ} Makefile
-	${CC} ${CFLAGS} -o radmind ${RADMIND_OBJ} ${LDFLAGS} -lpam
+	${CC} ${CFLAGS} -o radmind ${RADMIND_OBJ} ${LDFLAGS} @PAMLIBS@ 
 
 fsdiff : ${FSDIFF_OBJ}
 	${CC} -o fsdiff ${FSDIFF_OBJ} ${LDFLAGS}

@@ -2333,17 +2333,20 @@ fi;
     done
     if test x_$found_pam != x_yes; then
 	HAVE_PAM=no
-	{ { echo "$as_me:$LINENO: error: cannot find pam headers" >&5
-echo "$as_me: error: cannot find pam headers" >&2;}
-   { (exit 1); exit 1; }; }
+	PAMLIBS=;
+
+	echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
     else
 	PAMDEFS=-DPAM;
 
-	HAVE_PAM=yes
-    fi
+	PAMLIBS=-lpam;
 
-    echo "$as_me:$LINENO: result: yes" >&5
+	HAVE_PAM=yes
+
+	echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
+    fi
 
 
 # Miscellaneous:
@@ -2952,6 +2955,7 @@ s,@INSTALL_SCRIPT@,$INSTALL_SCRIPT,;t t
 s,@INSTALL_DATA@,$INSTALL_DATA,;t t
 s,@TLSDEFS@,$TLSDEFS,;t t
 s,@HAVE_SSL@,$HAVE_SSL,;t t
+s,@PAMLIBS@,$PAMLIBS,;t t
 s,@PAMDEFS@,$PAMDEFS,;t t
 s,@HAVE_PAM@,$HAVE_PAM,;t t
 s,@OPTOPTS@,$OPTOPTS,;t t
