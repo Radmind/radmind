@@ -87,7 +87,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *location, char *chksumval )
 	goto error;
     }
     size = atoi( line );
-    if ( verbose ) printf( "<<< " );
+    if ( verbose ) printf( "<<< %d\n<<< ", size );
 
     /* Get file from server */
     while ( size > 0 ) {
@@ -119,11 +119,10 @@ retr( SNET *sn, char *pathdesc, char *path, char *location, char *chksumval )
 	fprintf( stderr, "%s", line );
 	goto error;
     }
+    if ( verbose ) printf( "<<< .\n" );
 
     /* Chksum file */
     if ( chksum ) {
-	if ( verbose ) printf( "*** chksum " );
-
 	if ( lseek( fd, 0, SEEK_SET ) != 0 ) {
 	    perror( "lseek" );
 	    goto error;
@@ -138,7 +137,6 @@ retr( SNET *sn, char *pathdesc, char *path, char *location, char *chksumval )
 	    fprintf( stderr, " mismatch" );
 	    goto error;
 	}
-	if ( verbose ) printf( "match\n" );
     }
     if ( close( fd ) != 0 ) {
 	perror( path );

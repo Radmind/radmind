@@ -98,8 +98,6 @@ createspecial( SNET *sn, struct node *head )
 	exit( 2 );
     }
 
-    if ( verbose ) printf( "\n*** Creating %s/special.T\n", commandpath );
-
     if ( ( fd = open( fullpath, O_WRONLY | O_CREAT | O_TRUNC, 0666 ) )
 	    < 0 ) {
 	perror( fullpath );
@@ -112,8 +110,6 @@ createspecial( SNET *sn, struct node *head )
 
     do {
 	sprintf( pathdesc, "SPECIAL %s", head->path);
-
-	if ( verbose ) printf( "\n*** Statting %s\n", head->path );
 
 	if ( ( stats = getstat( sn, (char *)&pathdesc) ) == NULL ) {
 	    return( 1 );
@@ -159,8 +155,6 @@ check( SNET *sn, char *type, char *path)
     char        cchksum[ 29 ];
     int		tac;
 
-    if ( verbose ) printf( "\n" );
-
     if ( path != NULL ) {
 	sprintf( pathdesc, "%s %s", type, path);
     } else {
@@ -176,8 +170,6 @@ check( SNET *sn, char *type, char *path)
 	exit( 2 );
     }
     sprintf( fullpath, "%s/%s", commandpath, path );
-
-    if ( verbose ) printf( "*** Statting %s\n", fullpath );
 
     if ( ( stats = getstat( sn, (char *)&pathdesc) ) == NULL ) {
 	return( 2 );
@@ -201,8 +193,6 @@ check( SNET *sn, char *type, char *path)
 	    return( 2 );
 	}
 	if ( update ) {
-	    if ( verbose ) printf( "*** Retrieving missing file: %s\n",
-		    fullpath ); 
 	    if ( ( temppath = retr( sn, pathdesc, fullpath, NULL, schksum ) )
 		    == NULL ) {
 		fprintf( stderr, "retr failed\n" );
@@ -216,17 +206,12 @@ check( SNET *sn, char *type, char *path)
 	return( 1 );
     }
 
-    if ( verbose ) printf( "*** chksum " );
-
     if ( strcmp( schksum, cchksum) != 0 ) {
-	if ( verbose ) printf( "wrong on %s\n", fullpath );
 	if ( update ) {
 	    if ( unlink( fullpath ) != 0 ) {
 		perror( fullpath );
 		return( 2 );
 	    }
-	    if ( verbose ) printf( "*** %s deleted\n", fullpath );
-	    if ( verbose ) printf( "*** Retrieving %s\n", fullpath ); 
 	    if ( ( temppath = retr( sn, pathdesc, fullpath, NULL, schksum ) )
 		    == NULL ) {
 		fprintf( stderr, "retr failed\n" );
@@ -239,7 +224,6 @@ check( SNET *sn, char *type, char *path)
 	}
 	return( 1 );
     } else {
-	if ( verbose ) printf( "match\n" );
 	return( 0 );
     }
 
@@ -402,7 +386,6 @@ main( int argc, char **argv )
 	    }
 	    break;
 	case 2:
-	    perror( "check" );
 	    exit( 2 );
 	}
     }
@@ -438,7 +421,6 @@ main( int argc, char **argv )
 		fprintf( stderr, "rename failed: %s %s\n", temppath, path );
 		exit( 2 );
 	    }
-	    if ( verbose ) printf( "*** %s/special.T created\n", commandpath );
 	    change++;
 	} else {
 	    /* get file sizes */
@@ -459,7 +441,6 @@ main( int argc, char **argv )
 		    fprintf( stderr, "rename failed: %s %s\n", temppath, path );
 		    exit( 2 );
 		}
-		if ( verbose ) printf( "*** %s updated\n", path );
 		change++;
 	    } else {
 
@@ -468,12 +449,10 @@ main( int argc, char **argv )
 		    perror( temppath );
 		    exit( 2 );
 		}
-		if ( verbose ) printf( "*** %s not modified\n", path );
 	    }
 	}
     }
 
-    if ( verbose ) printf( "\n" );
     if ( ( closesn( sn ) ) !=0 ) {
 	fprintf( stderr, "can not close sn\n" );
 	exit( 2 );
@@ -481,16 +460,8 @@ main( int argc, char **argv )
 
 done:
     if ( change ) {
-	if ( verbose ) {
-	    if ( !update ) {
-		printf( "*** update needed\n" );
-	    } else {
-		printf( "*** update made\n" );
-	    }
-	}
 	exit( 1 );
     } else {
-	if ( verbose ) printf( "*** no changes needed\n" ); 
 	exit( 0 );
     }
 }
