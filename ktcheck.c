@@ -22,6 +22,8 @@
 #include "list.h"
 #include "connect.h"
 
+#define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
+
 void output( char* string);
 int check( SNET *sn, char *type, char *path); 
 int createspecial( SNET *sn, struct node *head );
@@ -33,6 +35,40 @@ int		chksum = 1;
 int		verbose = 0;
 int		update = 1;
 char		*command = "command.K";
+
+    char * 
+getstat( SNET *sn, char *description ) 
+{
+    struct timeval      tv;
+    char 		*line;
+
+    if( snet_writef( sn, "STAT %s\n", description ) == NULL ) {
+	perror( "snet_writef" );
+	return( NULL );
+    }
+
+    if ( verbose ) printf( ">>> STAT %s\n", description );
+
+    tv = timeout;
+    if ( ( line = snet_getline_multi( sn, logger, &tv ) ) == NULL ) {
+	perror( "snet_getline_multi" );
+	return( NULL );
+    }
+    if ( *line != '2' ) {
+	fprintf( stderr, "%s\n",  line );
+	return( NULL );
+    }
+
+    tv = timeout;
+    if ( ( line = snet_getline( sn, &tv ) ) == NULL ) {
+	perror( "snet_getline 1" );
+	return( NULL );
+    }
+
+    if ( verbose ) printf( "<<< %s\n", line );
+
+    return ( line );
+}
 
     void
 output( char *string )
@@ -149,7 +185,7 @@ check( SNET *sn, char *type, char *path)
 	if ( update ) {
 	    if ( verbose ) printf( "*** Downloading missing file: %s\n",
 		    path ); 
-	    if ( download( sn, pathdesc, path, schksum ) != 0 ) {
+	    if ( get( sn, pathdesc, path, schksum ) != 0 ) {
 		perror( "download" );
 		return( 2 );
 	    }
@@ -168,7 +204,7 @@ check( SNET *sn, char *type, char *path)
 	    }
 	    if ( verbose ) printf( "*** %s deleted\n", path );
 	    if ( verbose ) printf( "*** Downloading %s\n", path ); 
-	    if ( download( sn, pathdesc, path, schksum ) != 0 ) {
+	    if ( get( sn, pathdesc, path, schksum ) != 0 ) {
 		perror( "download" );
 		return( 2 );
 	    }
