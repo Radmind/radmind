@@ -12,7 +12,7 @@
 
 #ifdef sun
 #define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
-#endif
+#endif sun
 
 extern void            (*logger)( char * );
 extern struct timeval  	timeout;
