@@ -1,5 +1,5 @@
 0.8.0
-    Fixed broken 'make install' on OS X.
+    Fixed broken 'make install'.
     Cleaned up example negative transcript.
     Added wild card support for hosts in config file.
     Added support for directory finder information.
