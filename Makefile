@@ -11,7 +11,7 @@ TRANSCRIPTDIR=${VARDIR}/transcript
 
 # For client
 COMMANDFILE=${VARDIR}/client/command.K
-GNU_DIFF=/usr/local/gnu/bin/diff
+GNU_DIFF=/usr/bin/diff
 RADMIND_HOST=radmind
 
 RADMINDSYSLOG=LOG_LOCAL7
@@ -177,26 +177,35 @@ install	: all
 	    ${INSTALL} -m 0644 -c $$i ${MANDIR}/man1/; \
 	done
 
-STARTUPDIR=/Library/StartupItems/RadmindServer
+STARTUPITEMSDIR=/Library/StartupItems
+STARTUPDIR=${STARTUPITEMSDIR}/RadmindServer
+PACKAGEDIR=${DISTDIR}/package
 
 package : all
-	-mkdir -p ${DISTDIR}${SBINDIR}
-	${INSTALL} -m 0555 -c radmind ${DISTDIR}${SBINDIR}/
-	-mkdir -p ${DISTDIR}${BINDIR}
+	mkdir -p -m 0755 ${PACKAGEDIR}${SBINDIR}
+	${INSTALL} -o root -g wheel -m 0555 -c radmind ${PACKAGEDIR}${SBINDIR}
+	mkdir -p -m 0755 ${PACKAGEDIR}${BINDIR}
 	for i in ${BINTARGETS}; do \
-	    ${INSTALL} -m 0555 -c $$i ${DISTDIR}${BINDIR}/; \
+	    ${INSTALL} -o root -g wheel -m 0555 -c $$i ${PACKAGEDIR}${BINDIR}/; \
 	done
-	-mkdir -p ${DISTDIR}${MANDIR}/man1   
+	mkdir -p -m 0755 ${PACKAGEDIR}${MANDIR}/man1   
 	for i in ${MAN1TARGETS}; do \
-	    ${INSTALL} -m 0444 -c $$i ${DISTDIR}${MANDIR}/man1/; \
+	    ${INSTALL} -o root -g wheel -m 0444 -c $$i \
+		${PACKAGEDIR}${MANDIR}/man1/; \
 	done 
-	-mkdir -p ${DISTDIR}${VARDIR}/client
-	${INSTALL} -m 0755 -c OS_X/command.K ${DISTDIR}${VARDIR}/client
-	-mkdir -p ${DISTDIR}${STARTUPDIR}
-	${INSTALL} -m 0755 -c OS_X/RadmindServer ${DISTDIR}${STARTUPDIR}
-	${INSTALL} -m 0644 -c OS_X/StartupParameters.plist \
-	    ${DISTDIR}${STARTUPDIR};
-	package ${DISTDIR} OS_X/radmind.info -d .. 
+	mkdir -p -m 0755 ${PACKAGEDIR}${VARDIR}/client
+	${INSTALL} -o root -g staff -m 0755 -c OS_X/command.K \
+	    ${PACKAGEDIR}${VARDIR}/client
+	mkdir -p -m 0775 ${PACKAGEDIR}${STARTUPITEMSDIR}
+	mkdir -m 0755 ${PACKAGEDIR}${STARTUPDIR}
+	${INSTALL} -o root -g wheel -m 0755 -c OS_X/RadmindServer \
+	    ${PACKAGEDIR}${STARTUPDIR}
+	${INSTALL} -o root -g wheel -m 0644 -c OS_X/StartupParameters.plist \
+	    ${PACKAGEDIR}${STARTUPDIR};
+	chown root:wheel ${DISTDIR}
+	find ${DISTDIR}/* -exec chown root:wheel {} \;
+	package ${PACKAGEDIR} OS_X/radmind.info -d .. 
+	chown root:wheel ../radmind.pkg
 	cd ..; tar zvcf radmind.pkg.tgz radmind.pkg/*
 
 clean :

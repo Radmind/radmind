@@ -1,11 +1,16 @@
-Title                Radmind
-Version              0.6.0
-Description          Remote Administration Tools
+Title                	Radmind for Mac OS X
+Version              	0.6.0
+Description          	This package installs radmind for Mac OS X
 
-DefaultLocation      /
-Relocatable          NO
+DefaultLocation      	/
+Relocatable          	NO
 
-NeedsAuthorization   YES
-Application          NO
-InstallOnly          NO
-DisableStop          NO
+NeedsAuthorization   	YES
+Application          	NO
+InstallOnly          	NO
+DisableStop         	NO
+rootVolumeOnly		YES
+RequiresReboot 		NO
+UseUserMask 		YES
+OverwritePermissions 	NO
+InstallFat 		NO

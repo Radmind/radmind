@@ -21,7 +21,7 @@ extern int linenum;
 
     int
 update( const char *path, char *displaypath, int present, int newfile,
-    struct stat st, int tac, char **targv )
+    struct stat *st, int tac, char **targv )
 {
     mode_t              mode;
     struct utimbuf      times;
@@ -48,29 +48,29 @@ update( const char *path, char *displaypath, int present, int newfile,
 		printf( "%s: updating", displaypath );
 	    }
 	}
-	if( mode != st.st_mode ) {
+	if( mode != st->st_mode ) {
 	    if ( chmod( path, mode ) != 0 ) {
 		perror( path );
 		return( 1 );
 	    }
 	    if ( !quiet ) printf( " mode" );
 	}
-	if( uid != st.st_uid  || gid != st.st_gid ) {
+	if( uid != st->st_uid  || gid != st->st_gid ) {
 	    if ( chown( path, uid, gid ) != 0 ) {
 		perror( path );
 		return( 1 );
 	    }
-	    if ( uid != st.st_uid ) {
+	    if ( uid != st->st_uid ) {
 		if ( !quiet ) printf( " uid" );
 	    }
-	    if ( gid != st.st_gid ) {
+	    if ( gid != st->st_gid ) {
 		if ( !quiet ) printf( " gid" );
 	    }
 	}
 
-	if( times.modtime != st.st_mtime ) {
+	if( times.modtime != st->st_mtime ) {
 	    
-	    times.actime = st.st_atime;
+	    times.actime = st->st_atime;
 	    if ( utime( path, &times ) != 0 ) {
 		perror( path );
 		return( 1 );
@@ -98,7 +98,7 @@ update( const char *path, char *displaypath, int present, int newfile,
 		return( 1 );
 	    }
 	    newfile = 1;
-	    if ( lstat( path, &st ) != 0 ) {
+	    if ( lstat( path, st ) != 0 ) {
 		perror( path );
 		return( 1 );
 	    }
@@ -113,7 +113,7 @@ update( const char *path, char *displaypath, int present, int newfile,
 		printf( "%s: updating", displaypath );
 	    }
 	}
-	if( mode != st.st_mode ) {
+	if( mode != st->st_mode ) {
 	    if ( chmod( path, mode ) != 0 ) {
 		perror( path );
 		return( 1 );
@@ -122,15 +122,15 @@ update( const char *path, char *displaypath, int present, int newfile,
 	}
 
 	/* check uid & gid */
-	if( uid != st.st_uid  || gid != st.st_gid ) {
+	if( uid != st->st_uid  || gid != st->st_gid ) {
 	    if ( chown( path, uid, gid ) != 0 ) {
 		perror( path );
 		return( 1 );
 	    }
-	    if ( uid != st.st_uid ) {
+	    if ( uid != st->st_uid ) {
 		if ( !quiet ) printf( " uid" );
 	    }
-	    if ( gid != st.st_gid ) {
+	    if ( gid != st->st_gid ) {
 		if ( !quiet ) printf( " gid" );
 	    }
 	}
@@ -186,7 +186,7 @@ update( const char *path, char *displaypath, int present, int newfile,
 		perror( path );
 		return( 1 );
 	    }
-	    if ( lstat( path, &st ) != 0 ) {
+	    if ( lstat( path, st ) != 0 ) {
 		perror( path );
 		return( 1 );
 	    }
@@ -201,7 +201,7 @@ update( const char *path, char *displaypath, int present, int newfile,
 		printf( "%s: updating", displaypath );
 	    }
 	}
-	if( mode != st.st_mode ) {
+	if( mode != st->st_mode ) {
 	    if ( chmod( path, mode ) != 0 ) {
 		perror( path );
 		return( 1 );
@@ -209,15 +209,15 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    if ( !quiet ) printf( " mode" );
 	}
 	/* check uid & gid */
-	if( uid != st.st_uid  || gid != st.st_gid ) {
+	if( uid != st->st_uid  || gid != st->st_gid ) {
 	    if ( chown( path, uid, gid ) != 0 ) {
 		perror( path );
 		return( 1 );
 	    }
-	    if ( uid != st.st_uid ) {
+	    if ( uid != st->st_uid ) {
 		if ( !quiet ) printf( " uid" );
 	    }
-	    if ( gid != st.st_gid ) {
+	    if ( gid != st->st_gid ) {
 		if ( !quiet ) printf( " gid" );
 	    }
 	}
@@ -231,8 +231,8 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    return( 1 );
 	}
 
-	if ( present && ( ( minor( st.st_rdev )
-		!= atoi( targv[ 6 ] ) ) || ( major( st.st_rdev )
+	if ( present && ( ( minor( st->st_rdev )
+		!= atoi( targv[ 6 ] ) ) || ( major( st->st_rdev )
 		!= atoi( targv[ 5 ] ) ) ) ) {
 	    if ( unlink( path ) != 0 ) {
 		perror( path );
@@ -263,7 +263,7 @@ update( const char *path, char *displaypath, int present, int newfile,
 		perror( path );
 		return( 1 );
 	    }
-	    if ( lstat( path, &st ) !=  0 ) {
+	    if ( lstat( path, st ) !=  0 ) {
 		perror( path );
 		return( 1 );
 	    }
@@ -272,7 +272,7 @@ update( const char *path, char *displaypath, int present, int newfile,
 	}
 	/* check mode */
 	if ( !quiet ) printf( "%s: updating", path );
-	if( mode != st.st_mode ) {
+	if( mode != st->st_mode ) {
 	    if ( chmod( path, mode ) != 0 ) {
 		perror( path );
 		return( 1 );
@@ -280,15 +280,15 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    if ( !quiet ) printf( " mode" );
 	}
 	/* check uid & gid */
-	if( uid != st.st_uid  || gid != st.st_gid ) {
+	if( uid != st->st_uid  || gid != st->st_gid ) {
 	    if ( chown( path, uid, gid ) != 0 ) {
 		perror( path );
 		return( 1 );
 	    }
-	    if ( uid != st.st_uid ) {
+	    if ( uid != st->st_uid ) {
 		if ( !quiet ) printf( " uid" );
 	    }
-	    if ( gid != st.st_gid ) {
+	    if ( gid != st->st_gid ) {
 		if ( !quiet ) printf( " gid" );
 	    }
 	}
@@ -316,7 +316,7 @@ update( const char *path, char *displaypath, int present, int newfile,
 		printf( "%s: updating", displaypath );
 	    }
 	}
-	if( mode != st.st_mode ) {
+	if( mode != st->st_mode ) {
 	    if ( chmod( path, mode ) != 0 ) {
 		perror( path );
 		return( 1 );
@@ -324,15 +324,15 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    if ( !quiet ) printf( " mode" );
 	}
 	/* check uid & gid */
-	if( uid != st.st_uid  || gid != st.st_gid ) {
+	if( uid != st->st_uid  || gid != st->st_gid ) {
 	    if ( chown( path, uid, gid ) != 0 ) {
 		perror( path );
 		return( 1 );
 	    }
-	    if ( uid != st.st_uid ) {
+	    if ( uid != st->st_uid ) {
 		if ( !quiet ) printf( " uid" );
 	    }
-	    if ( gid != st.st_gid ) {
+	    if ( gid != st->st_gid ) {
 		if ( !quiet ) printf( " gid" );
 	    }
 	}

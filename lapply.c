@@ -48,7 +48,7 @@ struct node {
 
 struct node* create_node( char *path, char *tline );
 void free_node( struct node *node );
-int do_line( char *tline, int present, SNET *sn );
+int do_line( char *tline, int present, struct stat *st, SNET *sn );
 void output( char *string);
 
    struct node *
@@ -104,14 +104,13 @@ output( char *string )
 }
 
     int
-do_line( char *tline, int present, SNET *sn )
+do_line( char *tline, int present, struct stat *st, SNET *sn )
 {
     char                fstype;
     char                *command = "";
     ACAV                *acav;
     int			tac;
     char                **targv;
-    struct stat         st;
     struct applefileinfo        afinfo;
     char                path[ 2 * MAXPATHLEN ];
     char		temppath[ 2 * MAXPATHLEN ];
@@ -160,7 +159,7 @@ do_line( char *tline, int present, SNET *sn )
 		return( 1 );
 	    }
 	}
-	if ( radstat( temppath, &st, &fstype, &afinfo ) < 0 ) {
+	if ( radstat( temppath, st, &fstype, &afinfo ) < 0 ) {
 	    perror( temppath );
 	    return( 1 );
 	}
@@ -404,11 +403,11 @@ dirchecklist:
 			    perror( head->path );
 			    goto error2;
 			}
-			if ( !quiet ) printf( "%s: deleted\n", path );
+			if ( !quiet ) printf( "%s: deleted\n", head->path );
 			node = head;
 			head = node->next;
 			if ( node->doline ) {
-			    if ( do_line( node->tline, 0, sn ) != 0 ) {
+			    if ( do_line( node->tline, 0, &st, sn ) != 0 ) {
 				goto error2;
 			    }
 			}
@@ -437,11 +436,11 @@ filechecklist:
 			    perror( head->path );
 			    goto error2;
 			}
-			if ( !quiet ) printf( "%s: deleted\n", path );
+			if ( !quiet ) printf( "%s: deleted\n", head->path );
 			node = head;
 			head = node->next;
 			if ( node->doline ) {
-			    if ( do_line( node->tline, 0, sn ) != 0 ) {
+			    if ( do_line( node->tline, 0, &st, sn ) != 0 ) {
 				goto error2;
 			    }
 			}
@@ -467,14 +466,14 @@ filechecklist:
 	    node = head;
 	    head = node->next;
 	    if ( node->doline ) {
-		if ( do_line( node->tline, 0, sn ) != 0 ) {
+		if ( do_line( node->tline, 0, &st, sn ) != 0 ) {
 		    goto error2;
 		}
 	    }
 	    free_node( node );
 	}
 
-	if ( do_line( tline, present, sn ) != 0 ) {
+	if ( do_line( tline, present, &st, sn ) != 0 ) {
 	    goto error2;
 	}
     }
@@ -490,7 +489,7 @@ filechecklist:
 	node = head;
 	head = node->next;
 	if ( node->doline ) {
-	    if ( do_line( node->tline, 0, sn ) != 0 ) {
+	    if ( do_line( node->tline, 0, &st, sn ) != 0 ) {
 		goto error2;
 	    }
 	}
