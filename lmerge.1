@@ -77,24 +77,27 @@ transcripts can be merged with the \-n option.
 .SH OPTIONS
 .TP 19
 .B \-f
-merge one transcript into the second.
+merge
+.B transcript1
+into
+.IR transcript2 .
 .TP 19
 .B \-n
 merge two transcripts linking all files from the lowest precedence
 transcript.
 .TP 19
-.BI \-u\ umask
+.BI \-u\  umask
 use
 .I umask
 as the file mode creation mask, default is users umask.
-.TP 19
-.B \-v
-displays merge information to the standard output.
 .TP 19
 .B \-V
 displays the version of 
 .B lmerge 
 and exits.
+.TP 19
+.B \-v
+displays merge information to the standard output.
 .sp
 .SH EXIT STATUS
 The following exit values are returned:
@@ -106,11 +109,11 @@ Merge successful.
 An error occurred.
 .sp
 .SH SEE ALSO
-.BR ktcheck (1),
 .BR fsdiff (1),
+.BR ktcheck (1),
 .BR lapply (1),
-.BR lcreate (1),
 .BR lcksum (1),
+.BR lcreate (1),
 .BR lfdiff (1),
-.BR radmind (8),
-.BR twhich (1).
+.BR twhich (1),
+.BR radmind (8).

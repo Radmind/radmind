@@ -56,26 +56,29 @@ options are given using the \-X option.
 .SH OPTIONS
 .TP 19
 .BI \-h\  host
-specifies the radmind server, by default _RADMIND_HOST. 
+specifies the radmind server, by default
+.BR _RADMIND_HOST . 
 .TP 19
 .BI \-p\  port 
-specifies the port of the radmind server, by default 6662.
+specifies the port of the radmind server, by default
+.BR 6662 .
 .TP 19
 .B \-S
-file is a special file.
+.I file
+is a special file.
 .TP 19
 .BI \-T\  transcript 
 transcript that 
 .I file 
-is part of.
-.TP 19
-.BI \-v
-display download information.
+is listed in.
 .TP 19
 .B \-V
 displays the version of 
 .B lfdiff 
 and exits.
+.TP 19
+.BI \-v
+display communication with the radmind server.
 .TP 19
 .BI \-X\  unsupported\ diff\ options
 passes options directly to
@@ -101,5 +104,5 @@ An error occurred.
 .BR lcksum (1),
 .BR lcreate (1),
 .BR lmerge (1),
-.BR radmind (8),
-.BR twhich (1).
+.BR twhich (1),
+.BR radmind (8).

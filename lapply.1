@@ -51,31 +51,34 @@ stored on the server by
 .B lcreate(1),
 restoring the files' Mac OS HFS+ metadata to the client machine. (Mac OS X,
 HFS+-formatted drives only.)
-
 .sp
 .SH OPTIONS
-.TP 19
-.B \-n
-no network connection will be made, causing only file system removals and
-updates to be applied.
-.TP 19
-.B \-q
-suppress all messages.
-.TP 19
-.B \-v
-displays communication with the radmind server.
-.TP 19
-.B \-V
-displays the version of lapply and exits. 
 .TP 19
 .BI \-c\  checksum
 enables checksuming.
 .TP 19
 .BI \-h\  host
-specifies the radmind server.
+specifies the radmind server, by default
+.BR _RADMIND_HOST .
+.TP 19
+.B \-n
+no network connection will be made, causing only file system removals and
+updates to be applied.
 .TP 19
 .BI \-p\  port
-specifies the port of the radmind server, by default 6662.
+specifies the port of the radmind server, by default
+.BR 6662 .
+.TP 19
+.B \-q
+suppress all messages.
+.TP 19
+.B \-V
+displays the version number of
+.B lapply
+and exits. 
+.TP 19
+.B \-v
+displays communication with the radmind server.
 .sp
 .SH EXIT STATUS
 The following exit values are returned:
@@ -87,12 +90,12 @@ Transcript was applied.
 An error occurred.
 .sp
 .SH SEE ALSO
-.BR applefile (5),
-.BR ktcheck (1),
 .BR fsdiff (1),
-.BR lcreate (1),
+.BR ktcheck (1),
 .BR lcksum (1),
+.BR lcreate (1),
 .BR lfdiff (1),
 .BR lmerge (1),
-.BR radmind (8),
-.BR twhich (1).
+.BR twhich (1),
+.BR applefile (5),
+.BR radmind (8).

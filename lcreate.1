@@ -8,6 +8,8 @@
 [
 .RB \-q\ |\ \-v
 ] [
+.BI \-c\  checksum
+] [
 .BI \-h\  host
 ] [
 .BI \-p\  port
@@ -44,14 +46,25 @@ this special support.
 .sp
 .SH OPTIONS
 .TP 19
-.B \-n
-Don't upload any files or transcripts. Uses access(2) to verify all
-files in the transcript exist in the filesystem and are readable.
+.BI \-c\  checksum
+enables checksuming.
+.TP 19
+.BI \-h\  hostname
+specifies the radmind server, by default
+.BR _RADMIND_HOST .
 .TP 19
 .B \-N
 uploads a
 .B negative
 transcript then uploads all corresponding files as zero length.
+.TP 19
+.B \-n
+Don't upload any files or transcripts. Uses access(2) to verify all
+files in the transcript exist in the filesystem and are readable.
+.TP 19
+.BI \-p\  port
+specifies a port, by default
+.BR 6662 .
 .TP 19
 .B \-q
 suppress all messages.
@@ -61,30 +74,26 @@ uploads the transcript only, and
 .B not
 the corresponding files.
 .TP 19
-.B \-v
-displays communication with the radmind server.
-.TP 19
-.B \-V
-displays the version of lcreate and exits.
-.TP 19
-.BI \-p\  port
-specifies a port, by default 6662
-.TP 19
-.BI \-h\  hostname
-specifies the radmind server, by default "rsug".
-.TP 19
 .BI \-t\  stored-name
 specifies the name under which the transcript will be stored when saved
 on the server.
-.sp
+.TP 19
+.B \-V
+displays the version of 
+.BR lcreate ,
+a list  of supported checksumming algorithms in descending
+order of preference and then exits.
+.TP 19
+.B \-v
+displays communication with the radmind server.
 .sp
 .SH SEE ALSO
-.BR applefile (5),
-.BR ktcheck (1),
 .BR fsdiff (1),
+.BR ktcheck (1),
 .BR lapply (1),
 .BR lcksum (1),
 .BR lfdiff (1),
 .BR lmerge (1),
-.BR radmind (8),
-.BR twhich (1).
+.BR twhich (1),
+.BR applefile (5),
+.BR radmind (8).

@@ -210,8 +210,11 @@ d /xfn               0555     0     0
 .sp
 .SH OPTIONS
 .TP 19
+.B no option
+fsdiff defaults to -A.  Future releases will require an option explicitly.
+.TP 19
 .B \-1
-prints out a single transcript line for the given file. this option can be
+prints out a single transcript line for the given file. This option can be
 used to build 
 .B negative
 transcripts.
@@ -222,44 +225,43 @@ produces an applicable transcript.
 .B \-C
 produces a creatable transcript.
 .TP 19
+.BI \-c\  checksum
+enables checksuming.
+.TP 19
+.BI \-K\  command
+specifies a command
+file name, by default
+.B _RADMIND_COMMANDFILE
+.TP 19
+.BI \-o\  file
+specifies an output file, default is the standard output.
+.TP 19
 .B \-T
 prints out the difference transcript as edits to the file system to make
 it match the transcript.  This option is obsolete and has been replaced with
 -A. 
 .TP 19
-.B no option
-fsdiff defaults to -A.  Future releases will require an option explicitly.
-.TP 19
 .B \-V
-prints out the fsdiff version number and a list of supported checksumming
-algorithms in descending order of preference.
-.TP 19
-.BI \-K\  command
-specifies a command
-file name, by default
-.B command.K
-.TP 19
-.BI \-c\  checksum
-enables checksuming.
-.TP 19
-.BI \-o\  file
-specifies an output file, default is the standard output.
+displays the version number of 
+.BR fsdiff ,
+a list  of supported checksumming algorithms in descending
+order of preference and then exits.
 .sp
 .SH FILES
 .TP 19
-.B command.K
+.B _RADMIND_COMMANDFILE
 name of the default command file.
 .TP 19
 .B special.T 
 name of the special transcript.
 .sp
 .SH SEE ALSO
-.BR applefile (5),
 .BR ktcheck (1),
 .BR lapply (1),
-.BR lcreate (1),
 .BR lcksum (1),
+.BR lcreate (1),
 .BR lfdiff (1),
 .BR lmerge (1),
-.BR radmind (8),
-.BR twhich (1).
+.BR twhich (1),
+.BR applefile (5),
+.BR radmind (8).

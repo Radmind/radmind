@@ -54,22 +54,26 @@ must be in the respective radmind server transcript directory.
 .TP 19
 .B \-a
 list all transcripts that contain
-.I file .
-.TP 19
-.B \-s
-running on a radmind server.
+.IR file .
 .TP 19
 .BI \-K\  command
 specifies a command
-file name, by default
-.B command.K
+file, by default
+.BR _RADMIND_COMMANDFILE 
+.TP 19
+.B \-s
+indicates that
+.B twhich
+is running on a radmind server.
 .TP 19
 .B \-V
-prints out the twhich version number.
+displays the version number of
+.BR twhich
+and exits.
 .sp
 .SH FILES
 .TP 19
-.B command.K
+.B _RADMIND_COMMANDFILE
 name of the default command file.
 .TP 19
 .B special.T 
@@ -87,11 +91,11 @@ File was not found.
 An error occurred.
 .sp
 .SH SEE ALSO
-.BR ktcheck (1),
 .BR fsdiff (1),
+.BR ktcheck (1),
 .BR lapply (1),
-.BR lcreate (1),
 .BR lcksum (1),
+.BR lcreate (1),
 .BR lfdiff (1),
 .BR lmerge (1),
 .BR radmind (8).

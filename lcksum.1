@@ -56,21 +56,22 @@ will only verify transcript lines with paths starting with
 .BI \-c\  checksum
 enables checksuming.
 .TP 19
+.B \-n
+verify but do not modify
+.IR transcript .
+.TP 19
 .BI \-P\  prefix 
 only verify transcript lines that begin with 
 .IR prefix .
-.TP 19
-.B \-n
-verify but do not modify transcript.
-.TP 19
-.B \-v
-displays update information to the standard output.
 .TP 19
 .B \-V
 displays the version of 
 .BR lcksum ,
 a list  of supported checksumming algorithms in descending
 order of preference and then exits.
+.TP 19
+.B \-v
+displays update information to the standard output.
 .sp
 .SH EXIT STATUS
 The following exit values are returned:
@@ -85,11 +86,11 @@ Differences were found.
 An error occurred.
 .sp
 .SH SEE ALSO
-.BR ktcheck (1),
 .BR fsdiff (1),
+.BR ktcheck (1),
 .BR lapply (1),
 .BR lcreate (1),
 .BR lfdiff (1),
 .BR lmerge (1),
-.BR radmind (8),
-.BR twhich (1).
+.BR twhich (1),
+.BR radmind (8).
