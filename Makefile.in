@@ -61,7 +61,7 @@ LAPPLY_OBJ=     version.o lapply.o argcargv.o code.o base64.o retr.o \
                 radstat.o update.o cksum.o connect.o pathcmp.o \
                 applefile.o tls.o
 
-LCREATE_OBJ=    version.o lcreate.o argcargv.o code.o connect.o \
+LCREATE_OBJ=    version.o lcreate.o argcargv.o code.o connect.o progress.o \
                 stor.o applefile.o base64.o cksum.o radstat.o tls.o
 
 LCKSUM_OBJ=     version.o lcksum.o argcargv.o cksum.o base64.o code.o \
@@ -129,6 +129,10 @@ lcreate.o : lcreate.c
 		-D_RADMIND_HOST=\"${RADMIND_HOST}\" \
 		-D_RADMIND_AUTHLEVEL=${RADMIND_AUTHLEVEL} \
 		-c ${srcdir}/lcreate.c
+
+progress.o : progress.c
+	${CC} ${CFLAGS} \
+		-c ${srcdir}/progress.c
 
 root.o : root.c
 	${CC} ${CFLAGS} \
