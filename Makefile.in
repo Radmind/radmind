@@ -17,9 +17,6 @@ RADMIND_HOST=@server@
 
 RADMINDSYSLOG=LOG_LOCAL7
 
-LIBS="$LIBS -lsnet";
-	LDFLAGS="$LDFLAGS -L$snetdir"
-
 CWARN=		-Wall -Wmissing-prototypes 
 CC=		@CC@
 LIBS=		@LIBS@ -lsnet
