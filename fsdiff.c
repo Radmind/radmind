@@ -22,17 +22,16 @@ fs_walk( struct llist *path, char *rpath )
     struct llist	*cur;
     char 		temp[ MAXPATHLEN ];
     int			type;
-printf( "in walk\n" );
 
     /* if needed, make the correct path for lstat and opendir */
-    if ( strcmp( rpath, path->ll_info.name ) != 0 ) {
-        sprintf( temp, "%s/%s", rpath, path->ll_info.name );
+    if ( strcmp( rpath, path->ll_info.i_name ) != 0 ) {
+        sprintf( temp, "%s/%s", rpath, path->ll_info.i_name );
     } else {
-	sprintf( temp, "%s", path->ll_info.name );
+	sprintf( temp, "%s", path->ll_info.i_name );
     }
-printf( "before tran\n" );
 
-    if ( transcript( path, temp, rpath, out ) == NEG ) {
+    /* call the transcript code */
+    if ( transcript( path, temp, rpath, out ) == 0 ) {
 	return;
     }
 
@@ -54,10 +53,10 @@ printf( "before tran\n" );
 	/* make relative pathname to put in list */
 	/* different from above strcpy because it is for each element
 	   in the directory */
-	if ( strcmp( path->ll_info.name, rpath ) == 0 ) {
+	if ( strcmp( path->ll_info.i_name, rpath ) == 0 ) {
 	    sprintf( temp, "%s", de->d_name );
 	} else {
-	    sprintf( temp, "%s/%s", path->ll_info.name, de->d_name );
+	    sprintf( temp, "%s/%s", path->ll_info.i_name, de->d_name );
 	}
 
         /* allocate new node for newly created relative pathname */
@@ -68,13 +67,14 @@ printf( "before tran\n" );
 
     }
 
+    /* close the directory. */
     if ( closedir( dir ) != 0 ) {
     	perror( "closedir" );
 	return;
     }
 
+    /* call fswalk on each element in the sorted list */
     for ( cur = head; cur != NULL; cur = cur->ll_next ) {
-
 	 fs_walk ( cur, rpath );
     }
 
@@ -110,24 +110,26 @@ main( int argc, char **argv )
 	fprintf( stderr, "usage: fsdiff [ -t ]\n" );
     }
 
+    /* open the output file */
     if (( out = fopen( "tran.txt", "w" )) == NULL ) {
 	perror( "tran.txt" );
 	exit( 1 );
     }
 
-printf( "before init\n" );
+    /* initialize the transcripts */
     transcript_init();
 
+    /* create a linked list containing one element */
     root = ll_allocate( argv[ optind ] );
 
     /* go through file system */
     fs_walk( root, argv[ optind ] );
 
+    /* free the transcripts */
     transcript_free( );
 	    
-    if ( out != NULL ) {
-        fclose( out );
-    }
+    /* close the output file */     
+    fclose( out );
 
     exit(0);	
 }
