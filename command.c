@@ -65,6 +65,7 @@ char		command_file[ MAXPATHLEN ];
 char		upload_xscript[ MAXPATHLEN ];
 const EVP_MD    *md;
 struct node	*tran_list = NULL;
+extern char	path_config;
 
     int
 f_quit( sn, ac, av )
@@ -702,8 +703,7 @@ cmdloop( int fd, struct sockaddr_in *sin )
 	    inet_ntoa( sin->sin_addr ), remote_host );
     
     /* lookup proper command file based on the hostname */
-
-    if ( command_k( _PATH_CONFIG ) < 0 ) {
+    if ( command_k( &path_config ) < 0 ) {
         snet_writef( sn, "%d No access for %s\r\n", 500, remote_host );
 	exit( 1 );
     }

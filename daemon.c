@@ -38,6 +38,7 @@ int		verbose = 0;
 int		dodots = 0;
 int		cksum = 0;
 char		*path_radmind = _PATH_RADMIND;
+char		path_config[ MAXPATHLEN ];
 
 extern char	*version;
 
@@ -146,21 +147,27 @@ main( ac, av )
 	}
     }
 
+    if ( err || optind != ac ) {
+	fprintf( stderr, "Usage: radmind [ -D path ] [ -d ] [ -c ] " );
+	fprintf( stderr, "[ -p port ] [ -b backlog ] [ -u umask ]\n" );
+	exit( 1 );
+    }
+
     if ( chdir( path_radmind ) < 0 ) {
 	perror( path_radmind );
 	exit( 1 );
     }
 
-    /* read config files */
+    /* Set path to config file */
+    memset( path_config, 0, MAXPATHLEN );
+    if ( snprintf( path_config, MAXPATHLEN, "%s/%s", path_radmind, 
+	    _CONFIG_FILE ) > MAXPATHLEN -1 ) {
+	fprintf( stderr, "%s/%s: path too long\n", path_radmind, _CONFIG_FILE );
+	exit( 1 );
+    }
 
     if ( dontrun ) {
 	exit( 0 );
-    }
-
-    if ( err || optind != ac ) {
-	fprintf( stderr, "Usage: radmind [ -d ] [ -c ] [ -p port ]" );
-	fprintf( stderr, "[ -b backlog ] [ -u umask\n" );
-	exit( 1 );
     }
 
     /* Create directory structure */
