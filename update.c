@@ -295,7 +295,7 @@ done:
 
     if ( !quiet && !showprogress ) printf( "\n" );
     if ( showprogress ) {
-	progressupdate( UPDATEUNIT, displaypath );
+	progressupdate( PROGRESSUNIT, displaypath );
     }
 
     return( 0 );

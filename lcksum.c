@@ -24,6 +24,7 @@
 #include "code.h"
 #include "pathcmp.h"
 #include "largefile.h"
+#include "progress.h"
 #include "root.h"
 
 void            (*logger)( char * ) = NULL;
@@ -32,6 +33,8 @@ int		linenum = 0;
 int		cksum = 0;
 int		verbose = 1;
 const EVP_MD	*md;
+extern int	showprogress;
+extern off_t	lsize;
 extern char	*version, *checksumlist;
 char            prepath[ MAXPATHLEN ] = {0};
 
@@ -49,9 +52,7 @@ main( int argc, char **argv )
     int			ucount = 0, len, tac, amode = R_OK | W_OK;
     int			prefixfound = 0;
     int			remove = 0;
-    int			lastpct = -1;
-    float		pct = 0.0;
-    off_t		lsize = 0, bytes = 0;
+    ssize_t		bytes = 0;
     extern int          optind;
     char		*tpath = NULL, *line;
     char		*prefix = NULL, *d_path = NULL;
@@ -69,8 +70,12 @@ main( int argc, char **argv )
     struct stat		st;
     off_t		cksumsize;
 
-    while ( ( c = getopt ( argc, argv, "c:P:nqVv" ) ) != EOF ) {
+    while ( ( c = getopt ( argc, argv, "%c:P:nqV" ) ) != EOF ) {
 	switch( c ) {
+	case '%':
+	    showprogress = 1;
+	    break;
+
 	case 'c':
 	    OpenSSL_add_all_digests();
 	    md = EVP_get_digestbyname( optarg );
@@ -99,10 +104,6 @@ main( int argc, char **argv )
 	    printf( "%s\n", checksumlist );
 	    exit( 0 );
 
-	case 'v':
-	    verbose = 2;
-	    break;
-
 	case '?':
 	    err++;
 	    break;
@@ -120,7 +121,7 @@ main( int argc, char **argv )
     tpath = argv[ optind ];
 
     if ( err || ( argc - optind != 1 ) ) {
-	fprintf( stderr, "usage: %s [ -nqVv ] [ -P prefix ] ", argv[ 0 ] );
+	fprintf( stderr, "usage: %s [ -%%nqV ] [ -P prefix ] ", argv[ 0 ] );
 	fprintf( stderr, "-c checksum transcript\n" );
 	exit( 2 );
     }
@@ -136,8 +137,7 @@ main( int argc, char **argv )
 	}
 	strcpy( cwd, tpath );
     } else {
-	if ( snprintf( temp, MAXPATHLEN, "%s/%s", cwd, tpath )
-		> MAXPATHLEN - 1 ) {
+	if ( snprintf( temp, MAXPATHLEN, "%s/%s", cwd, tpath ) >= MAXPATHLEN ) {
 	    fprintf( stderr, "%s/%s: path too long\n", cwd, tpath );
 	    exit( 2 );
 	}
@@ -190,40 +190,9 @@ main( int argc, char **argv )
 	}
     }
 
-    /* calculate the loadset size */
-    if ( verbose == 2 ) {
-	while ( fgets( tline, MAXPATHLEN, f ) != NULL ) {
-	    linenum++;
-
-	    tac = argcargv( tline, &targv );
-	    if ( tac != 8 ) {
-		continue;
-	    }
-
-	    switch ( *targv[ 0 ] ) {
-	    case 'a':
-	    case 'f':
-		if ( prefix != NULL ) {
-		    if (( d_path = decode( targv[ 1 ] )) == NULL ) {
-			fprintf( stderr, "%d: path too long\n", linenum );
-			exit( 2 );
-		    }
-			
-		    if ( strncmp( d_path, prefix, strlen( prefix )) != 0 ) {
-			continue;
-		    }
-		}
-
-		lsize += strtoofft( targv[ 6 ], NULL, 10 );
-		break;
-
-	    default:
-		continue;
-	    }
-	}
-
-	linenum = 0;
-	rewind( f );
+    if ( showprogress ) {
+	/* calculate the loadset size */
+	lsize = lcksum_loadsetsize( f, prefix );
     }
 
     while ( fgets( tline, MAXPATHLEN, f ) != NULL ) {
@@ -272,32 +241,6 @@ main( int argc, char **argv )
 	    exit( 2 );
 	}
 	strcpy( path, d_path );
-	    
-	/* Check transcript order */
-	if ( prepath != 0 ) {
-	    if ( pathcmp( path, prepath ) < 0 ) {
-		fprintf( stderr, "line %d: bad sort order\n", linenum );
-		exit( 2 );
-	    }
-	}
-	if ( strlen( path ) >= MAXPATHLEN ) {
-	    fprintf( stderr, "line %d: path too long\n", linenum );
-	    exit( 2 );
-	}
-	strcpy( prepath, path );
-
-	if ((( *targv[ 0 ] != 'f' )  && ( *targv[ 0 ] != 'a' )) || ( remove )) {
-	    if ( updatetran ) {
-		fprintf( ufs, "%s", line );
-	    }
-	    goto done;
-	}
-
-	if ( tac != 8 ) {
-	    fprintf( stderr, "line %d: %d arguments should be 8\n",
-		    linenum, tac );
-	    exit( 2 );
-	}
 
 	/* check to see if file against prefix */
 	if ( prefix != NULL ) {
@@ -311,12 +254,44 @@ main( int argc, char **argv )
 	    prefixfound = 1;
 	}
 
+	if ( showprogress && ( tac > 0 && *line != '#' )) {
+	    progressupdate( bytes, d_path );
+	}
+	bytes = 0;
+
+	if ((( *targv[ 0 ] != 'f' )  && ( *targv[ 0 ] != 'a' )) || ( remove )) {
+	    if ( updatetran ) {
+		fprintf( ufs, "%s", line );
+	    }
+	    bytes += PROGRESSUNIT;
+	    goto done;
+	}
+
+	if ( tac != 8 ) {
+	    fprintf( stderr, "line %d: %d arguments should be 8\n",
+		    linenum, tac );
+	    exit( 2 );
+	}
+
 	if ( snprintf( path, MAXPATHLEN, "%s/%s/%s", file_root, tran_name,
 		d_path ) > MAXPATHLEN - 1 ) {
 	    fprintf( stderr, "%s/%s/%s: path too long\n", file_root,
 		tran_name, d_path );
 	    exit( 2 );
 	}
+
+	/* Check transcript order */
+	if ( prepath != 0 ) {
+	    if ( pathcmp( path, prepath ) < 0 ) {
+		fprintf( stderr, "line %d: bad sort order\n", linenum );
+		exit( 2 );
+	    }
+	}
+	if ( strlen( path ) >= MAXPATHLEN ) {
+	    fprintf( stderr, "line %d: path too long\n", linenum );
+	    exit( 2 );
+	}
+	strcpy( prepath, path );
 
 	/*
 	 * Since this tool is run on the server, all files can be treated
@@ -355,8 +330,7 @@ main( int argc, char **argv )
 	    exit( 2 );
 	}
 	bytes += cksumsize;
-
-	pct = ((( float )bytes / ( float )lsize ) * 100.0 );
+	bytes += PROGRESSUNIT;
 
 	/* check cksum */
 	if ( strcmp( lcksum, targv[ 7 ] ) != 0 ) {
@@ -393,15 +367,10 @@ main( int argc, char **argv )
 	    }
 	}
 done:
-	if ( verbose == 2 && ( tac > 0 && *line != '#' )) {
-	    if (( int )pct != lastpct ) {
-		printf( "%%%.2d %s\n", ( int )pct, d_path );
-	    }
-
-	    lastpct = ( int )pct;
-	}
-
 	free( line );
+    }
+    if ( showprogress ) {
+	progressupdate( bytes, "" );
     }
 
     if ( !prefixfound && prefix != NULL ) {

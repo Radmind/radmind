@@ -2,9 +2,11 @@
 #include <sys/param.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <limits.h>
 
 #include "argcargv.h"
+#include "code.h"
 #include "largefile.h"
 #include "progress.h"
 
@@ -71,11 +73,50 @@ applyloadsetsize( FILE *tran )
 	    break;
 	}
 
-	size += UPDATEUNIT;
+	size += PROGRESSUNIT;
     }
 
     rewind( tran );
 
+    return( size );
+}
+
+    off_t
+lcksum_loadsetsize( FILE *tran, char *prefix )
+{
+    char	tline[ LINE_MAX ];
+    char	*d_path = NULL;
+    char	**targv;
+    int		tac, linenum = 1;
+    off_t	size = 0;
+
+    while ( fgets( tline, LINE_MAX, tran ) != NULL ) {
+	if (( tac = argcargv( tline, &targv )) <= 1 ) {
+	    continue;
+	}
+
+	if ( prefix != NULL ) {
+	    if (( d_path = decode( targv[ 1 ] )) == NULL ) {
+		fprintf( stderr, "%d: path too long\n", linenum );
+		exit( 2 );
+	    }
+	    if ( strncmp( d_path, prefix, strlen( prefix )) != 0 ) {
+		continue;
+	    }
+	}
+
+	switch ( *targv[ 0 ] ) {
+	case 'a':
+	case 'f':
+	    size += strtoofft( targv[ 6 ], NULL, 10 );
+
+	default:
+	    size += PROGRESSUNIT;
+	    break;
+	}
+    }
+	
+    rewind( tran );
     return( size );
 }
 

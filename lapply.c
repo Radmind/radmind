@@ -547,7 +547,7 @@ dirchecklist:
 			    printf( "%s: deleted\n", head->path );
 			}
 			if ( showprogress ) {
-			    progressupdate( UPDATEUNIT, head->path );
+			    progressupdate( PROGRESSUNIT, head->path );
 			}
 			node = head;
 			head = node->next;
@@ -572,7 +572,7 @@ filechecklist:
 			printf( "%s: deleted\n", path );
 		    }
 		    if ( showprogress ) {
-			progressupdate( UPDATEUNIT, path );
+			progressupdate( PROGRESSUNIT, path );
 		    }
 		} else {
 		    if ( ischild( path, head->path)) {
@@ -584,7 +584,7 @@ filechecklist:
 			    printf( "%s: deleted\n", path );
 			}
 			if ( showprogress ) {
-			    progressupdate( UPDATEUNIT, path );
+			    progressupdate( PROGRESSUNIT, path );
 			}
 		    } else {
 			/* remove head */
@@ -596,7 +596,7 @@ filechecklist:
 			    printf( "%s: deleted\n", head->path );
 			}
 			if ( showprogress ) {
-			    progressupdate( UPDATEUNIT, head->path );
+			    progressupdate( PROGRESSUNIT, head->path );
 			}
 			node = head;
 			head = node->next;
@@ -628,7 +628,7 @@ filechecklist:
 		printf( "%s: deleted\n", head->path );
 	    }
 	    if ( showprogress ) {
-		progressupdate( UPDATEUNIT, head->path );
+		progressupdate( PROGRESSUNIT, head->path );
 	    }
 	    node = head;
 	    head = node->next;
@@ -656,7 +656,7 @@ filechecklist:
 	}
 	if ( !quiet && !showprogress ) printf( "%s: deleted\n", head->path );
 	if ( showprogress ) {
-	    progressupdate( UPDATEUNIT, head->path );
+	    progressupdate( PROGRESSUNIT, head->path );
 	}
 	node = head;
 	head = node->next;
