@@ -7,6 +7,7 @@ VARDIR=/var/radmind
 CONFIGFILE=${VARDIR}/config
 TRANSCRIPTDIR=${VARDIR}/transcript
 GNU_DIFF=/usr/local/gnu/bin/diff
+RADMIND_HOST=radmind
 
 RADMINDSYSLOG=LOG_LOCAL7
 
@@ -27,7 +28,7 @@ INSTALL=	/usr/ucb/install
 
 # Should not need to edit anything after here.
 BINTARGETS=	fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff
-MAN1TARGETS=	fsdiff.1 lapply.1 lcreate.1 
+MAN1TARGETS=	fsdiff.1 lapply.1 lcreate.1 lfdiff.1
 TARGETS=	radmind ${BINTARGETS}
 
 RADMIND_OBJ=	version.o daemon.o command.o argcargv.o auth.o code.o \
@@ -71,6 +72,7 @@ command.o : command.c
 lfdiff.o : lfdiff.c
 	${CC} ${CFLAGS} \
 		-D_PATH_GNU_DIFF=\"${GNU_DIFF}\" \
+		-D_RADMIND_HOST=\"${RADMIND_HOST}\" \
 		-c lfdiff.c
 
 radmind : libsnet/libsnet.a ${RADMIND_OBJ} Makefile
