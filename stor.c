@@ -18,6 +18,13 @@
 #include <unistd.h>
 #include <string.h>
 
+#ifdef TLS
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+
+extern SSL_CTX  *ctx;
+#endif TLS
+
 #include <openssl/evp.h>
 #include <snet.h>
 
