@@ -82,7 +82,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, size_t transize,
 
     /*Create temp file name*/
     if ( snprintf( temppath, MAXPATHLEN, "%s.radmind.%i",
-	    path, getpid() ) > MAXPATHLEN ) {
+	    path, getpid() ) >= MAXPATHLEN ) {
 	fprintf( stderr, "%s.radmind.%i: too long", path,
 		(int)getpid() );
 	goto error3;
@@ -277,14 +277,14 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 
     /* name temp file */
     if ( snprintf( temppath, MAXPATHLEN, "%s.radmind.%i", path,
-	    getpid()) > MAXPATHLEN ) {
+	    getpid()) >= MAXPATHLEN ) {
 	fprintf( stderr, "%s.radmind.%i: too long", path, ( int )getpid());
 	return( -1 );
     }
 
     /* make rsrc fork name */
     if ( snprintf( rsrc_path, MAXPATHLEN, "%s%s", temppath,
-	    _PATH_RSRCFORKSPEC ) > MAXPATHLEN ) {
+	    _PATH_RSRCFORKSPEC ) >= MAXPATHLEN ) {
 	fprintf( stderr, "%s%s: path too long\n", temppath,
 	    _PATH_RSRCFORKSPEC );
 	return ( -1 );

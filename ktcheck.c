@@ -175,25 +175,27 @@ check( SNET *sn, char *type, char *file )
 
     if ( file != NULL ) {
 	if ( snprintf( pathdesc, MAXPATHLEN * 2, "%s %s", type, file  )
-		> MAXPATHLEN * 2 ) {
+		> ( MAXPATHLEN * 2 ) - 1 ) {
 	    fprintf( stderr, "%s %s: too long", type, file );
 	    return( 2 );
 	}
 
 	/* create full path */
-	if ( snprintf( path, MAXPATHLEN, "%s%s", kdir, file ) > MAXPATHLEN ) {
+	if ( snprintf( path, MAXPATHLEN, "%s%s", kdir, file )
+		> MAXPATHLEN - 1 ) {
 	    fprintf( stderr, "%s%s: path too long\n", kdir, file );
 	    return( 2 );
 	}
     } else {
-	if ( snprintf( pathdesc, MAXPATHLEN, "%s", type ) > MAXPATHLEN * 2 ) {
+	if ( snprintf( pathdesc, MAXPATHLEN, "%s", type )
+		> ( MAXPATHLEN * 2 ) - 1 ) {
 	    fprintf( stderr, "%s: too long\n", type );
 	    return( 2 );
 	}
 	file = kfile;
 
 	/* create full path */
-	if ( snprintf( path, MAXPATHLEN, "%s", kfile ) > MAXPATHLEN ) {
+	if ( snprintf( path, MAXPATHLEN, "%s", kfile ) > MAXPATHLEN - 1 ) {
 	    fprintf( stderr, "%s: path too long\n", kfile );
 	}
     }
@@ -387,7 +389,7 @@ main( int argc, char **argv )
         p++;
         *p = (char)'\0';
     }
-    if ( snprintf( path, MAXPATHLEN, "%s", kfile ) > MAXPATHLEN ) {
+    if ( snprintf( path, MAXPATHLEN, "%s", kfile ) > MAXPATHLEN - 1 ) {
 	fprintf( stderr, "%s: path too long\n", kfile );
 	exit( 2 );
     }

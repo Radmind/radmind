@@ -182,7 +182,7 @@ main( int argc, char **argv )
 	}
 
 	if ( snprintf( path, MAXPATHLEN, "%s", decode( targv[ 1 ] ))
-		> MAXPATHLEN ) {
+		> MAXPATHLEN - 1) {
 	    fprintf( stderr, "line %d: path too long\n", linenum );
 	    exit( 1 );
 	}

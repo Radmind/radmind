@@ -91,7 +91,7 @@ getline:
 
     /* Decode file path */
     if ( snprintf( tran->filepath, MAXPATHLEN, "%s", decode( tran->targv[ 1 ]))
-	> MAXPATHLEN -1 ) {
+	> MAXPATHLEN - 1 ) {
 	fprintf( stderr, "%s: line %d: %s: path too long\n",
 		tran->name, tran->linenum, decode( tran->targv[ 1 ]));
 	return( 1 );
@@ -106,7 +106,7 @@ getline:
 	}
     }
     if ( snprintf( tran->prepath, MAXPATHLEN, "%s", tran->filepath )
-	    > MAXPATHLEN ) { 
+	    >= MAXPATHLEN ) { 
 	fprintf( stderr, "%s: line %d: %s: path too long\n",
 		tran->name, tran->linenum, tran->filepath );
 	return( 1 );
@@ -466,7 +466,7 @@ skipline:
     if ( force && ( dirlist != NULL ) ) {
 	while ( dirlist != NULL ) {
 	    if ( snprintf( opath, MAXPATHLEN, "%s/../file/%s/%s", tpath,
-		    tname, dirlist->path ) > MAXPATHLEN ) {
+		    tname, dirlist->path ) >= MAXPATHLEN ) {
 		fprintf( stderr, "%s/../file/%s/%s: path too long\n", 
 		    tpath, tname, dirlist->path );
 		exit( 1 );

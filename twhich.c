@@ -258,7 +258,7 @@ main( int argc, char **argv )
 	    }
 	    len = strlen( path );
 	    if ( snprintf( prepath, MAXPATHLEN, "%s", decode( av[ 1 ] ))
-			> MAXPATHLEN ) {
+			>= MAXPATHLEN ) {
 		fprintf( stderr, "%s: line %d: path too long\n",
 			tran, linenum );
 		exit( 2 );
