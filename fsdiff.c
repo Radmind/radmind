@@ -23,13 +23,13 @@ void            (*logger)( char * ) = NULL;
 
 extern char	*version, *checksumlist;
 
-void		fs_walk( struct llist *, int, int );
+void		fs_walk( struct llist *, float, float );
 int		verbose = 0;
 int		dodots = 0;
 const EVP_MD    *md;
 
     void
-fs_walk( struct llist *path, int start, int finish ) 
+fs_walk( struct llist *path, float start, float finish ) 
 {
     DIR			*dir;
     struct dirent	*de;
@@ -37,11 +37,12 @@ fs_walk( struct llist *path, int start, int finish )
     struct llist	*new;
     struct llist	*cur;
     int			len;
-    int			chunk, count = 0;
+    int			count = 0;
+    float		chunk;
     char		temp[ MAXPATHLEN ];
 
-    if ( finish > start ) {
-	printf( "%%%.3d %s\n", start, path->ll_pinfo.pi_name );
+    if (( int )finish > ( int )start ) {
+	printf( "%%%.3d %s\n", ( int )start, path->ll_pinfo.pi_name );
 	fflush( stdout );
     }
 
@@ -97,7 +98,7 @@ fs_walk( struct llist *path, int start, int finish )
 	ll_insert( &head, new ); 
     }
 
-    chunk = ( finish - start ) / count;
+    chunk = ( float )(( finish - start ) / count );
 
     if ( closedir( dir ) != 0 ) {
 	perror( "closedir" );
@@ -125,7 +126,7 @@ main( int argc, char **argv )
     int			gotkfile = 0;
     int 		c, len, edit_path_change = 0;
     int 		errflag = 0, use_outfile = 0;
-    int			finish = 0;
+    float		finish = 0;
 
     edit_path = CREATABLE;
     cksum = 0;
@@ -216,7 +217,7 @@ main( int argc, char **argv )
     fs_walk( root, 0, finish );
 
     if ( finish > 0 ) {
-	printf( "%%%d\n", finish );
+	printf( "%%%d\n", ( int )finish );
     }
 
     /* free the transcripts */
