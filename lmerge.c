@@ -248,8 +248,8 @@ main( int argc, char **argv )
     }
 
     /* Create array of transcripts */
-    if ( ( trans = (struct tran**)malloc(
-	    sizeof( struct tran* ) * ( tcount ) ) ) == NULL ) {
+    if (( trans = (struct tran**)malloc(
+	    sizeof( struct tran* ) * ( tcount ))) == NULL ) {
 	perror( "malloc" );
 	exit( 2 );
     }
@@ -308,8 +308,21 @@ main( int argc, char **argv )
 	    exit( 2 );
 	}
     } else {
-	if ( get_root( argv[ argc - 1 ], file_root, tran_root, tran_name )
-		!= 0 ) {
+	if ( *argv[ argc - 1 ] == '/' ) {
+	    if ( snprintf( cwd, MAXPATHLEN, "%s", argv[ argc - 1 ] )
+		    > MAXPATHLEN - 1 ) {
+		fprintf( stderr, "%s: path too long\n", argv[ argc - 1 ] );
+		exit( 2 );
+	    }
+	} else {
+	    if ( snprintf( cwd, MAXPATHLEN, "%s/%s", cwd, argv[ argc - 1 ] )
+		    > MAXPATHLEN - 1 ) {
+		fprintf( stderr, "%s/%s: path too long\n", cwd,
+		    argv[ argc - 1 ] );
+		exit( 2 );
+	    }
+	}
+	if ( get_root( cwd, file_root, tran_root, tran_name ) != 0 ) {
 	    exit( 2 );
 	}
     }
