@@ -14,15 +14,28 @@ int		progress = -1;
 int		showprogress = 0;
 off_t		lsize = 0, total = 0;
 
+    void
+linecheck( char *line, int ac )
+{
+    if ( ac < 8 ) {
+	if ( line[ strlen( line ) - 1 ] == '\n' ) {
+	    line[ strlen( line ) - 1 ] = '\0';
+	}
+	fprintf( stderr, "\"%s\": invalid transcript line\n", line );
+	exit( 2 );
+    }
+}
+
     off_t
 loadsetsize( FILE *tran )
 {
-    char	tline[ LINE_MAX ];
+    char	tline[ LINE_MAX ], line[ LINE_MAX ];
     char	**targv;
     int		tac;
     off_t	size = 0;
 
     while ( fgets( tline, LINE_MAX, tran ) != NULL ) {
+	strcpy( line, tline );
 	if (( tac = argcargv( tline, &targv )) == 0 ) {
 	    continue;
 	}
@@ -36,6 +49,7 @@ loadsetsize( FILE *tran )
 	    continue;
 	}
 
+	linecheck( line, tac );
 	size += strtoofft( targv[ 6 ], NULL, 10 );
     }
 
@@ -47,12 +61,13 @@ loadsetsize( FILE *tran )
     off_t
 applyloadsetsize( FILE *tran )
 {
-    char	tline[ LINE_MAX ];
+    char	tline[ LINE_MAX ], line[ LINE_MAX ];
     char	**targv;
     int		tac;
     off_t	size = 0;
 
     while ( fgets( tline, LINE_MAX, tran ) != NULL ) {
+	strcpy( line, tline );
 	/* skip empty lines and transcript marker lines */
 	if (( tac = argcargv( tline, &targv )) <= 1 ) {
 	    continue;
@@ -63,6 +78,7 @@ applyloadsetsize( FILE *tran )
 	    switch ( *targv[ 1 ] ) {
 	    case 'a':
 	    case 'f':
+		linecheck( line, tac );
 		size += strtoofft( targv[ 7 ], NULL, 10 );
 
 	    default:
@@ -84,13 +100,14 @@ applyloadsetsize( FILE *tran )
     off_t
 lcksum_loadsetsize( FILE *tran, char *prefix )
 {
-    char	tline[ LINE_MAX ];
+    char	tline[ LINE_MAX ], line[ LINE_MAX ];
     char	*d_path = NULL;
     char	**targv;
     int		tac, linenum = 1;
     off_t	size = 0;
 
     while ( fgets( tline, LINE_MAX, tran ) != NULL ) {
+	strcpy( line, tline );
 	if (( tac = argcargv( tline, &targv )) <= 1 ) {
 	    continue;
 	}
@@ -108,6 +125,7 @@ lcksum_loadsetsize( FILE *tran, char *prefix )
 	switch ( *targv[ 0 ] ) {
 	case 'a':
 	case 'f':
+	    linecheck( line, tac );
 	    size += strtoofft( targv[ 6 ], NULL, 10 );
 
 	default:
