@@ -15,7 +15,7 @@
 void            (*logger)( char * ) = NULL;
 
 int		linenum = 0;
-int		cksum = 1;
+int		cksum = 0;
 int		verbose = 0;
 int		dodots = 0;
 extern char	*version, *checksumlist;
@@ -45,8 +45,15 @@ main( int argc, char **argv )
     FILE		*f, *ufs;
     struct stat		st;
 
-    while ( ( c = getopt ( argc, argv, "P:nvV" ) ) != EOF ) {
+    while ( ( c = getopt ( argc, argv, "c:oP:nvV" ) ) != EOF ) {
 	switch( c ) {
+	case 'c':
+	    if ( strcasecmp( optarg, "sha1" ) != 0 ) {
+		perror( optarg );
+		exit( 1 );
+	    }
+	    cksum = 1;  
+	    break; 
 	case 'P':
 	    prefix = optarg;
 	    break;
@@ -73,11 +80,15 @@ main( int argc, char **argv )
 	}
     }
 
+    if ( cksum == 0 ) {
+	err++;
+    }
+
     tpath = argv[ optind ];
 
     if ( err || ( argc - optind != 1 ) ) {
-	fprintf( stderr, "usage: lcksum [ -nvV ] [ -P prefix ] " );
-	fprintf( stderr, "transcript\n" );
+	fprintf( stderr, "usage: %s [ -nvV ] [ -P prefix ] ", argv[ 0 ] );
+	fprintf( stderr, "-c checksum transcript\n" );
 	exit( 2 );
     }
 
