@@ -208,7 +208,7 @@ main( int argc, char **argv )
 	fprintf( stderr, "[ -t stored-name ] [ -U user ] " );
         fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );
         fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ] " );
-	fprintf( stderr, "difference-transcript\n" );
+	fprintf( stderr, "create-able-transcript\n" );
 	exit( 2 );
     }
 
