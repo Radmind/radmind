@@ -26,7 +26,7 @@
 
 extern void            (*logger)( char * );
 extern int              verbose;
-struct timeval          timeout = { 10 * 60, 0 };
+struct timeval          timeout = { 60, 0 };
 extern int		errno;
 extern SSL_CTX  	*ctx;
 

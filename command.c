@@ -340,7 +340,7 @@ f_retr( sn, ac, av )
     /* dump file */
 
     while (( readlen = read( fd, buf, sizeof( buf ))) > 0 ) {
-	tv.tv_sec = 60 * 60 ;
+	tv.tv_sec = 60 ;
 	tv.tv_usec = 0;
 	if ( snet_write( sn, buf, (int)readlen, &tv ) != readlen ) {
 	    syslog( LOG_ERR, "snet_write: %m" );
@@ -618,7 +618,7 @@ f_stor( SNET *sn, int ac, char *av[] )
 
     snet_writef( sn, "%d Storing file\r\n", 350 );
 
-    tv.tv_sec = 60 * 60;
+    tv.tv_sec = 60;
     tv.tv_usec = 0;
     if ( ( sizebuf = snet_getline( sn, &tv ) ) == NULL ) {
 	syslog( LOG_ERR, "f_stor: snet_getline: %m" );
@@ -628,7 +628,7 @@ f_stor( SNET *sn, int ac, char *av[] )
     len = atoi( sizebuf );
 
     for ( ; len > 0; len -= rc ) {
-	tv.tv_sec = 60 * 60;
+	tv.tv_sec = 60;
 	tv.tv_usec = 0;
 	if (( rc = snet_read(
 		sn, buf, (int)MIN( len, sizeof( buf )), &tv )) <= 0 ) {
@@ -649,7 +649,7 @@ f_stor( SNET *sn, int ac, char *av[] )
 
     syslog( LOG_DEBUG, "f_stor: file %s stored", upload );
 
-    tv.tv_sec = 60 * 60;
+    tv.tv_sec = 60;
     tv.tv_usec = 0;
     if (( line = snet_getline( sn, &tv )) == NULL ) {
         syslog( LOG_ERR, "f_stor: snet_getline: %m" );
@@ -661,7 +661,7 @@ f_stor( SNET *sn, int ac, char *av[] )
 	snet_writef( sn, "%d Length doesn't match sent data\r\n", 555 );
 	(void)unlink( upload );
 
-	tv.tv_sec = 60 * 60;
+	tv.tv_sec = 60;
 	tv.tv_usec = 0;
 	for (;;) {
 	    if (( line = snet_getline( sn, &tv )) == NULL ) {
@@ -1075,7 +1075,12 @@ cmdloop( int fd, struct sockaddr_in *sin )
     snet_writef( sn, "%d RAP 1 %s %s radmind access protocol\r\n", 200,
 	    hostname, version );
 
-    tv.tv_sec = 60 * 60;	/* 60 minutes */
+    /*
+     * 60 minutes
+     * To make fsdiff | lapply work, when fsdiff will take a long time,
+     * we allow the server to wait a long time.
+     */
+    tv.tv_sec = 60 * 60;
     tv.tv_usec = 0 ;
     while (( line = snet_getline( sn, &tv )) != NULL ) {
 	tv.tv_sec = 60 * 60;
