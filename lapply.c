@@ -34,6 +34,7 @@ int		verbose = 0;
 int		dodots = 0;
 int		special = 0;
 int		network = 1;
+int		exitval = 2;
 char		transcript[ 2 * MAXPATHLEN ] = { 0 };
 char		prepath[ MAXPATHLEN ]  = { 0 };
 extern char	*version, *checksumlist;
@@ -153,14 +154,28 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
 	    }
 	}
 	if ( *targv[ 0 ] == 'a' ) {
-	    if ( retr_applefile( sn, pathdesc, path, temppath,
-		    (ssize_t)atol( targv[ 6 ] ), cksum_b64 ) != 0 ) {
+	    switch ( retr_applefile( sn, pathdesc, path, temppath,
+		(ssize_t)atol( targv[ 6 ] ), cksum_b64 )) {
+	    case 1:
+		exitval = 1;
 		return( 1 );
+	    case -1:
+		exitval = -1;
+		return( 1 );
+	    default:
+		break;
 	    }
 	} else {
-	    if ( retr( sn, pathdesc, path, (char *)&temppath,
-		    (ssize_t)atol( targv[ 6 ] ), cksum_b64 ) != 0 ) {
+	    switch ( retr( sn, pathdesc, path, (char *)&temppath,
+		(ssize_t)atol( targv[ 6 ] ), cksum_b64 ) != 0 ) {
+	    case 1:
+		exitval = 1;
 		return( 1 );
+	    case -1:
+		exitval = -1;
+		return( 1 );
+	    default:
+		break;
 	    }
 	}
 	if ( radstat( temppath, st, &fstype, &afinfo ) < 0 ) {
@@ -276,7 +291,7 @@ main( int argc, char **argv )
     } else if ( argc - optind == 1 ) {
 	if (( f = fopen( argv[ optind ], "r" )) == NULL ) { 
 	    perror( argv[ optind ]);
-	    goto error0;
+	    exit( 2 );
 	}
     } else {
 	err++;
@@ -294,7 +309,7 @@ main( int argc, char **argv )
 
     if ( network ) {
 	if (( sn = connectsn( host, port )) == NULL ) {
-	    exit( 1 );
+	    exit( 2 );
 	}
     } else {
 	if ( !quiet ) printf( "No network connection\n" );
@@ -419,6 +434,7 @@ dirchecklist:
 				goto error2;
 			    }
 			}
+			exitval = 1;
 			free_node( node );
 			goto dirchecklist;
 		    }
@@ -452,6 +468,7 @@ filechecklist:
 				goto error2;
 			    }
 			}
+			exitval = 1;
 			free_node( node );
 			goto filechecklist;
 		    }
@@ -478,12 +495,14 @@ filechecklist:
 		    goto error2;
 		}
 	    }
+	    exitval = 1;
 	    free_node( node );
 	}
 
 	if ( do_line( tline, present, &st, sn ) != 0 ) {
 	    goto error2;
 	}
+	exitval = 1;
     }
 
     /* Clear out remove list */ 
@@ -501,6 +520,7 @@ filechecklist:
 		goto error2;
 	    }
 	}
+	exitval = 1;
 	free_node( node );
     }
     acav_free( acav ); 
@@ -513,26 +533,17 @@ filechecklist:
     if ( network ) {
 	if (( closesn( sn )) != 0 ) {
 	    fprintf( stderr, "can not close sn\n" );
-	    goto error0;
+	    exit( 2 );
 	}
     }
 
     exit( 0 );
 
 error2:
-    if ( fclose( f ) != 0 ) {
-	perror( argv[ optind ] );
-	exit( 2 );
-    }
-
+    fclose( f );
 error1:
     if ( network ) {
-	if (( closesn( sn )) !=0 ) {
-	    fprintf( stderr, "can not close sn\n" );
-	    exit( 2 );
-	}
+	closesn( sn );
     }
-
-error0:
-    exit( 2 );
+    exit( exitval );
 }
