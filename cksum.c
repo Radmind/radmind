@@ -8,7 +8,7 @@
 #include <sys/param.h>
 #ifdef __APPLE__
 #include <sys/paths.h>
-#endif __APPLE__
+#endif /* __APPLE__ */
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -141,7 +141,7 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
 
     return( size );
 }
-#else __APPLE__
+#else /* __APPLE__ */
 
 /*
  * stub fuction for non-hfs+ machines.
@@ -156,4 +156,4 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afino )
     errno = EOPNOTSUPP;
     return( -1 );
 }
-#endif __APPLE__
+#endif /* __APPLE__ */

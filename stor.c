@@ -9,7 +9,7 @@
 #ifdef __APPLE__
 #include <sys/paths.h>
 #include <sys/attr.h>
-#endif __APPLE__
+#endif /* __APPLE__ */
 #include <sys/uio.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -506,7 +506,7 @@ sn_error:
     snet_close( sn );
     exit( 2 );
 }
-#else !__APPLE__
+#else /* __APPLE__ */
     int
 stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize, 
     char *trancksum, struct applefileinfo *afinfo )
@@ -514,4 +514,4 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
     errno = ENOTSUP;
     return( -1 );
 }
-#endif __APPLE__
+#endif /* __APPLE__ */

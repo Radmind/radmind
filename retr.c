@@ -9,7 +9,7 @@
 #ifdef __APPLE__
 #include <sys/attr.h>
 #include <sys/paths.h>
-#endif __APPLE__
+#endif /* __APPLE__ */
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -28,7 +28,7 @@
 
 #ifdef sun
 #define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
-#endif sun
+#endif /* sun */
 
 extern void            (*logger)( char * );
 extern struct timeval  	timeout;
@@ -425,7 +425,7 @@ error1:
     return( -1 );
 }
 
-#else !__APPLE__
+#else /* !__APPLE__ */
 
     int
 retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
@@ -435,4 +435,4 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     return( -1 );
 }
 
-#endif __APPLE__
+#endif /* __APPLE__ */

@@ -10,9 +10,9 @@
 
 #ifdef __STDC__
 #define ___P(x)		x
-#else __STDC__
+#else /* __STDC__ */
 #define ___P(x)		()
-#endif __STDC__
+#endif /* __STDC__ */
 
 int		cmdloop ___P(( int, struct sockaddr_in * ));
 int		command_k ___P(( char * ));

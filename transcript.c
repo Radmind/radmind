@@ -7,7 +7,7 @@
 #include <sys/param.h>
 #ifdef sun
 #include <sys/mkdev.h>
-#endif sun
+#endif /* sun */
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -91,13 +91,13 @@ t_parse( struct transcript *tran )
 		    tran->t_fullname, tran->t_linenum, ac );
 	    exit( 2 );
 	}
-#else !__APPLE__
+#else /* !__APPLE__ */
 	if ( ac != 5 ) {
 	    fprintf( stderr, "%s: line %d: expected 5 arguments, got %d\n",
 		    tran->t_fullname, tran->t_linenum, ac );
 	    exit( 2 );
 	}
-#endif __APPLE__
+#endif /* __APPLE__ */
 
 	tran->t_pinfo.pi_stat.st_mode = strtol( argv[ 2 ], NULL, 8 );
 	tran->t_pinfo.pi_stat.st_uid = atoi( argv[ 3 ] );
@@ -190,7 +190,7 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 
 #ifdef __APPLE__
     static char         null_buf[ 32 ] = { 0 };
-#endif __APPLE__
+#endif /* __APPLE__ */
 
     if ( edit_path == APPLICABLE ) {
 	cur = &tran->t_pinfo;
@@ -236,7 +236,7 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 		    finfo_e );
 	    break;
 	}
-#endif __APPLE__
+#endif /* __APPLE__ */
 	fprintf( outtran, "%c %-37s\t%.4lo %5d %5d\n", cur->pi_type, epath, 
 		(unsigned long )( T_MODE & cur->pi_stat.st_mode ), 
 		(int)cur->pi_stat.st_uid, (int)cur->pi_stat.st_gid );
@@ -415,7 +415,7 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 	    }
 	}
 	break;
-#endif __APPLE__
+#endif /* __APPLE__ */
 	if (( fs->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
 		( fs->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) ||
 		( mode != tran_mode )) {

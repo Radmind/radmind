@@ -58,7 +58,7 @@ struct finderinfo {
 struct applefileinfo {
 #ifdef __APPLE__
     char                rsrc_path[ MAXPATHLEN ];
-#endif __APPLE__
+#endif /* __APPLE__ */
     struct finderinfo	fi;		// finder info
     struct as_entry	as_ents[ 3 ];	// Apple Single entries
 					// For Finder info, rcrs and data forks

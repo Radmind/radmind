@@ -258,9 +258,9 @@ main( ac, av )
      */
 #ifdef ultrix
     openlog( prog, LOG_NOWAIT|LOG_PID );
-#else ultrix
+#else /* ultrix */
     openlog( prog, LOG_NOWAIT|LOG_PID, LOG_RADMIND );
-#endif ultrix
+#endif /* ultrix */
 
     /* catch SIGHUP */
     memset( &sa, 0, sizeof( struct sigaction ));

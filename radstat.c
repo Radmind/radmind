@@ -9,7 +9,7 @@
 #ifdef __APPLE__
 #include <sys/paths.h>
 #include <sys/attr.h>
-#endif __APPLE__
+#endif /* __APPLE__ */
 #include <sys/uio.h>
 #include <errno.h>
 #include <snet.h>
@@ -33,7 +33,7 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
     struct stat			rsrc_st;
     static char			null_buf[ 32 ] = { 0 };
     extern struct attrlist 	alist;
-#endif __APPLE__
+#endif /* __APPLE__ */
 
     if ( lstat( path, st ) != 0 ) {
 	return( -1 );
@@ -50,7 +50,7 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 		break;
 	    }
 	}
-#endif __APPLE__
+#endif /* __APPLE__ */
 	*type = 'f';
 	break;
 
@@ -61,7 +61,7 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 	    getattrlist( path, &alist, &afinfo->fi,
 		sizeof( struct finderinfo ), FSOPT_NOFOLLOW );
 	}
-#endif __APPLE__
+#endif /* __APPLE__ */
 	*type = 'd';
 	break;
 
@@ -81,7 +81,7 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
     case S_IFDOOR:
 	*type = 'D';
 	break;
-#endif sun
+#endif /* sun */
 
     case S_IFIFO:
 	*type = 'p';
@@ -140,7 +140,7 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 	/* Set st->st_size to size of encoded apple single file */
 	st->st_size = afinfo->as_size;
     }
-#endif __APPLE__
+#endif /* __APPLE__ */
 
     return( 0 );
 }

@@ -29,4 +29,4 @@ struct as_header		as_header = {
 };
 
 extern struct as_header as_header;
-#endif __APPLE__
+#endif /* __APPLE__ */

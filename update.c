@@ -8,10 +8,10 @@
 #include <sys/param.h>
 #ifdef sun
 #include <sys/mkdev.h>
-#endif sun
+#endif /* sun */
 #ifdef __APPLE__
 #include <sys/attr.h>
-#endif
+#endif /* __APPLE__ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,7 +41,7 @@ update( const char *path, char *displaypath, int present, int newfile,
     char			fi_data[ FINFOLEN ];
     extern struct atterlist     alist;
     static char                 null_buf[ 32 ] = { 0 };
-#endif __APPLE__
+#endif /* __APPLE__ */
 
     switch ( *targv[ 0 ] ) {
     case 'a':
@@ -96,7 +96,7 @@ update( const char *path, char *displaypath, int present, int newfile,
 	if (( tac != 5 )
 #ifdef __APPLE__
 		&& ( tac != 6 )
-#endif __APPLE__
+#endif /* __APPLE__ */
 		) {
 	    fprintf( stderr,
 		"%d: incorrect number of arguments\n", linenum );
@@ -167,7 +167,7 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    }
 	    if ( !quiet ) printf( " finder-info" );
 	}
-#endif __APPLE__
+#endif /* __APPLE__ */
 	break;
 
     case 'h':
@@ -290,9 +290,9 @@ update( const char *path, char *displaypath, int present, int newfile,
 	       perror( path );
 	       return( 1 );
 	    }
-#else !sun
+#else /* !sun */
 	    dev = makedev( atoi( targv[ 5 ] ), atoi( targv[ 6 ] ));
-#endif sun
+#endif /* sun */
 	    if ( mknod( path, mode, dev ) != 0 ) {
 		perror( path );
 		return( 1 );

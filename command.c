@@ -39,7 +39,7 @@
 #ifdef sun
 #define MIN(a,b)	((a)<(b)?(a):(b))
 #define MAX(a,b)	((a)>(b)?(a):(b))
-#endif sun
+#endif /* sun */
 
 #define	DEFAULT_MODE 0444
 #define DEFAULT_UID     0
