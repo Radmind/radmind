@@ -354,7 +354,7 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
 }
 
     int
-transcript( struct pathinfo *new, char *name )
+transcript( struct pathinfo *new )
 {
 
     int			move;
@@ -366,8 +366,8 @@ transcript( struct pathinfo *new, char *name )
     struct transcript	*next_tran = NULL;
     struct transcript	*begin_tran = NULL;
 
-    if ( lstat( name, &new->pi_stat ) != 0 ) {
-	perror( name );
+    if ( lstat( new->pi_name, &new->pi_stat ) != 0 ) {
+	perror( new->pi_name );
 	exit( 1 );
     }
 
@@ -383,10 +383,7 @@ transcript( struct pathinfo *new, char *name )
 	    (( path = hardlink( new )) != NULL )) {
 	new->pi_type = 'h';
 	strcpy( new->pi_link, path );
-    }
-
-    /* check to see if a link, then read it in */
-    if ( S_ISLNK( new->pi_stat.st_mode )) {
+    } else if ( S_ISLNK( new->pi_stat.st_mode )) {
 	len = readlink( new->pi_name, epath, MAXPATHLEN );
 	epath[ len ] = '\0';
 	strcpy( new->pi_link, epath );
