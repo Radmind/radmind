@@ -2,8 +2,9 @@
 # Otherwise loading the .mpkg will fail.
 client-bin.pkg:Required
 client-man.pkg:Required
-client-var.pkg:Selected
+client-var.pkg:Unelected
 server-startup.pkg:Unselected
 server-sbin.pkg:Unselected
 server-man.pkg:Unselected
+server-var.pkg:Unselected
 

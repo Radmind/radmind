@@ -206,6 +206,7 @@ CLIENTVARPKGDIR=${MPKGDIR}/client-var
 SERVERSTARTUPPKGDIR=${MPKGDIR}/server-startup
 SERVERSBINPKGDIR=${MPKGDIR}/server-sbin
 SERVERMANPKGDIR=${MPKGDIR}/server-man
+SERVERVARPKGDIR=${MPKGDIR}/server-var
 INFOLIST=	$(wildcard OS_X/*.info)	
 
 info :
@@ -230,6 +231,16 @@ package : all man info
 	    ${INSTALL} -o root -g wheel -m 0444 -c tmp/man/$$i \
 		${SERVERMANPKGDIR}/man8/; \
 	done
+	mkdir -p -m 0755 ${SERVERVARPKGDIR}
+	mkdir -p -m 0755 ${SERVERVARPKGDIR}/file
+	mkdir -p -m 0755 ${SERVERVARPKGDIR}/command
+	tar xvf OS_X/tutorial-negative.files.tar -C ${SERVERVARPKGDIR}/file
+	${INSTALL} -o root -g wheel -m 0700 -c OS_X/config \
+	    ${SERVERVARPKGDIR}
+	${INSTALL} -o root -g wheel -m 0700 -c OS_X/tutorial.K \
+	    ${SERVERVARPKGDIR}/command
+	chown -R root:wheel ${SERVERVARPKGDIR}
+	chmod -R 0700 ${SERVERVARPKGDIR}
 
 	# Create client package #
 	mkdir -p -m 0755 ${CLIENTBINPKGDIR}
@@ -250,9 +261,9 @@ package : all man info
 	mkdir -p -m 0700 ${CLIENTVARPKGDIR}
 	mkdir -p -m 0700 ${CLIENTVARPKGDIR}/cert
 	mkdir -p -m 0700 ${CLIENTVARPKGDIR}/client
-	${INSTALL} -o root -g staff -m 0700 -c OS_X/command.K \
-	    ${CLIENTVARPKGDIR}/client
-	${INSTALL} -o root -g staff -m 0700 -c OS_X/negative.T \
+	${INSTALL} -o root -g staff -m 0700 -c OS_X/tutorial.K \
+	    ${CLIENTVARPKGDIR}/client/command.K
+	${INSTALL} -o root -g staff -m 0700 -c OS_X/tutorial-negative.T \
 	    ${CLIENTVARPKGDIR}/client
 	chown root:wheel ${MPKGDIR}
 	find ${MPKGDIR}/* -exec chown root:wheel {} \;
@@ -263,6 +274,7 @@ package : all man info
 	    ${MPKGDIR}
 	package ${SERVERSBINPKGDIR} tmp/OS_X/server-sbin.info -d ${MPKGDIR}
 	package ${SERVERMANPKGDIR} tmp/OS_X/server-man.info -d ${MPKGDIR}
+	package ${SERVERVARPKGDIR} tmp/OS_X/server-var.info -d ${MPKGDIR}
 	cp tmp/OS_X/radmind.info ${MPKGDIR}/radmind-${VERSION}.info
 	cp OS_X/radmind.list ${MPKGDIR}/radmind-${VERSION}.list
 	cp OS_X/License.rtf ${MPKGDIR}
