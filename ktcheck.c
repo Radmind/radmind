@@ -4,6 +4,7 @@
 #include <netdb.h>
 #include <sha.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/mkdev.h>
 #include <sys/ddi.h>
@@ -15,36 +16,78 @@
 
 #include "snet.h"
 #include "argcargv.h"
-#include "stat.h"
+#include "getstat.h"
+#include "download.h"
+#include "chksum.h"
+
+void output( char* string);
+int check( SNET *sn, char *type, char *path); 
 
 void		(*logger)( char * ) = NULL;
 struct timeval 	timeout = { 10 * 60, 0 };
 int		linenum = 0;
-int		chksum = 0;
+int		chksum = 1;
 int		verbose = 0;
-
-void output( char* string);
-int check( SNET *sn, char *file, char *chksum); 
 
     void
 output( char *string ) {
-    printf( "%s\n", string );
+    printf( "<<< %s\n", string );
     return;
 }
 
     int
-check( SNET *sn, char *file, char *chksum ) {
-    FILE	*f = NULL;
-    char	*stats;
+check( SNET *sn, char* type, char *path) {
+    //FILE	*f = NULL;
+    char	*schksum, *stats;
+    char	**targv;
+    char 	command[ 2 * MAXPATHLEN ];
+    char        cchksum[ 29 ];
+    int		error, tac;
 
-    printf( "Checking %s\n",file );
+    printf( "Checking %s\n", path);
+    sprintf( command, "%s %s", type, path);
+    printf( "%s\n", command );
 
-    stats = stat( sn, file, NULL );
+    stats = getstat( sn, (char *)&command );
 
-    printf( "stats: %s\n", stats );
+    tac = acav_parse( NULL, stats, &targv );
 
-    if ( ( f = fopen( file, "r" ) ) == NULL ) { 
-	//download( file );
+    if ( tac != 8 ) {
+	perror( "Incorrect number of arguments\n" );
+	return( 1 );
+    }
+
+    if ( ( schksum = strdup( targv[ 7 ] ) ) == NULL ) {
+	perror( "strdup" );
+	return( 1 );
+    }
+
+    printf( "path: %s\n", path );
+
+    error = do_chksum( path, cchksum );
+
+    if ( error == 2 ) {
+	printf( "File is not present -- must download\n" );
+	if ( download( sn, command, path, schksum ) != 0 ) {
+	    perror( "download" );
+	    return( 1 );
+	}
+	chmod( path, 0400 );
+	return( 0 );
+    } else if ( error == 1 ) {
+	perror( "do_chksum" );
+	return( 1 );
+    }
+
+    if ( strcmp( schksum, cchksum) != 0 ) {
+	printf( "Chksum mismatch.  Must download\n" );
+	if ( unlink( path ) != 0 ) {
+	    perror( "unlink" );
+	    return( 1 );
+	}
+	printf( "Unlinked %s\n", path );
+    } else {
+	printf( "Chksum match\n" );
     }
 
     return( 0 );
@@ -172,7 +215,7 @@ main( int argc, char **argv )
 	}
     }
 
-    if ( check( sn, argv[ optind ], NULL ) != 0 ) { 
+    if ( check( sn, "TRANSCRIPT", argv[ optind ] ) != 0 ) { 
 	perror( "check" );
 	exit( 1 );
     }
