@@ -4,7 +4,7 @@
 \-  upload transcripts and their corresponding files
 .SH SYNOPSIS
 .B lcreate
-.RB [ \-nNTV ]
+.RB [ \-LnNTV ]
 [
 .RB \-q\ |\ \-v
 ] [
@@ -14,7 +14,11 @@
 ] [
 .BI \-p\  port
 ] [
+.BI \-P\  password 
+] [
 .BI \-t\  stored-name
+] [
+.BI \-U\  user
 ] [
 .BI \-w\  auth-level
 ] [
@@ -61,6 +65,9 @@ enables checksuming.
 specifies the radmind server, by default
 .BR _RADMIND_HOST .
 .TP 19
+.B \-L
+Turn on user authentication.
+.TP 19
 .B \-N
 uploads a
 .B negative
@@ -74,6 +81,10 @@ files in the transcript exist in the filesystem and are readable.
 specifies a port, by default
 .BR 6662 .
 .TP 19
+.BI \-P\  password
+Specifies the password for user authentication.  By defualt, the user will
+be prompted for their password.
+.TP 19
 .B \-q
 suppress all messages.
 .TP 19
@@ -85,6 +96,12 @@ the corresponding files.
 .BI \-t\  stored-name
 specifies the name under which the transcript will be stored when saved
 on the server.
+.TP 19
+.BI \-U\  user
+Specifes the user for user authentication.  By default, the login name
+returned by
+.B getlogin() 
+will be used.
 .TP 19
 .B \-V
 displays the version of 
