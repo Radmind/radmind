@@ -274,10 +274,14 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
      * checksums are on, get the checksum
      */
 #ifdef __APPLE__
-    if ( chksum && ( fs->pi_type == 'f' || fs->pi_type == 'a' )) {
-#else !__APPLE__
-    if ( chksum && fs->pi_type == 'f' ) {
+    if ( chksum && fs->pi_type == 'a' ) {
+	if ( do_achksum( fs->pi_name, fs->pi_chksum_b64 ) < 0 ) {
+	    perror( fs->pi_name );
+	    exit( 1 );
+	}
+    }
 #endif __APPLE__
+    if ( chksum && fs->pi_type == 'f' ) {
 	if ( do_chksum( fs->pi_name, fs->pi_chksum_b64 ) < 0 ) {
 	    perror( fs->pi_name );
 	    exit( 1 );
