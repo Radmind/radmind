@@ -24,7 +24,7 @@ void            (*logger)( char * ) = NULL;
 extern char	*version, *checksumlist;
 
 void		fs_walk( struct llist *, int, int );
-int		verbose = 0, ihookoutput = 0;
+int		verbose = 0;
 int		dodots = 0;
 const EVP_MD    *md;
 
@@ -42,6 +42,7 @@ fs_walk( struct llist *path, int start, int finish )
 
     if ( finish > start ) {
 	printf( "%%%.3d %s\n", start, path->ll_pinfo.pi_name );
+	fflush( stdout );
     }
 
     /* call the transcript code */
@@ -51,7 +52,6 @@ fs_walk( struct llist *path, int start, int finish )
 
     /* open directory */
     if (( dir = opendir( path->ll_pinfo.pi_name )) == NULL ) {
-	if ( verbose ) putc( '\n', stdout );
 	perror( path->ll_pinfo.pi_name );
 	exit( 2 );	
     }
@@ -70,7 +70,6 @@ fs_walk( struct llist *path, int start, int finish )
 
 	/* absolute pathname. add 2 for / and NULL termination.  */
 	if (( len + strlen( de->d_name ) + 2 ) > MAXPATHLEN ) {
-	    if ( verbose ) putc( '\n', stdout );
 	    fprintf( stderr, "Absolute pathname too long\n" );
 	    exit( 2 );
 	}
@@ -78,7 +77,6 @@ fs_walk( struct llist *path, int start, int finish )
 	if ( path->ll_pinfo.pi_name[ len - 1 ] == '/' ) {
 	    if ( snprintf( temp, MAXPATHLEN, "%s%s", path->ll_pinfo.pi_name,
 		    de->d_name ) > MAXPATHLEN ) {
-		if ( verbose ) putc( '\n', stdout );
                 fprintf( stderr, "%s%s: path too long\n",
                     path->ll_pinfo.pi_name, de->d_name );
 		exit( 2 );
@@ -86,7 +84,6 @@ fs_walk( struct llist *path, int start, int finish )
 	} else {
             if ( snprintf( temp, MAXPATHLEN, "%s/%s", path->ll_pinfo.pi_name,
                     de->d_name ) > MAXPATHLEN ) {
-		if ( verbose ) putc( '\n', stdout );
                 fprintf( stderr, "%s/%s: path too long\n",
                     path->ll_pinfo.pi_name, de->d_name );
                 exit( 2 );
