@@ -153,9 +153,10 @@ main( int argc, char **argv )
 
 	/* check chksum */
 	if ( strcmp( lchksum, targv[ 7 ] ) != 0 ) {
-	    if ( verbose ) printf( "*** %s: chksum failed\n", targv[ 1 ] );
+	    if ( verbose && !update ) printf( "*** %s: chksum failed\n",
+		    targv[ 1 ] );
 	    if ( update ) {
-		if ( verbose ) printf( "*** %s: chksum updated\n",
+		if ( verbose && update ) printf( "*** %s: chksum updated\n",
 		    targv[ 1 ] ); 
 		ucount++;
 	    }
@@ -169,10 +170,11 @@ main( int argc, char **argv )
 	    exit( 2 );
 	}
 	if ( stats.st_size != atoi( targv[ 6 ] ) ) {
-	    if ( verbose ) printf( "*** %s: size incorrect\n",
-		targv[ 1 ] );
+	    if ( verbose && !update ) printf( "*** %s: size failed\n",
+		    targv[ 1 ] );
 	    if ( update ) {
-		if ( verbose ) printf( "*** %s: size updated\n", targv[ 1 ] );
+		if ( verbose && update ) printf( "*** %s: size updated\n",
+			targv[ 1 ] );
 		ucount++;
 	    }
 	    utime = 1;
