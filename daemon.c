@@ -38,6 +38,7 @@ int		backlog = 5;
 int		verbose = 0;
 int		dodots = 0;
 int		cksum = 0;
+int		authlevel = 0;
 char		*radmind_path = _RADMIND_PATH;
 SSL_CTX         *ctx = NULL;
 
@@ -96,8 +97,8 @@ main( ac, av )
     struct servent	*se;
     int			c, s, err = 0, fd, sinlen, trueint;
     int			dontrun = 0;
-    int			authlevel = 0;
     int			use_randfile = 0;
+    int			ssl_mode = 0;
     char		*prog;
     unsigned short	port = 0;
     int			facility = _RADMIND_LOG;
@@ -150,6 +151,11 @@ main( ac, av )
 
 	case 'w' :		/* authlevel 0:none, 1:serv, 2:client & serv */
 	    authlevel = atoi( optarg );
+	    if (( authlevel < 0 ) || ( authlevel > 2 )) {
+		fprintf( stderr, "%s: %s: invalid authorization level\n",
+			prog, optarg );
+		exit( 1 );
+	    }
 	    break;
 
 	case 'x' :		/* ca file */
@@ -208,24 +214,25 @@ main( ac, av )
             exit( 1 );
         }
 
-        /* Use cert.pem to set private key */
-        if ( SSL_CTX_use_PrivateKey_file( ctx, privatekey, SSL_FILETYPE_PEM )
-                != 1 ) {
-            fprintf( stderr, "SSL_CTX_use_PrivateKey_file: %s: %s\n",
-                    privatekey, ERR_error_string( ERR_get_error(), NULL ));
-            exit( 1 );
-        }
-        if ( SSL_CTX_use_certificate_chain_file( ctx, cert ) != 1 ) {
-            fprintf( stderr, "SSL_CTX_use_certificate_chain_file: %s: %s\n",
-                    cert, ERR_error_string( ERR_get_error(), NULL ));
-            exit( 1 );
-        }
-        /* Verify that private key matches cert */
-        if ( SSL_CTX_check_private_key( ctx ) != 1 ) {
-            fprintf( stderr, "SSL_CTX_check_private_key: %s\n",
-                    ERR_error_string( ERR_get_error(), NULL ));
-            exit( 1 );
-        }
+	if ( authlevel == 2 ) {
+	    if ( SSL_CTX_use_PrivateKey_file( ctx, privatekey,
+		    SSL_FILETYPE_PEM ) != 1 ) {
+		fprintf( stderr, "SSL_CTX_use_PrivateKey_file: %s: %s\n",
+			privatekey, ERR_error_string( ERR_get_error(), NULL ));
+		exit( 1 );
+	    }
+	    if ( SSL_CTX_use_certificate_chain_file( ctx, cert ) != 1 ) {
+		fprintf( stderr, "SSL_CTX_use_certificate_chain_file: %s: %s\n",
+			cert, ERR_error_string( ERR_get_error(), NULL ));
+		exit( 1 );
+	    }
+	    /* Verify that private key matches cert */
+	    if ( SSL_CTX_check_private_key( ctx ) != 1 ) {
+		fprintf( stderr, "SSL_CTX_check_private_key: %s\n",
+			ERR_error_string( ERR_get_error(), NULL ));
+		exit( 1 );
+	    }
+	}
 
         /* Load CA */
         if ( SSL_CTX_load_verify_locations( ctx, ca, NULL ) != 1 ) {
@@ -234,8 +241,13 @@ main( ac, av )
             exit( 1 );
         }
         /* Set level of security expecations */
-        SSL_CTX_set_verify( ctx,
-                SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL );
+	if ( authlevel == 1 ) {
+	    ssl_mode = SSL_VERIFY_PEER; 
+	} else {
+	    /* authlevel == 2 */
+	    ssl_mode = SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
+	}
+        SSL_CTX_set_verify( ctx, ssl_mode, NULL );
     }
 
     if ( dontrun ) {

@@ -3,11 +3,6 @@
  * All Rights Reserved.  See COPYRIGHT.
  */
 
-/*
- * Copyright (c) 1998 Regents of The University of Michigan.
- * All Rights Reserved.  See COPYRIGHT.
- */
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -58,6 +53,7 @@ extern SSL_CTX  *ctx;
 #define K_SPECIAL 3
 #define K_FILE 4
 
+int 		list_transcripts( SNET *sn );
 
 int		f_quit ___P(( SNET *, int, char *[] ));
 int		f_noop ___P(( SNET *, int, char *[] ));
@@ -65,16 +61,48 @@ int		f_help ___P(( SNET *, int, char *[] ));
 int		f_stat ___P(( SNET *, int, char *[] ));
 int		f_retr ___P(( SNET *, int, char *[] ));
 int		f_stor ___P(( SNET *, int, char *[] ));
+int		f_noauth ___P(( SNET *, int, char *[] ));
 #ifdef TLS
 int		f_starttls ___P(( SNET *, int, char *[] ));
 #endif /* TLS */
 
-char		*remote_host;
-char		*remote_addr;
+char		*remote_host = NULL;
+char		*remote_addr = NULL;
+char		*remote_cn = NULL;
 char		command_file[ MAXPATHLEN ];
 char		upload_xscript[ MAXPATHLEN ];
-const EVP_MD    *md;
+const EVP_MD    *md = NULL;
 struct node	*tran_list = NULL;
+int		ncommands = 0;
+char		hostname[ MAXHOSTNAMELEN ];
+
+extern int 	authlevel;
+
+struct command	noauth[] = {
+    { "QUIT",		f_quit },
+    { "NOOP",		f_noop },
+    { "HELP",		f_help },
+    { "STATus",		f_noauth },
+    { "RETRieve",	f_noauth },
+    { "STORe",		f_noauth },
+#ifdef TLS
+    { "STARTTLS",       f_starttls },
+#endif TLS
+};
+
+struct command	auth[] = {
+    { "QUIT",		f_quit },
+    { "NOOP",		f_noop },
+    { "HELP",		f_help },
+    { "STATus",		f_stat },
+    { "RETRieve",	f_retr },
+    { "STORe",		f_stor },
+#ifdef TLS
+    { "STARTTLS",       f_starttls },
+#endif TLS
+};
+
+struct command *commands  = noauth;
 
     int
 f_quit( sn, ac, av )
@@ -103,6 +131,16 @@ f_help( sn, ac, av )
     char	*av[];
 {
     snet_writef( sn, "%d What is this, SMTP?\r\n", 203 );
+    return( 0 );
+}
+
+    int
+f_noauth( sn, ac, av )
+    SNET	*sn;
+    int		ac;
+    char	*av[];
+{
+    snet_writef( sn, "%d No access for client\r\n", 500 );
     return( 0 );
 }
 
@@ -630,6 +668,8 @@ f_starttls( snet, ac, av )
     X509                        *peer;
     char                        buf[ 1024 ];
 
+    ncommands = sizeof( noauth ) / sizeof( noauth [ 0 ] );
+
     /* We get here when the client asks for TLS with the STARTTLS verb */
     /*
      * Client MUST NOT attempt to start a TLS session if a TLS     
@@ -668,8 +708,30 @@ f_starttls( snet, ac, av )
         return( -1 );
     }
 
-    syslog( LOG_INFO, "CERT Subject: %s\n", X509_NAME_oneline( X509_get_subject_name( peer ), buf, sizeof( buf )));
+    syslog( LOG_INFO, "CERT Subject: %s\n",
+	X509_NAME_oneline( X509_get_subject_name( peer ), buf, sizeof( buf )));
     X509_free( peer );
+
+    X509_NAME_get_text_by_NID( X509_get_subject_name( peer ),
+	NID_commonName, buf, sizeof( buf ));
+    if (( remote_cn = strdup( buf )) == NULL ) {
+	syslog( LOG_ERR, "strdup: %m" );
+	return( -1 );
+    }
+    X509_free( peer );
+
+    /* get command file */
+    if ( command_k( "config" ) < 0 ) {
+	snet_writef( snet, "%d Now access for %s\r\n", 500, remote_host );
+	return( -1 );
+    } else {
+	commands  = auth;
+	ncommands = sizeof( auth ) / sizeof( auth[ 0 ] );
+	if ( list_transcripts( snet ) != 0 ) {
+	    /* error message given in list_transcripts */
+	    exit( 1 );
+	}
+    }
 
 /* More env crap we don't have 
     env_reset( env );
@@ -713,7 +775,8 @@ command_k( char *path_config )
 	}
 
 	if ( wildcard( av[ 0 ], remote_host )
-		|| wildcard( av[ 0 ], remote_addr )) {
+		|| wildcard( av[ 0 ], remote_addr )
+		|| (( remote_cn != NULL ) && wildcard( av[ 0 ], remote_cn ))) {
 	    sprintf( command_file, "command/%s", av[ 1 ] );
 
 	    return( 0 );
@@ -727,20 +790,48 @@ command_k( char *path_config )
     return( -1 );
 }
 
-struct command	commands[] = {
-    { "QUIT",		f_quit },
-    { "NOOP",		f_noop },
-    { "HELP",		f_help },
-    { "STATus",		f_stat },
-    { "RETRieve",	f_retr },
-    { "STORe",		f_stor },
-#ifdef TLS
-    { "STARTTLS",       f_starttls },
-#endif TLS
-};
+    int
+list_transcripts( SNET *sn )
+{
+    int			ac, linenum;
+    char		kline[ MAXPATHLEN * 2 ];
+    FILE		*f;
+    char                **av;
 
-int		ncommands = sizeof( commands ) / sizeof( commands[ 0 ] );
-char		hostname[ MAXHOSTNAMELEN ];
+    /* Create list of transcripts */
+    if (( f = fopen( command_file, "r" )) == NULL ) {
+	syslog( LOG_ERR, "fopen: %s: %m", command_file );
+	snet_writef( sn, "%d %s: %s\r\n", 543, command_file,
+	    strerror( errno ));
+	return( -1 );
+    }
+    linenum = 0;
+    while ( fgets( kline, MAXPATHLEN, f ) != NULL ) {
+	linenum++;
+	ac = acav_parse( NULL, kline, &av );
+	if (( ac == 0 ) || ( *av[ 0 ] == '#' )
+		|| ( *av[ 0 ] == 's')) {
+	    continue;
+	}
+	if ( ac != 2 ) {
+	    syslog( LOG_ERR, "%s: %d: invalid command line\n",
+		    command_file, linenum );
+	    snet_writef( sn, "%d %s: %d:invalid command line\r\n", 543,
+		    command_file, linenum );
+	    return( -1 );
+	}
+	insert_node( av[ 1 ], &tran_list );
+    }
+    if ( ferror( f )) {
+	syslog( LOG_ERR, "fgets: %m" );
+	return( -1 );
+    }
+    if ( fclose( f ) < 0 ) {
+	syslog( LOG_ERR, "fclose: %m" );
+	return( -1 );
+    }
+    return( 0 );
+}
 
     int
 cmdloop( int fd, struct sockaddr_in *sin )
@@ -748,13 +839,13 @@ cmdloop( int fd, struct sockaddr_in *sin )
     SNET		*sn;
     struct hostent	*hp;
     char		*p;
-    int			ac, i, linenum;
+    int			ac, i;
     unsigned int	n;
     char		**av, *line;
     struct timeval	tv;
     extern char		*version;
-    char		kline[ MAXPATHLEN * 2 ];
-    FILE		*f;
+
+    ncommands = sizeof( noauth ) / sizeof( noauth[ 0 ] );
 
     if (( sn = snet_attach( fd, 1024 * 1024 )) == NULL ) {
 	syslog( LOG_ERR, "snet_attach: %m" );
@@ -776,42 +867,21 @@ cmdloop( int fd, struct sockaddr_in *sin )
     syslog( LOG_INFO, "child for [%s] %s",
 	    inet_ntoa( sin->sin_addr ), remote_host );
     
-    /* lookup proper command file based on the hostname */
-    if ( command_k( "config" ) < 0 ) {
-        snet_writef( sn, "%d No access for %s\r\n", 500, remote_host );
-	exit( 1 );
-    }
-
-    /* Create list of transcripts */
-    if (( f = fopen( command_file, "r" )) == NULL ) {
-	syslog( LOG_ERR, "fopen: %s: %m", command_file );
-	snet_writef( sn, "%d %s: %s\r\n", 543, command_file, strerror( errno ));
-	exit( 1 );
-    }
-    linenum = 0;
-    while ( fgets( kline, MAXPATHLEN, f ) != NULL ) {
-	linenum++;
-	ac = acav_parse( NULL, kline, &av );
-	if (( ac == 0 ) || ( *av[ 0 ] == '#' )
-		|| ( *av[ 0 ] == 's')) {
-	    continue;
+    if ( authlevel != 2 ) {
+	/* lookup proper command file based on the hostname */
+	if ( command_k( "config" ) < 0 ) {
+	    if ( authlevel == 0 ) {
+		snet_writef( sn, "%d No access for %s\r\n", 500, remote_host );
+		exit( 1 );
+	    }
+	} else {
+	    if ( list_transcripts( sn ) != 0 ) {
+		/* error message given in list_transcripts */
+		exit( 1 );
+	    }
+	    commands = auth;
+	    ncommands = sizeof( auth ) / sizeof( auth[ 0 ] );
 	}
-	if ( ac != 2 ) {
-	    syslog( LOG_ERR, "%s: %d: invalid command line\n",
-		    command_file, linenum );
-	    snet_writef( sn, "%d %s: %d:invalid command line\r\n", 543,
-		    command_file, linenum );
-	    exit( 1 );
-	}
-	insert_node( av[ 1 ], &tran_list );
-    }
-    if ( ferror( f )) {
-	syslog( LOG_ERR, "fgets: %m" );
-	exit( 1 );
-    }
-    if ( fclose( f ) < 0 ) {
-	syslog( LOG_ERR, "fclose: %m" );
-	exit( 1 );
     }
 
     if ( gethostname( hostname, MAXHOSTNAMELEN ) < 0 ) {
