@@ -85,14 +85,24 @@ main( int argc, char **argv )
     struct tran		**trans = NULL;
     struct node		*dirlist = NULL;
     FILE		*ofs;
+    mode_t		mask;
 
-    while ( ( c = getopt( argc, argv, "fnVv" ) ) != EOF ) {
+    while ( ( c = getopt( argc, argv, "fnu:Vv" ) ) != EOF ) {
 	switch( c ) {
 	case 'f':
 	    force = 1;
 	    break;
 	case 'n':
 	    noupload = 1;
+	    break;
+	case 'u':
+	    errno = 0;
+	    mask = strtol( optarg, (char **)NULL, 0 );
+	    if ( errno != 0 ) {
+		err++;
+		break;
+	    }
+	    umask( mask );
 	    break;
 	case 'V':
 	    printf( "%s\n", version );
@@ -119,7 +129,7 @@ main( int argc, char **argv )
     }
 
     if ( err ) {
-	fprintf( stderr, "usage: %s [ -fnvV ] ", argv[ 0 ] );
+	fprintf( stderr, "usage: %s [ -fnvV ] [ -u umask ] ", argv[ 0 ] );
 	fprintf( stderr, "transcript1, transcript2, ..., dest\n" );
 	exit( 2 );
     }
