@@ -192,6 +192,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *location,
 	exit( 1 );
     }
     if ( chksum ) SHA1_Update( &sha_ctx, finfo, (size_t)as_cc );
+    size -= as_cc;
 
     if (( rsrc_path = ( char * )malloc( strlen( path )
 		+ strlen( rsrc_suffix ))) == NULL ) {
