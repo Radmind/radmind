@@ -47,8 +47,9 @@ The file config contains a list of known clients that
 can connect to radmind, one per line.  Each line contains the
 CN, domain name or IP address of the client and the client's
 command file.  The server checks each line of the config file, first
-checking to see if the connecting client's CN, doman name, and 
-finally IP address match in that order.
+checking to see if the connecting client's CN, domain name, and 
+finally IP address match in that order.  CNs are case sensitive while 
+domain names are case insensitive.
 Lines that are blank or begin with '#' are ignored.  '*' is a wildcard and
 will match any string.  A number range can be given 
 by "<\c
@@ -59,7 +60,7 @@ where
 is the lower bound and
 .I max
 is the upper bound.  '\\'
-can be used to escape any character. 
+can be used to escape any character.
 .sp
 A client is only given access to transcripts that are listed in their config
 file.

@@ -1093,7 +1093,7 @@ command_k( char *path_config )
 	    *p = '/';
 	}
 
-	if (( remote_cn != NULL ) && wildcard( av[ 0 ], remote_cn )) {
+	if (( remote_cn != NULL ) && wildcard( av[ 0 ], remote_cn, 1 )) {
 	    if ( snprintf( command_file, MAXPATHLEN, "command/%s", av[ 1 ] )
 		    >= MAXPATHLEN ) {
 		syslog( LOG_ERR,
@@ -1109,7 +1109,7 @@ command_k( char *path_config )
 	    strcpy( special_dir, temp );
 	    return( 0 );
 	}
-	if ( wildcard( av[ 0 ], remote_host )) {
+	if ( wildcard( av[ 0 ], remote_host, 0 )) {
 	    if ( snprintf( command_file, MAXPATHLEN, "command/%s", av[ 1 ] )
 		    >= MAXPATHLEN ) {
 		syslog( LOG_ERR,
@@ -1125,7 +1125,7 @@ command_k( char *path_config )
 	    strcpy( special_dir, temp );
 	    return( 0 );
 	} 
-	if ( wildcard( av[ 0 ], remote_addr )) {
+	if ( wildcard( av[ 0 ], remote_addr, 1 )) {
 	    if ( snprintf( command_file, MAXPATHLEN, "command/%s", av[ 1 ] )
 		    >= MAXPATHLEN ) {
 		syslog( LOG_ERR,
