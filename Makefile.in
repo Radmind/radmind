@@ -150,7 +150,7 @@ libsnet/libsnet.a : FRC
 VERSION=`date +%Y%m%d`
 DISTDIR=../radmind-${VERSION}
 
-dist   : clean
+dist   : distclean
 	mkdir ${DISTDIR}
 	tar chfFFX - EXCLUDE . | ( cd ${DISTDIR}; tar xvf - )
 	echo ${VERSION} > ${DISTDIR}/VERSION
@@ -262,7 +262,9 @@ package : all man info
 	cd ..; tar zvcf radmind-${VERSION}.mpkg.tgz radmind-${VERSION}.mpkg/*
 
 clean :
-	rm -f config.log config.status Makefile libsnet/Makefile
 	rm -f *.o a.out core
 	rm -f ${TARGETS}
 	rm -rf man tmp
+
+distclean: clean
+	rm -f config.log config.status Makefile libsnet/Makefile
