@@ -19,12 +19,10 @@ do_chksum( char *path, char *chksum_b64 )
     }
 
     if ( do_chksum_fd( fd, chksum_b64 ) != 0 ) {
-	fprintf( stderr, "do_chksum_fd" );
 	return( 1 );
     }
 
     if ( close( fd ) != 0 ) {
-	perror( "close" );
 	return( 1 );
     }
 
@@ -47,7 +45,6 @@ do_chksum_fd( int fd, char *chksum_b64 )
     }
 
     if ( rr < 0 ) {
-	perror( "read on fd failed" );
 	return( 1 );
     }
 
