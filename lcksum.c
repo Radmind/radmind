@@ -33,8 +33,8 @@ extern char    	*version;
     int
 main( int argc, char **argv )
 {
-    int			ufd, c, err = 0, updatetran = 0, updateline = 0;
-    int			ucount = 0, len, tac, amode = R_OK;
+    int			ufd, c, err = 0, updatetran = 1, updateline = 0;
+    int			ucount = 0, len, tac, amode = R_OK | W_OK;
     extern int          optind;
     char		*transcript = NULL, *tpath = NULL, *line;
     char		*filter = NULL;
@@ -46,14 +46,14 @@ main( int argc, char **argv )
     FILE		*f, *ufs;
     struct stat		st;
 
-    while ( ( c = getopt ( argc, argv, "f:uvV" ) ) != EOF ) {
+    while ( ( c = getopt ( argc, argv, "f:nvV" ) ) != EOF ) {
 	switch( c ) {
 	case 'f':
 	    filter = optarg;
 	    break;
-	case 'u':
-	    amode = R_OK | W_OK;
-	    updatetran = 1;
+	case 'n':
+	    amode = R_OK;
+	    updatetran = 0;
 	    break;
 	case 'V':
 	    printf( "%s\n", version );
@@ -73,7 +73,7 @@ main( int argc, char **argv )
     tpath = argv[ optind ];
 
     if ( err || ( argc - optind != 1 ) ) {
-	fprintf( stderr, "usage: lcksum [ -uvV ] [ -f filter ] " );
+	fprintf( stderr, "usage: lcksum [ -nvV ] [ -f filter ] " );
 	fprintf( stderr, "transcript\n" );
 	exit( 2 );
     }
