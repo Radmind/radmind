@@ -678,7 +678,11 @@ f_stor( SNET *sn, int ac, char *av[] )
 	tv.tv_usec = 0;
 	if (( rc = snet_read(
 		sn, buf, MIN( len, sizeof( buf )), &tv )) <= 0 ) {
-	    syslog( LOG_ERR, "f_stor: snet_read: %m" );
+	    if ( snet_eof( sn )) {
+		syslog( LOG_ERR, "f_stor: snet_read: eof" );
+	    } else {
+		syslog( LOG_ERR, "f_stor: snet_read: %m" );
+	    }
 	    return( -1 );
 	}
 
@@ -714,19 +718,6 @@ f_stor( SNET *sn, int ac, char *av[] )
 	snet_writef( sn, "%d Length doesn't match sent data %s\r\n",
 		555, upload );
 	(void)unlink( upload );
-
-	tv.tv_sec = 60;
-	tv.tv_usec = 0;
-	for (;;) {
-	    if (( line = snet_getline( sn, &tv )) == NULL ) {
-		syslog( LOG_ERR, "f_stor: snet_getline: %m" );
-		break;
-	    }
-	    if ( strcmp( line, "." ) == 0 ) {
-		break;
-	    }
-	}
-
 	exit( 1 );
     }
 
