@@ -239,7 +239,7 @@ main( int argc, char **argv )
     char		targvline[ 2 * MAXPATHLEN ];
     char		path[ 2 * MAXPATHLEN ];
     struct applefileinfo	afinfo;
-    int			tac, present, len;
+    int			tac, present, len, lnbf = 0;
     char		**targv;
     char		*command = "";
     char		fstype;
@@ -251,7 +251,7 @@ main( int argc, char **argv )
     int			force = 0;
     int			use_randfile = 0;
 
-    while (( c = getopt ( argc, argv, "c:Fh:np:qVvw:x:y:z:" )) != EOF ) {
+    while (( c = getopt ( argc, argv, "c:Fh:inp:qVvw:x:y:z:" )) != EOF ) {
 	switch( c ) {
 	case 'c':
             OpenSSL_add_all_digests();
@@ -269,6 +269,11 @@ main( int argc, char **argv )
 
 	case 'h':
 	    host = optarg;
+	    break;
+
+	case 'i':
+	    setvbuf( stdout, ( char * )NULL, _IOLBF, 0 );
+	    lnbf = 1;
 	    break;
 	
 	case 'n':
@@ -348,6 +353,9 @@ main( int argc, char **argv )
 	err++;
     }
     if ( verbose && quiet ) {
+	err++;
+    }
+    if ( verbose && lnbf ) {
 	err++;
     }
 
