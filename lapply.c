@@ -203,19 +203,27 @@ apply( FILE *f, char *parent, SNET *sn )
 		perror( "download" );
 		return( 1 );
 	    }
+
+	    /* DO LSTAT ON NEW FILE */
+	    if ( lstat( temppath, &st ) !=  0 ) {
+		perror( temppath );
+		return( 1 );
+	    }
+	    fstype = t_convert((int)( S_IFMT & st.st_mode ));
+	    present = 1;
+
+	    /* Update temp file*/
+	    if ( update( temppath, present, st, tac, targv ) != 0 ) {
+		perror( "update" );
+		return( 1 );
+	    }
 	    if ( rename( temppath, path ) != 0 ) {
 		perror( temppath );
 		return( 1 );
 	    }
 	    free( temppath );
+	    goto linedone;
 
-	    /* DO LSTAT ON NEW FILE */
-	    if ( lstat( path, &st ) !=  0 ) {
-		perror( "path" );
-		return( 1 );
-	    }
-	    fstype = t_convert((int)( S_IFMT & st.st_mode ));
-	    present = 1;
 	}
 
 	/* UPDATE */
@@ -260,7 +268,7 @@ main( int argc, char **argv )
 	    network = 0;
 	    break;
 	case 'p':
-	    if (( port = htons ( atoi( optarg )) ) == 0 ) {
+	    if (( port = htons ( atoi( optarg ))) == 0 ) {
 		if (( se = getservbyname( optarg, "tcp" )) == NULL ) {
 		    fprintf( stderr, "%s: service unkown\n", optarg );
 		    exit( 1 );
@@ -288,8 +296,8 @@ main( int argc, char **argv )
 	}
     }
 
-    if (( ( host == NULL ) && ( network ))
-	    || (( host != NULL ) && ( !network )) ) {
+    if ((( host == NULL ) && ( network ))
+	    || (( host != NULL ) && ( !network ))) {
 	err++;
     }
 
