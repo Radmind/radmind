@@ -282,7 +282,7 @@ filechecklist:
 
 	    if ( special ) {
 		if ( snprintf( pathdesc, MAXPATHLEN * 2, "SPECIAL %s",
-			encode( path ))) {
+			encode( path )) > ( MAXPATHLEN * 2 ) - 1 ) {
 		    fprintf( stderr, "SPECIAL %s: too long\n", encode( path ));
 		    return( 1 );
 		}
