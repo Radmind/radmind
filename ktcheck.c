@@ -151,7 +151,7 @@ createspecial( SNET *sn, struct node *head )
     int
 check( SNET *sn, char *type, char *path)
 {
-    char	*schksum, *stats, *temppath = NULL;
+    char	*schksum, *stats;
     char	**targv;
     char 	pathdesc[ 2 * MAXPATHLEN ];
     char        cchksum[ 29 ];
@@ -199,18 +199,12 @@ check( SNET *sn, char *type, char *path)
 	return( 2 );
     case 2:
 	if ( update ) {
-	    if ( verbose ) printf( "*** Downloading missing file: %s\n",
-		    path ); 
-	    if ( ( temppath = download( sn, pathdesc, path, schksum ) )
-		    == NULL ) {
-		perror( "get" );
+	    if ( verbose ) printf( "*** Retrieving missing file: %s/%s\n",
+		    commandpath, path ); 
+	    if ( retr( sn, pathdesc, commandpath, path, schksum ) != 0 ) {
+		fprintf( stderr, "retr failed\n" );
 		return( 2 );
 	    }
-	    if ( rename( temppath, fullpath ) != 0 ) {
-		perror( temppath );
-		return( 1 );
-	    }
-	    free( temppath );
 	}
 	return( 1 );
     }
@@ -225,17 +219,11 @@ check( SNET *sn, char *type, char *path)
 		return( 2 );
 	    }
 	    if ( verbose ) printf( "*** %s deleted\n", path );
-	    if ( verbose ) printf( "*** Downloading %s\n", path ); 
-	    if ( ( temppath = download( sn, pathdesc, path, schksum ) )
-		    == NULL ) {
-		perror( "download" );
+	    if ( verbose ) printf( "*** Retrieving %s\n", path ); 
+	    if ( retr( sn, pathdesc, commandpath, path, schksum ) != 0 ) {
+		fprintf( stderr, "retr failed\n" );
 		return( 2 );
 	    }
-	    if ( rename( temppath, fullpath ) != 0 ) {
-		perror( temppath );
-		return( 1 );
-	    }
-	    free( temppath );
 	}
 	return( 1 );
     } else {
@@ -258,7 +246,8 @@ main( int argc, char **argv )
     int			c, port = htons( 6662 ), err = 0;
     int			len, tac, change = 0;
     extern int          optind;
-    char		*host = NULL, *version = "1.0";
+    extern char		*version;
+    char		*host = NULL;
     char		*transcript = NULL;
     char                **targv;
     char                cline[ 2 * MAXPATHLEN ];
