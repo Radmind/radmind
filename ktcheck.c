@@ -336,7 +336,7 @@ main( int argc, char **argv )
 
 	len = strlen( cline );
 	if (( cline[ len - 1 ] ) != '\n' ) {
-	    fprintf( stderr, "%s: line too long\n", cline );
+	    fprintf( stderr, "%s: %d: line too long\n", command, linenum );
 	    exit( 2 );
 	}
 
@@ -347,7 +347,8 @@ main( int argc, char **argv )
 	}
 
 	if ( tac != 2 ) {
-	    fprintf( stderr, "invalid command line %d\n", linenum );
+	    fprintf( stderr, "%s: %d: invalid command line\n",
+		    command, linenum );
 	    exit( 2 );
 	}
 
