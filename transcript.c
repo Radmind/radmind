@@ -60,8 +60,19 @@ t_parse( struct transcript *tran )
 	exit( 1 );
     }
 
-    tran->t_pinfo.pi_type = argv[ 0 ][ 0 ];
+    if ( argv[ 0 ][ 0 ] == '-' ) {
+	argv++;
+	ac--;
+	tran->t_pinfo.pi_minus = 1;
+    } else {
+	tran->t_pinfo.pi_minus = 0;
+    }
+    if ( argv[ 0 ][ 0 ] == '+' ) {
+	argv++;
+	ac--;
+    }
 
+    tran->t_pinfo.pi_type = argv[ 0 ][ 0 ];
     epath = decode( argv[ 1 ] );
     if ( pathcmp( epath, tran->t_pinfo.pi_name ) < 0 ) {
 	fprintf( stderr, "%s: line %d: bad sort order\n",
@@ -134,12 +145,6 @@ t_parse( struct transcript *tran )
 	}
 	strcpy( tran->t_pinfo.pi_cksum_b64, argv[ 7 ] );
 	break;
-
-    case '-':
-    case '+':
-	fprintf( stderr, "%s: line %d: leading '%c' not allowed\n",
-		tran->t_fullname, tran->t_linenum, *argv[ 0 ] );
-	exit( 1 );		
 
     default:
 	fprintf( stderr,
@@ -241,7 +246,7 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
    static int 
 t_compare( struct pathinfo *fs, struct transcript *tran )
 {
-    int			ret = -1;
+    int			cmp;
     mode_t		mode;
     mode_t		tran_mode;
     dev_t		dev;
@@ -255,18 +260,28 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
     }
 
     if ( tran->t_eof ) {
-	ret = -1;
-    } else if ( fs == NULL ) {
-	/*
-	 * If we've exhausted the filesystem, ret = 1 means that
-	 * name is in tran, but not fs.
-	 */
-	ret = 1;
+	cmp = -1;
     } else {
-	ret = pathcmp( fs->pi_name, tran->t_pinfo.pi_name );
+	/*
+	 * If the highest precedence transcript line has a leading '-',
+	 * then just pretend it's not there.
+	 */
+	if ( tran->t_pinfo.pi_minus ) {
+	    return T_MOVE_TRAN;
+	}
+
+	if ( fs == NULL ) {
+	    /*
+	     * If we've exhausted the filesystem, cmp = 1 means that
+	     * name is in tran, but not fs.
+	     */
+	    cmp = 1;
+	} else {
+	    cmp = pathcmp( fs->pi_name, tran->t_pinfo.pi_name );
+	}
     }
 
-    if ( ret > 0 ) {
+    if ( cmp > 0 ) {
 	/* name is in the tran, but not the fs */
 	t_print( fs, tran, PR_TRAN_ONLY ); 
 	return T_MOVE_TRAN;
@@ -292,7 +307,7 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 	}
     }
 
-    if ( ret < 0 ) {
+    if ( cmp < 0 ) {
 	/* name is not in the tran */
 	t_print( fs, tran, PR_FS_ONLY );
 	return T_MOVE_FS;
@@ -409,7 +424,6 @@ transcript( struct pathinfo *new )
     int 		len;
     char		epath[ MAXPATHLEN ];
     char		*path;
-    int			ret;
     struct transcript	*next_tran = NULL;
     struct transcript	*begin_tran = NULL;
 
@@ -482,8 +496,7 @@ transcript( struct pathinfo *new )
 	    }
 	}
 
-	ret = t_compare( new, begin_tran );
-	switch ( ret ) {
+	switch ( t_compare( new, begin_tran )) {
 	case T_MOVE_FS :
 	    return( move );
 

@@ -32,6 +32,7 @@ FILE			*outtran;
 
 struct pathinfo {
     char			pi_type;
+    int				pi_minus;
     char			pi_name[ MAXPATHLEN ];
     char			pi_link[ MAXPATHLEN ];
     struct stat			pi_stat;
