@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 #include "argcargv.h"
+#include "code.h"
 #include "list.h"
 #include "lmerge.h"
 #include "mkdirs.h"
@@ -29,6 +30,7 @@ getline:
 	tran->eof = 1;
 	return( 0 );
     }
+    tran->linenum++;
 
     if ( tran->line != NULL ) {
 	free( tran->line );
@@ -63,23 +65,29 @@ getline:
 	tran->remove = 0;
     }
 
+    /* Decode file path */
+    if ( snprintf( tran->filepath, MAXPATHLEN, "%s", decode( tran->targv[ 1 ]))
+	> MAXPATHLEN -1 ) {
+	fprintf( stderr, "%s: line %d: %s: path too long\n",
+		tran->name, tran->linenum, decode( tran->targv[ 1 ]));
+	return( 1 );
+    }
+
     /* Check transcript order */
     if ( tran->prepath != 0 ) {
-	if ( pathcmp( tran->targv[ 1 ], tran->prepath ) < 0 ) {
+	if ( pathcmp( tran->filepath, tran->prepath ) < 0 ) {
 	    fprintf( stderr, "%s: line %d: bad sort order\n",
 			tran->name, tran->linenum );
 	    return( 1 );
 	}
     }
-    len = strlen( tran->targv[ 1 ] );
-    if ( snprintf( tran->prepath, MAXPATHLEN, "%s",
-	    tran->targv[ 1 ]) > MAXPATHLEN ) { 
-	fprintf( stderr, "%s: line %d: path too long\n",
-		tran->name, tran->linenum );
+    if ( snprintf( tran->prepath, MAXPATHLEN, "%s", tran->filepath )
+	    > MAXPATHLEN ) { 
+	fprintf( stderr, "%s: line %d: %s: path too long\n",
+		tran->name, tran->linenum, tran->filepath );
 	return( 1 );
     }
 
-    tran->linenum++;
     return( 0 );
 }
 
@@ -260,8 +268,8 @@ main( int argc, char **argv )
 		if ( trans[ j ]->eof ) {
 		    continue;
 		}
-		cmpval = pathcmp( trans[ candidate ]->targv[ 1 ],
-		    trans[ j ]->targv[ 1 ] );
+		cmpval = pathcmp( trans[ candidate ]->filepath,
+		    trans[ j ]->filepath );
 		if ( cmpval == 0 ) {
 		    /* File match */
 
@@ -285,7 +293,7 @@ main( int argc, char **argv )
 		    if ( ( force ) && ( *trans[ j ]->targv[ 0 ] == 'f' ) ) {
 			/* Remove file from lower precedence transcript */
 			sprintf( opath,"%s/../file/%s/%s", trans[ j ]->path,
-			    trans[ j ]->name, trans[ j ]->targv[ 1 ] );
+			    trans[ j ]->name, trans[ j ]->filepath );
 			if ( unlink( opath ) != 0 ) {
 			    perror( opath );
 			    exit( 1 );
@@ -324,14 +332,15 @@ main( int argc, char **argv )
 	     * mkdirs() called.
 	     */
 	    sprintf( opath,"%s/../file/%s/%s", trans[ candidate ]->path,
-		trans[ fileloc ]->name, trans[ candidate ]->targv[ 1 ] );
+		trans[ fileloc ]->name,
+		trans[ candidate ]->filepath );
 
 	    if ( !force ) {
 		sprintf( npath, "%s/../file/%s.%d/%s", tpath, tname,
-		    (int)getpid(), trans[ candidate ]->targv[ 1 ] );
+		    (int)getpid(), trans[ candidate ]->filepath );
 	    } else {
 		sprintf( npath, "%s/../file/%s/%s", tpath, tname,
-		    trans[ candidate ]->targv[ 1 ] );
+		    trans[ candidate ]->filepath );
 	    }
 
 	    /* First try to link file */
@@ -342,10 +351,11 @@ main( int argc, char **argv )
 			!= NULL ) {
 		    if ( !force ) {
 			sprintf( npath, "%s/../file/%s.%d/%s", tpath, tname,
-			    (int)getpid(), trans[ candidate ]->targv[ 1 ] );
+			    (int)getpid(), 
+			    trans[ candidate ]->filepath );
 		    } else {
 			sprintf( npath, "%s/../file/%s/%s", tpath, tname,
-			    trans[ candidate ]->targv[ 1 ] );
+			    trans[ candidate ]->filepath );
 		    }
 		    if ( mkdirs( npath ) != 0 ) {
 			fprintf( stderr, "%s: mkdirs failed\n", npath );
@@ -362,7 +372,7 @@ main( int argc, char **argv )
 		}
 	    }
 	    if ( verbose ) printf( "*** linked %s/%s\n",
-		tname, trans[ candidate ]->targv[ 1 ]);
+		tname, trans[ candidate ]->filepath );
 		
 outputline:
 	    /* Output line */

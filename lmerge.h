@@ -10,6 +10,7 @@ struct tran
     char		*line;
     char		tline[ 2 * MAXPATHLEN ];
     char            	prepath[ MAXPATHLEN ];
+    char		filepath[ MAXPATHLEN ];
     char		**targv;
     FILE		*fs;
     ACAV		*acav;
