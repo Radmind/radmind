@@ -209,7 +209,7 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
     if ( edit_path == FS2TRAN ) {
 	cur = &tran->t_pinfo;
     } else {
-	cur = fs;
+	cur = fs;	/* What if this is NULL? */
     }
 
     /*
@@ -285,8 +285,22 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
     mode_t		tran_mode;
     dev_t		dev;
 
+    /*
+     * If the transcript is at EOF, and we've exhausted the filesystem,
+     * just return T_MOVE_FS, as this will cause transcript() to return.
+     */
+    if (( tran->t_eof ) && ( cur == NULL )) {
+	return T_MOVE_FS;
+    }
+
     if ( tran->t_eof ) {
 	ret = -1;
+    } else if ( cur == NULL ) {
+	/*
+	 * If we've exhausted the filesystem, ret = 1 means that
+	 * name is in tran, but not fs.
+	 */
+	ret = 1;
     } else {
 	ret = pathcmp( cur->pi_name, tran->t_pinfo.pi_name );
     }
@@ -408,34 +422,40 @@ transcript( struct pathinfo *new )
     struct transcript	*next_tran = NULL;
     struct transcript	*begin_tran = NULL;
 
-    if ( lstat( new->pi_name, &new->pi_stat ) != 0 ) {
-	perror( new->pi_name );
-	exit( 1 );
-    }
+    /*
+     * new is NULL when we've been called after the filesystem has been
+     * exhausted, to consume any remaining transcripts.
+     */
+    if ( new != NULL ) {
+	if ( lstat( new->pi_name, &new->pi_stat ) != 0 ) {
+	    perror( new->pi_name );
+	    exit( 1 );
+	}
 
-    type = ( S_IFMT & new->pi_stat.st_mode );
-    if (( new->pi_type = t_convert( type )) == 0 ) {
-	fprintf( stderr, "%s is of an uknown type\n", new->pi_name );
-	exit ( 1 );
-    }
+	type = ( S_IFMT & new->pi_stat.st_mode );
+	if (( new->pi_type = t_convert( type )) == 0 ) {
+	    fprintf( stderr, "%s is of an uknown type\n", new->pi_name );
+	    exit ( 1 );
+	}
 
-    /* if it's multiply referenced, check if it's a hardlink */
-    if ( !S_ISDIR( new->pi_stat.st_mode ) &&
-	    ( new->pi_stat.st_nlink > 1 ) &&
-	    (( path = hardlink( new )) != NULL )) {
-	new->pi_type = 'h';
-	strcpy( new->pi_link, path );
-    } else if ( S_ISLNK( new->pi_stat.st_mode )) {
-	len = readlink( new->pi_name, epath, MAXPATHLEN );
-	epath[ len ] = '\0';
-	strcpy( new->pi_link, epath );
-    }
+	/* if it's multiply referenced, check if it's a hardlink */
+	if ( !S_ISDIR( new->pi_stat.st_mode ) &&
+		( new->pi_stat.st_nlink > 1 ) &&
+		(( path = hardlink( new )) != NULL )) {
+	    new->pi_type = 'h';
+	    strcpy( new->pi_link, path );
+	} else if ( S_ISLNK( new->pi_stat.st_mode )) {
+	    len = readlink( new->pi_name, epath, MAXPATHLEN );
+	    epath[ len ] = '\0';
+	    strcpy( new->pi_link, epath );
+	}
 
-    /* only go into the file if it is a directory */
-    if ( S_ISDIR( new->pi_stat.st_mode )) {
-	move = 1;
-    } else { 
-	move = 0;
+	/* only go into the file if it is a directory */
+	if ( S_ISDIR( new->pi_stat.st_mode )) {
+	    move = 1;
+	} else { 
+	    move = 0;
+	}
     }
 
     for (;;) {
@@ -614,6 +634,12 @@ transcript_init(  char *cmd )
 transcript_free( )
 {
     struct transcript	 *next;
+
+    /*
+     * Call transcript() with NULL to indicate that we've run out of
+     * filesystem to compare against.
+     */
+    transcript( NULL );
 
     while ( tran_head != NULL ) {
 	next = tran_head->t_next;
