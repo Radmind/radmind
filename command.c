@@ -693,7 +693,7 @@ f_stor( SNET *sn, int ac, char *av[] )
     }
 
     if ( len != 0 ) {
-	syslog( LOG_ERR, "f_stor: len is %d", len );
+	syslog( LOG_ERR, "f_stor: len is %" PRIofft "d", len );
 	snet_writef( sn, "%d %s: internal error!\r\n", 555, upload );
 	exit( 1 );
     }
