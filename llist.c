@@ -33,7 +33,6 @@ ll_free( struct llist *head )
     
     for ( ; head != NULL; head = next ) {
         next = head->ll_next;
-	free( head->ll_info.i_name );
         free( head );
     }
 }
