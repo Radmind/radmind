@@ -10,7 +10,7 @@
 #include <sha.h>
 
 #include "retr.h"
-#include "chksum.h"
+#include "cksum.h"
 #include "base64.h"
 
 #ifdef sun
@@ -21,7 +21,7 @@ extern void            (*logger)( char * );
 extern struct timeval  	timeout;
 extern int 		linenum;
 extern int		verbose;
-extern int		chksum;
+extern int		cksum;
 
 /*
  * Download requests path from sn and writes it to disk.  The path to
@@ -29,7 +29,7 @@ extern int		chksum;
  */
 
     int 
-retr( SNET *sn, char *pathdesc, char *path, char *chksumval, char *temppath ) 
+retr( SNET *sn, char *pathdesc, char *path, char *cksumval, char *temppath ) 
 {
     struct timeval      tv;
     char 		*line;
@@ -43,9 +43,9 @@ retr( SNET *sn, char *pathdesc, char *path, char *chksumval, char *temppath )
     SHA_CTX             sha_ctx;
 
 
-    if ( chksum ) {
-	if ( strcmp( chksumval, "-" ) == 0 ) {
-	    fprintf( stderr, "line %d: Chksum not listed\n", linenum);
+    if ( cksum ) {
+	if ( strcmp( cksumval, "-" ) == 0 ) {
+	    fprintf( stderr, "line %d: cksum not listed\n", linenum);
 	    return( -1 );
 	}
 	SHA1_Init( &sha_ctx );
@@ -110,7 +110,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *chksumval, char *temppath )
 	    perror( temppath );
 	    goto error;
 	}
-	if ( chksum ) {
+	if ( cksum ) {
 	    SHA1_Update( &sha_ctx, buf, (size_t)rr );
 	}
 	if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
@@ -133,11 +133,11 @@ retr( SNET *sn, char *pathdesc, char *path, char *chksumval, char *temppath )
     }
     if ( verbose ) printf( "<<< .\n" );
 
-    /* Chksum file */
-    if ( chksum ) {
+    /* cksum file */
+    if ( cksum ) {
 	SHA1_Final( md, &sha_ctx );
 	base64_e( md, sizeof( md ), mde );
-	if ( strcmp( chksumval, mde ) != 0 ) {
+	if ( strcmp( cksumval, mde ) != 0 ) {
 	    fprintf( stderr, "checksum failed: %s\n", path );
 	    goto error;
 	}

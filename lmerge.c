@@ -15,7 +15,7 @@
 #include "mkdirs.h"
 #include "pathcmp.h"
 
-int		chksum = 1;
+int		cksum = 1;
 int		verbose = 0;
 int		noupload = 0;
 extern char   	*version;

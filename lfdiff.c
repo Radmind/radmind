@@ -19,7 +19,7 @@ void			(*logger)( char * ) = NULL;
 extern struct timeval	timeout;
 int			verbose = 0;
 int			linenum = 0;
-int			chksum = 0;
+int			cksum = 0;
 
     void
 output( char *string )

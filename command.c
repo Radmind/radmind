@@ -18,7 +18,7 @@
 
 #include "command.h"
 #include "argcargv.h"
-#include "chksum.h"
+#include "cksum.h"
 #include "code.h"
 #include "mkdirs.h"
 
@@ -298,7 +298,7 @@ f_stat( SNET *sn, int ac, char *av[] )
 {
 
     char 		path[ MAXPATHLEN ];
-    char		chksum_b64[ 29 ];
+    char		cksum_b64[ 29 ];
     struct stat		st;
     int			key;
     char		*enc_file, stranpath[ MAXPATHLEN ];
@@ -329,10 +329,10 @@ f_stat( SNET *sn, int ac, char *av[] )
 	return( 1 );
     }
 
-    /* chksums here */
-    if ( do_chksum( path, chksum_b64 ) < 0 ) {
+    /* cksums here */
+    if ( do_cksum( path, cksum_b64 ) < 0 ) {
 	snet_writef( sn, "%d Checksum Error: %s: %m\r\n", 500, path );
-	syslog( LOG_ERR, "do_chksum: %s: %m", path );
+	syslog( LOG_ERR, "do_cksum: %s: %m", path );
 	return( 1 );
     }
 
@@ -341,14 +341,14 @@ f_stat( SNET *sn, int ac, char *av[] )
     case K_COMMAND:
 	snet_writef( sn, "%s %s %o %d %d %d %d %s\r\n", "f", "command", 
 		    DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, st.st_mtime, 
-		    st.st_size, chksum_b64 );
+		    st.st_size, cksum_b64 );
 	return( 0 );
         
 		    
     case K_TRANSCRIPT:
 	snet_writef( sn, "%s %s %o %d %d %d %d %s\r\n", "f", av[ 2 ], 
 		    DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, st.st_mtime, 
-		    st.st_size, chksum_b64 );
+		    st.st_size, cksum_b64 );
 	return( 0 );
     
     case K_SPECIAL:
@@ -366,7 +366,7 @@ f_stat( SNET *sn, int ac, char *av[] )
 	    /* return constants */
 	    snet_writef( sn, "%s %s %o %d %d %d %d %s\r\n", "f", av[ 2 ], 
 		DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, 
-		st.st_mtime, st.st_size, chksum_b64 );
+		st.st_mtime, st.st_size, cksum_b64 );
 	    return( 0 );
 	}
 
@@ -391,12 +391,12 @@ f_stat( SNET *sn, int ac, char *av[] )
 	    if (( av = special_t( stranpath, enc_file )) == NULL ) {
 		snet_writef( sn, "%s %s %o %d %d %d %d %s\r\n", "f", enc_file, 
 		    DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, 
-		    st.st_mtime, st.st_size, chksum_b64 );
+		    st.st_mtime, st.st_size, cksum_b64 );
 		return( 0 );
 	    }
 	}
 	snet_writef( sn, "%s %s %s %s %s %d %d %s\r\n", "f", enc_file, av[ 2 ],
-		av[ 3 ], av[ 4 ], st.st_mtime, st.st_size, chksum_b64 );
+		av[ 3 ], av[ 4 ], st.st_mtime, st.st_size, cksum_b64 );
 
 	return( 0 );
 

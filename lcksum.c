@@ -8,14 +8,14 @@
 #include <unistd.h>
 
 #include "argcargv.h"
-#include "chksum.h"
+#include "cksum.h"
 #include "code.h"
 #include "pathcmp.h"
 
 void            (*logger)( char * ) = NULL;
 
 int		linenum = 0;
-int		chksum = 1;
+int		cksum = 1;
 int		verbose = 0;
 extern char	*version, *checksumlist;
 char            prepath[ MAXPATHLEN ] = {0};
@@ -40,7 +40,7 @@ main( int argc, char **argv )
     char                tline[ 2 * MAXPATHLEN ];
     char		path[ 2 * MAXPATHLEN ];
     char		upath[ 2 * MAXPATHLEN ];
-    char		lchksum[ 29 ];
+    char		lcksum[ 29 ];
     FILE		*f, *ufs;
     struct stat		st;
 
@@ -199,18 +199,29 @@ main( int argc, char **argv )
 	    exit( 2 );
 	}
 
-	if ( do_chksum( path, lchksum ) != 0 ) {
+	/*
+	 * Since this tool is run on the server, all files can be treated
+	 * as regular files.
+	 *
+	 * HFS+ files saved onto the server are converted to applesingle files.
+	 *
+	 * fsdiff uses do_achskum( ) to calculate the cksum of HFS+ files.
+	 *
+	 * do_acksum( ) creates a cksum for the associated applesingle file.
+	 */
+
+	if ( do_cksum( path, lcksum ) != 0 ) {
 	    perror( path );
 	    exit( 2 );
 	}
 
-	/* check chksum */
-	if ( strcmp( lchksum, targv[ 7 ] ) != 0 ) {
-	    if ( verbose && !updatetran ) printf( "%s: chksum wrong\n",
+	/* check cksum */
+	if ( strcmp( lcksum, targv[ 7 ] ) != 0 ) {
+	    if ( verbose && !updatetran ) printf( "%s: cksum wrong\n",
 		    decode( targv[ 1 ] ));
 	    ucount++;
 	    if ( updatetran ) {
-		if ( verbose && updatetran ) printf( "%s: chksum updated\n",
+		if ( verbose && updatetran ) printf( "%s: cksum updated\n",
 		    decode( targv[ 1 ] )); 
 	    }
 	    updateline = 1;
@@ -237,7 +248,7 @@ main( int argc, char **argv )
 		/* use local mtime */
 		fprintf( ufs, "%s %-37s %4s %5s %5s %9d %7d %s\n",
 		    targv[ 0 ], targv[ 1 ], targv[ 2 ], targv[ 3 ], targv[ 4 ],
-		    (int)st.st_mtime, (int)st.st_size, lchksum );
+		    (int)st.st_mtime, (int)st.st_size, lcksum );
 	    } else {
 		/* use transcript mtime */
 		fprintf( ufs, "%s", line );

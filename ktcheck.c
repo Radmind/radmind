@@ -12,7 +12,7 @@
 #include "connect.h"
 #include "retr.h"
 #include "argcargv.h"
-#include "chksum.h"
+#include "cksum.h"
 #include "list.h"
 
 void output( char* string);
@@ -22,7 +22,7 @@ char * getstat( SNET *sn, char *description );
 
 void			(*logger)( char * ) = NULL;
 int			linenum = 0;
-int			chksum = 1;
+int			cksum = 1;
 int			verbose = 0;
 int			quiet = 0;
 int			update = 1;
@@ -146,11 +146,11 @@ createspecial( SNET *sn, struct node *head )
     int
 check( SNET *sn, char *type, char *file )
 {
-    char	*schksum, *stats;
+    char	*scksum, *stats;
     char	**targv;
     char 	filedesc[ 2 * MAXPATHLEN ];
     char 	tempfile[ 2 * MAXPATHLEN ];
-    char        cchksum[ 29 ];
+    char        ccksum[ 29 ];
     char	path[ MAXPATHLEN ];
     int		tac;
     struct stat	st;
@@ -191,17 +191,17 @@ check( SNET *sn, char *type, char *file )
 	return( 2 );
     }
 
-    if (( schksum = strdup( targv[ 7 ] )) == NULL ) {
+    if (( scksum = strdup( targv[ 7 ] )) == NULL ) {
 	perror( "strdup" );
 	return( 2 );
     }
-    if ( do_chksum( path, cchksum ) != 0 ) {
+    if ( do_cksum( path, ccksum ) != 0 ) {
 	if ( errno != ENOENT ) {
 	    perror( path );
 	    return( 2 );
 	}
 	if ( update ) {
-	    if ( retr( sn, filedesc, path, schksum, (char *)&tempfile )
+	    if ( retr( sn, filedesc, path, scksum, (char *)&tempfile )
 		    != 0 ) {
 		fprintf( stderr, "%s: retr failed\n", path );
 		return( 2 );
@@ -222,14 +222,14 @@ check( SNET *sn, char *type, char *file )
 	return( 2 );
     }
 
-    if (( strcmp( schksum, cchksum ) != 0 )
+    if (( strcmp( scksum, ccksum ) != 0 )
 	    || ( atoi( targv[ 6 ] ) != (int)st.st_size )) {
 	if ( update ) {
 	    if ( unlink( path ) != 0 ) {
 		perror( path );
 		return( 2 );
 	    }
-	    if ( retr( sn, filedesc, path, schksum, (char *)&tempfile )
+	    if ( retr( sn, filedesc, path, scksum, (char *)&tempfile )
 		    != 0 ) {
 		fprintf( stderr, "retr failed\n" );
 		return( 2 );
@@ -267,7 +267,7 @@ main( int argc, char **argv )
     char                cline[ 2 * MAXPATHLEN ];
     char		tempfile[ MAXPATHLEN ];
     char		path[ MAXPATHLEN ];
-    char		lchksum[ 29 ], tchksum[ 29 ];
+    char		lcksum[ 29 ], tcksum[ 29 ];
     struct servent	*se;
     SNET		*sn;
     FILE		*f;
@@ -281,7 +281,7 @@ main( int argc, char **argv )
 		perror( optarg );
 		exit( 1 );
 	    }
-	    chksum = 1;
+	    cksum = 1;
 	    break;
 	case 'h':
 	    host = optarg;
@@ -431,11 +431,11 @@ main( int argc, char **argv )
 	    fprintf( stderr, "path too long: %sspecial.T.%i\n", kdir,
 		    (int)getpid());
 	}
-	if ( do_chksum( tempfile, tchksum ) != 0 ) {
+	if ( do_cksum( tempfile, tcksum ) != 0 ) {
 	    perror( tempfile );
 	    exit( 2 );
 	}
-	if ( do_chksum( path, lchksum ) != 0 ) {
+	if ( do_cksum( path, lcksum ) != 0 ) {
 	    if ( errno != ENOENT ) {
 		perror( path );
 		exit( 2 );
@@ -468,7 +468,7 @@ main( int argc, char **argv )
 
 	    /* specal.T exists */
 	    if (( tst.st_size != lst.st_size ) ||
-		    ( strcmp( tchksum, lchksum) != 0 )) {
+		    ( strcmp( tcksum, lcksum) != 0 )) {
 		/* special.T new from server */
 		if ( update ) {
 		    if ( rename( tempfile, path ) != 0 ) {

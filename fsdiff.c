@@ -109,7 +109,7 @@ main( int argc, char **argv )
     int 		errflag = 0;
 
     edit_path = TRAN2FS;
-    chksum = 0;
+    cksum = 0;
     outtran = stdout;
 
     while (( c = getopt( argc, argv, "c:o:K:T1V" )) != EOF ) {
@@ -119,7 +119,7 @@ main( int argc, char **argv )
 		perror( optarg );
 		exit( 1 );
 	    }
-	    chksum = 1;
+	    cksum = 1;
 	    break;
 
 	case 'o':
@@ -167,7 +167,7 @@ main( int argc, char **argv )
 
     if ( errflag || ( argc - optind != 1 )) {
 	fprintf( stderr, "usage: fsdiff [ -T | -1 ] [ -K command ] " );
-	fprintf( stderr, "[ -c chksumtype ] [ -o file ] path\n" );
+	fprintf( stderr, "[ -c cksumtype ] [ -o file ] path\n" );
 	exit ( 1 );
     }
 

@@ -19,7 +19,7 @@ ll_allocate( char *name )
 
     /* copy info into new item */
     strcpy( new->ll_pinfo.pi_name, name );
-    *new->ll_pinfo.pi_chksum_b64 = '\0';
+    *new->ll_pinfo.pi_cksum_b64 = '\0';
     new->ll_next = NULL;
     new->ll_flag = 0;
 

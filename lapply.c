@@ -22,7 +22,7 @@ void output( char *string);
 
 void		(*logger)( char * ) = NULL;
 int		linenum = 0;
-int		chksum = 0;
+int		cksum = 0;
 int		quiet = 0;
 int		verbose = 0;
 int		special = 0;
@@ -109,7 +109,7 @@ apply( FILE *f, char *parent, SNET *sn )
     char		path[ 2 * MAXPATHLEN ];
     char		temppath[ 2 * MAXPATHLEN ];
     char		pathdesc[ 2 * MAXPATHLEN ];
-    char		chksum_b64[ 29 ];
+    char		cksum_b64[ 29 ];
     unsigned char	finfo[ 32 ];
     int			tac, present, len;
     char		**targv;
@@ -268,7 +268,7 @@ filechecklist:
 		return( 1 );
 	    }
 
-	    strcpy( chksum_b64, targv[ 7 ] );
+	    strcpy( cksum_b64, targv[ 7 ] );
 
 	    if ( special ) {
 		if ( snprintf( pathdesc, MAXPATHLEN * 2, "SPECIAL %s",
@@ -286,11 +286,11 @@ filechecklist:
 	    }
 
 	    if ( *targv[ 0 ] == 'a' ) {
-		if ( retr_applefile( sn, pathdesc, path, chksum_b64, temppath,
+		if ( retr_applefile( sn, pathdesc, path, cksum_b64, temppath,
 			linenum ) != 0 ) {
 		    return( 1 );
 		}
-	    } else if ( retr( sn, pathdesc, path, chksum_b64,
+	    } else if ( retr( sn, pathdesc, path, cksum_b64,
 		    (char *)&temppath ) != 0 ) {
 		return( 1 );
 	    }
@@ -359,7 +359,7 @@ main( int argc, char **argv )
 		perror( optarg );
 		exit( 1 );
 	    }
-	    chksum = 1;
+	    cksum = 1;
 	    break;
 	case 'h':
 	    host = optarg;

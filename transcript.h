@@ -22,7 +22,7 @@
 
 int			edit_path;
 int			skip;
-int			chksum;
+int			cksum;
 FILE			*outtran;
 
 struct pathinfo {
@@ -30,7 +30,7 @@ struct pathinfo {
     char		pi_name[ MAXPATHLEN ];
     char		pi_link[ MAXPATHLEN ];
     struct stat		pi_stat;
-    char		pi_chksum_b64[ 29 ];
+    char		pi_cksum_b64[ 29 ];
     char		pi_hfs_finfo[ 32 ];
 };
 

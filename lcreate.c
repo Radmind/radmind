@@ -27,7 +27,7 @@
 
 void		(*logger)( char * ) = NULL;
 int		verbose = 0;
-int		chksum = 0;	/* needed to compile */
+int		cksum = 0;	/* needed to compile */
 int		quiet = 0;
 extern char	*version;
 

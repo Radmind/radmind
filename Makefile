@@ -35,28 +35,28 @@ MAN1TARGETS=    fsdiff.1 ktcheck.1 lapply.1 lcksum.1 lcreate.1 lfdiff.1 \
 TARGETS=        radmind ${BINTARGETS}
 
 RADMIND_OBJ=    version.o daemon.o command.o argcargv.o code.o \
-                chksum.o base64.o mkdirs.o applefile.o connect.o
+                cksum.o base64.o mkdirs.o applefile.o connect.o
 
 FSDIFF_OBJ=     version.o fsdiff.o argcargv.o transcript.o llist.o code.o \
-                hardlink.o chksum.o base64.o pathcmp.o radstat.o applefile.o \
+                hardlink.o cksum.o base64.o pathcmp.o radstat.o applefile.o \
                 connect.o
 
 KTCHECK_OBJ=    version.o ktcheck.o argcargv.o retr.o base64.o code.o \
-                chksum.o list.o connect.o applefile.o
+                cksum.o list.o connect.o applefile.o
 
 LAPPLY_OBJ=     version.o lapply.o argcargv.o code.o base64.o retr.o \
-                radstat.o update.o chksum.o connect.o pathcmp.o \
+                radstat.o update.o cksum.o connect.o pathcmp.o \
                 applefile.o
 
 LCREATE_OBJ=    version.o lcreate.o argcargv.o code.o connect.o \
                 stor_applefile.o applefile.o base64.o
 
-LCKSUM_OBJ=     version.o lcksum.o argcargv.o chksum.o base64.o code.o \
+LCKSUM_OBJ=     version.o lcksum.o argcargv.o cksum.o base64.o code.o \
                 pathcmp.o applefile.o connect.o
 
 LMERGE_OBJ=     version.o lmerge.o argcargv.o code.o pathcmp.o mkdirs.o list.o
 
-LFDIFF_OBJ=     version.o lfdiff.o argcargv.o connect.o retr.o chksum.o \
+LFDIFF_OBJ=     version.o lfdiff.o argcargv.o connect.o retr.o cksum.o \
                 base64.o applefile.o
 
 TWHICH_OBJ=     version.o argcargv.o code.o twhich.o pathcmp.o

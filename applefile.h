@@ -42,5 +42,5 @@ struct as_header {
 };
 
 int retr_applefile( SNET *sn, char *pathdesc, char *path, 
-	char *chksumval, char *temppath, int linenum );
+	char *cksumval, char *temppath, int linenum );
 int stor_applefile( int dfd, SNET *sn, char *filename );

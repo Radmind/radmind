@@ -19,11 +19,11 @@
 #include <sha.h>
 
 #include "applefile.h"
-#include "chksum.h"
+#include "cksum.h"
 #include "base64.h"
 
 extern int		verbose;
-extern int              chksum;
+extern int              cksum;
 void            (*logger)( char * );
 extern struct timeval	timeout;
 
@@ -48,7 +48,7 @@ struct as_header	as_header = {
 };
 
     int
-retr_applefile( SNET *sn, char *pathdesc, char *path, char *chksumval,
+retr_applefile( SNET *sn, char *pathdesc, char *path, char *cksumval,
     char *temppath, int linenum )
 {
     int			dfd, rfd, rc, dodots = 0;
@@ -64,7 +64,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *chksumval,
     unsigned char       mde[ SZ_BASE64_E( sizeof( md )) ];
     SHA_CTX             sha_ctx;
 
-    if ( chksum ) {
+    if ( cksum ) {
 	SHA1_Init( &sha_ctx );
     }
 
@@ -106,7 +106,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *chksumval,
 	fprintf( stderr, "%s is not a radmind AppleSingle file.\n", path );
 	return( -1 );
     }
-    if ( chksum ) SHA1_Update( &sha_ctx, ( char * )&ah, (size_t)rc );
+    if ( cksum ) SHA1_Update( &sha_ctx, ( char * )&ah, (size_t)rc );
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
     size -= rc;
 
@@ -118,7 +118,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *chksumval,
 	perror( "snet_read" );
 	return( -1 );
     }
-    if ( chksum ) SHA1_Update( &sha_ctx, ( char * )&ae_ents, (size_t)rc );
+    if ( cksum ) SHA1_Update( &sha_ctx, ( char * )&ae_ents, (size_t)rc );
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 
     size -= rc;
@@ -130,7 +130,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *chksumval,
 	perror( "snet_read" );
 	return( -1 );
     }
-    if ( chksum ) SHA1_Update( &sha_ctx, finfo, (size_t)rc );
+    if ( cksum ) SHA1_Update( &sha_ctx, finfo, (size_t)rc );
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
     size -= rc;
 
@@ -171,7 +171,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *chksumval,
 	    perror( "rfd write" );
 	    goto error2;
 	}
-	if ( chksum ) SHA1_Update( &sha_ctx, buf, (size_t)rc );
+	if ( cksum ) SHA1_Update( &sha_ctx, buf, (size_t)rc );
 	if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
     }
 
@@ -196,7 +196,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *chksumval,
 	    goto error2;
 	}
 
-	if ( chksum ) SHA1_Update( &sha_ctx, buf, (size_t)rc );
+	if ( cksum ) SHA1_Update( &sha_ctx, buf, (size_t)rc );
 	if ( dodots ) { putc( '.', stdout ); fflush( stdout); }
     }
 
@@ -223,10 +223,10 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *chksumval,
     }
     if ( verbose ) printf( "<<< .\n" );
 
-    if ( chksum ) {
+    if ( cksum ) {
         SHA1_Final( md, &sha_ctx );
         base64_e( md, sizeof( md ), mde );
-        if ( strcmp( chksumval, mde ) != 0 ) {
+        if ( strcmp( cksumval, mde ) != 0 ) {
             fprintf( stderr, "checksum failed: %s\n", path );
             return( -1 );
         }
@@ -262,7 +262,7 @@ error3:
 #include <snet.h>
 #include "applefile.h"
     int
-retr_applefile( SNET *sn, char *pathdesc, char *path, char *chksumval,
+retr_applefile( SNET *sn, char *pathdesc, char *path, char *cksumval,
     char *temppath, int linenum )
 {
     return( -1 );

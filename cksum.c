@@ -13,7 +13,7 @@
 
 #include <sha.h>
 
-#include "chksum.h"
+#include "cksum.h"
 #include "base64.h"
 #ifdef __APPLE__
 #include "applefile.h"
@@ -21,7 +21,7 @@ extern struct as_header as_header;
 #endif __APPLE__
 
     int 
-do_chksum( char *path, char *chksum_b64 )
+do_cksum( char *path, char *cksum_b64 )
 {
     int			fd;
     ssize_t		rr;
@@ -47,7 +47,7 @@ do_chksum( char *path, char *chksum_b64 )
     SHA1_Final( md, &sha_ctx );
 
     base64_e( md, sizeof( md ), mde );
-    strcpy( chksum_b64, mde );
+    strcpy( cksum_b64, mde );
 
     if ( close( fd ) != 0 ) {
 	return( -1 );
@@ -58,7 +58,7 @@ do_chksum( char *path, char *chksum_b64 )
 
 #ifdef __APPLE__
     int
-do_achksum( char *path, char *chksum_b64, char *finfo_buf )
+do_acksum( char *path, char *cksum_b64, char *finfo_buf )
 {
     int		    	    	afd, rfd, rc;
     unsigned char		md[ SHA_DIGEST_LENGTH ];
@@ -160,13 +160,13 @@ fprintf( stderr, "sizeof( ae_ents ): %d\n", sizeof( ae_ents ));
     SHA1_Final( md, &sha_ctx );
 
     base64_e( md, sizeof( md ), mde );
-    strcpy( chksum_b64, mde );
+    strcpy( cksum_b64, mde );
 
     return( 0 );
 }
 #else __APPLE__
     int
-do_achksum( char *path, char *chksum_b64, char *finfo_buf )
+do_acksum( char *path, char *cksum_b64, char *finfo_buf )
 {
     return( -1 );
 }

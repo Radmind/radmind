@@ -12,7 +12,7 @@
 #include <string.h>
 #include <snet.h>
 
-#include "chksum.h"
+#include "cksum.h"
 #include "applefile.h"
 
 extern struct timeval	timeout;

@@ -12,7 +12,7 @@
 #include "argcargv.h"
 #include "code.h"
 #include "radstat.h"
-#include "chksum.h"
+#include "cksum.h"
 #include "pathcmp.h"
 #include "applefile.h"
 
@@ -119,13 +119,13 @@ t_parse( struct transcript *tran )
 	tran->t_pinfo.pi_stat.st_mtime = atoi( argv[ 5 ] );
 	tran->t_pinfo.pi_stat.st_size = atoi( argv[ 6 ] );
 	if ( tran->t_type != T_NEGATIVE ) {
-	    if (( chksum ) && ( strcmp( "-", argv [ 7 ] ) == 0  )) {
-		fprintf( stderr, "%s: line %d: no chksums in transcript\n",
+	    if (( cksum ) && ( strcmp( "-", argv [ 7 ] ) == 0  )) {
+		fprintf( stderr, "%s: line %d: no cksums in transcript\n",
 			tran->t_fullname, tran->t_linenum );
 		exit( 1 );
 	    }
 	}
-	strcpy( tran->t_pinfo.pi_chksum_b64, argv[ 7 ] );
+	strcpy( tran->t_pinfo.pi_cksum_b64, argv[ 7 ] );
 	break;
 
     case '-':
@@ -211,7 +211,7 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 		(int)cur->pi_stat.st_uid, (int)cur->pi_stat.st_gid,
 		( flag == PR_STATUS_NEG ) ?
 			(int)fs->pi_stat.st_mtime : (int)cur->pi_stat.st_mtime,
-		(int)cur->pi_stat.st_size, cur->pi_chksum_b64 );
+		(int)cur->pi_stat.st_size, cur->pi_cksum_b64 );
 	break;
 
     case 'c':
@@ -269,14 +269,14 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
      * after this point, name is in the fs, so if it's 'f', and
      * checksums are on, get the checksum
      */
-    if ( chksum ) {
+    if ( cksum ) {
 	if ( fs->pi_type == 'f' ) {
-	    if ( do_chksum( fs->pi_name, fs->pi_chksum_b64 ) < 0 ) {
+	    if ( do_cksum( fs->pi_name, fs->pi_cksum_b64 ) < 0 ) {
 		perror( fs->pi_name );
 		exit( 1 );
 	    }
 	} else if ( fs->pi_type == 'a' ) {
-	    if ( do_achksum( fs->pi_name, fs->pi_chksum_b64,
+	    if ( do_acksum( fs->pi_name, fs->pi_cksum_b64,
 		    fs->pi_hfs_finfo ) < 0 ) {
 		perror( fs->pi_name );
 		exit( 1 );
@@ -306,8 +306,8 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
     case 'f':			    /* file */
 	if ( tran->t_type != T_NEGATIVE ) {
 	    if (( fs->pi_stat.st_size != tran->t_pinfo.pi_stat.st_size ) ||
-(( !chksum ) ? ( fs->pi_stat.st_mtime != tran->t_pinfo.pi_stat.st_mtime ) :
-( strcmp( fs->pi_chksum_b64, tran->t_pinfo.pi_chksum_b64 ) != 0 ))) {
+(( !cksum ) ? ( fs->pi_stat.st_mtime != tran->t_pinfo.pi_stat.st_mtime ) :
+( strcmp( fs->pi_cksum_b64, tran->t_pinfo.pi_cksum_b64 ) != 0 ))) {
 		t_print( fs, tran, PR_DOWNLOAD );
 		if (( edit_path == FS2TRAN ) && ( fs->pi_stat.st_nlink > 1 )) {
 		    hardlink_changed( fs, 1 );
@@ -441,8 +441,8 @@ transcript( struct pathinfo *new )
 	    move = 0;
 	}
 
-	/* initialize chksum field. */
-	strcpy( new->pi_chksum_b64, "-" );
+	/* initialize cksum field. */
+	strcpy( new->pi_cksum_b64, "-" );
     }
 
     for (;;) {
