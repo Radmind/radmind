@@ -243,33 +243,33 @@ info :
 	done
 
 package	: all man info
-	-mkdir -p ${PKGDIR}/${exec_prefix}
-	-mkdir -p ${PKGDIR}/${SBINDIR}
+	-mkdir -p -m 0755 ${PKGDIR}/${SBINDIR}
 	${INSTALL} -m 0755 -c radmind ${PKGDIR}/${SBINDIR}/
-	-mkdir -p ${PKGDIR}/${BINDIR}
+	-mkdir -p -m 0755 ${PKGDIR}/${BINDIR}
 	for i in ${BINTARGETS}; do \
 	    ${INSTALL} -m 0755 -c $$i ${PKGDIR}/${BINDIR}/; \
 	done
-	-mkdir -p ${prefix}
-	-mkdir -p ${PKGDIR}/${MANDIR}
-	-mkdir ${PKGDIR}/${MANDIR}/man1
+	-mkdir -p -m 0755 ${PKGDIR}/${MANDIR}
+	-mkdir -p -m 0755 ${PKGDIR}/${MANDIR}/man1
 	for i in ${MAN1TARGETS}; do \
 	    ${INSTALL} -m 0644 -c tmp/man/$$i ${PKGDIR}/${MANDIR}/man1/; \
 	done
-	-mkdir ${PKGDIR}/${MANDIR}/man5
+	-mkdir -p -m 0755 ${PKGDIR}/${MANDIR}/man5
 	for i in ${MAN5TARGETS}; do \
 	    ${INSTALL} -m 0644 -c tmp/man/$$i ${PKGDIR}/${MANDIR}/man5/; \
 	done
-	-mkdir ${PKGDIR}/${MANDIR}/man8
+	-mkdir -p -m 0755 ${PKGDIR}/${MANDIR}/man8
 	 for i in ${MAN8TARGETS}; do \
 	    ${INSTALL} -m 0644 -c tmp/man/$$i ${PKGDIR}/${MANDIR}/man8/; \
 	done
-	-mkdir -p ${PKGDIR}${CERTDIR}
-	-mkdir ${PKGRSRCDIR}
-	cp OS_X/License.rtf ${PKGRSRCDIR}
-	cp OS_X/ReadMe.rtf ${PKGRSRCDIR}
-	cp OS_X/Welcome.rtf ${PKGRSRCDIR}
-	cp OS_X/background.tiff ${PKGRSRCDIR}
+	-mkdir -p -m 0755 ${PKGDIR}${CERTDIR}
+	-mkdir -p -m 0755 ${PKGRSRCDIR}
+	${INSTALL} -m 0644 -c OS_X/License.rtf ${PKGRSRCDIR}
+	${INSTALL} -m 0644 -c OS_X/ReadMe.rtf ${PKGRSRCDIR}
+	${INSTALL} -m 0644 -c OS_X/Welcome.rtf ${PKGRSRCDIR}
+	${INSTALL} -m 0644 -c OS_X/background.tiff ${PKGRSRCDIR}
+	sudo chown -R root:wheel ${PKGDIR}
+	sudo chgrp admin ${PKGDIR}
 	/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/packagemaker \
 	   -build -p ${PKGSRCDIR}/../${PKGNAME}.pkg \
 	   -f ${PKGSRCDIR}/${PKGDIR} \
