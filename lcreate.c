@@ -129,7 +129,7 @@ store_file( int fd, SNET *sn, char *filename, char *transcript )
 	return( -1 );
     }
 
-    if ( snet_writef( sn, "%d\r\n", st.st_size ) == NULL ) {
+    if ( snet_writef( sn, "%d\r\n", (int)st.st_size ) == NULL ) {
 	perror( "snet_writef" );
 	return( -1 );
     }
