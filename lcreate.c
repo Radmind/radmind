@@ -368,6 +368,12 @@ main( int argc, char **argv )
 			exitcode = 2;
 			break;
 		    }
+		    if ( strcmp( cksumval, targv[ 7 ] ) != 0 ) {
+			fprintf( stderr,
+			    "line %d: checksum listed in transcript wrong\n",
+			    linenum );
+			return( -1 );
+		    }
 		}
 		if ( access( dpath,  R_OK ) < 0 ) {
 		    perror( dpath );
