@@ -23,13 +23,32 @@ void            (*logger)( char * ) = NULL;
 
 extern char	*version, *checksumlist;
 
-void	fs_walk( struct llist * );
-int	verbose = 0;
+void	progress_update( char * );
+void	fs_walk( struct llist *, int );
+int	verbose = 0, ihookoutput = 0;
 int	dodots = 0;
+int	rootitems = 0;
+float	pctdone = 0.0;
 const EVP_MD    *md;
 
     void
-fs_walk( struct llist *path  ) 
+progress_update( char *location )
+{
+    if ( pctdone > 100 ) {
+	pctdone = 100.0;
+    }
+
+    if ( ihookoutput ) {
+	printf( "%%%d\n", ( int )pctdone );
+    } else {
+	printf( "\rScanning %-50s %3d%% done", location, ( int )pctdone );
+    }
+
+    fflush( stdout );
+}
+
+    void
+fs_walk( struct llist *path, int atroot  ) 
 {
     DIR			*dir;
     struct dirent	*de;
@@ -37,6 +56,7 @@ fs_walk( struct llist *path  )
     struct llist	*new;
     struct llist	*cur;
     int			len;
+    float		increment = 0.0;
     char		temp[ MAXPATHLEN ];
 
     /* call the transcript code */
@@ -46,6 +66,7 @@ fs_walk( struct llist *path  )
 
     /* open directory */
     if (( dir = opendir( path->ll_pinfo.pi_name )) == NULL ) {
+	if ( verbose ) putc( '\n', stdout );
 	perror( path->ll_pinfo.pi_name );
 	exit( 2 );	
     }
@@ -59,10 +80,14 @@ fs_walk( struct llist *path  )
 	    continue;
 	}
 
+	if ( verbose && atroot ) {
+	    rootitems++;
+	}
 	len = strlen( path->ll_pinfo.pi_name );
 
 	/* absolute pathname. add 2 for / and NULL termination.  */
 	if (( len + strlen( de->d_name ) + 2 ) > MAXPATHLEN ) {
+	    if ( verbose ) putc( '\n', stdout );
 	    fprintf( stderr, "Absolute pathname too long\n" );
 	    exit( 2 );
 	}
@@ -70,6 +95,7 @@ fs_walk( struct llist *path  )
 	if ( path->ll_pinfo.pi_name[ len - 1 ] == '/' ) {
 	    if ( snprintf( temp, MAXPATHLEN, "%s%s", path->ll_pinfo.pi_name,
 		    de->d_name ) > MAXPATHLEN ) {
+		if ( verbose ) putc( '\n', stdout );
                 fprintf( stderr, "%s%s: path too long\n",
                     path->ll_pinfo.pi_name, de->d_name );
 		exit( 2 );
@@ -77,6 +103,7 @@ fs_walk( struct llist *path  )
 	} else {
             if ( snprintf( temp, MAXPATHLEN, "%s/%s", path->ll_pinfo.pi_name,
                     de->d_name ) > MAXPATHLEN ) {
+		if ( verbose ) putc( '\n', stdout );
                 fprintf( stderr, "%s/%s: path too long\n",
                     path->ll_pinfo.pi_name, de->d_name );
                 exit( 2 );
@@ -91,6 +118,10 @@ fs_walk( struct llist *path  )
 
     }
 
+    if ( verbose && atroot ) {
+	increment = ( float )( 100.0 / rootitems );
+    }
+
     if ( closedir( dir ) != 0 ) {
 	perror( "closedir" );
 	exit( 2 );
@@ -98,10 +129,23 @@ fs_walk( struct llist *path  )
 
     /* call fswalk on each element in the sorted list */
     for ( cur = head; cur != NULL; cur = cur->ll_next ) {
-	 fs_walk ( cur );
+	if ( verbose && atroot ) {
+	    progress_update( cur->ll_pinfo.pi_name );
+	}
+
+	fs_walk ( cur, 0 );
+	
+	if ( verbose && atroot ) {
+	    pctdone += increment;
+	}
     }
 
     ll_free( head );
+    if ( verbose && atroot ) {
+	pctdone = 100.0;
+	progress_update( "complete." );
+	if ( ! ihookoutput ) putc( '\n', stdout );
+    }
 
     return;
 }
@@ -115,13 +159,13 @@ main( int argc, char **argv )
     char		*kfile = _RADMIND_COMMANDFILE;
     int			gotkfile = 0;
     int 		c, len, edit_path_change = 0;
-    int 		errflag = 0;
+    int 		errflag = 0, use_outfile = 0;
 
     edit_path = CREATABLE;
     cksum = 0;
     outtran = stdout;
 
-    while (( c = getopt( argc, argv, "Ac:Co:K:1V" )) != EOF ) {
+    while (( c = getopt( argc, argv, "Ac:CIo:K:1Vv" )) != EOF ) {
 	switch( c ) {
 	case 'c':
             OpenSSL_add_all_digests();
@@ -137,11 +181,17 @@ main( int argc, char **argv )
 		perror( optarg );
 		exit( 2 );
 	    }
+	    use_outfile = 1;
 	    break;
 
 	case 'K':
 	    kfile = optarg;
 	    gotkfile = 1;
+	    break;
+
+	case 'I':
+	    ihookoutput = 1;
+	    verbose = 1;
 	    break;
 
 	case '1':
@@ -161,6 +211,10 @@ main( int argc, char **argv )
 	    printf( "%s\n", checksumlist );
 	    exit( 0 );
 
+	case 'v':
+	    verbose = 1;
+	    break;
+
 	case '?':
 	    errflag++;
 	    break;
@@ -168,6 +222,10 @@ main( int argc, char **argv )
 	default: 
 	    break;
 	}
+    }
+
+    if ( verbose && ! use_outfile ) {
+	errflag++;
     }
 
     if (( edit_path == APPLICABLE ) && ( skip )) {
@@ -184,8 +242,8 @@ main( int argc, char **argv )
     }
 
     if ( errflag || ( argc - optind != 1 )) {
-	fprintf( stderr, "usage: %s [ -C | { -T | -A } | -1 ] ", argv[ 0 ] );
-	fprintf( stderr, "[ -K command ] " );
+	fprintf( stderr, "usage: %s [ -C | -A | -1 ] ", argv[ 0 ] );
+	fprintf( stderr, "[ -Iv ] [ -K command ] " );
 	fprintf( stderr, "[ -c cksumtype ] [ -o file ] path\n" );
 	exit ( 2 );
     }
@@ -194,7 +252,7 @@ main( int argc, char **argv )
     transcript_init( kfile, gotkfile );
     root = ll_allocate( argv[ optind ] );
 
-    fs_walk( root );
+    fs_walk( root, 1 );
 
     /* free the transcripts */
     transcript_free( );
