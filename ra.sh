@@ -325,12 +325,10 @@ create)
    	exit $?
     	;;
     esac
-    echo -n "Enter new transcript name: "
+    echo -n "Enter new transcript name [`hostname | cut -d. -f1`-`date +%Y%m%d`-${USER}.T]: "
     read TNAME
     if [ -z "${TNAME}" ]; then
-	echo "No transcript name provided!"
-	cleanup
-	exit 1
+	TNAME=`hostname | cut -d. -f1`-`date +%Y%m%d`-${USER}.T
     fi
     FTMP="${TMPDIR}/${TNAME}"
     fsdiff -C -% ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
@@ -343,7 +341,7 @@ create)
 	cleanup
 	exit 1
     fi
-    Yn "Edit transcript?"
+    Yn "Edit transcript ${TNAME}?"
     if [ $? -eq 1 ]; then
 	${EDITOR} ${FTMP}
     fi
