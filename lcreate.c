@@ -32,7 +32,7 @@ extern char	*version;
     static void
 v_logger( char *line )
 {
-    fprintf( stderr, "<<< %s\n", line );
+    printf( "<<< %s\n", line );
     return;
 }
 
@@ -49,7 +49,7 @@ n_store_file( SNET *sn, char *filename, char *transcript )
     }
 
     if ( verbose ) {
-	fprintf( stderr, ">>> STOR FILE %s %s\n", transcript, filename );
+	printf( ">>> STOR FILE %s %s\n", transcript, filename );
     }
 
     tv.tv_sec = 120;
@@ -67,7 +67,7 @@ n_store_file( SNET *sn, char *filename, char *transcript )
         perror( "snet_writef" );
         return( -1 );
     }
-    if ( verbose ) fputs( ">>> 0\n\n>>> .\n", stderr );
+    if ( verbose ) fputs( ">>> 0\n\n>>> .\n", stdout );
 
     tv.tv_sec = 120;
     tv.tv_usec = 0;
@@ -106,7 +106,7 @@ store_file( int fd, SNET *sn, char *filename, char *transcript )
 	    return( -1 );
 	}
 	if ( verbose ) {
-	    fprintf( stderr, ">>> STOR TRANSCRIPT %s\n", transcript );
+	    printf( ">>> STOR TRANSCRIPT %s\n", transcript );
 	}
     } else {  /* STOR "FILE" <transcript-name> <path> "\r\n" */
 	if ( snet_writef( sn,
@@ -115,7 +115,7 @@ store_file( int fd, SNET *sn, char *filename, char *transcript )
 	    return( -1 );
 	}
 	if ( verbose ) {
-	    fprintf( stderr, ">>> STOR FILE %s %s\n", transcript, filename );
+	    printf( ">>> STOR FILE %s %s\n", transcript, filename );
 	}
     }
 
@@ -134,10 +134,10 @@ store_file( int fd, SNET *sn, char *filename, char *transcript )
 	perror( "snet_writef" );
 	return( -1 );
     }
-    if ( verbose ) fprintf( stderr, ">>> %d\n", (int)st.st_size );
+    if ( verbose ) printf( ">>> %d\n", (int)st.st_size );
     
     while (( rr = read( fd, buf, sizeof( buf ))) > 0 ) {
-	if ( verbose ) { fputs( "...", stderr ); fflush( stderr ); }
+	if ( verbose ) { fputs( "...", stdout ); fflush( stdout ); }
 	tv.tv_sec = 120;
 	tv.tv_usec = 0;
 	if ( snet_write( sn, buf, (int)rr, &tv ) != rr ) {
@@ -150,7 +150,7 @@ store_file( int fd, SNET *sn, char *filename, char *transcript )
 	perror( "snet_writef" );
 	return( -1 );
     }
-    if ( verbose ) fputs( "\n>>> .\n", stderr );
+    if ( verbose ) fputs( "\n>>> .\n", stdout );
 
     tv.tv_sec = 120;
     tv.tv_usec = 0;
