@@ -360,7 +360,7 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
 
     case 'c':
 	/*
-	 * negative charcter special files only check major and minor
+	 * negative character special files only check major and minor
 	 * devices numbers. pseudo ttys can change uid, gid and mode for
 	 * every login and this is normal behavior.
 	 */
