@@ -17,6 +17,7 @@
 
 struct node {
     char                *path;
+    int			negative;
     struct node         *next;
 };
 
@@ -31,6 +32,7 @@ create_node( char *path )
 
     new_node = (struct node *) malloc( sizeof( struct node ) );
     new_node->path = strdup( path );
+    new_node->negative = 0;
 
     return( new_node );
 }
@@ -187,11 +189,18 @@ main( int argc, char **argv )
 	    break;
 
 	case 'n':
+	    new_node = create_node( av[ 1 ] );
+	    new_node->next = head;
+	    head = new_node;
+	    new_node->negative++;
+	    break;
+
 	case 'p':
 	    new_node = create_node( av[ 1 ] );
 	    new_node->next = head;
 	    head = new_node;
 	    break;
+
 	default:
 	    fprintf( stderr,
 		"%s: line %d: Invalid command line - unknown type\n",
@@ -290,6 +299,12 @@ main( int argc, char **argv )
 	    cmp = pathcmp( d_path, pattern );
 	    if ( cmp == 0 ) {
 		match++;
+		if ( node->negative ) {
+		     printf( "# Negative\n" );
+		} else {
+		     printf( "# Positive\n" );
+		}
+
 		if (( !remove ) &&
 			(( *av[ 0 ] == 'f' ) || ( *av[ 0 ] == 'a' ))) {
 		    printf( "%s:\n+ %s", tran, tline );
