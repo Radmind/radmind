@@ -27,27 +27,27 @@ wildcard( char *wild, char *p )
 	case '<' :
 	    wild++;
 
-	    if ( ! isdigit( *p )) {
+	    if ( ! isdigit( (int)*p )) {
 		return( 0 );
 	    }
 	    i = atoi( p );
-	    while ( isdigit( *p )) p++;
+	    while ( isdigit( (int)*p )) p++;
 
-	    if ( ! isdigit( *wild )) {
+	    if ( ! isdigit( (int)*wild )) {
 		return( 0 );
 	    }
 	    min = atoi( wild );
-	    while ( isdigit( *wild )) wild++;
+	    while ( isdigit( (int)*wild )) wild++;
 
 	    if ( *wild++ != '-' ) {
 		return( 0 );
 	    }
 
-	    if ( ! isdigit( *wild )) {
+	    if ( ! isdigit( (int)*wild )) {
 		return( 0 );
 	    }
 	    max = atoi( wild );
-	    while ( isdigit( *wild )) wild++;
+	    while ( isdigit( (int)*wild )) wild++;
 
 	    if ( *wild++ != '>' ) {
 		return( 0 );
