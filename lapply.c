@@ -16,6 +16,9 @@
 #include "snet.h"
 #include "argcargv.h"
 #include "code.h"
+
+void		(*logger)( char * ) = NULL;
+
     static char
 t_convert( int type )
 {
@@ -362,9 +365,111 @@ apply( FILE *f, char *parent )
     int
 main( int argc, char **argv )
 {
+    int			i, c, s, port = htons( 6662 ), err = 0, network = 1;
     FILE		*f; 
+    char		*host = "rsug.itd.umich.edu";
+    char		*line;
+    struct servent	*se;
+    char		*version = "1.0";
+    struct hostent	*he;
+    struct sockaddr_in	sin;
+    SNET		*sn;
+    struct timeval	tv;
 
-    if (( f = fopen( argv[ 1 ], "r" )) == NULL ) { 
+    while ( ( c = getopt ( argc, argv, "h:np:V" ) ) != EOF ) {
+	switch( c ) {
+	case 'h':
+	    host = optarg;
+	    break;
+	case 'n':
+	    network = 0;
+	    break;
+	case 'p':
+	    if ( ( port = htons ( atoi( optarg ) ) ) == 0 ) {
+		if ( ( se = getservbyname( optarg, "tcp" ) ) == NULL ) {
+		    fprintf( stderr, "%s: service unkown\n", optarg );
+		    exit( 1 );
+		}
+		port = se->s_port;
+	    }
+	    break;
+	case 'V':
+	     printf( "%s\n", version );
+	     exit( 0 );
+	case '?':
+	    err++;
+	    break;
+	default:
+	    err++;
+	    break;
+	}
+    }
+
+    if ( err || ( argc - optind != 1 ) ) {
+	fprintf( stderr, "usage: lapply [ -n ] " );
+	fprintf( stderr, "[ -h host ] [ -port ] " );
+	fprintf( stderr, "difference-transcript\n" );
+	exit( 1 );
+    }
+
+    if ( network ) {
+	if ( ( he = gethostbyname( host ) ) == NULL ) {
+	    perror( host );
+	    exit( 1 );
+	}
+
+	for ( i = 0; he->h_addr_list[ i ] != NULL; i++ ) {
+	    if ( ( s = socket( PF_INET, SOCK_STREAM, NULL ) ) < 0 ) {
+		perror ( host );
+		exit( 1 );
+	    }
+	    memset( &sin, 0, sizeof( struct sockaddr_in ) );
+	    sin.sin_family = AF_INET;
+	    sin.sin_port = port;
+	    memcpy( &sin.sin_addr.s_addr, he->h_addr_list[ i ],
+		( unsigned int)he->h_length );
+	    fprintf( stderr, "trying %s... ",
+		    inet_ntoa( *( struct in_addr *)he->h_addr_list[ i ] ) );
+	    if ( connect( s, ( struct sockaddr *)&sin,
+		    sizeof( struct sockaddr_in ) ) != 0 ) {
+		perror( "connect" );
+		(void)close( s );
+		continue;
+	    }
+	    perror( "success!\n" );
+
+	    if ( ( sn = snet_attach( s, 1024 * 1024 ) ) == NULL ) {
+		perror ( "snet_attach failed" );
+		continue;
+	    }
+
+	    tv.tv_sec = 10;
+	    tv.tv_usec = 0;
+	    if ( ( line = snet_getline_multi( sn, logger, &tv) ) == NULL ) {
+		perror( "snet_getline_multi" );
+		if ( snet_close( sn ) != 0 ) {
+		    perror ( "snet_close" );
+		}
+		continue;
+	    }
+
+	    if ( *line !='2' ) {
+		fprintf( stderr, "%s\n", line);
+		if ( snet_close( sn ) != 0 ) {
+		    perror ( "snet_close" );
+		}
+		continue;
+	    }
+	    break;
+	}
+
+	if ( he->h_addr_list[ i ] == NULL ) {
+	    perror( "connection failed" );
+	    exit( 1 );
+	}
+    }
+
+    if ( ( f = fopen( argv[ 1 ], "r" ) ) == NULL ) { 
 	perror( argv[ 1 ] );
 	exit( 1 );
     }
@@ -372,6 +477,27 @@ main( int argc, char **argv )
     if ( apply( f, NULL ) != 0 ) {
 	fclose( f );
 	exit( 1 );
+    }
+
+    if ( network ) {
+	if ( snet_writef( sn, "QUIT\r\n" ) == NULL ) {
+	    perror( "snet_writef" );
+	    exit( 1 );
+	}
+
+	if ( ( line = snet_getline_multi( sn, logger, &tv ) ) == NULL ) {
+	    perror( "snet_getline_multi" );
+	    exit( 1 );
+	}
+
+	if ( *line != '2' ) {
+	    perror( line );
+	}
+
+	if ( snet_close( sn ) != 0 ) {
+	    perror( "snet_close" );
+	    exit( 1 );
+	}
     }
 
     exit( 0 );
