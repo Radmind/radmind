@@ -378,19 +378,21 @@ base64_e( unsigned char *d, int dlen, char *e )
 	e[ 1 ] = etab_high24[ ( d[ 0 ] & 0x03 ) | ( d[ 1 ] & 0xF0 ) ];
 	e[ 2 ] = etab_low42[ d[ 1 ] & 0x0F ];
 	e[ 3 ] = '=';
-	break;
+	e[ 4 ] = '\0';
+	return;
 
     case 1 :
 	e[ 0 ] = etab_high6[ d[ 0 ]];
 	e[ 1 ] = etab_high24[ d[ 0 ] & 0x03 ];
 	e[ 2 ] = '=';
 	e[ 3 ] = '=';
-	break;
+	e[ 4 ] = '\0';
+	return;
+    
+    default :
+	e[ 4 ] = '\0';
+	return;
     }
-
-    /* null terminated */
-    e[ 4 ] = '\0';
-    return;
 }
 
 /*
