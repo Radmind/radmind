@@ -1,6 +1,6 @@
-Title                Cclient example files
+Title                	Client tutorial files
 Version              	_RADMIND_VERSION
-Description          	This package installs radmind client example files
+Description          	This package installs radmind client tutorial files
 
 DefaultLocation      	/private/var/radmind
 Relocatable          	NO
