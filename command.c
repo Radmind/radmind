@@ -384,7 +384,7 @@ f_stat( SNET *sn, int ac, char *av[] )
 	return( 1 );
     }
 
-    /* cksums here */
+    /* XXX cksums here, totally the wrong place to do this! */
     OpenSSL_add_all_digests();
     md = EVP_get_digestbyname( "sha1" );
     if ( !md ) {
@@ -758,24 +758,31 @@ cmdloop( int fd, struct sockaddr_in *sin )
 	    return( 1 );
 	}
 
-	if ( ac ) {
-	    for ( i = 0; i < ncommands; i++ ) {
-		n = MAX( strlen( av[ 0 ] ), 4 );
-		if ( strncasecmp( av[ 0 ], commands[ i ].c_name, n ) == 0 ) {
-		    if ( (*(commands[ i ].c_func))( sn, ac, av ) < 0 ) {
-			return( 1 );
-		    }
-		    break;
-		}
-	    }
-	    if ( i >= ncommands ) {
-		snet_writef( sn, "%d Command %s unregcognized\r\n", 500,
-			av[ 0 ] );
-	    }
-	} else {
+	if ( ac == 0 ) {
 	    snet_writef( sn, "%d Illegal null command\r\n", 501 );
+	    continue;
 	}
+
+	for ( i = 0; i < ncommands; i++ ) {
+	    n = MAX( strlen( av[ 0 ] ), 4 );
+	    if ( strncasecmp( av[ 0 ], commands[ i ].c_name, n ) == 0 ) {
+		break;
+	    }
+	}
+	if ( i >= ncommands ) {
+	    snet_writef( sn, "%d Command %s unregcognized\r\n", 500, av[ 0 ] );
+	    continue;
+	}
+	if ( (*(commands[ i ].c_func))( sn, ac, av ) < 0 ) {
+	    break;
+	}
+
     }
 
+    snet_writef( sn, "%d Server closing connection\r\n", 444 );
+
+    if ( line == NULL ) {
+	syslog( LOG_ERR, "snet_getline: %m" );
+    }
     return( 0 );
 }
