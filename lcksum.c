@@ -37,6 +37,7 @@ main( int argc, char **argv )
     int			ucount = 0, len, tac, amode = R_OK;
     extern int          optind;
     char		*transcript = NULL, *tpath = NULL, *line;
+    char		*filter = NULL;
     char                **targv;
     char                tline[ 2 * MAXPATHLEN ];
     char		path[ 2 * MAXPATHLEN ];
@@ -45,8 +46,11 @@ main( int argc, char **argv )
     FILE		*f, *ufs;
     struct stat		st;
 
-    while ( ( c = getopt ( argc, argv, "uvV" ) ) != EOF ) {
+    while ( ( c = getopt ( argc, argv, "f:uvV" ) ) != EOF ) {
 	switch( c ) {
+	case 'f':
+	    filter = optarg;
+	    break;
 	case 'u':
 	    amode = R_OK | W_OK;
 	    updatetran = 1;
@@ -69,7 +73,7 @@ main( int argc, char **argv )
     tpath = argv[ optind ];
 
     if ( err || ( argc - optind != 1 ) ) {
-	fprintf( stderr, "usage: lcksum [ -uvV ] " );
+	fprintf( stderr, "usage: lcksum [ -uvV ] [ -f filter ] " );
 	fprintf( stderr, "transcript\n" );
 	exit( 2 );
     }
@@ -139,6 +143,16 @@ main( int argc, char **argv )
 		fprintf( ufs, "%s", line );
 	    }
 	    goto done;
+	}
+
+	/* check to see if file against filter */
+	if ( filter != NULL ) {
+	    if ( strncmp( targv[ 1 ], filter, strlen( filter ) ) != 0 ) {
+		if ( updatetran ) {
+		    fprintf( ufs, "%s", line );
+		}
+		goto done;
+	    }
 	}
 
 	sprintf( path, "%s/../file/%s/%s", tpath, transcript,
