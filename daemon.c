@@ -102,9 +102,9 @@ main( ac, av )
     int			facility = _RADMIND_LOG;
     extern int		optind;
     extern char		*optarg;
-    char		*ca = _RADMIND_TLS_CA;
-    char		*cert = _RADMIND_TLS_CERT;
-    char		*privatekey = _RADMIND_TLS_CERT;
+    char		*ca = "cert/ca.pem";
+    char		*cert = "cert/cert.pem";
+    char		*privatekey = "cert/cert.pem";
 
 
     if (( prog = strrchr( av[ 0 ], '/' )) == NULL ) {
