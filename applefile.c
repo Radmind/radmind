@@ -19,6 +19,16 @@ struct attrlist		getalist = {
     0,
 };
 
+struct attrlist		getdiralist = {
+    ATTR_BIT_MAP_COUNT,
+    0,
+    ATTR_CMN_FNDRINFO,
+    0,
+    0,
+    0,
+    0,
+};
+
 struct attrlist		setalist = {
     ATTR_BIT_MAP_COUNT,
     0,
