@@ -505,9 +505,14 @@ main( int argc, char **argv )
 	    }
 	}
 
-	/* special.T exists */
-	if (( tst.st_size != lst.st_size ) ||
-		( strcmp( tcksum, lcksum) != 0 )) {
+	/*
+	 * Without checksums we must assume that the special 
+	 * transcript has changed since there is no way to
+	 * verify its contents
+	 */
+	/* Special exists */
+	if (( !cksum ) || (( tst.st_size != lst.st_size ) ||
+		( strcmp( tcksum, lcksum) != 0 ))) {
 	    /* update special.T */
 	    if ( update ) {
 		if ( rename( tempfile, path ) != 0 ) {
