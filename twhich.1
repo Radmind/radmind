@@ -1,0 +1,79 @@
+.TH twhich "1" "January 2002" "RSUG" "User Commands"
+.SH NAME
+.B twhich 
+\- locates a file listing in transcripts
+.SH SYNOPSIS
+.B twhich 
+[
+.RI \-aV
+] [
+.BI \-K\  command
+]
+.I file 
+.sp
+.SH DESCRIPTION
+.B twhich 
+searches each transcript listed in the command file ( the default name is
+.B command.K )
+for
+.IR file .
+Transcripts are searched in precedence order.
+The first
+transcript listed in the command file has the lowest precedence, the
+next higher, and the last has the highest.  If any special files are
+listed, the
+.B special.T
+transcript will have the absolute highest precedence.
+
+If
+.I file
+is found,
+.B twhich
+prints a message to the standard output indicating the transcript and line
+number matched, and then exits.  With the -a option,
+.B twhich
+will continue to search all transcripts listed in the command file for
+.IR file .
+.sp
+.SH OPTIONS
+.TP 19
+.B \-a
+list all transcripts that contain
+.IR file .
+.TP 19
+.B \-V
+prints out the twhich version number.
+.TP 19
+.BI \-K\  command
+specifies a command
+file name, by default
+.B command.K
+.sp
+.SH FILES
+.TP 19
+.B command.K
+name of the default command file.
+.TP 19
+.B special.T 
+name of the special transcript.
+.SH EXIT STATUS
+The following exit values are returned:
+.TP 5
+0
+File was found. 
+.TP 5
+1
+File was not found.
+.TP 5
+>1
+An error occurred.
+.sp
+.SH SEE ALSO
+.BR ktcheck (1),
+.BR fsdiff (1),
+.BR lapply (1),
+.BR lcreate (1),
+.BR lcksum (1),
+.BR lfdiff (1),
+.BR lmerge (1),
+.BR radmind (8).
