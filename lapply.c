@@ -178,14 +178,21 @@ apply( FILE *f, char *parent, SNET *sn )
 	}
 
 	/* Do type check on local file */
-	if ( lstat( path, &st ) == 0 ) {
-	    fstype = t_convert( path, NULL, (int)( S_IFMT & st.st_mode ));
+	switch ( getfsoinfo( path, &st, &fstype, NULL )) {
+	case 0:
 	    present = 1;
-	} else if ( errno == ENOENT ) { 
-	    present = 0;
-	} else {
-	    perror( path );
+	    break;
+	case 1:
+	    fprintf( stderr, "%s is of an unknown type\n", path );
 	    return( 1 );
+	default:
+	    if ( errno == ENOENT ) { 
+		present = 0;
+	    } else {
+		perror( path );
+		return( 1 );
+	    }
+	    break;
 	}
 
 	if ( *command == '-'
@@ -285,12 +292,10 @@ filechecklist:
 		return( 1 );
 	    }
 
-	    /* DO LSTAT ON NEW FILE */
-	    if ( lstat( temppath, &st ) !=  0 ) {
-		perror( temppath );
+	    if ( getfsoinfo( path, &st, &fstype, NULL ) < 0 ) {
+		perror( path );
 		return( 1 );
 	    }
-	    fstype = t_convert( path, NULL, (int)( S_IFMT & st.st_mode ));
 
 	    /* Update temp file*/
 	    if ( update( temppath, path, present, 1, st, tac, targv )

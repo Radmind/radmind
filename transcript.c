@@ -408,7 +408,6 @@ transcript( struct pathinfo *new )
     char		epath[ MAXPATHLEN ];
     char		*path;
     int			ret;
-    int			type;
     struct transcript	*next_tran = NULL;
     struct transcript	*begin_tran = NULL;
 
@@ -417,16 +416,16 @@ transcript( struct pathinfo *new )
      * exhausted, to consume any remaining transcripts.
      */
     if ( new != NULL ) {
-	if ( lstat( new->pi_name, &new->pi_stat ) != 0 ) {
+	switch ( getfsoinfo( new->pi_name, &new->pi_stat, &new->pi_type,
+		new->pi_hfs_finfo )) {
+	case 0:
+	    break;
+	case 1:
+	    fprintf( stderr, "%s is of an unknown type\n", new->pi_name );
+	    exit( 1 );
+	default:
 	    perror( new->pi_name );
 	    exit( 1 );
-	}
-
-	type = ( S_IFMT & new->pi_stat.st_mode );
-	if (( new->pi_type =  t_convert( new->pi_name, new->pi_hfs_finfo,
-		type )) == 0 ) {
-	    fprintf( stderr, "%s is of an unknown type\n", new->pi_name );
-	    exit ( 1 );
 	}
 
 	/* if it's multiply referenced, check if it's a hardlink */
