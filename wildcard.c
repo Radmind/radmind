@@ -68,14 +68,15 @@ wildcard( char *wild, char *p, int sensitive )
 	case '\\' :
 	    wild++;
 	default :
-	   if ( sensitive ) {
+	    if ( sensitive ) {
 	       if ( *wild != *p ) {
 		   return( 0 );
 	       }
-	   } else {
+	    } else {
 	       if ( tolower(*wild) != tolower(*p) ) {
 		  return( 0 );
-	   }
+		}
+	    }
 	    if ( *wild == '\0' ) {
 		return( 1 );
 	    }
