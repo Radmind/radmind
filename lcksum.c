@@ -410,11 +410,6 @@ main( int argc, char **argv )
 	    exit( 2 );
 	}
 
-	if (( cksumsize = do_cksum( path, lcksum )) < 0 ) {
-	    perror( path );
-	    exit( 2 );
-	}
-
 	if (( cksumsize = do_fcksum( fd, lcksum )) < 0 ) {
 	    perror( path );
 	    exit( 2 );
