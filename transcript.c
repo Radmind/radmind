@@ -21,6 +21,7 @@
 static struct transcript	*tran_head = NULL;
 static struct transcript	*prev_tran = NULL;
 static int			linenum = 0;
+extern int			edit_path;
 
     static void 
 t_parse( struct transcript *tran ) 
@@ -151,7 +152,6 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
     struct pathinfo	*cur;
     char		*epath;
     dev_t		dev;
-    extern int		edit_path;
 
     /*
      * Compare the current transcript with the previous one.  If they are 
@@ -205,9 +205,6 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 		prev_tran = tran;
 	    }
 	    fprintf( outtran, "+ " );
-	    if ( fs->pi_stat.st_nlink > 1 ) {
-		hardlink_set_changed( fs );
-	    }
 	}
 	fprintf( outtran, "f %-37s\t%.4lo %5d %5d %9d %7d %s\n", epath,
 		(unsigned long)( T_MODE & cur->pi_stat.st_mode ), 
@@ -234,7 +231,7 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 
      
    static int 
-t_compare( struct pathinfo *cur, struct transcript *tran )
+t_compare( struct pathinfo *fs, struct transcript *tran )
 {
     int			ret = -1;
     mode_t		mode;
@@ -245,25 +242,25 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
      * If the transcript is at EOF, and we've exhausted the filesystem,
      * just return T_MOVE_FS, as this will cause transcript() to return.
      */
-    if (( tran->t_eof ) && ( cur == NULL )) {
+    if (( tran->t_eof ) && ( fs == NULL )) {
 	return T_MOVE_FS;
     }
 
     if ( tran->t_eof ) {
 	ret = -1;
-    } else if ( cur == NULL ) {
+    } else if ( fs == NULL ) {
 	/*
 	 * If we've exhausted the filesystem, ret = 1 means that
 	 * name is in tran, but not fs.
 	 */
 	ret = 1;
     } else {
-	ret = pathcmp( cur->pi_name, tran->t_pinfo.pi_name );
+	ret = pathcmp( fs->pi_name, tran->t_pinfo.pi_name );
     }
 
     if ( ret > 0 ) {
 	/* name is in the tran, but not the fs */
-	t_print( cur, tran, PR_TRAN_ONLY ); 
+	t_print( fs, tran, PR_TRAN_ONLY ); 
 	return T_MOVE_TRAN;
     } 
 
@@ -271,59 +268,53 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
      * after this point, name is in the fs, so if it's 'f', and
      * checksums are on, get the checksum
      */
-    if ( chksum && ( cur->pi_type == 'f' )) {
-	if ( do_chksum( cur->pi_name, cur->pi_chksum_b64 ) < 0 ) {
-	    perror( cur->pi_name );
+    if ( chksum && ( fs->pi_type == 'f' )) {
+	if ( do_chksum( fs->pi_name, fs->pi_chksum_b64 ) < 0 ) {
+	    perror( fs->pi_name );
 	    exit( 1 );
 	}
     }
 
     if ( ret < 0 ) {
 	/* name is not in the tran */
-	t_print( cur, tran, PR_FS_ONLY );
+	t_print( fs, tran, PR_FS_ONLY );
 	return T_MOVE_FS;
     } 
 
     /* convert the modes */
-    mode = ( T_MODE & cur->pi_stat.st_mode );
+    mode = ( T_MODE & fs->pi_stat.st_mode );
     tran_mode = ( T_MODE & tran->t_pinfo.pi_stat.st_mode );
 
     /* the names match so check types */
-    if ( cur->pi_type != tran->t_pinfo.pi_type ) {
-	t_print( cur, tran, PR_DOWNLOAD );
+    if ( fs->pi_type != tran->t_pinfo.pi_type ) {
+	t_print( fs, tran, PR_DOWNLOAD );
 	return T_MOVE_BOTH;
     }
 
     /* compare the other components for each file type */
-    switch( cur->pi_type ) {
+    switch( fs->pi_type ) {
     case 'f':			    /* file */
 	if ( tran->t_type != T_NEGATIVE ) {
-	    if ( cur->pi_stat.st_size != tran->t_pinfo.pi_stat.st_size ) {
-		t_print( cur, tran, PR_DOWNLOAD );
+	    if (( fs->pi_stat.st_size != tran->t_pinfo.pi_stat.st_size ) ||
+(( !chksum ) ? ( fs->pi_stat.st_mtime != tran->t_pinfo.pi_stat.st_mtime ) :
+( strcmp( fs->pi_chksum_b64, tran->t_pinfo.pi_chksum_b64 ) != 0 ))) {
+		t_print( fs, tran, PR_DOWNLOAD );
+		if (( edit_path == FS2TRAN ) && ( fs->pi_stat.st_nlink > 1 )) {
+		    hardlink_changed( fs, 1 );
+		}
 		break;
 	    }
 
-	    if ( chksum ) {
-		if ( strcmp( cur->pi_chksum_b64,
-			tran->t_pinfo.pi_chksum_b64 ) != 0 ) {
-		    t_print( cur, tran, PR_DOWNLOAD );
-		    break;
-		}
-		if ( cur->pi_stat.st_mtime != tran->t_pinfo.pi_stat.st_mtime ) {
-		    t_print( cur, tran, PR_STATUS );
-		    break;
-		}
-	    } else if ( cur->pi_stat.st_mtime !=
-		    tran->t_pinfo.pi_stat.st_mtime ) {
-		t_print( cur, tran, PR_DOWNLOAD );
+	    if ( fs->pi_stat.st_mtime != tran->t_pinfo.pi_stat.st_mtime ) {
+		t_print( fs, tran, PR_STATUS );
 		break;
 	    }
 	}
 
-	if (( cur->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) || 
-		( cur->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) ||
+	if (( fs->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) || 
+		( fs->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) ||
 		( mode != tran_mode )) {
-	    t_print( cur, tran, PR_STATUS );
+	    t_print( fs, tran, PR_STATUS );
 	}
 	break;
 
@@ -331,23 +322,23 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
     case 'D':
     case 'p':
     case 's':
-	if (( cur->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
-		( cur->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) ||
+	if (( fs->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
+		( fs->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) ||
 		( mode != tran_mode )) {
-	    t_print( cur, tran, PR_STATUS );
+	    t_print( fs, tran, PR_STATUS );
 	}
 	break;
 
     case 'l':			    /* link */
-	if ( strcmp( cur->pi_link, tran->t_pinfo.pi_link ) != 0 ) {
-	    t_print( cur, tran, PR_STATUS );
+	if ( strcmp( fs->pi_link, tran->t_pinfo.pi_link ) != 0 ) {
+	    t_print( fs, tran, PR_STATUS );
 	}
 	break;
 
     case 'h':			    /* hard */
-	if (( strcmp( cur->pi_link, tran->t_pinfo.pi_link ) != 0 ) ||
-		( hardlink_get_changed( cur ) != 0 )) {
-	    t_print( cur, tran, PR_STATUS );
+	if (( strcmp( fs->pi_link, tran->t_pinfo.pi_link ) != 0 ) ||
+		( hardlink_changed( fs, 0 ) != 0 )) {
+	    t_print( fs, tran, PR_STATUS );
 	}
 	break;
 
@@ -357,26 +348,26 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
 	 * devices numbers. pseudo ttys can change uid, gid and mode for
 	 * every login and this is normal behavior.
 	 */
-	dev = cur->pi_stat.st_rdev;
+	dev = fs->pi_stat.st_rdev;
 	if ( tran->t_type != T_NEGATIVE ) {
-	    if (( cur->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
-		    ( cur->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) || 
+	    if (( fs->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
+		    ( fs->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) || 
 		    ( mode != tran_mode )) {
-		t_print( cur, tran, PR_STATUS );
+		t_print( fs, tran, PR_STATUS );
 	    }
 	}
 	if ( dev != tran->t_pinfo.pi_stat.st_rdev ) {
-	    t_print( cur, tran, PR_STATUS );
+	    t_print( fs, tran, PR_STATUS );
 	}	
 	break;
 
     case 'b':
-	dev = cur->pi_stat.st_rdev;
-	if (( cur->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
-		( cur->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) || 
+	dev = fs->pi_stat.st_rdev;
+	if (( fs->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
+		( fs->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) || 
 		( dev != tran->t_pinfo.pi_stat.st_rdev ) ||
 		( mode != tran_mode )) {
-	    t_print( cur, tran, PR_STATUS );
+	    t_print( fs, tran, PR_STATUS );
 	}	
 	break;
 
@@ -536,7 +527,6 @@ transcript_init( char *prepath, char *cmd )
     char	fullpath[ MAXPATHLEN ];
     int		length, ac;
     int		foundspecial = 0;
-    extern int	edit_path;
     FILE	*fp;
 
     /*
