@@ -28,7 +28,8 @@ INSTALL=	/usr/ucb/install
 
 # Should not need to edit anything after here.
 BINTARGETS=	fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff
-MAN1TARGETS=	fsdiff.1 lapply.1 lcreate.1 lfdiff.1
+MAN1TARGETS=	fsdiff.1 ktcheck.1 lapply.1 lcksum.1 lcreate.1 lfdiff.1 \
+		lmerge.1
 TARGETS=	radmind ${BINTARGETS}
 
 RADMIND_OBJ=	version.o daemon.o command.o argcargv.o auth.o code.o \
