@@ -105,11 +105,15 @@ main( ac, av )
 	prog++;
     }
 
-    while (( c = getopt( ac, av, "Vdp:b:u:" )) != EOF ) {
+    while (( c = getopt( ac, av, "VD:dp:b:u:" )) != EOF ) {
 	switch ( c ) {
 	case 'V' :		/* version */
 	    printf( "%s\n", version );
 	    exit( 0 );
+
+	case 'D':		/* Set radmind path */
+	    path_radmind = optarg;
+	    break;
 
 	case 'd' :		/* debug */
 	    debug++;
@@ -132,8 +136,8 @@ main( ac, av )
 	}
     }
 
-    if ( chdir( _PATH_RADMIND ) < 0 ) {
-	perror( _PATH_RADMIND );
+    if ( chdir( path_radmind ) < 0 ) {
+	perror( path_radmind );
 	exit( 1 );
     }
 
