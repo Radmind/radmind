@@ -227,7 +227,6 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *location,
 	if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 	rsize -= as_cc;
     }
-    if ( verbose ) printf( "\n" );
 
     if ( rsize != 0 ) {
 	fprintf( stderr, "Didn't write correct number of bytes to rsrc fork" );

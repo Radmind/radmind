@@ -307,7 +307,8 @@ filechecklist:
 #endif __APPLE__
 
 	    if ( getfsoinfo( temppath, &st, &fstype, finfo ) < 0 ) {
-		perror( path );
+printf( "getfso failed\n" );
+		perror( temppath );
 		return( 1 );
 	    }
 
@@ -343,7 +344,7 @@ filechecklist:
 	     perror( head->path );
 	     return( 1 );
 	}
-	if ( quiet ) printf( "%s: deleted\n", path );
+	if ( !quiet ) printf( "%s: deleted\n", path );
 	node = head;
 	head = node->next;
 	free_node( node );
