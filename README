@@ -27,10 +27,9 @@ your system:
 
   % ./configure
 
-The configure scripts take several options:
-  --with-server=SERVER specifies the default radmind serve
-  --with-ssl=DIR specifies the non-standard ssl path
-  --with-snet=DIR specifies the non-standard snet path
+The configure scripts take several options.  To see them, run:
+
+  %s ./configure --help
 
 3: Build and install the software
 
@@ -42,23 +41,35 @@ Once that is done, you can install the tools.
 
   # make install
 
---------------
+-------------------------------------
 Building a Mac OS X Installer Package
---------------
+-------------------------------------
 
 The radmind Makefile contains a target called 'package', which will construct
 a Mac OS X installer package suitable for distribution. To make the package,
-follow the steps below:
+login as an administrator and follow the steps below:
 
 Enter the radmind source directory.
 ./configure
-sudo make package
+make package
+
+During the build process, you will be prompted for your password.
+
+PackageMaker currently does not work with make, so at the end of the build process you will see "make: *** [package] Error 2" even though that package was created successfully.
 
 After the source has been built and the package created, you will be left with
 a package called 'RadmindTools.pkg' in the parent directory of the radmind
 source. This file may be double-clicked in the Finder to launch the Installer.
 
 This target will fail if it is used on a system other than Mac OS X.
+
+---------------------
+Building for RedHat 9
+---------------------
+To build radmind on RedHat 9 with SSL support, you have give the location
+for the kerberos header files:
+
+  % "env CPPFLAGS=-I/usr/kerberos/include ./configure"
 
 ------------
 Known Issues
