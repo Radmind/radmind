@@ -9,6 +9,11 @@ encode( char *line )
     static char	    buf[ 2 * MAXPATHLEN ];
     char	    *temp;    
 
+    if ( strlen( line ) > MAXPATHLEN ) {
+	fprintf( stderr, "ERROR: The path is too long\n" );
+	exit( 1 );
+    }
+
     temp = buf;
 
     for ( ; *line != '\0'; line++, temp++ ) {
