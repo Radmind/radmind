@@ -20,6 +20,10 @@
  *      -data fork
  */
 
+#ifdef __APPLE__
+#include <stdint.h>
+#endif /* __APPLE__ */
+
 #define AS_HEADERLEN	26
 #define AS_MAGIC	0x00051600
 #define AS_VERSION	0x00020000

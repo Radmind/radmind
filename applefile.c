@@ -7,7 +7,6 @@
 
 #ifdef __APPLE__
 #include <sys/attr.h>
-
 #include "applefile.h"
 
 struct attrlist		alist = {
