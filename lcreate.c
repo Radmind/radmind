@@ -48,6 +48,7 @@ int		quiet = 0;
 int		linenum = 0;
 extern char	*version;
 extern char	*checksumlist;
+extern struct timeval   timeout;   
 const EVP_MD    *md;
 SSL_CTX  	*ctx;
 
@@ -82,8 +83,12 @@ main( int argc, char **argv )
     ssize_t		size = 0;
     int                 authlevel = 0;
     int                 use_randfile = 0;
+    int                 login = 0;
+    char                *user = NULL;
+    char                *password = NULL;
 
-    while (( c = getopt( argc, argv, "c:h:inNp:qt:TvVw:x:y:z:" )) != EOF ) {
+    while (( c = getopt( argc, argv, "c:h:iLnNp:P:qt:TU:vVw:x:y:z:" ))
+	    != EOF ) {
 	switch( c ) {
         case 'c':
             OpenSSL_add_all_digests();
@@ -104,6 +109,10 @@ main( int argc, char **argv )
 	    lnbf = 1;
 	    break;
 
+        case 'L':
+            login = 1;
+            break;
+
 	case 'n':
 	    network = 0;
 	    break;
@@ -122,6 +131,10 @@ main( int argc, char **argv )
 	    }
 	    break;
 
+        case 'P':
+            password = optarg;
+            break;
+
 	case 'q':
 	    quiet = 1;
 	    break;
@@ -133,6 +146,10 @@ main( int argc, char **argv )
 	case 'T':
 	    tran_only = 1;
 	    break;
+
+        case 'U':
+            user = optarg;
+            break;
 
 	case 'v':
 	    verbose = 1;
@@ -185,9 +202,10 @@ main( int argc, char **argv )
     }
 
     if ( err || ( argc - optind != 1 ))   {
-	fprintf( stderr, "usage: lcreate [ -nNTV ] [ -q | -v | -i ] " );
+	fprintf( stderr, "usage: lcreate [ -LnNTV ] [ -q | -v | -i ] " );
 	fprintf( stderr, "[ -c checksum ] " );
-	fprintf( stderr, "[ -h host ] [-p port ] [ -t stored-name ] " );
+	fprintf( stderr, "[ -h host ] [ -p port ] [ -P password ] " );
+	fprintf( stderr, "[ -t stored-name ] [ -U user ] " );
         fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );
         fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ] " );
 	fprintf( stderr, "difference-transcript\n" );
@@ -203,6 +221,8 @@ main( int argc, char **argv )
 		exit( 2 );
 	    }
 	}
+
+
 
 	/* no name given on command line, so make a "default" name */
 	if ( tname == NULL ) {
@@ -222,6 +242,41 @@ main( int argc, char **argv )
                 /* error message printed in tls_cleint_starttls */
                 exit( 2 );
             }
+        }
+
+        if ( login ) {
+	    struct timeval	tv;
+	    char		*line;
+
+            if ( user == NULL ) {
+                if (( user = getlogin()) == NULL ) {
+		    perror( "getlogin" );
+                    exit( 2 );
+                } 
+            }
+            if ( password == NULL ) {
+		printf( "user: %s\n", user );
+                if (( password = getpass( "password:" )) == NULL ) {
+                    fprintf( stderr, "Invalid null password\n" );
+                    exit( 2 );
+                }
+            }
+            if ( verbose ) printf( ">>> LOGIN %s %s\n", user, password );
+            if ( snet_writef( sn, "LOGIN %s %s\n", user, password ) < 0 ) {
+                fprintf( stderr, "login %s failed: 1-%s\n", user, 
+                    strerror( errno ));
+                exit( 2 );                       
+            }                            
+	    tv = timeout;
+	    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
+		fprintf( stderr, "login %s failed: 2-%s\n", user,
+		    strerror( errno ));
+		exit( 2 );
+	    }
+	    if ( *line != '2' ) {
+		fprintf( stderr, "%s\n", line );
+		return( 1 );
+	    }
         }
 
 	if ( cksum ) {
