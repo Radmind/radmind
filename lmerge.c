@@ -21,6 +21,7 @@
 
 int		chksum = 1;
 int		verbose = 0;
+int		noupload = 0;
 extern char   	*version;
 
     int
@@ -54,6 +55,13 @@ getnextline( struct tran *tran )
 	fprintf( stderr, "acav_parse\n" );
 	return( -1 );
     }
+
+    if ( *tran->targv[ 0 ] == '-' ) {
+	tran->remove = 1;
+	tran->targv++;
+    } else {
+	tran->remove = 0;
+    }
     return( 0 );
 }
 
@@ -66,9 +74,8 @@ getnextline( struct tran *tran )
     int
 main( int argc, char **argv )
 {
-    int			c, i, j, cmpval, err = 0, tcount = 0, canidate = NULL;
-    int			ofd;
-int	ccount = 0;
+    int			c, i, j, cmpval, err = 0, tcount = 0, candidate = NULL;
+    int			ofd, fileloc = 0;
     char		*tname = NULL, *file = NULL;
     char		*tpath = NULL;
     char		npath[ 2 * MAXPATHLEN ];
@@ -76,8 +83,11 @@ int	ccount = 0;
     struct tran		**trans = NULL;
     FILE		*ofs;
 
-    while ( ( c = getopt( argc, argv, "Vv" ) ) != EOF ) {
+    while ( ( c = getopt( argc, argv, "nVv" ) ) != EOF ) {
 	switch( c ) {
+	case 'n':
+	    noupload = 1;
+	    break;
 	case 'V':
 	    printf( "%s\n", version );
 	    exit( 0 );
@@ -90,13 +100,20 @@ int	ccount = 0;
 	}
     }
 
-    if ( err || ( ( argc - optind ) < 2 ) ) {
-	fprintf( stderr, "usage: lmerge [ -vV ] " );
-	fprintf( stderr, "transcript1, transcript 2, ..., dest\n" );
+    tcount = argc - ( optind + 1 );	/* "+ 1" accounts for dest tran */
+
+    if ( noupload && ( tcount > 2 ) ) {
+	fprintf( stderr, "usage: lmerge [ -nvV ] " );
+	fprintf( stderr, "transcript1, transcript2, dest\n" );
 	exit( 2 );
     }
 
-    tcount = argc - optind - 1;
+    if ( err || ( ( argc - optind ) < 2 ) ) {
+	fprintf( stderr, "usage: lmerge [ -vV ] " );
+	fprintf( stderr, "transcript1, transcript2, ..., dest\n" );
+	exit( 2 );
+    }
+
     tpath = argv[ argc - 1 ];
 
     /* Create array of transcripts */
@@ -105,22 +122,26 @@ int	ccount = 0;
 	perror( "malloc" );
 	exit( 1 );
     }
-    for ( i = optind - 1; i + 2 < argc; i++ ) {
+
+    /* loop over array of trans */
+    for ( i = 0;  i < tcount;  i++ ) {
 
 	if ( ( trans[ i ] = (struct tran*)malloc( sizeof( struct tran ) ) )
 		== NULL ) {
 	    perror( "malloc" );
 	    return( 1 );
 	}
-	trans[ i ]->num = argc - i;
+	trans[ i ]->num = i;
 	trans[ i ]->eof = 0;
-	if ( ( trans[ i ]->fs = fopen( argv[ i + 1 ], "r" ) ) == NULL ) {
-	    perror( argv[ i +1 ]);
+
+	/* open tran */
+	if ( ( trans[ i ]->fs = fopen( argv[ i + optind ], "r" ) ) == NULL ) {
+	    perror( argv[ i + optind ] );
 	    return( 1 );
 	}
 
 	/* Get transcript name from path */
-	trans[ i ]->path = argv[ i + 1 ];
+	trans[ i ]->path = argv[ i + optind ];
 	if ( ( trans[ i ]->name = strrchr( trans[ i ]->path, '/' ) ) == NULL ) {
 	    trans[ i ]->name = trans[ i ]->path;
 	    trans[ i ]->path = ".";
@@ -167,70 +188,104 @@ int	ccount = 0;
 	perror( opath );
 	exit( 1 );
     }
-	
+
     /* Merge transcripts */
     for ( i = 0; i < tcount; i++ ) {
 	while ( !(trans[ i ]->eof) ) {
-	    canidate = i;
+	    candidate = i;
+	    fileloc = i;
 
-	    /* Compare canidate to other transcripts */
+	    /* Compare candidate to other transcripts */
 	    for ( j = i + 1; j < tcount; j++ ) {
 		if ( trans[ j ]->eof ) {
 		    continue;
 		}
-ccount++;
-		cmpval = pathcmp( trans[ canidate ]->targv[ 1 ],
+		cmpval = pathcmp( trans[ candidate ]->targv[ 1 ],
 		    trans[ j ]->targv[ 1 ] );
 		if ( cmpval == 0 ) {
 
+		    if ( ( noupload ) && ( *trans[ candidate ]->targv[ 0 ]
+			    == 'f' ) ) {
+			/* Use lower precedence path */
+			trans[ candidate ]->path = 
+			    trans[ j ]->path;
+
+			/* Select which file should be linked */
+			if ( ( strcmp( trans[ candidate ]->targv[ 6 ], 
+				trans[ j ]->targv[ 6 ] ) == 0 ) &&
+				( strcmp( trans[ candidate ]->targv[ 7 ],
+				trans[ j ]->targv[ 7 ] ) == 0 ) ) {
+			    fileloc = j;
+			} else {
+			    /* don't print file only in highest tran */
+			    goto skipline;
+			}
+		    }
 		    /* Advance lower precedence transcript */
 		    if ( getnextline( trans[ j ] ) < 0 ) {
 			fprintf( stderr, "getnextline\n" );
 			exit( 1 );
 		    }
 		} else if ( cmpval > 0 ) {
-		    canidate = j;
+		    candidate = j;
+		    fileloc = j;
 		}
 	    }
-	    if ( *trans[ canidate ]->targv[ 0 ] != 'f' ) {
-		goto getnext;
+	    /* output non-files */
+	    if ( *trans[ candidate ]->targv[ 0 ] != 'f' ) {
+		goto outputline;
 	    }
-	    /*
-	    sprintf( npath, "%s/../file.%d/%s/%s", tpath, (int)getpid(),
-		tname, trans[ canidate ]->targv[ 1 ] ); 
-	    */
-
-	    /* verify directory structure for link */
-	    if ( ( file = strrchr( trans[ canidate ]->targv[ 1 ], '/' ) )
-		    != NULL ) {
-		*file = (char)'\0';
-		sprintf( npath, "%s/../file/%s.%d/%s", tpath,
-		    tname, (int)getpid(), trans[ canidate ]->targv[ 1 ] ); 
-		if ( create_directories( npath ) != 0 ) {
-		    fprintf( stderr, "create_dirs\n" );
-		    exit( 1 );
-		}
-		*file = (char)'/';
-	    } 
+	    /* skip items to be removed or files not uploaded */
+	    if ( ( trans[ candidate ]->remove ) ||
+		    ( ( noupload ) && ( candidate == 0 ) &&
+		    ( fileloc == 0 ) ) ) {
+		goto skipline;
+	    }
 
 	    /* Link file */
 	    sprintf( npath, "%s/../file/%s.%d/%s", tpath, tname,
-		(int)getpid(), trans[ canidate ]->targv[ 1 ] );
-	    sprintf( opath,"%s/../file/%s/%s", trans[ canidate ]->path,
-		trans[ canidate ]->name, trans[ canidate ]->targv[ 1 ] );
+		(int)getpid(), trans[ candidate ]->targv[ 1 ] );
+	    sprintf( opath,"%s/../file/%s/%s", trans[ candidate ]->path,
+		trans[ fileloc ]->name, trans[ candidate ]->targv[ 1 ] );
+
+	    /*
+	     * Assume that directory structure is present so the entire path
+	     * is not recreated for every file.  Only if link fails is
+	     * create_direcetories() called.
+	     */
+
+	    /* First try to link file */
 	    if ( link( opath, npath ) != 0 ) {
-		perror( npath );
-		exit( 1 );
+
+		/* If that fails, verify directory structure */
+		if ( ( file = strrchr( trans[ candidate ]->targv[ 1 ], '/' ) )
+			!= NULL ) {
+		    sprintf( npath, "%s/../file/%s.%d/%s", tpath,
+			tname, (int)getpid(), trans[ candidate ]->targv[ 1 ] ); 
+		    if ( create_directories( npath ) != 0 ) {
+			fprintf( stderr, "create_dirs\n" );
+			exit( 1 );
+		    }
+		} 
+
+		/* Try link again */
+		if ( link( opath, npath ) != 0 ) {
+		    fprintf( stderr, "creating %s by linking to %s",
+			npath, opath );
+		    perror( "" );
+		    exit( 1 );
+		}
 	    }
-	    if ( verbose ) printf( "*** linked %s/%s\n",
-		tname, trans[ canidate ]->targv[ 1 ]);
+	    if ( verbose ) printf( "*** %d: linked %s/%s\n",
+		trans[ fileloc ]->num, tname, trans[ candidate ]->targv[ 1 ]);
 		
-getnext:
-	    if ( fputs( trans[ canidate ]->line, ofs ) == EOF ) {
-		perror( trans[ canidate ]->line );
+outputline:
+	    if ( fputs( trans[ candidate ]->line, ofs ) == EOF ) {
+		perror( trans[ candidate ]->line );
 		exit( 1 );
 	    }
-	    if ( getnextline( trans[ canidate ] ) != 0 ) {
+skipline:
+	    if ( getnextline( trans[ candidate ] ) != 0 ) {
 		fprintf( stderr, "getnextline\n" );
 		exit( 1 );
 	    }
@@ -250,8 +305,6 @@ getnext:
 	perror( npath );
 	exit ( 1 );
     }
-
-printf( "ccount: %d\n", ccount );
 
     exit( 0 );
 } 
