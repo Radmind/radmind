@@ -277,6 +277,8 @@ main( int argc, char **argv )
 		fprintf( stderr, "%s\n", line );
 		return( 1 );
 	    }
+
+	    /* XXX At this point we should free/clear the password */
         }
 
 	if ( cksum ) {
