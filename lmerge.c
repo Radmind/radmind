@@ -19,7 +19,6 @@
 #include "pathcmp.h"
 #include "mkdirs.h"
 
-int		linenum = 0;
 int		chksum = 1;
 int		verbose = 0;
 
@@ -67,9 +66,8 @@ getnextline( struct tran *tran )
 main( int argc, char **argv )
 {
     int			c, i, j, cmpval, err = 0, tcount = 0, canidate = NULL;
-    int			ofd, new = 0;
+    int			ofd;
 int	ccount = 0;
-    extern int          optind;
     char		*tname = NULL, *version = "1.0", *file = NULL;
     char		*tpath = NULL;
     char		npath[ 2 * MAXPATHLEN ];
@@ -77,20 +75,13 @@ int	ccount = 0;
     struct tran		**trans = NULL;
     FILE		*ofs;
 
-    while ( ( c = getopt( argc, argv, "n:Vv" ) ) != EOF ) {
+    while ( ( c = getopt( argc, argv, "Vv" ) ) != EOF ) {
 	switch( c ) {
-	case 'n':
-	    new = 1;
-	    tpath = optarg;
-	    break;
 	case 'V':
 	    printf( "%s\n", version );
 	    exit( 0 );
 	case 'v':
 	    verbose = 1;
-	    break;
-	case '?':
-	    err++;
 	    break;
 	default:
 	    err++;
@@ -98,38 +89,37 @@ int	ccount = 0;
 	}
     }
 
-    if ( new && ( npath == NULL ) ) {
-	err++;
-    }
-
-    if ( err || ( argc - optind == 0 ) ) {
-	fprintf( stderr, "usage: lmerge [ -n path | -u ] [ -vV ] " );
-	fprintf( stderr, "transcript 1, transcript 2, ...\n" );
+    if ( err || ( ( argc - optind ) < 2 ) ) {
+	fprintf( stderr, "usage: lmerge [ -vV ] " );
+	fprintf( stderr, "transcript1, transcript 2, ..., dest\n" );
 	exit( 2 );
     }
 
+    tcount = argc - optind - 1;
+    tpath = argv[ argc - 1 ];
+
     /* Create array of transcripts */
     if ( ( trans = (struct tran**)malloc(
-	    sizeof( struct tran* ) * ( argc - optind ) ) ) == NULL ) {
+	    sizeof( struct tran* ) * ( tcount ) ) ) == NULL ) {
 	perror( "malloc" );
 	exit( 1 );
     }
-    for ( i = 0; ( argc - optind ) > 0; optind++ ) {
+    for ( i = optind - 1; i + 2 < argc; i++ ) {
 
 	if ( ( trans[ i ] = (struct tran*)malloc( sizeof( struct tran ) ) )
 		== NULL ) {
 	    perror( "malloc" );
 	    return( 1 );
 	}
-	trans[ i ]->num = i;
+	trans[ i ]->num = argc - i;
 	trans[ i ]->eof = 0;
-	if ( ( trans[ i ]->fs = fopen( argv[ optind ], "r" ) ) == NULL ) {
-	    perror( argv[ optind ]);
+	if ( ( trans[ i ]->fs = fopen( argv[ i + 1 ], "r" ) ) == NULL ) {
+	    perror( argv[ i +1 ]);
 	    return( 1 );
 	}
 
 	/* Get transcript name from path */
-	trans[ i ]->path = argv[ optind ];
+	trans[ i ]->path = argv[ i + 1 ];
 	if ( ( trans[ i ]->name = strrchr( trans[ i ]->path, '/' ) ) == NULL ) {
 	    trans[ i ]->name = trans[ i ]->path;
 	    trans[ i ]->path = ".";
@@ -147,39 +137,34 @@ int	ccount = 0;
 	    fprintf( stderr, "getnextline\n" );
 	    exit( 1 );
 	}
-
-	i++;
     }
-    tcount = i;
 
-    if ( new ) {
-	/* Get new transcript name from transcript path */
-	if ( ( tname = strrchr( tpath, '/' ) ) == NULL ) {
-	    tname = tpath;
-	    tpath = ".";
-	} else {
-	    *tname = (char)'\0';
-	    tname++;
-	}
+    /* Get new transcript name from transcript path */
+    if ( ( tname = strrchr( tpath, '/' ) ) == NULL ) {
+	tname = tpath;
+	tpath = ".";
+    } else {
+	*tname = (char)'\0';
+	tname++;
+    }
 
-	/* Create file/tname dir */
-	sprintf( npath, "%s/../file/%s.%d", tpath, tname, (int)getpid() );
-	if ( mkdir( npath, 0777 ) != 0 ) {
-	    perror( npath );
-	    exit( 1 );
-	}
+    /* Create file/tname dir */
+    sprintf( npath, "%s/../file/%s.%d", tpath, tname, (int)getpid() );
+    if ( mkdir( npath, 0777 ) != 0 ) {
+	perror( npath );
+	exit( 1 );
+    }
 
-	/* Create transcript/tname file */
-	sprintf( opath, "%s/%s.%d", tpath, tname, (int)getpid() );
-	if ( ( ofd = open( opath, O_WRONLY | O_CREAT | O_EXCL,
-		0644 ) ) < 0 ) {
-	    perror( opath );
-	    exit( 1 );
-	}
-	if ( ( ofs = fdopen( ofd, "w" ) ) == NULL ) {
-	    perror( opath );
-	    exit( 1 );
-	}
+    /* Create transcript/tname file */
+    sprintf( opath, "%s/%s.%d", tpath, tname, (int)getpid() );
+    if ( ( ofd = open( opath, O_WRONLY | O_CREAT | O_EXCL,
+	    0666 ) ) < 0 ) {
+	perror( opath );
+	exit( 1 );
+    }
+    if ( ( ofs = fdopen( ofd, "w" ) ) == NULL ) {
+	perror( opath );
+	exit( 1 );
     }
 	
     /* Merge transcripts */
@@ -197,7 +182,7 @@ ccount++;
 		    trans[ j ]->targv[ 1 ] );
 		if ( cmpval == 0 ) {
 
-		    /* Advance lower precidence transcript */
+		    /* Advance lower precedence transcript */
 		    if ( getnextline( trans[ j ] ) < 0 ) {
 			fprintf( stderr, "getnextline\n" );
 			exit( 1 );
@@ -209,46 +194,41 @@ ccount++;
 	    if ( *trans[ canidate ]->targv[ 0 ] != 'f' ) {
 		goto getnext;
 	    }
-	    if ( new ) {
-		/*
-		sprintf( npath, "%s/../file.%d/%s/%s", tpath, (int)getpid(),
-		    tname, trans[ canidate ]->targv[ 1 ] ); 
-		*/
+	    /*
+	    sprintf( npath, "%s/../file.%d/%s/%s", tpath, (int)getpid(),
+		tname, trans[ canidate ]->targv[ 1 ] ); 
+	    */
 
-		/* verify directory structure for link */
-		if ( ( file = strrchr( trans[ canidate ]->targv[ 1 ], '/' ) )
-			!= NULL ) {
-		    *file = (char)'\0';
-		    sprintf( npath, "%s/../file/%s.%d/%s", tpath,
-			tname, (int)getpid(), trans[ canidate ]->targv[ 1 ] ); 
-		    if ( create_directories( npath ) != 0 ) {
-			fprintf( stderr, "create_dirs\n" );
-			exit( 1 );
-		    }
-		    *file = (char)'/';
-		} 
-
-		/* Link file */
-		sprintf( npath, "%s/../file/%s.%d/%s", tpath, tname,
-		    (int)getpid(), trans[ canidate ]->targv[ 1 ] );
-		sprintf( opath,"%s/../file/%s/%s", trans[ canidate ]->path,
-		    trans[ canidate ]->name, trans[ canidate ]->targv[ 1 ] );
-		if ( link( opath, npath ) != 0 ) {
-		    perror( npath );
+	    /* verify directory structure for link */
+	    if ( ( file = strrchr( trans[ canidate ]->targv[ 1 ], '/' ) )
+		    != NULL ) {
+		*file = (char)'\0';
+		sprintf( npath, "%s/../file/%s.%d/%s", tpath,
+		    tname, (int)getpid(), trans[ canidate ]->targv[ 1 ] ); 
+		if ( create_directories( npath ) != 0 ) {
+		    fprintf( stderr, "create_dirs\n" );
 		    exit( 1 );
 		}
-		if ( verbose ) printf( "*** linked %s/%s\n",
-		    tname, trans[ canidate ]->targv[ 1 ]);
+		*file = (char)'/';
+	    } 
+
+	    /* Link file */
+	    sprintf( npath, "%s/../file/%s.%d/%s", tpath, tname,
+		(int)getpid(), trans[ canidate ]->targv[ 1 ] );
+	    sprintf( opath,"%s/../file/%s/%s", trans[ canidate ]->path,
+		trans[ canidate ]->name, trans[ canidate ]->targv[ 1 ] );
+	    if ( link( opath, npath ) != 0 ) {
+		perror( npath );
+		exit( 1 );
 	    }
+	    if ( verbose ) printf( "*** linked %s/%s\n",
+		tname, trans[ canidate ]->targv[ 1 ]);
 		
 getnext:
-	    if ( new ) {
-		if ( fputs( trans[ canidate ]->line, ofs ) == EOF ) {
-		    perror( trans[ canidate ]->line );
-		    exit( 1 );
-		}
+	    if ( fputs( trans[ canidate ]->line, ofs ) == EOF ) {
+		perror( trans[ canidate ]->line );
+		exit( 1 );
 	    }
-	    if ( verbose && !new ) printf( "%s", trans[ canidate ]->line );
 	    if ( getnextline( trans[ canidate ] ) != 0 ) {
 		fprintf( stderr, "getnextline\n" );
 		exit( 1 );
@@ -257,19 +237,17 @@ getnext:
     }
 
     /* Rename temp transcript and file structure */
-    if ( new ) {
-	sprintf( opath, "%s/../file/%s.%d", tpath, tname, (int)getpid() );
-	sprintf( npath, "%s/../file/%s", tpath, tname );
-	if ( rename( opath, npath ) != 0 ) {
-	    perror( npath );
-	    exit( 1 );
-	}
-	sprintf( opath, "%s/%s.%d", tpath, tname, (int)getpid() );
-	sprintf( npath, "%s/%s", tpath, tname );
-        if ( rename( opath, npath ) != 0 ) {
-	    perror( npath );
-	    exit ( 1 );
-	}
+    sprintf( opath, "%s/../file/%s.%d", tpath, tname, (int)getpid() );
+    sprintf( npath, "%s/../file/%s", tpath, tname );
+    if ( rename( opath, npath ) != 0 ) {
+	perror( npath );
+	exit( 1 );
+    }
+    sprintf( opath, "%s/%s.%d", tpath, tname, (int)getpid() );
+    sprintf( npath, "%s/%s", tpath, tname );
+    if ( rename( opath, npath ) != 0 ) {
+	perror( npath );
+	exit ( 1 );
     }
 
 printf( "ccount: %d\n", ccount );
