@@ -40,7 +40,25 @@ Now you are ready to build the software
 
 Once that is done, you can install the tools.
 
-  % make install
+  # make install
+
+--------------
+Building a Mac OS X Installer Package
+--------------
+
+The radmind Makefile contains a target called 'package', which will construct
+a Mac OS X installer package suitable for distribution. To make the package,
+follow the steps below:
+
+Enter the radmind source directory.
+./configure
+sudo make package
+
+After the source has been built and the package created, you will be left with
+a package called 'RadmindTools.pkg' in the parent directory of the radmind
+source. This file may be double-clicked in the Finder to launch the Installer.
+
+This target will fail if it is used on a system other than Mac OS X.
 
 ----------------
 More Information
