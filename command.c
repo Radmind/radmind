@@ -167,7 +167,7 @@ f_retr( sn, ac, av )
     char	*av[];
 {
 
-    unsigned int	readlen;
+    ssize_t		readlen;
     struct stat		st;
     struct timeval	tv;
     char		buf[8192];

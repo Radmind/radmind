@@ -88,7 +88,7 @@ store_file( int fd, SNET *sn, char *filename, char *transcript )
     struct stat 	st;
     struct timeval 	tv;
     unsigned char	buf[ 8192 ];
-    unsigned int	rr;
+    ssize_t		rr;
     char		*line;
     int			dodots = 0;
 
@@ -147,6 +147,11 @@ store_file( int fd, SNET *sn, char *filename, char *transcript )
 	    perror( "snet_write" );
 	    return( -1 );
 	}
+    }
+
+    if ( rr < 0 ) {
+	perror( filename );
+	return( -1 );
     }
 
     if ( snet_writef( sn, ".\r\n" ) == NULL ) {
