@@ -13,6 +13,8 @@
 } [
 .BI -V
 ] [
+.BI -Iv
+] [
 .BI \-K\  command
 ] [
 .BI \-c\  checksum
@@ -249,6 +251,10 @@ produces a creatable transcript.
 .BI \-c\  checksum
 enables checksuming.
 .TP 19
+.B \-I
+display progress suitable for controlling a progress bar in iHook.
+(http://www.ihook.org) Must be used with -o flag.
+.TP 19
 .BI \-K\  command
 specifies a command
 file name, by default
@@ -262,6 +268,9 @@ displays the version number of
 .BR fsdiff ,
 a list  of supported checksumming algorithms in descending
 order of preference and then exits.
+.TP 19
+.B \-v
+verbose progress output. Requires -o option.
 .sp
 .SH FILES
 .TP 19
