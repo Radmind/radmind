@@ -1,5 +1,9 @@
 ./EXCLUDE
 ./CVS
+./Makefile
 ./OS_X/CVS
 ./configure.ac
+./config.log
+./config.status
 ./libsnet/CVS
+./libsnet/Makefile
