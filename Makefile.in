@@ -241,10 +241,11 @@ package : all man info
 	done 
 	mkdir -p -m 0700 ${CLIENTVARPKGDIR}
 	mkdir -p -m 0700 ${CLIENTVARPKGDIR}/cert
+	mkdir -p -m 0700 ${CLIENTVARPKGDIR}/client
 	${INSTALL} -o root -g staff -m 0700 -c OS_X/command.K \
-	    ${CLIENTVARPKGDIR}
+	    ${CLIENTVARPKGDIR}/client
 	${INSTALL} -o root -g staff -m 0700 -c OS_X/negative.T \
-	    ${CLIENTVARPKGDIR}
+	    ${CLIENTVARPKGDIR}/client
 	chown root:wheel ${MPKGDIR}
 	find ${MPKGDIR}/* -exec chown root:wheel {} \;
 	package ${CLIENTBINPKGDIR} tmp/OS_X/client-bin.info -d ${MPKGDIR}
