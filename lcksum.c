@@ -24,6 +24,7 @@
 #include "code.h"
 #include "pathcmp.h"
 #include "largefile.h"
+#include "root.h"
 
 void            (*logger)( char * ) = NULL;
 
@@ -51,13 +52,13 @@ main( int argc, char **argv )
     int			lastpct = -1;
     float		pct = 0.0;
     extern int          optind;
-    char		*transcript = NULL, *tpath = NULL, *line;
+    char		*tpath = NULL, *line;
     char		*prefix = NULL, *d_path = NULL;
     char                **targv;
     char		cwd[ MAXPATHLEN ];
-    char		radmind_real_path[ PATH_MAX ];
     char		file_root[ MAXPATHLEN ];
-    char		transcript_root[ MAXPATHLEN ];
+    char		tran_root[ MAXPATHLEN ];
+    char		tran_name[ MAXPATHLEN ];
     char                tline[ 2 * MAXPATHLEN ];
     char		path[ 2 * MAXPATHLEN ];
     char		upath[ 2 * MAXPATHLEN ];
@@ -117,57 +118,18 @@ main( int argc, char **argv )
 	exit( 2 );
     }
 
-    /* Guess at file location:
-     *  1 check to see if our cwd contains _RADMIND_PATH/tmp
-     *	  -> assume files are at _RADMIND_PATH/tmp/file/tpath
-     *  2 check to see if our cwd contains _RADMIND_PATH
-     *	  -> assume files are at _RADMIND_PATH/file/tpath
-     *  3 use "."
-     *	  -> assume files are at ./../file/tpath
-     */
-    if ( realpath( _RADMIND_PATH, radmind_real_path ) == NULL ) {
-	perror( radmind_real_path );
-	exit( 2 );
-    }
-    printf( "radmind_real_path: %s\n", radmind_real_path );
     if ( getcwd( cwd, MAXPATHLEN ) == NULL ) {
 	perror( "getcwd" );
 	exit( 2 );
     }
-    printf( "cwd: %s\n", cwd );
-    if ( snprintf( transcript_root, MAXPATHLEN, "%s/tmp/transcript",
-	    radmind_real_path ) > MAXPATHLEN - 1 ) {
-	fprintf( stderr, "%s/tmp: path too long\n", radmind_real_path );
+    if ( snprintf( cwd, MAXPATHLEN, "%s/%s", cwd, tpath )
+	    > MAXPATHLEN - 1 ) {
+	fprintf( stderr, "%s/%s: path too long\n", cwd, tpath );
 	exit( 2 );
     }
-
-    if ( strstr( cwd, transcript_root ) != NULL ) {
-	if ( snprintf( file_root, MAXPATHLEN, "%s/tmp/file%s",
-		radmind_real_path,
-		&cwd[ strlen( transcript_root ) ]) > MAXPATHLEN - 1 ) {
-	    fprintf( stderr, "%s/tmp/file: path too long\n",
-		radmind_real_path );
-	    exit( 2 );
-	}
-    } else {
-	if ( snprintf( transcript_root, MAXPATHLEN, "%s/transcript",
-		radmind_real_path ) > MAXPATHLEN - 1 ) {
-	    fprintf( stderr, "%s/tmp: path too long\n", radmind_real_path );
-	    exit( 2 );
-	}
-
-	if ( strstr( cwd, transcript_root ) != NULL ) {
-	    if ( snprintf( file_root, MAXPATHLEN, "%s/file%s",
-		    radmind_real_path,
-		    &cwd[ strlen( transcript_root ) ]) > MAXPATHLEN - 1 ) {
-		fprintf( stderr, "%s/file: path too long\n",
-		    radmind_real_path );
-		exit( 2 );
-	    }
-	} else {
-	    sprintf( file_root, "../file" );
-	    sprintf( transcript_root, "." );
-	}
+    printf( "tpath: %s\n", cwd );
+    if ( get_root( cwd, file_root, tran_root, tran_name ) != 0 ) {
+	exit( 2 );
     }
 
     if ( stat( tpath, &st ) != 0 ) {
@@ -211,15 +173,6 @@ main( int argc, char **argv )
 	    perror( upath );
 	    exit( 2 );
 	}
-    }
-
-    /* Get transcript name from transcript path */
-    if ( ( transcript = strrchr( tpath, '/' ) ) == NULL ) {
-	transcript = tpath;
-	tpath = ".";
-    } else {
-	*transcript = (char)'\0';
-	transcript++;
     }
 
     /* count the lines */
@@ -315,10 +268,10 @@ main( int argc, char **argv )
 	    prefixfound = 1;
 	}
 
-	if ( snprintf( path, MAXPATHLEN, "%s/%s/%s/%s", file_root, tpath,
-		transcript, d_path ) > MAXPATHLEN - 1 ) {
-	    fprintf( stderr, "%s/file/%s/%s: path too long\n", file_root,
-		transcript, d_path );
+	if ( snprintf( path, MAXPATHLEN, "%s/%s/%s", file_root, tran_name,
+		d_path ) > MAXPATHLEN - 1 ) {
+	    fprintf( stderr, "%s/%s/%s: path too long\n", file_root,
+		tran_name, d_path );
 	    exit( 2 );
 	}
 
@@ -413,34 +366,27 @@ done:
     if ( updatetran ) {
 
 	if ( ucount ) {
-	    /* reconstruct full transcript path */
-	    if ( *tpath != '.' ) {
-		*(transcript - 1) = '/';
-	    } else {
-		tpath = transcript;
-	    }
-
 	    if ( rename( upath, tpath ) != 0 ) {
 		fprintf( stderr, "rename %s to %s failed: %s\n", upath, tpath,
 		    strerror( errno ));
 		exit( 2 );
 	    }
-	    if ( verbose ) printf( "%s: updated\n", transcript );
+	    if ( verbose ) printf( "%s: updated\n", tran_name );
 	    exit( 1 );
 	} else {
 	    if ( unlink( upath ) != 0 ) {
 		perror( upath );
 		exit( 2 );
 	    }
-	    if ( verbose ) printf( "%s: verified\n", transcript );
+	    if ( verbose ) printf( "%s: verified\n", tran_name );
 	    exit( 0 );
 	}
     } else {
 	if ( ucount ) {
-	    if ( verbose ) printf( "%s: incorrect\n", transcript );
+	    if ( verbose ) printf( "%s: incorrect\n", tran_name );
 	    exit( 1 );
 	} else {
-	    if ( verbose ) printf( "%s: verified\n", transcript );
+	    if ( verbose ) printf( "%s: verified\n", tran_name );
 	    exit( 0 );
 	}
     }
