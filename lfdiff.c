@@ -18,6 +18,7 @@ void output( char* string);
 void			(*logger)( char * ) = NULL;
 extern struct timeval	timeout;
 int			verbose = 0;
+int			dodots = 0;
 int			linenum = 0;
 int			cksum = 0;
 
@@ -91,6 +92,9 @@ main( int argc, char **argv, char **envp )
 	case 'v':
 	    verbose = 1;
 	    logger = output;
+	    if ( isatty( fileno( stdout ))) {
+		dodots = 1;
+	    }
 	    break;
 	/* diff options */
 	case 'b': case 'i': case 't': case 'w':

@@ -25,6 +25,7 @@ int		linenum = 0;
 int		cksum = 0;
 int		quiet = 0;
 int		verbose = 0;
+int		dodots = 0;
 int		special = 0;
 int		network = 1;
 char		transcript[ 2 * MAXPATHLEN ] = { 0 };
@@ -386,6 +387,9 @@ main( int argc, char **argv )
 	case 'v':
 	    verbose = 1;
 	    logger = output;
+	    if ( isatty( fileno( stdout ))) {
+		dodots = 1;
+	    }
 	    break;
 	case '?':
 	    err++;

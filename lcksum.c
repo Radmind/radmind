@@ -17,6 +17,7 @@ void            (*logger)( char * ) = NULL;
 int		linenum = 0;
 int		cksum = 1;
 int		verbose = 0;
+int		dodots = 0;
 extern char	*version, *checksumlist;
 char            prepath[ MAXPATHLEN ] = {0};
 
@@ -59,6 +60,9 @@ main( int argc, char **argv )
 	    exit( 0 );
 	case 'v':
 	    verbose = 1;
+	    if ( isatty( fileno( stdout ))) {
+		dodots = 1;
+	    }
 	    break;
 	case '?':
 	    err++;

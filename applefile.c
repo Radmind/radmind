@@ -23,8 +23,9 @@
 #include "base64.h"
 
 extern int		verbose;
+extern int		dotots;
 extern int              cksum;
-void            (*logger)( char * );
+void            	(*logger)( char * );
 extern struct timeval	timeout;
 
 struct attrlist		alist = {
@@ -51,7 +52,7 @@ struct as_header	as_header = {
 retr_applefile( SNET *sn, char *pathdesc, char *path, char *cksumval,
     char *temppath, int linenum )
 {
-    int			dfd, rfd, rc, dodots = 0;
+    int			dfd, rfd, rc;
     size_t		size, rsize;
     char		finfo[ 32 ];
     char		buf[ 8192 ];

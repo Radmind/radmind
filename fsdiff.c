@@ -17,6 +17,7 @@ extern char	*version, *checksumlist;
 
 void	fs_walk( struct llist * );
 int	verbose = 0;
+int	dodots = 0;
 
     void
 fs_walk( struct llist *path  ) 

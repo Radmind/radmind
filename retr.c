@@ -21,6 +21,7 @@ extern void            (*logger)( char * );
 extern struct timeval  	timeout;
 extern int 		linenum;
 extern int		verbose;
+extern int		dodots;
 extern int		cksum;
 
 /*
@@ -36,7 +37,6 @@ retr( SNET *sn, char *pathdesc, char *path, char *cksumval, char *temppath )
     int			fd;
     size_t              size;
     unsigned char       buf[ 8192 ]; 
-    int			dodots = 0;
     ssize_t             rr;
     unsigned char       md[ SHA_DIGEST_LENGTH ];
     unsigned char       mde[ SZ_BASE64_E( sizeof( md )) ];
@@ -90,13 +90,6 @@ retr( SNET *sn, char *pathdesc, char *path, char *cksumval, char *temppath )
     }
     size = atoi( line );
     if ( verbose ) printf( "<<< %d\n<<< ", size );
-
-    /*
-     * If output is not a tty, don't bother with the dots.
-     */
-    if ( verbose && isatty( fileno( stdout ))) {
-	dodots = 1;
-    }
 
     /* Get file from server */
     while ( size > 0 ) {

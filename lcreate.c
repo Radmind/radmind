@@ -27,6 +27,7 @@
 
 void		(*logger)( char * ) = NULL;
 int		verbose = 0;
+int		dodots = 0;
 int		cksum = 0;	/* needed to compile */
 int		quiet = 0;
 extern char	*version;
@@ -96,7 +97,6 @@ store_file( int fd, SNET *sn, char *filename, char *transcript, char *filetype )
     unsigned char	buf[ 8192 ];
     ssize_t		rr;
     char		*line;
-    int			dodots = 0;
 
     if ( fstat( fd, &st) < 0 ) {
 	perror( filename );
@@ -134,10 +134,6 @@ store_file( int fd, SNET *sn, char *filename, char *transcript, char *filetype )
     if ( *line != '3' ) {
 	fprintf( stderr, "%s\n", line );
 	return( -1 );
-    }
-
-    if ( verbose && isatty( fileno( stdout ))) {
-	dodots = 1;
     }
 
     switch( *filetype ) {
@@ -243,6 +239,9 @@ main( int argc, char **argv )
 	case 'v':
 	    verbose = 1;
 	    logger = v_logger;
+	    if ( isatty( fileno( stdout ))) {
+		dodots = 1;
+	    }
 	    break;
 	case 'V':
 	    printf( "%s\n", version );

@@ -24,6 +24,7 @@ void			(*logger)( char * ) = NULL;
 int			linenum = 0;
 int			cksum = 1;
 int			verbose = 0;
+int			dodots= 0;
 int			quiet = 0;
 int			update = 1;
 char			*kfile= _RADMIND_COMMANDFILE;
@@ -311,6 +312,9 @@ main( int argc, char **argv )
 	case 'v':
 	    verbose = 1;
 	    logger = output;
+	    if ( isatty( fileno( stdout ))) {
+		dodots = 1;
+	    }
 	    break;
 	case '?':
 	    err++;

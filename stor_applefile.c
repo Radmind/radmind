@@ -19,7 +19,7 @@ extern struct timeval	timeout;
 extern struct as_header as_header;
 extern struct attrlist  alist;
 extern int		verbose;
-int			dodots = 0;
+extern int		dodots;
 
     int    
 stor_applefile( int dfd, SNET *sn, char *filename )
