@@ -259,16 +259,9 @@ update( const char *path, char *displaypath, int present, int newfile,
 	}
     }
 
+    /* check uid & gid */
     uid = atoi( targv[ 3 ] );
     gid = atoi( targv[ 4 ] );
-    if ( mode != ( T_MODE & st->st_mode )) {
-	if ( chmod( path, mode ) != 0 ) {
-	    perror( path );
-	    return( 1 );
-	}
-	if ( !quiet ) printf( " mode" );
-    }
-    /* check uid & gid */
     if ( uid != st->st_uid || gid != st->st_gid ) {
 	if ( chown( path, uid, gid ) != 0 ) {
 	    perror( path );
@@ -280,6 +273,14 @@ update( const char *path, char *displaypath, int present, int newfile,
 	if ( gid != st->st_gid ) {
 	    if ( !quiet ) printf( " gid" );
 	}
+    }
+    /* chmod after chown to preserve S_ISUID and S_ISGID mode bits */
+    if ( mode != ( T_MODE & st->st_mode )) {
+	if ( chmod( path, mode ) != 0 ) {
+	    perror( path );
+	    return( 1 );
+	}
+	if ( !quiet ) printf( " mode" );
     }
 
     if ( timeupdated & !quiet ) {
