@@ -28,6 +28,7 @@ AC_PROG_AWK
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_PATH_PROG(diffpath, diff)
+AC_SYS_LARGEFILE
 
 # Checks for libraries.
 AC_CHECK_LIB([nsl], [inet_ntoa])

@@ -30,6 +30,7 @@
 #include "argcargv.h"
 #include "code.h"
 #include "tls.h"
+#include "largefile.h"
 
 /*
  * STOR
@@ -81,7 +82,7 @@ main( int argc, char **argv )
     FILE		*tran; 
     struct stat		st;
     struct applefileinfo	afinfo;
-    ssize_t		size = 0;
+    off_t		size = 0;
     int                 authlevel = _RADMIND_AUTHLEVEL;
     int                 use_randfile = 0;
     int                 login = 0;
@@ -375,7 +376,7 @@ main( int argc, char **argv )
 			fprintf( stderr, "%s: %s\n", dpath, strerror( errno ));
 			exitcode = 2;
 			break;
-		    } else if ( size != atol( targv[ 6 ] )) {
+		    } else if ( size != strtoofft( targv[ 6 ], NULL, 10 )) {
 			fprintf( stderr, "line %d: size in transcript does "
 			    "not match size of file\n", linenum );
 			exitcode = 2;
@@ -412,10 +413,10 @@ main( int argc, char **argv )
 		} else {
 		    if ( *targv[ 0 ] == 'a' ) {
 			rc = stor_applefile( sn, pathdesc, decode( targv[ 1 ] ),
-			    (size_t)atol( targv[ 6 ] ), targv[ 7 ], &afinfo );
+			    strtoofft( targv[ 6 ], NULL, 10 ), targv[ 7 ], &afinfo );
 		    } else {
 			rc = stor_file( sn, pathdesc, decode( targv[ 1 ] ), 
-			    (size_t)atol( targv[ 6 ] ), targv[ 7 ]); 
+			    strtoofft( targv[ 6 ], NULL, 10 ), targv[ 7 ]); 
 		    }
 		    if ( rc < 0 ) {
 			if ( dodots ) { putchar( (char)'\n' ); }

@@ -21,6 +21,7 @@
 #include "radstat.h"
 #include "cksum.h"
 #include "pathcmp.h"
+#include "largefile.h"
 
 static struct transcript	*tran_head = NULL;
 static struct transcript	*prev_tran = NULL;
@@ -158,7 +159,7 @@ t_parse( struct transcript *tran )
 	tran->t_pinfo.pi_stat.st_uid = atoi( argv[ 3 ] );
 	tran->t_pinfo.pi_stat.st_gid = atoi( argv[ 4 ] );
 	tran->t_pinfo.pi_stat.st_mtime = atoi( argv[ 5 ] );
-	tran->t_pinfo.pi_stat.st_size = atoi( argv[ 6 ] );
+	tran->t_pinfo.pi_stat.st_size = strtoofft( argv[ 6 ], NULL, 10 );
 	if ( tran->t_type != T_NEGATIVE ) {
 	    if (( cksum ) && ( strcmp( "-", argv [ 7 ] ) == 0  )) {
 		fprintf( stderr, "%s: line %d: no cksums in transcript\n",
@@ -269,13 +270,13 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 	 * but the corresponding transcript is negative, hence, retain
 	 * the file system's mtime.  Woof!
 	 */
-	fprintf( outtran, "%c %-37s\t%.4lo %5d %5d %9d %7d %s\n",
+	fprintf( outtran, "%c %-37s\t%.4lo %5d %5d %9d %7" PRIofft "d %s\n",
 		cur->pi_type, epath,
 		(unsigned long)( T_MODE & cur->pi_stat.st_mode ), 
 		(int)cur->pi_stat.st_uid, (int)cur->pi_stat.st_gid,
 		( flag == PR_STATUS_NEG ) ?
 			(int)fs->pi_stat.st_mtime : (int)cur->pi_stat.st_mtime,
-		(int)cur->pi_stat.st_size, cur->pi_cksum_b64 );
+		cur->pi_stat.st_size, cur->pi_cksum_b64 );
 	break;
 
     case 'c':

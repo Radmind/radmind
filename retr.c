@@ -29,6 +29,7 @@
 #include "cksum.h"
 #include "base64.h"
 #include "code.h"
+#include "largefile.h"
 
 #ifdef sun
 #define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
@@ -54,20 +55,20 @@ extern SSL_CTX  	*ctx;
  */
 
     int 
-retr( SNET *sn, char *pathdesc, char *path, char *temppath, ssize_t transize,
+retr( SNET *sn, char *pathdesc, char *path, char *temppath, off_t transize,
     char *trancksum )
 {
-    struct timeval      tv;
-    char 		*line;
+    struct timeval	tv;
+    char		*line;
     int			fd, md_len;
     int			returnval = -1;
-    size_t              size = 0;
-    unsigned char       buf[ 8192 ]; 
-    ssize_t             rr;
-    extern EVP_MD       *md;
-    EVP_MD_CTX          mdctx;
-    unsigned char       md_value[ EVP_MAX_MD_SIZE ];
-    unsigned char       cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
+    off_t		size = 0;
+    unsigned char	buf[ 8192 ]; 
+    ssize_t		rr;
+    extern EVP_MD	*md;
+    EVP_MD_CTX		mdctx;
+    unsigned char	md_value[ EVP_MAX_MD_SIZE ];
+    unsigned char	cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
 
     if ( cksum ) {
 	if ( strcmp( trancksum, "-" ) == 0 ) {
@@ -104,7 +105,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, ssize_t transize,
 	    strerror( errno ));
 	return( -1 );
     }
-    size = atoi( line );
+    size = strtoofft( line, NULL, 10 );
     if ( verbose ) printf( "<<< %ld\n", (long)size );
     if ( transize >= 0 && size != transize ) {
 	fprintf( stderr, "line %d: size in transcript does not match size "
@@ -130,7 +131,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, ssize_t transize,
     /* Get file from server */
     while ( size > 0 ) {
 	tv = timeout;
-	if (( rr = snet_read( sn, buf, (int)MIN( sizeof( buf ), size ),
+	if (( rr = snet_read( sn, buf, MIN( sizeof( buf ), size ),
 		&tv )) <= 0 ) {
 	    fprintf( stderr, "retrieve %s failed: 4-%s\n", pathdesc,
 		strerror( errno ));
@@ -203,11 +204,13 @@ error1:
 
     int
 retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
-    ssize_t transize, char *trancksum )
+    off_t transize, char *trancksum )
 {
-    int				dfd, rfd, rc, md_len;
+    int				dfd, rfd, md_len;
     int				returnval = -1;
-    size_t			size, rsize;
+    off_t			size;
+    size_t			rsize;
+    ssize_t			rc;
     char			finfo[ 32 ];
     char			buf[ 8192 ];
     char			rsrc_path[ MAXPATHLEN ];
@@ -257,8 +260,8 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	    strerror( errno ));
 	return( -1 );
     }
-    size = atol( line );
-    if ( verbose ) printf( "<<< %ld\n", size );
+    size = strtoofft( line, NULL, 10 );
+    if ( verbose ) printf( "<<< %" PRIofft "d\n", size );
     if ( transize >= 0 && size != transize ) {
 	fprintf( stderr, "line %d: size in transcript does not match size"
 	    "from server\n", linenum );
@@ -397,7 +400,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     /* write data fork to file */
     for ( rc = 0; size > 0; size -= rc ) {
     	tv = timeout;
-    	if (( rc = snet_read( sn, buf, (int)MIN( sizeof( buf ), size ),
+    	if (( rc = snet_read( sn, buf, MIN( sizeof( buf ), size ),
 		&tv )) <= 0 ) {
 	    fprintf( stderr, "retrieve applefile %s failed: 8-%s\n", pathdesc,
 		strerror( errno ));

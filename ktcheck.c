@@ -31,6 +31,7 @@
 #include "argcargv.h"
 #include "list.h"
 #include "tls.h"
+#include "largefile.h"
 
 void output( char* string);
 int check( SNET *sn, char *type, char *path); 
@@ -222,7 +223,7 @@ check( SNET *sn, char *type, char *file )
 	    /* Local file is missing */
 	    if ( update ) {
 		if ( retr( sn, pathdesc, path, (char *)&tempfile,
-			(ssize_t)atoi( targv[ 6 ] ), targv[ 7 ] ) != 0 ) {
+			strtoofft( targv[ 6 ], NULL, 10 ), targv[ 7 ] ) != 0 ) {
 		    return( 2 );
 		}
 		if ( utime( tempfile, &times ) != 0 ) {
@@ -269,7 +270,7 @@ check( SNET *sn, char *type, char *file )
 		return( 2 );
 	    }
 	    if ( retr( sn, pathdesc, path, (char *)&tempfile,
-		    (ssize_t)atol( targv[ 6 ] ), targv[ 7 ] ) != 0 ) {
+		    strtoofft( targv[ 6 ], NULL, 10 ), targv[ 7 ] ) != 0 ) {
 		return( 2 );
 	    }
 	    if ( utime( tempfile, &times ) != 0 ) {

@@ -30,6 +30,7 @@
 #include "pathcmp.h"
 #include "update.h"
 #include "tls.h"
+#include "largefile.h"
 
 void		(*logger)( char * ) = NULL;
 int		linenum = 0;
@@ -163,7 +164,7 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
 	}
 	if ( *targv[ 0 ] == 'a' ) {
 	    switch ( retr_applefile( sn, pathdesc, path, temppath,
-		(ssize_t)atol( targv[ 6 ] ), cksum_b64 )) {
+		strtoofft( targv[ 6 ], NULL, 10 ), cksum_b64 )) {
 	    case -1:
 		/* Network problem */
 		network = 0;
@@ -175,7 +176,7 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
 	    }
 	} else {
 	    switch ( retr( sn, pathdesc, path, (char *)&temppath,
-		(ssize_t)atol( targv[ 6 ] ), cksum_b64 ) != 0 ) {
+		strtoofft( targv[ 6 ], NULL, 10 ), cksum_b64 ) != 0 ) {
 	    case -1:
 		/* Network problem */
 		network = 0;

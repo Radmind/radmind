@@ -41,6 +41,7 @@ extern SSL_CTX  *ctx;
 #include "mkdirs.h"
 #include "list.h"
 #include "wildcard.h"
+#include "largefile.h"
 
 #ifdef sun
 #define MIN(a,b)	((a)<(b)?(a):(b))
@@ -362,6 +363,11 @@ f_retr( sn, ac, av )
     }
 
     snet_writef( sn, "%d Retrieving file\r\n", 240 );
+    /*
+     * Here's a problem.  Do we need to add long long support to
+     * snet_writef?
+     * LLL
+     */
     snet_writef( sn, "%d\r\n", (int)st.st_size );
 
     /* dump file */
@@ -369,7 +375,7 @@ f_retr( sn, ac, av )
     while (( readlen = read( fd, buf, sizeof( buf ))) > 0 ) {
 	tv.tv_sec = 60 ;
 	tv.tv_usec = 0;
-	if ( snet_write( sn, buf, (int)readlen, &tv ) != readlen ) {
+	if ( snet_write( sn, buf, readlen, &tv ) != readlen ) {
 	    syslog( LOG_ERR, "snet_write: %m" );
 	    return( -1 );
 	}
@@ -493,6 +499,7 @@ f_stat( SNET *sn, int ac, char *av[] )
     snet_writef( sn, "%d Returning STAT information\r\n", 230 );
     switch ( key ) {
     case K_COMMAND:
+	/* LLL */
 	snet_writef( sn, "%s %s %o %d %d %d %d %s\r\n", "f", "command", 
 		    DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, st.st_mtime, 
 		    (int)st.st_size, cksum_b64 );
@@ -500,6 +507,7 @@ f_stat( SNET *sn, int ac, char *av[] )
         
 		    
     case K_TRANSCRIPT:
+	/* LLL */
 	snet_writef( sn, "%s %s %o %d %d %d %d %s\r\n", "f", av[ 2 ], 
 		    DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, st.st_mtime, 
 		    (int)st.st_size, cksum_b64 );
@@ -518,6 +526,7 @@ f_stat( SNET *sn, int ac, char *av[] )
 		"f_stat: transcript path longer than MAXPATHLEN" );
 
 	    /* return constants */
+	    /* LLL */
 	    snet_writef( sn, "%s %s %o %d %d %d %d %s\r\n", "f", av[ 2 ], 
 		DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, 
 		st.st_mtime, (int)st.st_size, cksum_b64 );
@@ -544,12 +553,14 @@ f_stat( SNET *sn, int ac, char *av[] )
 	if (( av = special_t( path, enc_file )) == NULL ) {
 	    if (( av = special_t( "transcript/special.T", enc_file ))
 		    == NULL ) {
+		/* LLL */
 		snet_writef( sn, "%s %s %o %d %d %d %d %s\r\n", "f", enc_file, 
 		    DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, 
 		    st.st_mtime, (int)st.st_size, cksum_b64 );
 		return( 0 );
 	    }
 	}
+	/* LLL */
 	snet_writef( sn, "%s %s %s %s %s %d %d %s\r\n", av[ 0 ], enc_file,
 	    av[ 2 ], av[ 3 ], av[ 4 ], st.st_mtime, (int)st.st_size,
 	    cksum_b64 );
@@ -571,7 +582,8 @@ f_stor( SNET *sn, int ac, char *av[] )
     char		*line;
     char		*d_path;
     int			fd;
-    unsigned int	len, rc;
+    off_t		len;
+    ssize_t		rc;
     struct timeval	tv;
 
     if ( checkuser && ( !authorized )) {
@@ -652,13 +664,13 @@ f_stor( SNET *sn, int ac, char *av[] )
 	return( -1 );
     }
     /* Will there be a limit? */
-    len = atoi( sizebuf );
+    len = strtoofft( sizebuf, NULL, 10 );
 
     for ( ; len > 0; len -= rc ) {
 	tv.tv_sec = 60;
 	tv.tv_usec = 0;
 	if (( rc = snet_read(
-		sn, buf, (int)MIN( len, sizeof( buf )), &tv )) <= 0 ) {
+		sn, buf, MIN( len, sizeof( buf )), &tv )) <= 0 ) {
 	    syslog( LOG_ERR, "f_stor: snet_read: %m" );
 	    return( -1 );
 	}

@@ -30,11 +30,12 @@
  *	>= 0	number of bytes check summed
  */
 
-    ssize_t 
+    off_t 
 do_cksum( char *path, char *cksum_b64 )
 {
     int			fd, md_len;
-    ssize_t		rr, size = 0;
+    ssize_t		rr;
+    off_t		size = 0;
     unsigned char	buf[ 8192 ];
     extern EVP_MD	*md;
     EVP_MD_CTX		mdctx;
@@ -76,12 +77,12 @@ do_cksum( char *path, char *cksum_b64 )
  * do_acksum should only be called on native HFS+ system.
  */
 
-    ssize_t 
+    off_t 
 do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
 {
     int		    	    	dfd, rfd, rc;
     char			buf[ 8192 ];
-    ssize_t			size = 0;
+    off_t			size = 0;
     extern struct as_header	as_header;
     int				md_len;
     extern EVP_MD		*md;
@@ -101,7 +102,7 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
 
     /* checksum finder info data */
     EVP_DigestUpdate( &mdctx, afinfo->fi.fi_data, FINFOLEN );
-    size += (ssize_t)FINFOLEN;
+    size += FINFOLEN;
 
     /* checksum rsrc fork data */
     if ( afinfo->as_ents[ AS_RFE ].ae_length > 0 ) {
@@ -149,7 +150,7 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
  * 	-1 	system error: non hfs+ system
  */
 
-    ssize_t 
+    off_t 
 do_acksum( char *path, char *cksum_b64, struct applefileinfo *afino )
 {
     errno = EOPNOTSUPP;

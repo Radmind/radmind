@@ -30,6 +30,7 @@
 #include "cksum.h"
 #include "base64.h"
 #include "code.h"
+#include "largefile.h"
 
 extern struct timeval	timeout;
 extern struct as_header as_header;
@@ -110,7 +111,7 @@ sn_error:
 }
 
     int 
-stor_file( SNET *sn, char *pathdesc, char *path, size_t transize,
+stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
     char *trancksum )
 {
     int			fd;
@@ -182,18 +183,22 @@ stor_file( SNET *sn, char *pathdesc, char *path, size_t transize,
         return( -1 );
     }
 
-     /* tell server how much data to expect */
-    if ( snet_writef( sn, "%d\r\n", (int)st.st_size ) < 0 ) {
+    /* tell server how much data to expect */
+    /*
+     * Another long long issue with snet_writef.
+     * LLL
+     */
+    if ( snet_writef( sn, "%d\r\n", st.st_size ) < 0 ) {
 	fprintf( stderr, "store %s failed: %s\n", pathdesc,
 	    strerror( errno ));
 	goto sn_error;
     }
-    if ( verbose ) printf( ">>> %d\n", (int)st.st_size );
+    if ( verbose ) printf( ">>> %" PRIofft "d\n", st.st_size );
 
     /* write file to server */
     while (( rr = read( fd, buf, sizeof( buf ))) > 0 ) {
 	tv = timeout;
-	if ( snet_write( sn, buf, (int)rr, &tv ) != rr ) {
+	if ( snet_write( sn, buf, rr, &tv ) != rr ) {
 	    fprintf( stderr, "store %s failed: %s\n", pathdesc,
 		strerror( errno ));
 	    goto sn_error;
@@ -271,11 +276,11 @@ sn_error:
 
 #ifdef __APPLE__
     int    
-stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize, 
+stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize, 
     char *trancksum, struct applefileinfo *afinfo )
 {
     int			rc = 0, dfd = 0, rfd = 0;
-    size_t		size;
+    off_t		size;
     char		buf[ 8192 ];
     char	        *line;
     struct timeval   	tv;
@@ -352,12 +357,12 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize,
 
     /* tell server how much data to expect */
     tv = timeout;
-    if ( snet_writef( sn, "%d\r\n", (int)afinfo->as_size ) < 0 ) {
+    if ( snet_writef( sn, "%d\r\n", afinfo->as_size ) < 0 ) {
 	fprintf( stderr, "store %s failed: %s\n", pathdesc,
 	    strerror( errno ));
         goto sn_error;
     }
-    if ( verbose ) printf( ">>> %d\n", (int)afinfo->as_size );
+    if ( verbose ) printf( ">>> %" PRIofft "d\n", afinfo->as_size );
 
     /* write applesingle header to server */
     tv = timeout;
@@ -513,7 +518,7 @@ sn_error:
 }
 #else /* __APPLE__ */
     int
-stor_applefile( SNET *sn, char *pathdesc, char *path, size_t transize, 
+stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize, 
     char *trancksum, struct applefileinfo *afinfo )
 {
     errno = EINVAL;

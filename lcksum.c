@@ -21,6 +21,7 @@
 #include "cksum.h"
 #include "code.h"
 #include "pathcmp.h"
+#include "largefile.h"
 
 void            (*logger)( char * ) = NULL;
 
@@ -55,7 +56,7 @@ main( int argc, char **argv )
     char		lcksum[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
     FILE		*f, *ufs = NULL;
     struct stat		st;
-    ssize_t		cksumsize;
+    off_t		cksumsize;
 
     while ( ( c = getopt ( argc, argv, "c:oP:nqvV" ) ) != EOF ) {
 	switch( c ) {
@@ -305,14 +306,16 @@ main( int argc, char **argv )
 		/* Check to see if checksum is listed in transcript */
 		if ( strcmp( targv[ 7 ], "-" ) != 0) {
 		    /* use mtime from server */
-		    fprintf( ufs, "%s %-37s %4s %5s %5s %9d %7d %s\n",
+		    fprintf( ufs, "%s %-37s %4s %5s %5s %9ld "
+			    "%7" PRIofft "d %s\n",
 			targv[ 0 ], targv[ 1 ], targv[ 2 ], targv[ 3 ],
-			targv[ 4 ], (int)st.st_mtime, (int)st.st_size, lcksum );
+			targv[ 4 ], st.st_mtime, st.st_size, lcksum );
 		} else {
 		    /* use mtime from transcript */
-		    fprintf( ufs, "%s %-37s %4s %5s %5s %9s %7d %s\n",
+		    fprintf( ufs, "%s %-37s %4s %5s %5s %9s "
+			    "%7" PRIofft "d %s\n",
 			targv[ 0 ], targv[ 1 ], targv[ 2 ], targv[ 3 ],
-			targv[ 4 ], targv[ 5 ], (int)st.st_size, lcksum );
+			targv[ 4 ], targv[ 5 ], st.st_size, lcksum );
 		    }
 	    } else {
 		/* Line correct */

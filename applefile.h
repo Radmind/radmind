@@ -62,5 +62,5 @@ struct applefileinfo {
     struct finderinfo	fi;		// finder info
     struct as_entry	as_ents[ 3 ];	// Apple Single entries
 					// For Finder info, rcrs and data forks
-    size_t		as_size;	// Total apple single file size 
+    off_t		as_size;	// Total apple single file size 
 };
