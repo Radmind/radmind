@@ -723,9 +723,12 @@ read_kfile( char * kfile )
 	    break;
 
 	case 's':
-	    if ( list_insert( special_list, av[ 1 ] ) != 0 ) {
-		perror( "list_insert" );
-		exit( 2 );
+	    /* Added special file if it's not already in the list */
+	    if ( !list_check( special_list, av[ 1 ] )) {
+		if ( list_insert( special_list, av[ 1 ] ) != 0 ) {
+		    perror( "list_insert" );
+		    exit( 2 );
+		}
 	    }
 	    continue;
 	    
