@@ -243,7 +243,7 @@ main( int argc, char **argv )
     int			len, tac, change = 0;
     extern int          optind;
     extern char		*version;
-    char		*host = NULL;
+    char		*host = _RADMIND_HOST;
     char                **targv;
     char                cline[ 2 * MAXPATHLEN ];
     char		path[ MAXPATHLEN ], temppath[ MAXPATHLEN ];
@@ -254,7 +254,7 @@ main( int argc, char **argv )
     struct node		*head = NULL;
     struct stat		tst, lst;
 
-    while ( ( c = getopt ( argc, argv, "c:K:np:Vv" ) ) != EOF ) {
+    while ( ( c = getopt ( argc, argv, "c:K:nhp:Vv" ) ) != EOF ) {
 	switch( c ) {
 	case 'c':
 	    if ( strcasecmp( optarg, "sha1" ) != 0 ) {
@@ -262,6 +262,9 @@ main( int argc, char **argv )
 		exit( 1 );
 	    }
 	    chksum = 1;
+	    break;
+	case 'h':
+	    host = optarg;
 	    break;
 	case 'p':
 	    if ( ( port = htons ( atoi( optarg ) ) ) == 0 ) {
@@ -293,6 +296,7 @@ main( int argc, char **argv )
 	    break;
 	case 'V':
 	    printf( "%s\n", version );
+	    printf( "%s\n", checksumlist );
 	    exit( 0 );
 	case 'v':
 	    verbose = 1;
@@ -310,8 +314,7 @@ main( int argc, char **argv )
     if ( err || ( argc - optind != 1 ) ) {
 	fprintf( stderr, "usage: ktcheck [ -nvV ] " );
 	fprintf( stderr, "[ -c checksum ] [ -K command file ] " );
-	fprintf( stderr, "[ -p port ] " );
-	fprintf( stderr, "host\n" );
+	fprintf( stderr, "[ -h host ] [ -p port ]\n" );
 	exit( 2 );
     }
     host = argv[ optind ];
@@ -413,9 +416,17 @@ main( int argc, char **argv )
 	    }
 
 	    /* special.T did not exist */
-	    if ( rename( temppath, path ) != 0 ) {
-		fprintf( stderr, "rename failed: %s %s\n", temppath, path );
-		exit( 2 );
+	    if ( update ) { 
+		if ( rename( temppath, path ) != 0 ) {
+		    fprintf( stderr, "rename failed: %s %s\n", temppath, path );
+		    exit( 2 );
+		}
+	    } else {
+		/* specaial.T not updated */
+		if ( unlink( temppath ) !=0 ) {
+		    perror( temppath );
+		    exit( 2 );
+		}
 	    }
 	    change++;
 	} else {
@@ -432,11 +443,21 @@ main( int argc, char **argv )
 	    /* specal.T exists */
 	    if ( ( tst.st_size != lst.st_size ) ||
 		    ( strcmp( tchksum, lchksum) != 0 ) ) {
-		/* special.T updated */
-		if ( rename( temppath, path ) != 0 ) {
-		    fprintf( stderr, "rename failed: %s %s\n", temppath, path );
-		    exit( 2 );
+		/* special.T new from server */
+		if ( update ) {
+		    if ( rename( temppath, path ) != 0 ) {
+			fprintf( stderr, "rename failed: %s %s\n", temppath,
+				path );
+			exit( 2 );
+		    }
+		} else {
+		    /* No update */
+		    if ( unlink( temppath ) !=0 ) {
+			perror( temppath );
+			exit( 2 );
 		}
+	    }
+
 		change++;
 	    } else {
 
