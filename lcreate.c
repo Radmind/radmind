@@ -212,6 +212,11 @@ main( int argc, char **argv )
 	linenum++;
 	tac = argcargv( tline, &targv );
 
+	/* skips blank lines and comments */
+	if (( tac == 0 ) || ( *targv[ 0 ] == '#' )) {
+	    continue;
+	}
+
 	if ( tac == 1 ) {
 	    fprintf( stderr, "Appliable transcripts cannot be uploaded.\n" );
 	    exitcode = 1;
