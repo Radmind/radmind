@@ -242,7 +242,7 @@ main( int argc, char **argv )
 	exit ( 2 );
     }
 
-    path = argv[ optind
+    path = argv[ optind ];
     /* Clip trailing '/' */
     len = strlen( path );
     if ( path[ len - 1 ] == '/' ) {
