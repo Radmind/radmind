@@ -99,7 +99,7 @@ n_stor_file( SNET *sn, char *pathdesc, char *path )
     if ( snet_writef( sn, "%s\r\n", pathdesc ) < 0 ) {
 	fprintf( stderr, "n_store_file %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	return( -1 );
+	exit( 2 );
     }
     if ( verbose ) printf( ">>> %s\n", pathdesc );
 
@@ -107,7 +107,7 @@ n_stor_file( SNET *sn, char *pathdesc, char *path )
     if ( snet_writef( sn, "0\r\n.\r\n" ) < 0 ) {
 	fprintf( stderr, "n_store_file %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	return( -1 );
+	exit( 2 );
     }
     if ( verbose ) fputs( ">>> 0\n>>> .\n", stdout );
 
@@ -136,7 +136,7 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
     if ( cksum ) {
         if ( strcmp( trancksum, "-" ) == 0 ) {
 	    fprintf( stderr, "line %d: No checksum listed\n", linenum );
-            return( -1 );
+	    exit( 2 );
         }
 	EVP_DigestInit( &mdctx, md );
     }
@@ -144,12 +144,12 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
     /* Open and stat file */
     if (( fd = open( path, O_RDONLY, 0 )) < 0 ) {
 	perror( path );
-	return( -1 );
+	exit( 2 );
     }
     if ( fstat( fd, &st ) < 0 ) {
 	perror( path );
 	close( fd );
-	return( -1 );
+	exit( 2 );
     }
 
     /* Check size listed in transcript */
@@ -162,7 +162,7 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
 	    linenum );
 	if ( ! force ) {
 	    close( fd );
-	    return( -1 );
+	    exit( 2 );
 	}
     }
     size = st.st_size;
@@ -171,7 +171,7 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
     if ( snet_writef( sn, "%s\r\n", pathdesc ) < 0 ) {
 	fprintf( stderr, "stor_file %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	return( -1 );
+	exit( 2 );
     }
     if ( verbose ) printf( ">>> %s\n", pathdesc );
 
@@ -179,7 +179,7 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
     if ( snet_writef( sn, "%" PRIofft "d\r\n", st.st_size ) < 0 ) {
 	fprintf( stderr, "stor_file %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	return( -1 );
+	exit( 2 );
     }
     if ( verbose ) printf( ">>> %" PRIofft "d\n", st.st_size );
 
@@ -258,7 +258,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     if ( cksum ) {
         if ( strcmp( trancksum, "-" ) == 0 ) {
 	    fprintf( stderr, "line %d: No checksum listed\n", linenum );
-            return( -1 );
+	    exit( 2 );
         }
         EVP_DigestInit( &mdctx, md );
     }
@@ -271,26 +271,28 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 	fprintf( stderr,
 	    "%s: size in transcript does not match size of file\n",
 	    decode( path ));
-	if ( ! force ) return( -1 );
+	if ( ! force ) {
+	    exit( 2 );
+	}
     }
     size = afinfo->as_size;
 
     /* open data and rsrc fork */
     if (( dfd = open( path, O_RDONLY )) < 0 ) {
 	perror( path );
-	return( -1 );
+	exit( 2 );
     }
     if ( afinfo->as_ents[ AS_RFE ].ae_length > 0 ) {
 	if (( rfd = open( afinfo->rsrc_path, O_RDONLY )) < 0 ) {
 	    perror( afinfo->rsrc_path );
 	    close( dfd );
-	    return( -1 );
+	    exit( 2 );
 	}
     }
     if ( snet_writef( sn, "%s\r\n", pathdesc ) < 0 ) {
 	fprintf( stderr, "stor_applefile %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	return( -1 );
+	exit( 2 );
     }
     if ( verbose ) {
 	printf( ">>> %s\n", pathdesc );
@@ -301,7 +303,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     if ( snet_writef( sn, "%" PRIofft "d\r\n", afinfo->as_size ) < 0 ) {
 	fprintf( stderr, "stor_applefile %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	return( -1 );
+	exit( 2 );
     }
     if ( verbose ) printf( ">>> %" PRIofft "d\n", afinfo->as_size );
 
@@ -475,7 +477,7 @@ n_stor_applefile( SNET *sn, char *pathdesc, char *path )
     if ( snet_writef( sn, "%s\r\n", pathdesc ) < 0 ) {
 	fprintf( stderr, "n_stor_applefile %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	return( -1 );
+	exit( 2 );
     }
     if ( verbose ) printf( ">>> %s\n", pathdesc );
 
@@ -483,7 +485,7 @@ n_stor_applefile( SNET *sn, char *pathdesc, char *path )
     if ( snet_writef( sn, "%" PRIofft "d\r\n", afinfo.as_size ) < 0 ) {
 	fprintf( stderr, "n_stor_applefile %s failed: %s\n", pathdesc,
 	    strerror( errno ));
-	return( -1 );
+	exit( 2 );
     }
     if ( verbose ) printf( ">>> %" PRIofft "d\n", afinfo.as_size );
 

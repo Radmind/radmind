@@ -473,7 +473,9 @@ done:
 
 stor_failed:
     while ( respcount > 0 ) {
-	if ( stor_response( sn, &respcount, NULL ) < 0 ) {
+	tv.tv_sec = 30;
+	tv.tv_usec = 0;
+	if ( stor_response( sn, &respcount, &tv ) < 0 ) {
 	    exit( 2 );
 	}
     }
