@@ -57,7 +57,7 @@ main( int argc, char **argv )
     struct stat		st;
     ssize_t		cksumsize;
 
-    while ( ( c = getopt ( argc, argv, "c:oP:nqV" ) ) != EOF ) {
+    while ( ( c = getopt ( argc, argv, "c:oP:nqvV" ) ) != EOF ) {
 	switch( c ) {
 	case 'c':
 	    OpenSSL_add_all_digests();
@@ -82,6 +82,8 @@ main( int argc, char **argv )
 	case 'q':
 	    verbose = 0;
 	    break;
+	case 'v':
+	    break;
 	case '?':
 	    err++;
 	    break;
@@ -98,7 +100,7 @@ main( int argc, char **argv )
     tpath = argv[ optind ];
 
     if ( err || ( argc - optind != 1 ) ) {
-	fprintf( stderr, "usage: %s [ -nqV ] [ -P prefix ] ", argv[ 0 ] );
+	fprintf( stderr, "usage: %s [ -nqvV ] [ -P prefix ] ", argv[ 0 ] );
 	fprintf( stderr, "-c checksum transcript\n" );
 	exit( 2 );
     }
