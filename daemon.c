@@ -124,6 +124,7 @@ main( int ac, char **av )
     char		*prog;
     unsigned short	port = 0;
     int			facility = _RADMIND_LOG;
+    int			level = LOG_INFO;
     extern int		optind;
     extern char		*optarg;
     char		*ca = "cert/ca.pem";
@@ -145,7 +146,7 @@ main( int ac, char **av )
 
      b_addr.s_addr = htonl( INADDR_ANY );
 
-    while (( c = getopt( ac, av, "a:b:dD:L:m:p:Ru:UVw:x:y:z:" )) != EOF ) {
+    while (( c = getopt( ac, av, "a:b:dD:F:L:m:p:Ru:UVw:x:y:z:" )) != EOF ) {
 	switch ( c ) {
 	case 'a' :		/* bind address */ 
 	    if ( !inet_aton( optarg, &b_addr )) {
@@ -166,10 +167,17 @@ main( int ac, char **av )
 	    radmind_path = optarg;
 	    break;
 
-	case 'L' :		/* syslog facility */
-	    if (( facility = syslogname( optarg )) == -1 ) {
+	case 'F':
+	    if (( facility = syslogfacility( optarg )) == -1 ) {
 		fprintf( stderr, "%s: %s: unknown syslog facility\n",
 			prog, optarg );
+		exit( 1 );
+	    }
+	    break;
+
+	case 'L' :		/* syslog level */
+	    if (( level = sysloglevel( optarg )) == -1 ) {
+		fprintf( stderr, "%s: unknown syslog level\n", optarg );
 		exit( 1 );
 	    }
 	    break;
@@ -386,6 +394,7 @@ main( int ac, char **av )
 #else /* ultrix */
     openlog( prog, LOG_NOWAIT|LOG_PID, facility );
 #endif /* ultrix */
+    setlogmask( LOG_UPTO( level ));
 
     /* catch SIGHUP */
     memset( &sa, 0, sizeof( struct sigaction ));

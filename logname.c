@@ -10,10 +10,19 @@
 
 #include "logname.h"
 
-struct syslogname {
-    char	*sl_name;
-    int		sl_value;
-} syslognames[] = {
+struct syslogname	_sysloglevel[] = {
+    { "emerg",          LOG_EMERG },
+    { "alert",          LOG_ALERT },
+    { "crit",           LOG_CRIT },
+    { "err",            LOG_ERR },
+    { "warning",        LOG_WARNING },
+    { "notice",         LOG_NOTICE },
+    { "info",           LOG_INFO },
+    { "debug",          LOG_DEBUG },
+    { 0,                0 },
+};
+
+struct syslogname 	_syslogfacility[] = {
 #ifdef LOG_KERN
     { "kern",		LOG_KERN },
 #endif // LOG_KERN
@@ -44,11 +53,9 @@ struct syslogname {
 };
 
     int
-syslogname( char *name )
+syslogname( char *name, struct syslogname *sln )
 {
-    struct syslogname	*sln;
-
-    for ( sln = syslognames; sln->sl_name != 0; sln++ ) {
+    for ( ; sln->sl_name != 0; sln++ ) {
 	if ( strcasecmp( sln->sl_name, name ) == 0 ) {
 	    return( sln->sl_value );
 	}
