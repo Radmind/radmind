@@ -74,7 +74,7 @@ v_logger( char *line )
 main( int argc, char **argv )
 {
     int			c, err = 0, port = htons(6662), tac; 
-    int			network = 1, len = 0, rc, lnbf = 0;
+    int			network = 1, len = 0, rc;
     int			negative = 0, tran_only = 0;
     int			respcount = 0;
     extern int		optind;
@@ -125,7 +125,6 @@ main( int argc, char **argv )
 
 	case 'i':
 	    setvbuf( stdout, ( char * )NULL, _IOLBF, 0 );
-	    lnbf = 1;
 	    break;
 
         case 'l':
@@ -220,12 +219,9 @@ main( int argc, char **argv )
     if ( showprogress && verbose ) {
 	err++;
     }
-    if ( verbose && lnbf ) {
-	err++;
-    }
 
     if ( err || ( argc - optind != 1 ))   {
-	fprintf( stderr, "usage: lcreate [ -%%FlnNrTV ] [ -q | -v | -i ] " );
+	fprintf( stderr, "usage: lcreate [ -FilnNrTV ] [ -% | -q | -v ] " );
 	fprintf( stderr, "[ -c checksum ] " );
 	fprintf( stderr, "[ -h host ] [ -p port ] " );
 	fprintf( stderr, "[ -t stored-name ] [ -U user ] " );

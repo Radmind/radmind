@@ -361,7 +361,7 @@ check( SNET *sn, char *type, char *file )
 main( int argc, char **argv )
 {
     int			c, port = htons( 6662 ), err = 0;
-    int			len, tac, change = 0, lnbf = 0;
+    int			len, tac, change = 0;
     int			authlevel = _RADMIND_AUTHLEVEL;
     int			use_randfile = 0;
     extern int          optind;
@@ -396,7 +396,6 @@ main( int argc, char **argv )
 
 	case 'i':
 	    setvbuf( stdout, ( char * )NULL, _IOLBF, 0 );
-	    lnbf = 1;
 	    break;
 
 	case 'K':
@@ -471,13 +470,10 @@ main( int argc, char **argv )
     if ( verbose && quiet ) {
 	err++;
     }
-    if ( verbose && lnbf ) {
-	err++;
-    }
 
     if ( err || ( argc - optind != 0 )) {
 	fprintf( stderr,
-		"usage: ktcheck [ -nrV ] [ -q | -v | -i ] " );
+		"usage: ktcheck [ -inrV ] [ -q | -v ] " );
 	fprintf( stderr, "[ -c checksum ] " );
 	fprintf( stderr, "[ -K command file ] " );
 	fprintf( stderr, "[ -h host ] [ -p port ] " );

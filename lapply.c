@@ -228,7 +228,7 @@ main( int argc, char **argv )
     char		targvline[ 2 * MAXPATHLEN ];
     char		path[ 2 * MAXPATHLEN ];
     struct applefileinfo	afinfo;
-    int			tac, present, len, lnbf = 0;
+    int			tac, present, len;
     char		**targv;
     char		*command = "";
     char		fstype;
@@ -266,7 +266,6 @@ main( int argc, char **argv )
 
 	case 'i':
 	    setvbuf( stdout, ( char * )NULL, _IOLBF, 0 );
-	    lnbf = 1;
 	    break;
 	
 	case 'n':
@@ -353,21 +352,16 @@ main( int argc, char **argv )
     } else {
 	err++;
     }
-    if ( quiet && showprogress ) {
-	err++;
-    }
-    if ( verbose && quiet ) {
+
+    if ( quiet && ( verbose || showprogress )) {
 	err++;
     }
     if ( verbose && showprogress ) {
 	err++;
     }
-    if ( verbose && lnbf ) {
-	err++;
-    }
 
     if ( err ) {
-	fprintf( stderr, "usage: %s [ -%%FnrV ] [ -q | -v | -i ] ",
+	fprintf( stderr, "usage: %s [ -FinrV ] [ -%% | -q | -v ] ",
 	    argv[ 0 ] );
 	fprintf( stderr, "[ -c checksum ] [ -h host ] [ -p port ] " );
 	fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );
