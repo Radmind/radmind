@@ -112,7 +112,8 @@ t_parse( struct transcript *tran )
 	tran->t_pinfo.pi_stat.st_mode = strtol( argv[ 2 ], NULL, 8 );
 	tran->t_pinfo.pi_stat.st_uid = atoi( argv[ 3 ] );
 	tran->t_pinfo.pi_stat.st_gid = atoi( argv[ 4 ] );
-	tran->t_pinfo.pi_dev = makedev( ( unsigned )( atoi( argv[ 5 ] )), 
+	tran->t_pinfo.pi_stat.st_rdev =
+		makedev( ( unsigned )( atoi( argv[ 5 ] )), 
 		( unsigned )( atoi( argv[ 6 ] )));
 	break;
 
@@ -386,7 +387,7 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
 		t_print( cur, tran, PR_STATUS );
 	    }
 	}
-	if ( dev != tran->t_pinfo.pi_dev ) {
+	if ( dev != tran->t_pinfo.pi_stat.st_rdev ) {
 	    t_print( cur, tran, PR_STATUS );
 	}	
 	break;
@@ -395,7 +396,7 @@ t_compare( struct pathinfo *cur, struct transcript *tran )
 	dev = cur->pi_stat.st_rdev;
 	if (( cur->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
 		( cur->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) || 
-		( dev != tran->t_pinfo.pi_dev ) ||
+		( dev != tran->t_pinfo.pi_stat.st_rdev ) ||
 		( mode != tran_mode )) {
 	    t_print( cur, tran, PR_STATUS );
 	}	

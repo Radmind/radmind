@@ -30,7 +30,6 @@ struct pathinfo {
     char		pi_link[ MAXPATHLEN ];
     struct stat		pi_stat;
     char		pi_chksum_b64[ 29 ];
-    dev_t		pi_dev;
 };
 
 struct transcript {
