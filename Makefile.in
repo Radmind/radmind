@@ -21,7 +21,7 @@ RADMIND_HOST=radmind
 
 RADMINDSYSLOG=LOG_LOCAL7
 
-CWARN=	-Wall -Wmissing-prototypes -Wconversion -Werror
+CWARN=	-Wall -Wmissing-prototypes -Wconversion
 OPENSSL=	/usr/local/openssl
 CC = @CC@
 LDFLAGS = @LDFLAGS@
