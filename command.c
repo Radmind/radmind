@@ -83,6 +83,7 @@ f_retr( sn, ac, av )
 
     unsigned int	readlen;
     struct stat		st;
+    struct timeval	tv;
     char		buf[8192];
     char		path[ MAXPATHLEN ];
     char		*tmp, *d_path, *d_xscript, d_pth[ MAXPATHLEN ];
@@ -108,15 +109,14 @@ f_retr( sn, ac, av )
 	}
         
 	d_path = decode( av[ 2 ] );
-	/* 3 = .T + null char */
-	if ( strlen( av[ 1 ] ) + strlen(  av[ 2 ] ) + 3 > MAXPATHLEN ) {
+	if ( strlen( av[ 1 ] ) + strlen(  av[ 2 ] ) + 1 > MAXPATHLEN ) {
 	    syslog( LOG_WARNING, 
-		"Overflow attempt: %s/%s.T longer than MAXPATHLEN", 
+		"Overflow attempt: %s/%s longer than MAXPATHLEN", 
 		    av[ 1 ], av[ 2 ] );
 	    return( -1 );
 	}
 	    
-        sprintf( path, "transcript/%s.T", d_path );
+        sprintf( path, "transcript/%s", d_path );
 
     } else if ( strcasecmp( av[ 1 ], "SPECIAL" ) == 0 ) {
 
@@ -181,9 +181,11 @@ f_retr( sn, ac, av )
 
     /* dump file */
 
-    while ( ( readlen = read( fd, buf, sizeof( buf ) ) ) > 0 ) {
-	if ( write( snet_fd( sn ), buf, readlen ) != readlen ) {
-	    syslog( LOG_ERR, "write: %m" );
+    while (( readlen = read( fd, buf, sizeof( buf ))) > 0 ) {
+	tv.tv_sec = 10 * 60;
+	tv.tv_usec = 0;
+	if ( snet_write( sn, buf, (int)readlen, &tv ) != readlen ) {
+	    syslog( LOG_ERR, "snet_write: %m" );
 	    return( -1 );
 	}
     }
@@ -286,6 +288,7 @@ f_stat( sn, ac, av )
 {
 
     char 		path[ MAXPATHLEN ];
+    char		chksum_b64[ 29 ];
     struct stat		st;
     int			req_type;
     char		*d_path, *enc_file;
@@ -306,7 +309,7 @@ f_stat( sn, ac, av )
 	}
 
 	d_path = decode( av[ 2 ] );
-
+	/* XXX can transcripts have '/'s */
 	if ( strchr( d_path, '/' ) != NULL ) {
 	    snet_writef(sn, "%d Illegal name, %s\r\n", 532, av[ 2 ]);
 	    return( 1 );
@@ -355,19 +358,22 @@ f_stat( sn, ac, av )
 	return( 1 );
     }
 
+    /* chksums here */
+    do_chksum( path, chksum_b64 );
+
     snet_writef( sn, "%d Returning STAT information\r\n", 230 );
     switch ( req_type ) {
     case COMMAND:
-	snet_writef( sn, "%s %s %o %d %d %d %d %d\r\n", "f", "command", 
+	snet_writef( sn, "%s %s %o %d %d %d %d %s\r\n", "f", "command", 
 		    DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, st.st_mtime, 
-		    st.st_size, 0 );
+		    st.st_size, chksum_b64 );
 	return( 0 );
         
 		    
     case TRANSCRIPT:
-	snet_writef( sn, "%s %s %o %d %d %d %d %d\r\n", "f", av[ 2 ], 
+	snet_writef( sn, "%s %s %o %d %d %d %d %s\r\n", "f", av[ 2 ], 
 		    DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, st.st_mtime, 
-		    st.st_size, 0 );
+		    st.st_size, chksum_b64 );
 	return( 0 );
     
     case SPECIAL:
@@ -384,9 +390,9 @@ f_stat( sn, ac, av )
 		"f_stat: transcript path longer than MAXPATHLEN" );
 
 	    /* return constants */
-	    snet_writef( sn, "%s %s %o %d %d %d %d %d\r\n", "f", av[ 2 ], 
+	    snet_writef( sn, "%s %s %o %d %d %d %d %s\r\n", "f", av[ 2 ], 
 		DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, 
-		st.st_mtime, st.st_size, 0 );
+		st.st_mtime, st.st_size, chksum_b64 );
 	    return( 0 );
 	}
 
@@ -409,13 +415,13 @@ f_stat( sn, ac, av )
 	    if ( ( av = find_file( _PATH_TRANSCRIPTS, enc_file ) ) == NULL ) {
 		snet_writef( sn, "%s %s %o %d %d %d %d %d\r\n", "f", enc_file, 
 		    DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, 
-		    st.st_mtime, st.st_size, 0 );
+		    st.st_mtime, st.st_size, chksum_b64 );
 		return( 0 );
 	    }
 	}
 
 	snet_writef( sn, "%s %s %s %s %s %d %d %d\r\n", "f", enc_file, 
-	    av[ 3 ], av[ 4 ], st.st_mtime, st.st_size, 0 );
+	    av[ 3 ], av[ 4 ], st.st_mtime, st.st_size, chksum_b64 );
 
 	return( 0 );
 
@@ -529,16 +535,16 @@ f_stor( sn, ac, av )
 	    snet_writef( sn, "%d / Not Allowed\r\n", 554 );
 	    return( 0 );
 	}
-	/* 18 = tmp/transcript + .T + null char */
+	/* 15 = tmp/transcript + null char */
 
-        if ( ( strlen( d_path ) + 18 ) > MAXPATHLEN ) {
+        if ( ( strlen( d_path ) + 15 ) > MAXPATHLEN ) {
 	    syslog( LOG_WARNING, "tmp/transcript/%s longer than MAXPATHLEN", 
 		    d_path );
 	    return( 1 );
 	}
 
         sprintf( xscriptdir, "tmp/file/%s", d_path );
-        sprintf( upload_file, "tmp/transcript/%s.T", d_path );
+        sprintf( upload_file, "tmp/transcript/%s", d_path );
 
 	/* don't decode the transcript name, since it will just be
 	 * used later to compare in a stor file.
@@ -675,7 +681,7 @@ f_stor( sn, ac, av )
 	}
     }
 
-    tv.tv_sec = 600;
+    tv.tv_sec = 10 * 60;
     tv.tv_usec = 0;
     if ( ( line = snet_getline( sn, &tv ) ) == NULL ) {
         syslog( LOG_ERR, "f_stor: snet_getline: %m" );
@@ -744,11 +750,11 @@ cmdloop( fd )
     snet_writef( sn, "%d RAP 1 %s %s radmind access protocol\r\n", 200,
 	    hostname, version );
 
-    tv.tv_sec = 60 * 10;	/* 10 minutes */
-    tv.tv_usec = 60 * 10;
+    tv.tv_sec = 10 * 60;	/* 10 minutes */
+    tv.tv_usec = 0 ;
     while (( line = snet_getline( sn, &tv )) != NULL ) {
-	tv.tv_sec = 60 * 10;
-	tv.tv_usec = 60 * 10;
+	tv.tv_sec = 10 * 60;
+	tv.tv_usec = 0; 
 	if (( ac = argcargv( line, &av )) < 0 ) {
 	    syslog( LOG_ERR, "argcargv: %m" );
 	    return( 1 );
