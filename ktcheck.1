@@ -36,7 +36,10 @@ if it is missing or has a different checksum.
 Each special file listed in the command file is converted into a
 transcript line in special.T with information provided by 
 .I host.
-The special transcript is verified using only a checksum.  If checksuming is 
+If checksuming is turned on, the special transcript is verified using
+the checksum and file size.  If either are wrong, the special transcript
+is updated.
+If checksuming is 
 turned off, the special transcript is always updated.
 
 Files updated by
