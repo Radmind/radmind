@@ -41,12 +41,15 @@ extern int		verbose;
     int    
 store_applefile( const char *path, int afd, SNET *sn, int dodots )
 {
-    int		    	rfd, r_cc, d_cc, d_size, r_size, err, has_rsrc = 0;
+    int		    	rfd, r_cc, d_cc, d_size, r_size, has_rsrc = 0;
     size_t		asingle_size = 0;
     const char	    	*rsrc_suffix = _PATH_RSRCFORKSPEC; /* sys/paths.h */
     char	    	rsrc_path[ MAXPATHLEN ];
     char		data_buf[ 8192 ];
-    char		finfo_buf[ 32 ] = { 0 };
+    struct {
+        unsigned long   ssize;
+        char            finfo_buf[ 32 ];
+    } finfo_struct;
     struct stat		r_stp;	    /* for rsrc fork */
     struct stat		d_stp;	    /* for data fork */
     struct as_entry	as_entry_finfo = { ASEID_FINFO, 62, 32 };
@@ -54,6 +57,15 @@ store_applefile( const char *path, int afd, SNET *sn, int dodots )
     struct as_entry	as_entry_dfork = { ASEID_DFORK, 0, 0 };
     struct timeval tv;
     extern struct timeval timeout;
+    struct attrlist             alist = {
+        ATTR_BIT_MAP_COUNT,
+        0,
+        ATTR_CMN_FNDRINFO,
+        0,
+        0,
+        0,
+        0,
+    };
 
     tv = timeout;
 
@@ -102,7 +114,7 @@ store_applefile( const char *path, int afd, SNET *sn, int dodots )
 
     /* calculate total applesingle file size */
     asingle_size = ( AS_HEADERLEN + ( 3 * sizeof( struct as_entry ))
-		+ sizeof( finfo_buf ) + r_size + d_size );
+		+ sizeof( finfo_struct.finfo_buf ) + r_size + d_size );
 
     /* tell server how much data to expect */
     if ( snet_writef( sn, "%d\r\n", ( int )asingle_size ) == NULL ) {
@@ -147,15 +159,15 @@ store_applefile( const char *path, int afd, SNET *sn, int dodots )
     }
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 
-    err = chk_for_finfo( path, finfo_buf );
-    if ( err ) {
-	fprintf( stderr, "Non-hfs system\n" );
+    /* snet_write finder info data to server */
+    if ( getattrlist( path, &alist, &finfo_struct,
+	    sizeof( finfo_struct ), FSOPT_NOFOLLOW ) != 0 ) {
 	return( -1 );
     }
 
-    /* snet_write finder info data to server */
-    if ( snet_write( sn, finfo_buf, ( int )sizeof( finfo_buf ), &tv ) !=
-		sizeof( finfo_buf )) {
+    if ( snet_write( sn, finfo_struct.finfo_buf,
+	    ( int )sizeof( finfo_struct.finfo_buf ), &tv )
+	    != sizeof( finfo_struct.finfo_buf )) {
 	perror( "snet_write" );
 	return( -1 );
     }
