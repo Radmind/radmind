@@ -34,6 +34,11 @@ encode( char *line )
 	    temp++;
 	    *temp = 't';
 	    break;
+	case '\m':
+	    *temp = '\\';
+	    temp++;
+	    *temp = 'm';
+	    break;
 	case '\n':
 	    *temp = '\\';
 	    temp++;
@@ -73,6 +78,9 @@ decode( char *line )
 	case '\\':
 	    line++;
 	    switch( *line ) {
+	    case 'm':
+		*temp = '\m';
+		break;
 	    case 'n':
 		*temp = '\n';
 		break;
