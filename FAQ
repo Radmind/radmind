@@ -1,6 +1,0 @@
-If file is locked, it can not be unliked by lapply.
-
-Must run lcksum to fix a transcript upload to the server with the lcreate using the -N option.
-
-Q: If I update the crontab files, nothing changes.  What's going on?
-A: cron only reads files on start, so you have to restart.
