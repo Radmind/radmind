@@ -248,6 +248,12 @@ main( int argc, char **argv )
 	    if (( ac < 2 ) || ( *av[ 0 ] == '#' )) {
 		continue;
 	    }
+
+	    /* Move past leading '-' */
+	    if ( *av[ 0 ] == '-' ) {
+		av++;
+	    }
+
 	    /* Check transcript order */
 	    if ( prepath != 0 ) {
 		if ( pathcmp( decode( av[ 1 ] ), prepath ) < 0 ) {
