@@ -1,0 +1,49 @@
+.TH lcksum "1" "6 November 2001" "RSUG" "User Commands"
+.SH NAME
+.B lmerge 
+\- combines transcript 
+.SH SYNOPSIS
+.B lmerge 
+[
+.B -f
+] [
+.B -n
+] [
+.B -v
+] [
+.B -V
+] [
+.BI \-u\  umask 
+]
+.I transcript1, transcript2, ..., dest 
+.sp
+.SH DESCRIPTION
+.s
+.SH OPTIONS
+.TP 19
+.BI \-f\  filter
+only verify transcript lines with paths the begin with filter.
+.TP 19
+.B \-n
+don't modify transcript.
+.TP 19
+.B \-v
+displays update information to standard out. 
+.TP 19
+.B \-V
+displays the version of 
+.B lcksum 
+and exits.
+.sp
+.SH DIAGNOSTICS
+An exit code of 0 means no differences were found, 1 means differences were
+found and 2 means trouble.
+.sp
+.SH SEE ALSO
+.BR ktcheck(1),
+.BR fsdiff(1),
+.BR lapply(1),
+.BR lcreate(1),
+.BR lfdiff(1),
+.BR lmerge(1),
+.BR radmind(8).

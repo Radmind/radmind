@@ -1,0 +1,72 @@
+.TH ktcheck "1" "6 November 2001" "RSUG" "User Commands"
+.SH NAME
+.B ktcheck 
+\- updates command file and transcripts
+.SH SYNOPSIS
+.B ktcheck 
+[
+.B -n
+] [
+.B -v
+] [
+.B -V
+] [
+.BI \-c\ checksum 
+] [
+.BI \-K\ command file 
+] [
+.BI \-p\ port 
+]
+.I host 
+.sp
+.SH DESCRIPTION
+ktcheck verifies and update the local copies of the command file (the default 
+name is command.K), associated transcripts, and special transcript with the 
+radmind server 
+.I host.
+Missing files and those that fail verification are downloaded from 
+.I host.
+.sp
+.SH OPTIONS
+.TP 19
+.BI \-c\  checksum
+enables checksuming. sha1 is the only currently supported checksuming
+algorithim.
+.TP 19
+.BI \-K\  command
+specifies a command
+file name, by default
+.B command.K
+.TP 19
+.BI \-p\  port
+specifies a port, by default 6662
+.TP 19
+.B \-n
+no files are updated or downloaded.
+.TP 19
+.B \-v
+displays update information to standard out. 
+.TP 19
+.B \-V
+displays the version of ktcheck and exits.
+.sp
+.SH FILES
+.TP 19
+.B command.K
+name of the default command file.
+.TP 19
+.B special.T 
+name of the special transcript.
+.sp
+.SH DIAGNOSTICS
+An exit code of 0 means no differences were found, 1 means differences were
+found and 2 means trouble.
+.sp
+.SH SEE ALSO
+.BR fsdiff(1),
+.BR lapply(1),
+.BR lcksum(1),
+.BR lcreate(1),
+.BR lfdiff(1),
+.BR lmerge(1),
+.BR radmind(8).
