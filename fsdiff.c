@@ -12,15 +12,10 @@
 #include "llist.h"
 #include "code.h"
 
-#define FS2TRAN		0
-#define TRAN2FS		1
-
-static int		skip;
-
 void fs_walk( struct llist *, int );
 
     void
-fs_walk( struct llist *path, int rpath ) 
+fs_walk( struct llist *path, int flag ) 
 {
     DIR			*dir;
     struct dirent 	*de;
@@ -30,8 +25,8 @@ fs_walk( struct llist *path, int rpath )
     char 		temp[ MAXPATHLEN ];
 
     /* call the transcript code */
-    if (( transcript( &path->ll_info, path->ll_info.i_name, outtran ) == 0 ) 
-		|| ( skip == 1 )) {
+    if (( transcript( &path->ll_info, path->ll_info.i_name, outtran ) 
+		== 0 ) || ( flag & FLAG_SKIP )) {
 	return;
     }
 
@@ -51,7 +46,7 @@ fs_walk( struct llist *path, int rpath )
 	}
 
 	/* construct relative pathname to put in list */
-	if ( rpath == 0 ) {
+	if ( !( flag & FLAG_INIT )) {
 	    if (( strlen( path->ll_info.i_name ) + strlen( de->d_name + 2 )) > 
 			MAXPATHLEN ) {
 		fprintf( stderr, "ERROR: Illegal length of path\n" );
@@ -88,14 +83,15 @@ fs_walk( struct llist *path, int rpath )
     int
 main( int argc, char **argv ) 
 {
-    int    		c;
+    struct llist	*root;
     extern char    	*optarg;
     extern int    	optind;
     extern int		errno;
+    int    		c;
     int    		errflag = 0;
-    struct llist	*root;
+    int			flag = 0;
 
-    skip = 0;
+    flag |= FLAG_INIT;
     edit_path = TRAN2FS;
     outtran = stdout;
 
@@ -108,7 +104,7 @@ main( int argc, char **argv )
 		  }
 		  break;
 	case '1':
-		  skip = 1;
+		  flag |= FLAG_SKIP;
 		  break;	
 	case 't': 		/* want to record differences from tran */
 		  edit_path = FS2TRAN;
@@ -131,19 +127,18 @@ main( int argc, char **argv )
     }
 
     /* initialize the transcripts */
-    transcript_init();
+    transcript_init( flag );
 
-    if (( chdir( argv[ optind ] ) != 0 ) || ( skip == 1 )) {
-	if (( errno != ENOTDIR ) && ( skip == 0 )) {
+    if ( chdir( argv[ optind ] ) != 0 ) {
+	if ( errno != ENOTDIR ) {
 		perror( argv[ optind ] );
 		exit( 1 );
-	} else {
-    		root = ll_allocate( argv[ optind ] );
 	}
+    	root = ll_allocate( argv[ optind ] );
     } else {
     	root = ll_allocate( "." );
     }
-    fs_walk( root, 1 );
+    fs_walk( root, flag );
 
     /* free the transcripts */
     transcript_free( );
