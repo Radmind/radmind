@@ -10,7 +10,9 @@
 #include "download.h"
 #include "chksum.h"
 
+#ifdef SOLARIS
 #define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
+#endif
 
 extern void            (*logger)( char * );
 extern struct timeval  	timeout;

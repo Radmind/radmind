@@ -23,6 +23,11 @@
 #include "code.h"
 #include "mkdirs.h"
 
+#ifdef SOLARIS
+#define MIN(a,b)	((a)<(b)?(a):(b))
+#define MAX(a,b)	((a)>(b)?(a):(b))
+#endif
+
 #define	DEFAULT_MODE 0444
 #define DEFAULT_UID     0
 #define DEFAULT_GID     0
@@ -486,7 +491,6 @@ f_stor( SNET *sn, int ac, char *av[] )
     len = atoi( sizebuf );
 
     for ( ; len > 0; len -= rc ) {
-#define MIN(a,b)	((a)<(b)?(a):(b))
 	tv.tv_sec = 10 * 60;
 	tv.tv_usec = 0;
 	if (( rc = snet_read(
@@ -632,7 +636,6 @@ cmdloop( fd )
 
 	if ( ac ) {
 	    for ( i = 0; i < ncommands; i++ ) {
-#define MAX(a,b)	((a)>(b)?(a):(b))
 		n = MAX( strlen( av[ 0 ] ), 4 );
 		if ( strncasecmp( av[ 0 ], commands[ i ].c_name, n ) == 0 ) {
 		    if ( (*(commands[ i ].c_func))( sn, ac, av ) < 0 ) {
