@@ -21,7 +21,7 @@ extern struct timeval	timeout;
 int			verbose = 0;
 int			chksum = 0;
 char			fullpath[ MAXPATHLEN ];
-char			*diff = "/usr/local/gnu/bin/diff";
+char			*diff = _PATH_GNU_DIFF;
 char			*location = "/tmp/lfdiff";
 
     void

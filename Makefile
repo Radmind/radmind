@@ -6,6 +6,7 @@ SBINDIR=${DESTDIR}/sbin
 VARDIR=/var/radmind
 CONFIGFILE=${VARDIR}/config
 TRANSCRIPTDIR=${VARDIR}/transcript
+GNU_DIFF=/usr/local/gnu/bin/diff
 
 RADMINDSYSLOG=LOG_LOCAL7
 
@@ -66,6 +67,11 @@ command.o : command.c
 		-D_PATH_CONFIG=\"${CONFIGFILE}\" \
 		-D_PATH_TRANSCRIPTS=\"${TRANSCRIPTDIR}\" \
 		-c command.c
+
+lfdiff.o : lfdiff.c
+	${CC} ${CFLAGS} \
+		-D_PATH_GNU_DIFF=\"${GNU_DIFF}\" \
+		-c lfdiff.c
 
 radmind : libsnet/libsnet.a ${RADMIND_OBJ} Makefile
 	${CC} ${CFLAGS} -o radmind ${RADMIND_OBJ} ${LDFLAGS}
