@@ -730,6 +730,8 @@ f_starttls( snet, ac, av )
 	    NID_commonName, buf, sizeof( buf ));
 	if (( remote_cn = strdup( buf )) == NULL ) {
 	    syslog( LOG_ERR, "strdup: %m" );
+	    snet_writef( snet, "%d System error: %s\r\n", 501,
+		strerror( errno ));
 	    return( -1 );
 	}
 	X509_free( peer );
@@ -761,6 +763,13 @@ exchange( int num_msg, const struct pam_message **msg,
     if ( num_msg <= 0 ) {
 	return( PAM_CONV_ERR );
     }
+
+    /*
+     * From pam_start man page:
+     *
+     * "The storage used by pam_response has to be allocated by the
+     * application and freed by the PAM modules."
+     */
 
     if (( reply = malloc( num_msg * sizeof( struct pam_response ))) == NULL ) {
 	return( PAM_CONV_ERR );
@@ -830,19 +839,16 @@ f_login( snet, ac, av )
     };
 
     if ( !checkuser ) {
-        syslog( LOG_DEBUG, "f_login: Users not enabled\n" );
 	snet_writef( snet, "%d Users not enabled\r\n", 502 );
-	return( -1 );
+	return( 1 );
     }
     if ( authlevel < 1 ) {
-        syslog( LOG_DEBUG, "f_login: Command requires TLS\n" );
 	snet_writef( snet, "%d Command requires TLS\r\n", 503 );
-	return( -1 );
+	return( 1 );
     }
     if ( ac != 3 ) {  
-        syslog( LOG_DEBUG, "f_login: Syntax error\n" );
         snet_writef( snet, "%d Syntax error\r\n", 501 );
-        return( -1 );
+        return( 1 );
     }
     if ( user != NULL ) {
 	free( user );
@@ -855,15 +861,15 @@ f_login( snet, ac, av )
     user = strdup( av[ 1 ] );
     if ( user == NULL ) {
 	syslog( LOG_ERR, "f_login: strdup: %m" );
-	/* What should this message be? */
-        snet_writef( snet, "%d System error\r\n", 501 );
+        snet_writef( snet, "%d System error: %s\r\n", 501, strerror( errno ));
+	return( -1 );
     }
 
     password = strdup( av[ 2 ] );
     if ( password == NULL ) {
 	syslog( LOG_ERR, "f_login: strdup: %m" );
-	/* What should this message be? */
-        snet_writef( snet, "%d System error\r\n", 501 );
+        snet_writef( snet, "%d System error: %s\r\n", 501, strerror( errno ));
+	return( -1 );
     }
 
     if (( retval =  pam_start( "radmind", user, &pam_conv,
@@ -881,16 +887,12 @@ f_login( snet, ac, av )
     }
     free( password );
 
-    /*
-     * I don't think we have to do this, so I'm not! *
-     *
     if (( retval = pam_acct_mgmt( pamh, 0 )) != PAM_SUCCESS ) {
         syslog( LOG_ERR, "f_login: pam_acct_mgmt: %s\n",
 	    pam_strerror( pamh, retval ));
 	snet_writef( snet, "%d %s\r\n", 503, pam_strerror( pamh, retval ));
 	return( -1 );
     }
-    */
 
     if (( retval = pam_end( pamh, retval )) != PAM_SUCCESS ) {
         syslog( LOG_ERR, "f_login: pam_end: %s\n",
