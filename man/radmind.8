@@ -37,7 +37,6 @@ With the
 as its working directory.
 Radmind forks a child for each connection.
 
-
 The file _PATH_RADMIND/config contains the list of known clients that
 can connect to radmind, one per line.  Each line contains the fully
 qualified domain name or IP address of the client and the client's command file.
@@ -49,26 +48,83 @@ can be used to escape any character.
 
 A client is only given access to transcripts that are listed in their config
 file.
-
-Radmind currently supports the following radmind access protocol
-requests:
 .sp
-.br
-QUIT     terminate session
-.br
-NOOP     do nothing
-.br
-STAT     stat a transcript, command or special file
-.br
-RETR     retrieve a file
-.br
-STOR     store a file
-
-A Client's special files are stored in _PATH_RADMIND/special/<HOST>/<PATH> where
-<HOST> is the host name of the client and <PATH> is the full path of the
-special file.  The IP address of the client will be used for <HOST> if there
+.SH DIRECTORY STRUCTURE
+.TP 19
+.B command
+Stores the command files.
+.TP 19
+.B transcripts 
+Stores the transcripts.
+.TP 19
+.B file
+All files served from the radmind server are stored in the
+.B file
+directory.
+All files for a given transcript are stored in
+.B file/<TRANSCRIPT>
+where <TRANSCRIPT> is the name of the transcript.  A file is stored in
+.B file/<TRANSCRIPT>/<PATH>
+where <PATH> is the file's path as listed in the transcript.
+.TP 19
+.B special
+All special files are stored in
+.BR special .
+The special files for a given host are stored in
+.B file/<HOST>
+where <HOST> is the fully qualified domain name of the client.
+Individual special files are stored in
+.B special/<HOST>/<PATH>
+where PATH is the path of the special file as listed in the client's
+command file.
+The IP address of the client will be used for <HOST> if there
 is no domain name returned by
 .BR gethostbyname() .
+.TP 19
+.B tmp/file
+All files stored on the server using the STOR command are saved in
+.BR tmp/file .
+Files for a given transcript are stored in
+tmp/transcript/<TRANSCRIPT>/<PATH>
+where <TRANSCRIPT> is the name of the transcript and <PATH> is the file's path
+as given in the STOR command.
+.TP 19
+.B tmp/transcript
+All transcripts stored on the server using the STOR command are saved in
+.BR tmp/transcript .
+.sp
+.SH RADMIND ACCESS PROTOCAL
+Radmind currently supports the following Radmind Access Protocol ( RAP )
+requests:
+.sp
+.TP 10
+QUIT
+terminate session
+.TP 10
+NOOP
+do nothing
+.TP 10
+HELP
+Display help message
+.TP 10
+STAT
+stat a transcript, command or special file.  When statting a command file or
+transcript, the mode, UID and GID default to 0444, 0, and 0 respectively.
+Status of a special file is determined by a single transcript line listed
+in a file named <SPECIAL_FILE_PATH>.T, where <SPECIAL_FILE_PATH> is the full
+path to the special file.  If that does not exist, a listing for the file 
+in the special.T transcript in the transcript directory will be used.
+If neither of those exist, the defaults are returned.
+.TP 10
+RETR
+retrieve a file, transcript command or special file
+.TP 10
+STOR
+store a file or transcript
+.TP 10
+STAR
+Start TLS.  If the server is run with an authorization level of 2, this
+command must be given before a client can send a STAT, RETR, or STOR.
 .sp
 .SH OPTIONS
 .TP 19
