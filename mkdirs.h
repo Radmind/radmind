@@ -1,1 +1,1 @@
-int create_directories( char *path );
+int mkdirs( char *path );
