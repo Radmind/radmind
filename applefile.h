@@ -20,6 +20,8 @@
  *      -data fork
  */
 
+#include <sys/types.h>
+#include <sys/param.h>
 #include <inttypes.h>
 
 #define AS_HEADERLEN	26
@@ -69,3 +71,5 @@ struct applefileinfo {
 					// For Finder info, rcrs and data forks
     off_t		as_size;	// Total apple single file size 
 };
+
+off_t ckapplefile( char *applefile, int afd );

@@ -4,10 +4,10 @@
  */
 
 #include "config.h"
+#include "applefile.h"
 
 #ifdef __APPLE__
 #include <sys/attr.h>
-#include "applefile.h"
 
 struct attrlist		getalist = {
     ATTR_BIT_MAP_COUNT,
@@ -38,6 +38,7 @@ struct attrlist		setalist = {
     0,
     0,
 };
+#endif /* __APPLE__ */
 
 struct as_header		as_header = {
     AS_MAGIC,
@@ -50,4 +51,3 @@ struct as_header		as_header = {
 };
 
 extern struct as_header as_header;
-#endif /* __APPLE__ */

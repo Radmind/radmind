@@ -33,9 +33,9 @@
  */
 
     off_t 
-do_cksum( char *path, char *cksum_b64 )
+do_fcksum( int fd, char *cksum_b64 )
 {
-    int			fd, md_len;
+    int			md_len;
     ssize_t		rr;
     off_t		size = 0;
     unsigned char	buf[ 8192 ];
@@ -45,9 +45,6 @@ do_cksum( char *path, char *cksum_b64 )
 
     EVP_DigestInit( &mdctx, md );
 
-    if (( fd = open( path, O_RDONLY, 0 )) < 0 ) {
-	return( -1 );
-    }
     while (( rr = read( fd, buf, sizeof( buf ))) > 0 ) {
 	size += rr;
 	EVP_DigestUpdate( &mdctx, buf, (unsigned int)rr );
@@ -55,12 +52,28 @@ do_cksum( char *path, char *cksum_b64 )
     if ( rr < 0 ) {
 	return( -1 );
     }
-    if ( close( fd ) != 0 ) {
-	return( -1 );
-    }
 
     EVP_DigestFinal( &mdctx, md_value, &md_len );
     base64_e( ( char*)&md_value, md_len, cksum_b64 );
+
+    return( size );
+}
+
+    off_t
+do_cksum( char *path, char *cksum_b64 )
+{
+    int			fd;
+    off_t		size = 0;
+
+    if (( fd = open( path, O_RDONLY, 0 )) < 0 ) {
+	return( -1 );
+    }
+
+    size = do_fcksum( fd, cksum_b64 );
+
+    if ( close( fd ) != 0 ) {
+	return( -1 );
+    }
 
     return( size );
 }

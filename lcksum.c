@@ -42,13 +42,80 @@ char            prepath[ MAXPATHLEN ] = {0};
  *	2	System error
  */
 
+    off_t
+ckapplefile( char *applefile, int afd )
+{
+    extern struct as_header as_header;
+    struct as_header	header;
+    struct as_entry	as_ents[ 3 ];
+    int			rr;
+    off_t		size = 0;
+
+    /* check header */
+    rr = read( afd, &header, AS_HEADERLEN );
+    if ( rr < 0 ) {
+	perror( "read" );
+	exit( 2 );
+    }
+    if ( rr != AS_HEADERLEN ||
+		memcmp( &as_header, &header, AS_HEADERLEN ) != 0 ) {
+	goto invalid_applefile;
+    }
+    size += rr;
+
+    /* check entries */
+    rr = read( afd, &as_ents, ( 3 * sizeof( struct as_entry )));
+    if ( rr < 0 ) {
+	perror( "read" );
+	exit( 2 );
+    }
+    if ( rr != ( 3 * sizeof( struct as_entry ))) {
+	goto invalid_applefile;
+    }
+    size += rr;
+
+    /* check entry IDs */
+    if ( as_ents[ AS_FIE ].ae_id != ASEID_FINFO ||
+	    as_ents[ AS_RFE ].ae_id != ASEID_RFORK ||
+	    as_ents[ AS_DFE ].ae_id != ASEID_DFORK ) {
+	goto invalid_applefile;
+    }
+
+    /* check offsets */
+    if ( as_ents[ AS_FIE ].ae_offset !=
+		( AS_HEADERLEN + ( 3 * sizeof( struct as_entry )))) {
+	fprintf( stderr, "%s: invalid finder info offset\n", applefile );
+	return( -1 );
+    }
+    if ( as_ents[ AS_RFE ].ae_offset != 
+		( as_ents[ AS_FIE ].ae_offset + as_ents[ AS_FIE ].ae_length )) {
+	fprintf( stderr, "%s: incorrect rsrc fork offset\n", applefile );
+	return( -1 );
+    }
+    if ( as_ents[ AS_DFE ].ae_offset !=
+		( as_ents[ AS_RFE ].ae_offset + as_ents[ AS_RFE ].ae_length )) {
+	fprintf( stderr, "%s: incorrect data fork offset\n", applefile );
+	return( -1 );
+    }
+
+    /* total sizes as stored in entries */
+    size += ( as_ents[ AS_FIE ].ae_length +
+		as_ents[ AS_RFE ].ae_length +
+		as_ents[ AS_DFE ].ae_length );
+    
+    return( size );
+
+invalid_applefile:
+    fprintf( stderr, "%s: invalid applesingle header\n", applefile );
+    return( -1 );
+}
     int
 main( int argc, char **argv )
 {
-    int			ufd, c, err = 0, updatetran = 1, updateline = 0;
+    int			fd, ufd, c, err = 0, updatetran = 1, updateline = 0;
     int			ucount = 0, len, tac, amode = R_OK | W_OK;
     int			prefixfound = 0;
-    int			remove = 0;
+    int			remove = 0, checkapplefile = 0;
     int			lastpct = -1;
     float		pct = 0.0;
     off_t		lsize = 0, bytes = 0;
@@ -69,8 +136,12 @@ main( int argc, char **argv )
     struct stat		st;
     off_t		cksumsize;
 
-    while ( ( c = getopt ( argc, argv, "c:P:nqVv" ) ) != EOF ) {
+    while ( ( c = getopt ( argc, argv, "Ac:P:nqVv" ) ) != EOF ) {
 	switch( c ) {
+	case 'A':
+	    checkapplefile = 1;
+	    break;
+
 	case 'c':
 	    OpenSSL_add_all_digests();
 	    md = EVP_get_digestbyname( optarg );
@@ -120,7 +191,7 @@ main( int argc, char **argv )
     tpath = argv[ optind ];
 
     if ( err || ( argc - optind != 1 ) ) {
-	fprintf( stderr, "usage: %s [ -nqVv ] [ -P prefix ] ", argv[ 0 ] );
+	fprintf( stderr, "usage: %s [ -AnqVv ] [ -P prefix ] ", argv[ 0 ] );
 	fprintf( stderr, "-c checksum transcript\n" );
 	exit( 2 );
     }
@@ -329,8 +400,14 @@ main( int argc, char **argv )
 	 * do_acksum( ) creates a cksum for the associated applesingle file.
 	 */
 
+	/* open file here to save us some other open calls */
+	if (( fd = open( path, O_RDONLY, 0 )) < 0 ) {
+	    fprintf( stderr, "open %s: %s\n", d_path, strerror( errno ));
+	    exit( 2 );
+	}
+
 	/* check size */
-	if ( stat( path, &st) != 0 ) {
+	if ( fstat( fd, &st) != 0 ) {
 	    perror( path );
 	    exit( 2 );
 	}
@@ -345,7 +422,7 @@ main( int argc, char **argv )
 	    updateline = 1;
 	}
 
-	if (( cksumsize = do_cksum( path, lcksum )) < 0 ) {
+	if (( cksumsize = do_fcksum( fd, lcksum )) < 0 ) {
 	    perror( path );
 	    exit( 2 );
 	}
@@ -368,6 +445,23 @@ main( int argc, char **argv )
 		    d_path ); 
 	    }
 	    updateline = 1;
+	}
+
+	if ( *targv[ 0 ] == 'a' && checkapplefile ) {
+	    /* rewind the descriptor */
+	    if ( lseek( fd, 0, SEEK_SET ) < 0 ) {
+		perror( "lseek" );
+		exit( 2 );
+	    }
+	    if ( ckapplefile( path, fd ) != st.st_size ) {
+		fprintf( stderr, "%s: corrupted applefile\n", path );
+		exit( 2 );
+	    }
+	}
+
+	if ( close( fd ) != 0 ) {
+	    perror( "close" );
+	    exit( 2 );
 	}
 
 	if ( updatetran ) {
