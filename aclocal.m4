@@ -90,3 +90,30 @@ AC_DEFUN([CHECK_SSL],
     AC_SUBST(HAVE_SSL)
     AC_MSG_RESULT(yes)
 ])
+
+AC_DEFUN([CHECK_ZEROCONF],
+[
+    AC_MSG_CHECKING(for zeroconf)
+    zeroconfdirs="/usr /usr/local"
+    AC_ARG_WITH(zeroconf,
+	    AC_HELP_STRING([--with-zeroconf=DIR], [path to zeroconf]),
+	    zeroconfdirs="$withval")
+    for dir in $zeroconfdirs; do
+	zcdir="$dir"
+	if test -f "$dir/include/DNSServiceDiscovery/DNSServiceDiscovery.h"; then
+	    found_zeroconf="yes";
+	    CPPFLAGS="$CPPFLAGS -I$zcdir/include";
+	    break;
+	fi
+    done
+    if test x_$found_zeroconf != x_yes; then
+	HAVE_ZEROCONF=no
+	AC_MSG_RESULT(no)
+    else
+	ZEROCONFDEFS=-DZEROCONF;
+	AC_SUBST(ZEROCONFDEFS)
+	HAVE_ZEROCONF=yes
+	AC_SUBST(HAVE_ZEROCONF)
+	AC_MSG_RESULT(yes)
+    fi
+])

@@ -40,6 +40,7 @@ AC_CHECK_LIB([socket], [socket])
 
 CHECK_SSL
 CHECK_PAM
+CHECK_ZEROCONF
 
 # Miscellaneous:
 if test x_$GCC = x_yes; then
