@@ -43,6 +43,7 @@ BINTARGETS=     fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff twhich
 MAN1TARGETS=    fsdiff.1 ktcheck.1 lapply.1 lcksum.1 lcreate.1 lfdiff.1 \
                 lmerge.1 twhich.1
 MAN8TARGETS=	radmind.8
+MANTARGETS=	${MAN1TARGETS} ${MAN8TARGETS}
 TARGETS=        radmind ${BINTARGETS}
 
 RADMIND_OBJ=    version.o daemon.o command.o argcargv.o code.o \
@@ -164,6 +165,16 @@ dist   : clean
 	chmod +w ${DISTDIR}/Makefile
 	echo ${VERSION} > ${DISTDIR}/VERSION
 
+.PHONY : man
+man :
+	-mkdir man
+	for i in ${MANTARGETS}; do \
+	    sed -e 's@_PATH_RADMIND@${VARDIR}@g'  \
+		-e 's@_RADMIND_COMMANDFILE@${COMMANDFILE}@g' \
+		-e 's@_RADMIND_HOST@${RADMIND_HOST}@g' \
+		$$i > man/$$i; \
+	done
+
 install	: all
 	-mkdir -p ${DESTDIR}
 	-mkdir -p ${SBINDIR}
@@ -189,7 +200,7 @@ SERVERSTARTUPPKGDIR=${DISTDIR}/server-startup
 SERVERSBINPKGDIR=${DISTDIR}/server-sbin
 SERVERMANPKGDIR=${DISTDIR}/server-man
 
-package : all
+package : all man
 	# Create server package #
 	mkdir -p -m 0755 ${SERVERSBINPKGDIR}
 	${INSTALL} -o root -g wheel -m 0555 -c radmind ${SERVERSBINPKGDIR}
@@ -218,6 +229,8 @@ package : all
 	mkdir -p -m 0755 ${CLIENTVARPKGDIR}
 	${INSTALL} -o root -g staff -m 0755 -c OS_X/command.K \
 	    ${CLIENTVARPKGDIR}
+	${INSTALL} -o root -g staff -m 0755 -c OS_X/apple-neg.T \
+	    ${CLIENTVARPKGDIR}
 	chown root:wheel ${DISTDIR}
 	find ${DISTDIR}/* -exec chown root:wheel {} \;
 	package ${CLIENTBINPKGDIR} OS_X/client-bin.info -d ${DISTDIR}
@@ -238,3 +251,4 @@ package : all
 clean :
 	rm -f *.o a.out core
 	rm -f ${TARGETS}
+	rm -rf man
