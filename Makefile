@@ -189,11 +189,11 @@ install	: all man
 	-mkdir -p ${MANDIR}
 	-mkdir ${MANDIR}/man1
 	for i in ${MAN1TARGETS}; do \
-	    ${INSTALL} -m 0644 -c man/$$i ${MANDIR}/man1/; \
+	    ${INSTALL} -m 0644 -c tmp/man/$$i ${MANDIR}/man1/; \
 	done
 	-mkdir ${MANDIR}/man5
 	for i in ${MAN5TARGETS}; do \
-	    ${INSTALL} -m 0644 -c man/$$i ${MANDIR}/man5/; \
+	    ${INSTALL} -m 0644 -c tmp/man/$$i ${MANDIR}/man5/; \
 	done
 	-mkdir ${MANDIR}/man8
 	 for i in ${MAN8TARGETS}; do \
