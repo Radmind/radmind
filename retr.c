@@ -47,7 +47,7 @@ extern SSL_CTX  	*ctx;
  * this new file is returned via temppath which must be 2 * MAXPATHLEN.
  * 
  * Return Value:
- *	-1 - erorr, do not call closesn
+ *	-1 - error, do not call closesn
  *	 0 - OKAY
  *	 1 - error, call closesn
  */
