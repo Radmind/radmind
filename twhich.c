@@ -66,7 +66,6 @@ main( int argc, char **argv )
     char	line[ MAXPATHLEN * 2 ];
     char	tran[ MAXPATHLEN ];
     char	path[ MAXPATHLEN ];
-    char	serverkfile[ MAXPATHLEN ];
     FILE	*f;
     ACAV	*acav;
     struct node	*head = NULL, *new_node, *node;
@@ -123,19 +122,8 @@ main( int argc, char **argv )
 	exit( 2 );
     }
     if (( p = strrchr( kdir, '/' )) == NULL ) { 
-	if ( server ) {
-	    /* Build server command file */
-	    kdir = _RADMIND_SERVER_COMMAND_DIR;
-	    if ( snprintf( serverkfile, MAXPATHLEN, "%s%s", kdir, kfile ) >
-		    MAXPATHLEN - 1 ) {
-		fprintf( stderr, "path too long: %s%s\n", kdir, kfile );
-		exit( 2 );
-	    }
-	    kfile = serverkfile;
-	} else {
-	    /* No '/' in kfile - use working directory */
-	    kdir = "./";
-	}
+	/* No '/' in kfile - use working directory */
+	kdir = "./";
     } else {
 	p++;
 	*p = (char)'\0';
@@ -202,7 +190,7 @@ main( int argc, char **argv )
 	strncpy( tran, node->path, MAXPATHLEN );
 	free_node( node );
 	if ( server ) {
-	    if ( snprintf( path, MAXPATHLEN, "%s%s", _RADMIND_TRANSCRIPT_DIR,
+	    if ( snprintf( path, MAXPATHLEN, "%s../transcript/%s", kdir,
 		    tran ) > MAXPATHLEN - 1 ) {
 		fprintf( stderr, "path too long: %s%s\n", kdir, tran );
 		exit( 2 );
@@ -247,7 +235,7 @@ main( int argc, char **argv )
 	    }
 	    if ( strcmp( decode( av[ 1 ] ), pattern ) == 0 ) {
 		match++;
-		printf( "%s: line %d:\n%s", path, linenum, tline );
+		printf( "%s: line %d:\n%s", tran, linenum, tline );
 		if ( !displayall ) {
 		    goto closetran;
 		}
