@@ -267,7 +267,7 @@ f_retr( sn, ac, av )
 	return( -1 );
     }
 
-    syslog( LOG_INFO, "f_retr: 'file' %s retreived", path );
+    syslog( LOG_INFO, "f_retr: 'file' %s retrieved", path );
 
     return( 0 );
 }
