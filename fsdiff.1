@@ -68,7 +68,7 @@ A transcript contains a list of filesystem objects, eg. directories,
 files, symbolic links etc. Transcripts have the following format:
 .sp
 .br
-type	path	[type specific information]
+	type path [type specific information]
 .br
 .sp
 Type is a single letter: h, l, d, c, b, p, s, D, f, a. Path is the encoded
@@ -77,54 +77,52 @@ is "\\r", and
 \\ is "\\\\". The type specific information varies.
 .sp
 .br
-l	path	target
+	l path target
 .br
-h	path 	target
+	h path target
 .br
 .sp
 Type 'l' is a symbolic link and 'h' is a hard link.  Target is encoded like
 path.
 .sp
 .br
-d	path	mode	uid	gid	finder-information
+	d path mode uid gid [ finder-information ]
 .br
-D	path	mode	uid	gid
+	D path mode uid gid
 .br
-s	path	mode	uid	gid
+	s path mode uid gid
 .br
-p	path	mode	uid	gid
+	p path mode uid gid
 .br
 .sp
-Type 'd' is a directory, 'D' is a door, 's' is a socket and 'p' is a named
-pipe. Mode is a 4 digit octal representation of the permissions. 
-( see
+Type 'd' is a directory, 'D' is a door, 's' is a socket and 'p' is
+a named pipe. Mode is a 4 digit octal representation of the
+permissions.  ( see
 .BR chmod(1).
-) uid and gid are the user and group ids in decimal format.   finder-information
-is used only on Mac OS X machines running on an HFS formatted drive to store
-directory finder information.
-If a directory is listed in a 
+) uid and gid are the user and group ids in decimal format.
+finder-information is used only on Mac OS X machines running on an
+HFS+ formatted drive to store directory finder information.  If a
+directory is listed in a
 .B negative
-transcript, mode, uid, gid and, if listed, finder-information will be checked,
-but the directory itself
-will not be read.
+transcript, mode, uid, gid and, if listed, finder-information will
+be checked, but the directory itself will not be read.
 .sp
 .br
-b       path    mode    uid     gid     major   minor
+	b path mode uid gid major minor
 .br
-c       path    mode    uid     gid     major   minor
+	c path mode uid gid major minor
 .br
 .sp
-Type 'b' is a block special file, 'c' is a character special file. Major
-and minor are the major and minor device numbers in decimal. If a
-character special file is listed in a 
-.B negative 
-transcript, only major
-and minor device number will be checked.
+Type 'b' is a block special file, 'c' is a character special file.
+Major and minor are the major and minor device numbers in decimal.
+If a character special file is listed in a
+.B negative
+transcript, only major and minor device number will be checked.
 .sp
 .br
-f       path    mode    uid     gid     mtime   size    checksum
+	f path mode uid gid mtime size checksum
 .br
-a       path    mode    uid     gid     mtime   size    checksum
+	a path mode uid gid mtime size checksum
 .br
 .sp
 Type 'f' is a reuglar file. Mtime is a decimal number of seconds since 1970 GMT.
@@ -147,18 +145,30 @@ sensitively.  This means subdirectories have precedence over files
 in the same directory: lexically, "/" has highest precedence.  So
 the file:
 .sp
-/etc/passwd
+	/etc/passwd
 .sp
 comes before:
 .sp
-/etc.old
+	/etc.old
 .sp
-even though "." normally comes before "/"
+even though "." normally comes before "/", and:
+.sp
+	/Library
+.sp
+would come before:
+.sp
+	/dev
+.sp
+as capitalized characters are higher in precedence than
+lowercase ones.  Both of the previous two directories would come
+before:
+.sp
+	/etc.old
 .SH COMMAND FILES
 Command files have the following format:
 .br
 .sp
-type	transcriptname/pathname
+	type	transcriptname/pathname
 .sp
 .br
 Type is any part of the words "positive", "negative" and "special". The
@@ -169,13 +179,13 @@ special, a full pathname.
 .sp
 # example command file
 .br
-p	solaris8base.T
+	p	solaris8base.T
 .br
-n	solarisneg.T
+	n	solarisneg.T
 .br
-s	/etc/printcap
+	s	/etc/printcap
 .br
-s	/etc/hostname.hme0
+	s	/etc/hostname.hme0
 .br
 .br
 .sp
