@@ -7,11 +7,13 @@
 #include "mkdirs.h"
 
     int 
-create_directories( char *path ) 
+mkdirs( char *path ) 
 {
     char 	*p;
 
-    for ( p = strchr( path, '/' ); p != NULL; p = strchr( p, '/' )) {
+    for ( p = path; *p == '/'; p++ )
+	;
+    for ( p = strchr( p, '/' ); p != NULL; p = strchr( p, '/' )) {
 	*p = '\0';
 	if ( mkdir( path, 0777 ) < 0 ) {
 	    if ( errno != EEXIST ) {
