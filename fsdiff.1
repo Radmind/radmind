@@ -1,0 +1,206 @@
+.TH fsdiff "1" "15 November 2000" "RSUG" "User Commands"
+.SH NAME
+.B fsdiff
+\- compare filesystem to transcripts
+.SH SYNOPSIS
+.B fsdiff
+[
+.B -T
+|
+.B -1
+] [
+.BI -V
+] [
+.BI \-K\  command
+] [
+.BI \-c\  checksum
+] [
+.BI \-o\  file
+]
+.I path
+.sp
+.SH DESCRIPTION
+.B fsdiff
+reads a command file (the default name is
+.B command.K)
+to get a list of transcripts. If no command file is given, the
+transcript list is considered to be the null transcript. The first
+transcript listed in the command file has the lowest precedence, the
+next higher, and the last has the highest.  If any special files are
+listed, the
+.B special.T
+transcript will have the absolute highest precedence.
+.B fsdiff
+walks the filesystem starting at
+.I path
+and compares the filesystem to the transcripts.
+.sp
+If a transcript is
+.B negative,
+.B fsdiff
+checks to make sure the files or directories exist and that the mode,
+owner and group match.
+.B fsdiff
+additionally compares size, time and (checksum with the -c option) if a
+transcript is
+.B positive.
+There is only one
+.B special
+transcript,
+.B special.T,
+and it contains references to files that are host specific, eg.
+/etc/hostname.hme0.
+.sp
+Any discrepancies are printed on standard out or, with the -o option,
+to a file. The default is to print the differences as edits to the
+transcript to make it match the filesystem. If the edit direction
+chosen is -T, the differences are printed as edits to the file system
+to make it match the transcript. A "+" at the beginning of a line
+indicates a file must be downloaded. A "-" indicates the given object (
+file, directory, link etc ) must be removed.
+.sp
+.SH TRANSCRIPTS 
+Transcripts have the following format:
+.sp
+.br
+type	path	[type specific information]
+.br
+.sp
+Type is a single letter: h, l, d, c, b, p, s, D, f. Path is the encoded
+path, where space is "\\b", tab is "\\t", newline is "\\n" and
+\\ is "\\\\". The type specific information varies.
+.sp
+.br
+l	path	target
+.br
+h	path 	target
+.br
+.sp
+Type 'l' is a symbolic link and 'h' is a hard link.  Target is encoded like
+path.
+.sp
+.br
+d	path	mode	uid	gid
+.br
+D	path	mode	uid	gid
+.br
+s	path	mode	uid	gid
+.br
+p	path	mode	uid	gid
+.br
+.sp
+Type 'd' is a directory, 'D' is a door, 's' is a socket and 'p' is a named
+pipe. Mode is a 4 digit octal representation of the permissions. 
+( see
+.BR chmod(1).
+) uid and gid are the user and group ids in decimal format.
+.sp
+.br
+b       path    mode    uid     gid     major   minor
+.br
+c       path    mode    uid     gid     major   minor
+.br
+.sp
+Type 'b' is a block special file, 'c' is a character special file. Major
+and minor are the major and minor device numbers in decimal.
+.sp
+.br
+f       path    mode    uid     gid     mtime   size    checksum
+.br
+.sp
+Type 'f' is a file. Mtime is a decimal number of seconds since 1970 GMT.
+Size is the size of the file in bytes. Checksum is the base64 encoded
+checksum if enabled, otherwise it is "-".
+.sp
+Transcripts are sorted in depth first order, which means subdirectories have
+precedence over files in the same directory. This means that "/" has
+special precedence. So the file:
+.sp
+/etc/passwd  comes before /etc.old
+.sp
+even though "." comes lexically before "/"
+.SH COMMAND FILES
+Command files have the following format:
+.br
+.sp
+type	transcriptname/pathname
+.sp
+.br
+Type is any part of the words "positive", "negative" and "special". The
+second argument is either a transcript name, or in the case of type
+special, a full pathname.
+.br
+.br
+.sp
+# example command file
+.br
+p	solaris8base.T
+.br
+n	solarisneg.T
+.br
+s	/etc/printcap
+.br
+s	/etc/hostname.hme0
+.br
+.br
+.sp
+Lines beginning with "#" are comments, and are skipped. A comment must
+be on a line by itself. Blank lines are also skipped.
+.sp
+If there is no command file, the transcript used is the null transcript.
+This means
+.B fsdiff
+will print out a difference line for every object in the
+filesystem, eg. a filesystem snapshot. 
+.sp
+.SH EXAMPLES
+In this example, fsdiff is used to generate a line for the negative
+transcript for /tmp.
+.RS
+.sp
+.nf	
+	example% fsdiff -1 /tmp
+	d	/tmp	1777     3     3
+	example%
+.fi
+.RE
+.sp
+.SH OPTIONS
+.TP 19
+.B \-1
+prints out a single transcript line for the given file. this option can be
+used to build 
+.B negative
+transcripts.
+.TP 19
+.B \-T
+prints out the difference transcript as edits to the file system to make
+it match the transcript. 
+.TP 19
+.B \-V
+prints out the fsdiff version number and a list of supported checksumming
+algorithims in descending order of preference.
+.TP 19
+.BI \-K\  command
+specifies a command
+file name, by default
+.B command.K
+.TP 19
+.BI \-c\  checksum
+enables checksuming. 
+.TP 19
+.BI \-o\  file
+specifies an output file, default is standard out.
+.sp
+.SH FILES
+.TP 19
+.B command.K
+name of the default command file.
+.TP 19
+.B special.T 
+name of the special transcript.
+.sp
+.SH SEE ALSO
+.BR ktcheck (1),
+.BR lcreate (1),
+.BR lapply (1).
