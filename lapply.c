@@ -2,10 +2,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <netdb.h>
+#include <sha.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/mkdev.h>
+#include <sys/ddi.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -16,8 +18,13 @@
 #include "snet.h"
 #include "argcargv.h"
 #include "code.h"
+#include "base64.h"
+
+#define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
 
 void		(*logger)( char * ) = NULL;
+struct timeval 	timeout = { 10 * 60, 0 };
+int		linenum = 0;
 
     static char
 t_convert( int type )
@@ -68,20 +75,144 @@ ischild( const char *parent, const char *child)
 	}
     }
 }
+    int
+download( SNET *sn, char *transcript, char *path, char *chksum ) 
+{
+    struct timeval      tv;
+    char 		*line;
+    char                *temppath;
+    unsigned int	rr;
+    int			fd;
+    size_t              size;
+    char                buf[ 8192 ]; 
+    unsigned char	md[ SHA_DIGEST_LENGTH ];
+    unsigned char	mde[ SZ_BASE64_E( sizeof( md ) ) ];
+    SHA_CTX		sha_ctx;
+
+    /* Connect to server */ 
+    if( snet_writef( sn, "RETR FILE %s %s\r\n", transcript,
+	    encode( path ) ) == NULL ) {
+	perror( "snet_writef" );
+	return( -1 );
+    }
+
+    printf( ">>> RETR FILE %s %s\r\n", transcript, encode( path ) );
+
+    tv = timeout;
+    if ( ( line = snet_getline_multi( sn, logger, &tv ) ) == NULL ) {
+	perror( "snet_getline_multi" );
+	return( -1 );
+    }
+
+    printf( "<<< %s\n", line );
+
+    if ( *line != '2' ) {
+	perror( line );
+	return( -1 );
+    }
+
+    /*Create temp file name*/
+    temppath = (char *)malloc( MAXPATHLEN );
+    if ( temppath == NULL ) {
+	perror( "malloc" );
+	return ( -1 );
+    }
+    sprintf( temppath, "%s.radmind.%i", path, rand() );
+
+    /* Open file */
+    if ( ( fd = open( temppath, O_WRONLY | O_CREAT | O_EXCL, 0 ) ) < 0 ) {
+	perror( temppath );
+	return( -1 );
+    }
+    tv = timeout;
+    if ( ( line = snet_getline( sn, &tv ) ) == NULL ) {
+	perror( "snet_getline 1" );
+	goto error;
+    }
+
+    size = atoi( line );
+    printf( "<<< %i\n", size );
+    //printf( "<<< " );
+
+    SHA1_Init( &sha_ctx );
+
+    /* Get file from server */
+    while ( size > 0 ) {
+	tv = timeout;
+	printf( "Min is %d\n",  MIN( sizeof( buf ), size ) );
+	if ( ( rr = snet_read( sn, buf, MIN( sizeof( buf ), size ),
+		&tv ) ) <= 0 ) {
+	    perror( "snet_read" );
+	    goto error;
+	}
+	printf( "rr: %d\n", rr ); 
+	SHA1_Update( &sha_ctx, buf, rr );
+	if ( write( fd, buf, (int)rr ) != rr ) {
+	    perror( temppath );
+	    goto error;
+	}
+	printf( "..." );
+	size -= rr;
+    }
+
+    printf( "\n" );
+
+    if ( close( fd ) != 0 ) {
+	perror( temppath );
+	goto error;
+    }
+    SHA1_Final( md, &sha_ctx );
+    base64_e( md, sizeof( md ), mde );
+    printf( "chksum: %s\n", mde );
+    printf( "match to: %s\n", chksum );
+    if ( ( strcmp( chksum, mde ) ) != 0  && strcmp( chksum, "-" ) !=0 ) {
+	perror( "Chksum failed" );
+	goto error;
+    }
+    if ( rename( temppath, path ) != 0 ) {
+	perror( path );
+	goto error;
+    }
+
+    free( temppath );
+
+    if ( size != 0 ) {
+	perror( "Did not write correct number of bytes" );
+	return( -1 );
+    }
+
+    tv = timeout;
+    if ( ( line = snet_getline( sn, &tv ) ) == NULL ) {
+	perror( "snet_getline" );
+	return( -1 );
+    }
+    if ( strcmp( line, "." ) != 0 ) {
+	perror( line );
+	return( -1 );
+    }
+
+    return ( 0 );
+
+error:
+    close( fd );
+    unlink( temppath );
+    free ( temppath );
+    return ( -1 );
+
+}
 
     int 
 apply( FILE *f, char *parent, SNET *sn )
 {
     char		tline[ 2 * MAXPATHLEN ];
     char		transcript[ 2 * MAXPATHLEN ];
-    char		buf[ 8192 ]; 
-    int			tac, present, len, fd, size, rr;
-    char		**targv, *path, *command, *line;
+    char		chksum_b64[ 29 ];
+    int			tac, present, len;
+    char		**targv, *path, *command = "";
     char		fstype;
     struct stat		st;
     mode_t	   	mode;
     struct utimbuf	times;
-    struct timeval	tv;
     uid_t		uid;
     gid_t		gid;
 
@@ -92,16 +223,17 @@ apply( FILE *f, char *parent, SNET *sn )
     }
 
     while ( fgets( tline, MAXPATHLEN, f ) != NULL ) {
+	linenum++;
 
-	printf( "%s", tline );
-
-	tac = argcargv( tline, &targv );
+	printf( "%d: %s", linenum, tline );
 
 	len = strlen( tline );
         if (( tline[ len - 1 ] ) != '\n' ) {
 	    fprintf( stderr, "%s: line too long\n", tline );
 	    return( 1 );
 	}
+
+	tac = argcargv( tline, &targv );
 
 	if ( tac == 1 ) {
 	    printf( "Command file: %s\n", targv[ 0 ] );
@@ -125,17 +257,21 @@ apply( FILE *f, char *parent, SNET *sn )
 		perror( path );
 		return( 1 );
 	    } else {
+		//printf( "%s not present\n", path );
 		present = 0;
 	    }
 
-	    if ( ( fstype != *targv[ 0 ] && present ) || 
-		    ( *command == '-' && present ) ) {
+	    if ( present && ( *command == '-'||  fstype != *targv[ 0 ] ) ) {
+
+		printf( "%s: Must Remove\n", path );
 
 		if ( fstype == 'd' ) {
 		    printf( "Calling apply to handle dir\n" );
 
 		    /* Recurse */
-		    apply( f, path, sn );
+		    if ( apply( f, path, sn ) != 0 ) {
+			return -1;
+		    }
 
 		    /* Directory is now empty */
 		    if ( rmdir( path ) != 0 ) {
@@ -157,68 +293,13 @@ apply( FILE *f, char *parent, SNET *sn )
 	    }
 
 	    /* DOWNLOAD */
-	    if ( *command == '+' ) { 
+	    if ( *command == '+' ) {
+		strcpy( chksum_b64, targv[ 7 ] );
 
-		/* Open file */
-		if ( ( fd = open( path, O_WRONLY | O_CREAT, 0 ) ) > 0 ) {
-		    perror( path );
+		if ( download( sn, transcript, path, chksum_b64 ) != 0 ) {
+		    perror( "download" );
 		    return( -1 );
 		}
-
-		/* Connect to server */ 
-		if( snet_writef( sn,
-			"RETR FILE %s %s\r\n",
-			transcript,
-			encode( path ) ) == NULL ) {
-		    perror( "snet_writef" );
-		    return( -1 );
-		}
-		tv.tv_sec = 10;
-		tv.tv_usec = 0;
-		if ( ( line = snet_getline_multi( sn, logger, &tv ) ) == NULL ) {
-		    perror( "snet_getline_multi" );
-		    return( -1 );
-		}
-		if ( *line != '2' ) {
-		    perror( line );
-		    return( -1 );
-		}
-		tv.tv_sec = 10;
-		tv.tv_usec = 0;
-		if ( ( line = snet_getline_multi( sn, logger, &tv ) ) == NULL ) {
-		    perror( "snet_getline_multi" );
-		    return( -1 );
-		}
-		size = atoi( line );
-
-		/* Get file from server */
-		while ( ( rr = snet_read( sn, buf, sizeof( buf ), &tv ) ) > 0 ) {
-		    tv.tv_sec = 10;
-		    tv.tv_usec = 0;
-		    if ( write( fd, buf, (int)rr ) != rr ) {
-			perror( path );
-			return ( -1 );
-		    }
-		    size -= rr;
-		}
-
-		if ( size != 0 ) {
-		    perror( "Did not write correct number of bytes" );
-		    return( -1 );
-		}
-
-		tv.tv_sec = 10;
-		tv.tv_usec = 0;
-		if ( ( line = snet_getline_multi( sn, logger, &tv ) ) == NULL ) {
-		    perror( "snet_getline_multi" );
-		    return( -1 );
-		}
-		if ( *line != '.' ) {
-		    perror( line );
-		    return( -1 );
-		}
-
-		close( fd );
 
 		/* DO LSTAT ON NEW FILE */
 		if ( lstat( path, &st ) !=  0 ) {
@@ -288,6 +369,8 @@ apply( FILE *f, char *parent, SNET *sn )
 			    perror( path );
 			    return( 1 );
 			}
+
+			printf( "Created dir %s\n", path );
 
 			if ( lstat( path, &st ) !=  0 ) {
 			    perror( path );
@@ -407,7 +490,7 @@ apply( FILE *f, char *parent, SNET *sn )
 		    }
 		    break;
 		default :
-		    printf( "Unkown type %s to update\n", path );
+		    printf( "%d: Unkown type %s\n", linenum, targv[ 0 ] );
 		    return( 1 );
 		} // End of defualt switch
 	    }
@@ -426,6 +509,7 @@ apply( FILE *f, char *parent, SNET *sn )
     }
 
     return( 0 );
+
 }
 
     int
@@ -433,7 +517,7 @@ main( int argc, char **argv )
 {
     int			i, c, s, port = htons( 6662 ), err = 0, network = 1;
     FILE		*f; 
-    char		*host = "rsug.itd.umich.edu";
+    char		*host = "rearwindow.rsug.itd.umich.edu";
     char		*line;
     struct servent	*se;
     char		*version = "1.0";
@@ -494,15 +578,15 @@ main( int argc, char **argv )
 	    sin.sin_port = port;
 	    memcpy( &sin.sin_addr.s_addr, he->h_addr_list[ i ],
 		( unsigned int)he->h_length );
-	    fprintf( stderr, "trying %s... ",
+	    printf( "trying %s... ",
 		    inet_ntoa( *( struct in_addr *)he->h_addr_list[ i ] ) );
 	    if ( connect( s, ( struct sockaddr *)&sin,
 		    sizeof( struct sockaddr_in ) ) != 0 ) {
-		perror( "connect" );
+		printf( "connect" );
 		(void)close( s );
 		continue;
 	    }
-	    perror( "success!\n" );
+	    printf( "success!\n" );
 
 	    if ( ( sn = snet_attach( s, 1024 * 1024 ) ) == NULL ) {
 		perror ( "snet_attach failed" );
