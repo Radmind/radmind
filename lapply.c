@@ -124,7 +124,7 @@ apply( FILE *f, char *parent, SNET *sn )
 
 	len = strlen( tline );
         if (( tline[ len - 1 ] ) != '\n' ) {
-	    fprintf( stderr, "%s: line too long\n", tline );
+	    fprintf( stderr, "%s: line %d: line too long\n", tline, linenum  );
 	    return( 1 );
 	}
 
@@ -134,7 +134,8 @@ apply( FILE *f, char *parent, SNET *sn )
 	    strcpy( transcript, targv[ 0 ] );
 	    len = strlen( transcript );
 	    if ( transcript[ len - 1 ] != ':' ) { 
-		fprintf( stderr, "%s: invalid transcript name\n", transcript );
+		fprintf( stderr, "%s: line %d: invalid transcript name\n",
+		    transcript, linenum );
 		return( 1 );
 	    }
 	    transcript[ len - 1 ] = '\0';
@@ -257,7 +258,7 @@ filechecklist:
 			linenum, *targv[ 0 ] );
 		return( 1 );
 	    }
-		
+
 	    strcpy( chksum_b64, targv[ 7 ] );
 
 	    if ( special ) {
@@ -268,7 +269,6 @@ filechecklist:
 
 	    if ( retr( sn, pathdesc, path, NULL, chksum_b64,
 		    (char *)&temppath ) != 0 ) {
-		perror( "download" );
 		return( 1 );
 	    }
 
@@ -389,7 +389,7 @@ main( int argc, char **argv )
     }
 
     if ( err ) {
-	fprintf( stderr, "usage: lapply [ -nsvV ] " );
+	fprintf( stderr, "usage: lapply [ -nsV ] [ -q | -v ]" );
 	fprintf( stderr, "[ -c checksum ] [ -h host ] [ -p port ] " );
 	fprintf( stderr, "[ appliable-transcript ]\n" );
 	exit( 1 );
