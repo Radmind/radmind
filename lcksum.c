@@ -52,7 +52,7 @@ main( int argc, char **argv )
     float		pct = 0.0;
     extern int          optind;
     char		*transcript = NULL, *tpath = NULL, *line;
-    char		*prefix = NULL;
+    char		*prefix = NULL, *d_path = NULL;
     char                **targv;
     char                tline[ 2 * MAXPATHLEN ];
     char		path[ 2 * MAXPATHLEN ];
@@ -211,7 +211,11 @@ main( int argc, char **argv )
 	    remove = 0;
 	}
 
-	if ( snprintf( path, MAXPATHLEN, "%s", decode( targv[ 1 ] ))
+	if (( d_path = decode( targv[ 1 ] )) == NULL ) {
+	    fprintf( stderr, "line %d: path too long\n", linenum );
+	    exit( 2 );
+	} 
+	if ( snprintf( path, MAXPATHLEN, "%s", d_path )
 		> MAXPATHLEN - 1) {
 	    fprintf( stderr, "line %d: path too long\n", linenum );
 	    exit( 2 );
@@ -224,7 +228,6 @@ main( int argc, char **argv )
 		exit( 2 );
 	    }
 	}
-	len = strlen( targv[ 1 ] );
 	if ( snprintf( prepath, MAXPATHLEN, "%s", path) > MAXPATHLEN ) {
 	    fprintf( stderr, "line %d: path too long\n", linenum );
 	    exit( 2 );
@@ -245,7 +248,7 @@ main( int argc, char **argv )
 
 	/* check to see if file against prefix */
 	if ( prefix != NULL ) {
-	    if ( strncmp( decode( targv[ 1 ] ), prefix, strlen( prefix ))
+	    if ( strncmp( d_path, prefix, strlen( prefix ))
 		    != 0 ) {
 		if ( updatetran ) {
 		    fprintf( ufs, "%s", line );
@@ -256,9 +259,9 @@ main( int argc, char **argv )
 	}
 
 	if ( snprintf( path, MAXPATHLEN, "%s/../file/%s/%s", tpath, transcript,
-		decode( targv[ 1 ] )) > MAXPATHLEN - 1 ) {
+		d_path ) > MAXPATHLEN - 1 ) {
 	    fprintf( stderr, "%s/../file/%s/%s: path too long\n", tpath,
-		transcript, decode( targv[ 1 ] ));
+		transcript, d_path );
 	    exit( 2 );
 	}
 
@@ -280,11 +283,11 @@ main( int argc, char **argv )
 	}
 	if ( st.st_size != strtoofft( targv[ 6 ], NULL, 10 )) {
 	    if ( verbose && !updatetran ) printf( "%s: size wrong\n",
-		    decode( targv[ 1 ] ));
+		    d_path );
 	    ucount++;
 	    if ( updatetran ) {
 		if ( verbose && updatetran ) printf( "%s: size updated\n",
-			decode( targv[ 1 ] ));
+			d_path );
 	    }
 	    updateline = 1;
 	}
@@ -302,11 +305,11 @@ main( int argc, char **argv )
 	/* check cksum */
 	if ( strcmp( lcksum, targv[ 7 ] ) != 0 ) {
 	    if ( verbose && !updatetran ) printf( "%s: cksum wrong\n",
-		    decode( targv[ 1 ] ));
+		    d_path );
 	    ucount++;
 	    if ( updatetran ) {
 		if ( verbose && updatetran ) printf( "%s: cksum updated\n",
-		    decode( targv[ 1 ] )); 
+		    d_path ); 
 	    }
 	    updateline = 1;
 	}
@@ -337,7 +340,7 @@ done:
 	if ( verbose == 2 && ( tac > 0 && *line != '#' )) {
 	    pct = ((( float )linenum / ( float )lcount ) * 100.0 );
 	    if (( int )pct != lastpct ) {
-		printf( "%%%.2d %s\n", ( int )pct, decode( targv[ 1 ] ));
+		printf( "%%%.2d %s\n", ( int )pct, d_path );
 	    }
 
 	    lastpct = ( int )pct;

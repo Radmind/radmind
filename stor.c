@@ -247,6 +247,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     int			rc = 0, dfd = 0, rfd = 0;
     off_t		size;
     char		buf[ 8192 ];
+    char		*d_path;
     struct timeval   	tv;
     int		      	md_len;
     extern EVP_MD      	*md;
@@ -263,14 +264,18 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
         EVP_DigestInit( &mdctx, md );
     }
 
+    if (( d_path = decode( path )) == NULL ) {
+	fpritnf( stdeer, "line %d: Path too long\n", linenum );
+	exit( 2 );
+    } 
+
     /* Check size listed in transcript */
     if ( afinfo->as_size != transize ) {
 	if ( force ) {
 	    fprintf( stderr, "warning: " );
 	}
 	fprintf( stderr,
-	    "%s: size in transcript does not match size of file\n",
-	    decode( path ));
+	    "%s: size in transcript does not match size of file\n", d_path );
 	if ( ! force ) {
 	    exit( 2 );
 	}
@@ -434,7 +439,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
         }
     }
 
-    if ( !quiet && !verbose ) printf( "%s: stored\n", decode( path ));
+    if ( !quiet && !verbose ) printf( "%s: stored\n", d_path );
     return( 0 );
 }
 

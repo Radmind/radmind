@@ -71,7 +71,7 @@ main( int argc, char **argv )
     extern char	*version;
     char	*kfile = _RADMIND_COMMANDFILE;
     char	*kdir = "";
-    char	*pattern, *p, *tline, **av;
+    char	*pattern, *p, *tline, **av, *d_path;
     char	line[ MAXPATHLEN * 2 ];
     char	tran[ MAXPATHLEN ];
     char	path[ MAXPATHLEN ];
@@ -176,9 +176,13 @@ main( int argc, char **argv )
 	switch( *av[ 0 ] ) {
 	case 's':
 	    specialfile++;
-	    if ( pathcmp( decode( av[ 1 ] ), pattern ) == 0 ) {
+	    if (( d_path = decode( av[ 1 ] )) == NULL ) {
+		fprintf( stderr, "line %d: path too long\n", linenum );
+		exit( 2 );
+	    } 
+	    if ( pathcmp( d_path, pattern ) == 0 ) {
 		match++;
-		printf( "special.T:\ns %s\n", av[ 1 ] );
+		printf( "special.T:\ns %s\n", d_path );
 		if ( !displayall ) {
 		    goto done;
 		}
@@ -259,23 +263,29 @@ main( int argc, char **argv )
 		av++;
 	    }
 
+	    if (( d_path = decode( av[ 1 ] )) == NULL ) {
+		fprintf( stderr, "%s: line %d: path too long\n", tran,
+		    linenum );
+		exit( 2 );
+	    } 
+
 	    /* Check transcript order */
 	    if ( prepath != 0 ) {
-		if ( pathcmp( decode( av[ 1 ] ), prepath ) < 0 ) {
+		if ( pathcmp( d_path, prepath ) < 0 ) {
 		    fprintf( stderr, "%s: line %d: bad sort order\n",
 				tran, linenum );
 		    exit( 2 );
 		}
 	    }
 	    len = strlen( path );
-	    if ( snprintf( prepath, MAXPATHLEN, "%s", decode( av[ 1 ] ))
+	    if ( snprintf( prepath, MAXPATHLEN, "%s", d_path )
 			>= MAXPATHLEN ) {
 		fprintf( stderr, "%s: line %d: path too long\n",
 			tran, linenum );
 		exit( 2 );
 	    }
 
-	    cmp = pathcmp( decode( av[ 1 ] ), pattern );
+	    cmp = pathcmp( d_path, pattern );
 	    if ( cmp == 0 ) {
 		match++;
 		if (( !remove ) &&

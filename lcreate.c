@@ -79,7 +79,7 @@ main( int argc, char **argv )
     SNET          	*sn = NULL;
     char		type;
     char		*tname = NULL, *host = _RADMIND_HOST; 
-    char		*p,*dpath = NULL, tline[ 2 * MAXPATHLEN ];
+    char		*p,*d_path = NULL, tline[ 2 * MAXPATHLEN ];
     char		pathdesc[ 2 * MAXPATHLEN ];
     char		**targv;
     char                cksumval[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
@@ -376,12 +376,15 @@ main( int argc, char **argv )
 		exit( 2 );
 	    }
 
-	    dpath = decode( targv[ 1 ] );
+	    if (( d_path = decode( targv[ 1 ] )) == NULL ) {
+		fprintf( stderr, "line %d: path too long\n", linenum );
+		return( 1 );
+	    } 
 
 	    if ( !negative ) {
 		/* Verify transcript line is correct */
-		if ( radstat( dpath, &st, &type, &afinfo ) != 0 ) {
-		    perror( dpath );
+		if ( radstat( d_path, &st, &type, &afinfo ) != 0 ) {
+		    perror( d_path );
 		    exit( 2 );
 		}
 		if ( *targv[ 0 ] != type ) {
@@ -393,13 +396,13 @@ main( int argc, char **argv )
 	    if ( !network ) {
 		if ( cksum ) {
 		    if ( *targv[ 0 ] == 'f' ) {
-			size = do_cksum( dpath, cksumval );
+			size = do_cksum( d_path, cksumval );
 		    } else {
 			/* apple file */
-			size = do_acksum( dpath, cksumval, &afinfo );
+			size = do_acksum( d_path, cksumval, &afinfo );
 		    }
 		    if ( size < 0 ) {
-			fprintf( stderr, "%s: %s\n", dpath, strerror( errno ));
+			fprintf( stderr, "%s: %s\n", d_path, strerror( errno ));
 			exit( 2 );
 		    } else if ( size != strtoofft( targv[ 6 ], NULL, 10 )) {
 			fprintf( stderr, "line %d: size in transcript does "
@@ -413,24 +416,23 @@ main( int argc, char **argv )
 			return( -1 );
 		    }
 		}
-		if ( access( dpath,  R_OK ) < 0 ) {
-		    perror( dpath );
+		if ( access( d_path,  R_OK ) < 0 ) {
+		    perror( d_path );
 		    exit( 2 );
 		}
 	    } else {
 		if ( snprintf( pathdesc, MAXPATHLEN * 2, "STOR FILE %s %s", 
 			tname, targv[ 1 ] ) > ( MAXPATHLEN * 2 ) - 1 ) {
 		    fprintf( stderr, "STOR FILE %s %s: path description too \
-			long\n", tname, dpath );
+			long\n", tname, d_path );
 		    exit( 2 );
 		}
 
 		if ( negative ) {
 		    if ( *targv[ 0 ] == 'a' ) {
-			rc = n_stor_applefile( sn, pathdesc,
-				decode( targv[ 1 ] ));
+			rc = n_stor_applefile( sn, pathdesc, d_path );
 		    } else {
-			rc = n_stor_file( sn, pathdesc, decode( targv[ 1 ] ));
+			rc = n_stor_file( sn, pathdesc, d_path );
 		    }
 		    respcount += 2;
 		    if ( rc < 0 ) {
@@ -439,11 +441,11 @@ main( int argc, char **argv )
 
 		} else {
 		    if ( *targv[ 0 ] == 'a' ) {
-			rc = stor_applefile( sn, pathdesc, decode( targv[ 1 ] ),
+			rc = stor_applefile( sn, pathdesc, d_path,
 			    strtoofft( targv[ 6 ], NULL, 10 ), targv[ 7 ],
 			    &afinfo );
 		    } else {
-			rc = stor_file( sn, pathdesc, decode( targv[ 1 ] ), 
+			rc = stor_file( sn, pathdesc, d_path, 
 			    strtoofft( targv[ 6 ], NULL, 10 ), targv[ 7 ]); 
 		    }
 		    respcount += 2;

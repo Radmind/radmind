@@ -79,7 +79,8 @@ int getnextline( struct tran *tran );
     int
 getnextline( struct tran *tran )
 {
-    int len;
+    int		len;
+    char	*d_path;
 
 getline:
     if ( fgets( tran->tline, MAXPATHLEN, tran->fs ) == NULL ) {
@@ -123,10 +124,15 @@ getline:
     }
 
     /* Decode file path */
-    if ( snprintf( tran->filepath, MAXPATHLEN, "%s", decode( tran->targv[ 1 ]))
-	> MAXPATHLEN - 1 ) {
+    if (( d_path = decode( tran->targv[ 1 ] )) == NULL ) {
 	fprintf( stderr, "%s: line %d: %s: path too long\n",
 		tran->name, tran->linenum, decode( tran->targv[ 1 ]));
+	return( 1 );
+    } 
+    if ( snprintf( tran->filepath, MAXPATHLEN, "%s", d_path )
+	    > MAXPATHLEN - 1 ) {
+	fprintf( stderr, "%s: line %d: %s: path too long\n",
+		tran->name, tran->linenum, d_path );
 	return( 1 );
     }
 

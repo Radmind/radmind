@@ -80,10 +80,14 @@ transcript_parse( struct transcript *tran )
     }
 
     tran->t_pinfo.pi_type = argv[ 0 ][ 0 ];
-    epath = decode( argv[ 1 ] );
+    if (( epath = decode( argv[ 1 ] )) == NULL ) {
+	fprintf( stderr, "%s: line %d: path too long\n",
+	    tran->t_fullname, tran->t_linenum );
+	exit( 2 );
+    }
     if ( pathcmp( epath, tran->t_pinfo.pi_name ) < 0 ) {
 	fprintf( stderr, "%s: line %d: bad sort order\n",
-		tran->t_fullname, tran->t_linenum );
+	    tran->t_fullname, tran->t_linenum );
 	exit( 2 );
     }
 
@@ -152,7 +156,11 @@ transcript_parse( struct transcript *tran )
 		    tran->t_fullname, tran->t_linenum, ac );
 	    exit( 2 );
 	}
-	epath = decode( argv[ 2 ] );
+	if (( epath = decode( argv[ 2 ] )) == NULL ) {
+	    fprintf( stderr, "%s: line %d: target path too long\n",
+		tran->t_fullname, tran->t_linenum );
+	    exit( 2 );
+	}
 	strcpy( tran->t_pinfo.pi_link, epath );
 	break;
 

@@ -296,7 +296,7 @@ f_retr( sn, ac, av )
     struct timeval	tv;
     char		buf[8192];
     char		path[ MAXPATHLEN ];
-    char		*d_path;
+    char		*d_path, *d_tran;
     int			fd;
     struct node		*node = NULL;
 
@@ -306,42 +306,67 @@ f_retr( sn, ac, av )
 	break;
 
     case K_TRANSCRIPT:
+	if (( d_tran = decode( av[ 2 ] )) == NULL ) {
+	    syslog( LOG_ERR, "f_retr: decode: buffer too small" );
+	    snet_writef( sn, "%d Line too long\r\n", 540 );
+	    return( 1 );
+	} 
+
 	/* Check for access */
 	for ( node = tran_list; node != NULL; node = node->next ) {
-	    if ( strcmp( av[ 2 ], node->path ) == 0 ) {
+	    if ( strcmp( d_tran, node->path ) == 0 ) {
 		break;
 	    }
 	}
 	if ( node == NULL ) {
-	    syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s", av[ 2 ] );
-	    snet_writef( sn, "%d No access for %s\r\n", 540, av[ 2 ] );
+	    syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s", d_tran );
+	    snet_writef( sn, "%d No access for %s\r\n", 540, d_tran );
 	    return( 1 );
 	}
-	sprintf( path, "transcript/%s", decode( av[ 2 ] ));
+
+	sprintf( path, "transcript/%s", d_tran );
 	break;
 
     case K_SPECIAL:
-	sprintf( path, "special/%s/%s", special_dir, decode( av[ 2 ] ));
+	if (( d_path = decode( av[ 2 ] )) == NULL ) {
+	    syslog( LOG_ERR, "f_retr: decode: buffer too small" );
+	    snet_writef( sn, "%d Line too long\r\n", 540 );
+	    return( 1 );
+	} 
+
+	sprintf( path, "special/%s/%s", special_dir, d_path );
 	break;
 
     case K_FILE:
+	if (( d_path = decode( av[ 3 ] )) == NULL ) {
+	    syslog( LOG_ERR, "f_retr: decode: buffer too small" );
+	    snet_writef( sn, "%d Line too long\r\n", 540 );
+	    return( 1 );
+	} 
+	if (( d_path = strdup( d_path )) == NULL ) {
+	    syslog( LOG_ERR, "f_retr: strdup: %s: %m", d_path );
+	    return( -1 );
+	}
+	if (( d_tran = decode( av[ 2 ] )) == NULL ) {
+	    syslog( LOG_ERR, "f_retr: decode: buffer too small" );
+	    snet_writef( sn, "%d Line too long\r\n", 540 );
+	    return( 1 );
+	} 
+
 	/* Check for access */
 	for ( node = tran_list; node != NULL; node = node->next ) {
-	    if ( strcmp( av[ 2 ], node->path ) == 0 ) {
+	    if ( strcmp( d_tran, node->path ) == 0 ) {
 		break;
 	    }
 	}
 	if ( node == NULL ) {
-	    syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s", av[ 2 ] );
-	    snet_writef( sn, "%d No access for %s:%s\r\n", 540, av[ 2 ], av[ 3 ] );
+	    syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s", d_tran );
+	    snet_writef( sn, "%d No access for %s:%s\r\n", 540, d_tran,
+		d_path );
 	    return( 1 );
 	}
 
-	if (( d_path = strdup( decode( av[ 3 ] ))) == NULL ) {
-	    syslog( LOG_ERR, "f_retr: strdup: %s: %m", av[ 3 ] );
-	    return( -1 );
-	}
-	sprintf( path, "file/%s/%s", decode( av[ 2 ] ), d_path );
+	sprintf( path, "file/%s/%s", d_tran, d_path );
 	free( d_path );
 	break;
 
@@ -448,7 +473,7 @@ f_stat( SNET *sn, int ac, char *av[] )
     char		cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
     struct stat		st;
     int			key;
-    char		*enc_file;
+    char		*enc_file, *d_tran, *d_path;
     struct node		*node;
 
     switch ( key = keyword( ac, av )) {
@@ -457,22 +482,35 @@ f_stat( SNET *sn, int ac, char *av[] )
 	break;
 
     case K_TRANSCRIPT:
+	if (( d_tran = decode( av[ 2 ] )) == NULL ) {
+	    syslog( LOG_ERR, "f_stat: decode: buffer too small" );
+	    snet_writef( sn, "%d Line too long\r\n", 540 );
+	    return( 1 );
+	} 
+
 	/* Check for access */
 	for ( node = tran_list; node != NULL; node = node->next ) {
-	    if ( strcmp( av[ 2 ], node->path ) == 0 ) {
+	    if ( strcmp( d_tran, node->path ) == 0 ) {
 		break;
 	    }
 	}
 	if ( node == NULL ) {
-	    syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s", av[ 2 ] );
-	    snet_writef( sn, "%d No access for %s\r\n", 540, av[ 2 ] );
+	    syslog( LOG_WARNING | LOG_AUTH, "attempt to access: %s", d_tran );
+	    snet_writef( sn, "%d No access for %s\r\n", 540, d_tran );
 	    return( 1 );
 	}
-	sprintf( path, "transcript/%s", decode( av[ 2 ] ));
+
+	sprintf( path, "transcript/%s", d_tran );
 	break;
 
     case K_SPECIAL:
-	sprintf( path, "special/%s/%s", special_dir, decode( av[ 2 ] ));
+	if (( d_path = decode( av[ 2 ] )) == NULL ) {
+	    syslog( LOG_ERR, "f_stat: decode: buffer too small" );
+	    snet_writef( sn, "%d Line too long\r\n", 540 );
+	    return( 1 );
+	} 
+
+	sprintf( path, "special/%s/%s", special_dir, d_path);
 	break;
 
     default:
@@ -585,7 +623,7 @@ f_stor( SNET *sn, int ac, char *av[] )
     char		upload[ MAXPATHLEN ];
     char		buf[ 8192 ];
     char		*line;
-    char		*d_path;
+    char		*d_tran, *d_path;
     int			fd;
     off_t		len;
     ssize_t		rc;
@@ -595,13 +633,19 @@ f_stor( SNET *sn, int ac, char *av[] )
 	snet_writef( sn, "%d Not logged in\r\n", 551 );
 	exit( 1 );
     }
+    if (( d_tran = decode( av[ 2 ] )) == NULL ) {
+	syslog( LOG_ERR, "f_stor: decode: buffer too small" );
+	snet_writef( sn, "%d Line too long\r\n", 540 );
+	return( 1 );
+    } 
+
     switch ( keyword( ac, av )) {
 
     case K_TRANSCRIPT:
-        sprintf( xscriptdir, "tmp/file/%s", decode( av[ 2 ] ));
-        sprintf( upload, "tmp/transcript/%s", decode( av[ 2 ] ));
+        sprintf( xscriptdir, "tmp/file/%s", d_tran );
+        sprintf( upload, "tmp/transcript/%s", d_tran );
 
-	/* don't decode the transcript name, since it will just be
+	/* keep encoded transcript name, since it will just be
 	 * used later to compare in a stor file.
 	 */
 	strcpy( upload_xscript, av[ 2 ] );
@@ -628,14 +672,20 @@ f_stor( SNET *sn, int ac, char *av[] )
 	}
 
 	/* decode() uses static mem, so strdup() */
-	if (( d_path = strdup( decode( av[ 3 ] ))) == NULL ) {
-	    syslog( LOG_ERR, "f_stor: strdup: %s: %m", av[ 3 ] );
+	if (( d_path = decode( av[ 3 ] )) == NULL ) {
+	    syslog( LOG_ERR, "f_stor: decode: buffer too small" );
+	    snet_writef( sn, "%d Line too long\r\n", 540 );
+	    return( 1 );
+	} 
+	if (( d_path = strdup( d_path )) == NULL ) {
+	    syslog( LOG_ERR, "f_stor: strdup: %s: %m", d_path );
 	    return( -1 );
 	}
+
 	if ( d_path[ 0 ] == '/' ) {
-	    sprintf( upload, "tmp/file/%s%s", decode( av[ 2 ] ), d_path );
+	    sprintf( upload, "tmp/file/%s%s", d_tran, d_path );
 	} else {
-	    sprintf( upload, "tmp/file/%s/%s", decode( av[ 2 ] ), d_path );
+	    sprintf( upload, "tmp/file/%s/%s", d_tran, d_path );
 	}
 	free( d_path );
 	break;

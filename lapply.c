@@ -100,7 +100,7 @@ output( char *string )
 do_line( char *tline, int present, struct stat *st, SNET *sn )
 {
     char                	fstype;
-    char        	        *command = "";
+    char        	        *command = "", *d_path;
     ACAV               		*acav;
     int				tac;
     char 	               	**targv;
@@ -119,7 +119,11 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
 	targv++;
 	tac--;
     }
-    strcpy( path, decode( targv[ 1 ] ));
+    if (( d_path = decode( targv[ 1 ] )) == NULL ) {
+	fprintf( stderr, "line %d: too long\n", linenum );
+	return( 1 );
+    } 
+    strcpy( path, d_path );
 
     /* DOWNLOAD */
     if ( *command == '+' ) {
@@ -215,7 +219,7 @@ main( int argc, char **argv )
     int			c, port = htons( 6662 ), err = 0;
     extern int          optind;
     FILE		*f = NULL; 
-    char		*host = _RADMIND_HOST;
+    char		*host = _RADMIND_HOST, *d_path;
     struct servent	*se;
     char		tline[ 2 * MAXPATHLEN ];
     char		targvline[ 2 * MAXPATHLEN ];
@@ -443,7 +447,11 @@ main( int argc, char **argv )
 	    continue;
 	}
 
-	strcpy( path, decode( targv[ 1 ] ));
+	if (( d_path = decode( targv[ 1 ] )) == NULL ) {
+	    fprintf( stderr, "line %d: too long\n", linenum );
+	    return( 1 );
+	} 
+	strcpy( path, d_path );
 
 	/* Check transcript order */
 	if ( prepath != 0 ) {

@@ -39,6 +39,7 @@ update( const char *path, char *displaypath, int present, int newfile,
     gid_t               gid;
     dev_t               dev;
     char		type;
+    char		*d_target;
 #ifdef __APPLE__
     char			fi_data[ FINFOLEN ];
     extern struct attrlist	setalist;
@@ -178,12 +179,15 @@ update( const char *path, char *displaypath, int present, int newfile,
 		"%d: incorrect number of arguments\n", linenum );
 	    return( 1 );
 	}
-	if ( link( decode( targv[ 2 ] ), path ) != 0 ) {
+	if (( d_target = decode( targv[ 2 ] )) == NULL ) {
+	    fprintf( stderr, "line %d: target path too long\n", linenum );
+	    return( 1 );
+	} 
+	if ( link( d_target, path ) != 0 ) {
 	    perror( path );
 	    return( 1 );
 	}
-	if ( !quiet ) printf( "%s: hard linked to %s",
-	    displaypath, decode( targv[ 2 ] ));
+	if ( !quiet ) printf( "%s: hard linked to %s", displaypath, d_target);
 	break;
 
     case 'l':
@@ -199,12 +203,16 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    }
 	    present = 0;
 	}
-	if ( symlink( decode( targv[ 2 ] ), path ) != 0 ) {
+	if (( d_target = decode( targv[ 2 ] )) == NULL ) {
+	    fprintf( stderr, "line %d: target path too long\n", linenum );
+	    return( 1 );
+	} 
+	if ( symlink( d_target, path ) != 0 ) {
 	    perror( path );
 	    return( 1 );
 	}
 	if ( !quiet ) printf( "%s: symbolic linked to %s",
-	    displaypath, decode( targv[ 2 ] ));
+	    displaypath, d_target );
 	break;
 
     case 'p':
