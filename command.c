@@ -1113,7 +1113,7 @@ cmdloop( int fd, struct sockaddr_in *sin )
 	/* lookup proper command file based on the hostname, IP or CN */
 	if ( command_k( "config" ) < 0 ) {
 	    snet_writef( sn, "%d No access for %s\r\n", 500, remote_host );
-	    syslog( LOG_INFO, "%s: Access denied: Not in command file",
+	    syslog( LOG_INFO, "%s: Access denied: Not in config file",
 		    remote_host );
 	    exit( 1 );
 	} else {
