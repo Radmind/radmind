@@ -15,13 +15,14 @@ int		showprogress = 0;
 off_t		lsize = 0, total = 0;
 
     void
-linecheck( char *line, int ac )
+linecheck( char *line, int ac, int linenum )
 {
     if ( ac < 8 ) {
 	if ( line[ strlen( line ) - 1 ] == '\n' ) {
 	    line[ strlen( line ) - 1 ] = '\0';
 	}
-	fprintf( stderr, "\"%s\": invalid transcript line\n", line );
+	fprintf( stderr, "%s: line %d: invalid transcript line\n",
+			line, linenum );
 	exit( 2 );
     }
 }
@@ -31,10 +32,11 @@ loadsetsize( FILE *tran )
 {
     char	tline[ LINE_MAX ], line[ LINE_MAX ];
     char	**targv;
-    int		tac;
+    int		tac, linenum = 0;
     off_t	size = 0;
 
     while ( fgets( tline, LINE_MAX, tran ) != NULL ) {
+	linenum++;
 	strcpy( line, tline );
 	if (( tac = argcargv( tline, &targv )) == 0 ) {
 	    continue;
@@ -49,7 +51,7 @@ loadsetsize( FILE *tran )
 	    continue;
 	}
 
-	linecheck( line, tac );
+	linecheck( line, tac, linenum );
 	size += strtoofft( targv[ 6 ], NULL, 10 );
     }
 
@@ -63,10 +65,11 @@ applyloadsetsize( FILE *tran )
 {
     char	tline[ LINE_MAX ], line[ LINE_MAX ];
     char	**targv;
-    int		tac;
+    int		tac, linenum = 0;
     off_t	size = 0;
 
     while ( fgets( tline, LINE_MAX, tran ) != NULL ) {
+	linenum++;
 	strcpy( line, tline );
 	/* skip empty lines and transcript marker lines */
 	if (( tac = argcargv( tline, &targv )) <= 1 ) {
@@ -78,7 +81,7 @@ applyloadsetsize( FILE *tran )
 	    switch ( *targv[ 1 ] ) {
 	    case 'a':
 	    case 'f':
-		linecheck( line, tac );
+		linecheck( line, tac, linenum );
 		size += strtoofft( targv[ 7 ], NULL, 10 );
 
 	    default:
@@ -103,10 +106,11 @@ lcksum_loadsetsize( FILE *tran, char *prefix )
     char	tline[ LINE_MAX ], line[ LINE_MAX ];
     char	*d_path = NULL;
     char	**targv;
-    int		tac, linenum = 1;
+    int		tac, linenum = 0;
     off_t	size = 0;
 
     while ( fgets( tline, LINE_MAX, tran ) != NULL ) {
+	linenum++;
 	strcpy( line, tline );
 	if (( tac = argcargv( tline, &targv )) <= 1 ) {
 	    continue;
@@ -125,7 +129,7 @@ lcksum_loadsetsize( FILE *tran, char *prefix )
 	switch ( *targv[ 0 ] ) {
 	case 'a':
 	case 'f':
-	    linecheck( line, tac );
+	    linecheck( line, tac, linenum );
 	    size += strtoofft( targv[ 6 ], NULL, 10 );
 
 	default:
