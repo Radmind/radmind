@@ -151,10 +151,10 @@ update( const char *path, char *displaypath, int present, int newfile,
 #ifdef __APPLE__
 	/* Check finder info */
 	if ( tac == 6 ) {
-	    memset( fi_data, 0, sizeof( fi_data ));
+	    memset( fi_data, 0, FINFOLEN );
 	    base64_d( targv[ 5 ], strlen( targv[ 5 ] ), fi_data );
 	} else {
-	    memcpy( fi_data, null_buf, sizeof( null_buf ));
+	    memcpy( fi_data, null_buf, FINFOLEN );
 	}
 	if ( memcmp( afinfo->fi.fi_data, fi_data, FINFOLEN ) != 0 ) {
 	    if ( setattrlist( path, &alist,
