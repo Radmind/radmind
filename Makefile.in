@@ -247,7 +247,7 @@ package	: all man info
 	-mkdir -p ${PKGDIR}/${SBINDIR}
 	${INSTALL} -m 0755 -c radmind ${PKGDIR}/${SBINDIR}/
 	-mkdir -p ${PKGDIR}/${BINDIR}
-	for i in ${PKGDIR}/${BINTARGETS}; do \
+	for i in ${BINTARGETS}; do \
 	    ${INSTALL} -m 0755 -c $$i ${PKGDIR}/${BINDIR}/; \
 	done
 	-mkdir -p ${prefix}
