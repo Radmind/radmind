@@ -458,10 +458,6 @@ main( int argc, char **argv )
             privatekey = optarg;
             break;
 
-	case '?':
-	    err++;
-	    break;
-
 	default:
 	    err++;
 	    break;
@@ -474,7 +470,7 @@ main( int argc, char **argv )
 
     if ( err || ( argc - optind != 0 )) {
 	fprintf( stderr, "usage: %s ", argv[ 0 ] );
-	fprintf( stderr, "[ -nrV ] [ -q | -vi ] " );
+	fprintf( stderr, "[ -inrV ] [ -q | -v ] " );
 	fprintf( stderr, "[ -c checksum ] [ -K command file ] " );
 	fprintf( stderr, "[ -h host ] [ -p port ] " );
 	fprintf( stderr, "[ -w authlevel ] [ -x ca-pem-file ] " );
