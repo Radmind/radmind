@@ -37,9 +37,7 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 #endif /* __APPLE__ */
 
     if ( lstat( path, st ) != 0 ) {
-	memset( &st, 0, sizeof( struct stat ));
-	*type = 'X';
-	return( 0 );
+	return( -1 );
     }
 
     switch( st->st_mode & S_IFMT ) {
