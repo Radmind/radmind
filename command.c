@@ -904,27 +904,34 @@ f_login( snet, ac, av )
 
     if (( retval =  pam_start( "radmind", user, &pam_conv,
 	    &pamh )) != PAM_SUCCESS ) {
+        snet_writef( snet, "%d Authentication Failed\r\n", 535 );
         syslog( LOG_ERR, "f_login: pam_start: %s\n",
 	    pam_strerror( pamh, retval ));
-	return( -1 );
+	return( 1 );
     }
+
+    /* is user really user? */
     if (( retval =  pam_authenticate( pamh, PAM_SILENT )) != PAM_SUCCESS ) {
+        snet_writef( snet, "%d Authentication Failed\r\n", 535 );
         syslog( LOG_ERR, "f_login: pam_authenticate: %s\n",
 	    pam_strerror( pamh, retval ));
-	return( -1 );
+	return( 1 );
     }
     free( password );
 
+    /* permitted access? */
     if (( retval = pam_acct_mgmt( pamh, 0 )) != PAM_SUCCESS ) {
+        snet_writef( snet, "%d Authentication Failed\r\n", 535 );
         syslog( LOG_ERR, "f_login: pam_acct_mgmt: %s\n",
 	    pam_strerror( pamh, retval ));
-	return( -1 );
+	return( 1 );
     }
 
     if (( retval = pam_end( pamh, retval )) != PAM_SUCCESS ) {
+        snet_writef( snet, "%d Authentication Failed\r\n", 535 );
         syslog( LOG_ERR, "f_login: pam_end: %s\n",
 	    pam_strerror( pamh, retval ));
-	return( -1 );
+	return( 1 );
     }
     syslog( LOG_INFO, "%s: successfully logged in\n", user );
     snet_writef( snet, "%d %s successfully logged in\r\n", 205, user );
