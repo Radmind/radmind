@@ -1,15 +1,13 @@
-/* check file for AS magic number. If AS, decode. */
-
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/paths.h>
+#include <sys/attr.h>
+#include <sys/uio.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/uio.h>
 #include <unistd.h>
-#include <sys/paths.h>
-#include <sys/attr.h>
 #include <string.h>
 #include <snet.h>
 
@@ -52,17 +50,6 @@ send_afile( const char *path, int afd, SNET *sn, int dodots )
     struct as_entry	as_entry_finfo = { ASEID_FINFO, 62, 32 };
     struct as_entry	as_entry_rfork = { ASEID_RFORK, 94, 0 };
     struct as_entry	as_entry_dfork = { ASEID_DFORK, 0, 0 };
-#ifdef notdef
-    struct as_header	as_header = {
-	0x00051600,
-	0x00020000,
-	{
-	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	},
-	NUM_ENTRIES,
-    };
-#endif
     struct timeval tv;
     extern struct timeval timeout;
 
@@ -119,7 +106,6 @@ printf( "r_size = 0\n" );
 
     /* rsrc fork header entry */
     as_entry_rfork.ae_length = r_size;
-printf( "as_entry_rfork.ae_length = %d\n", (int)r_size );
 
     /* data fork header entry */
     as_entry_dfork.ae_offset = 
@@ -129,7 +115,6 @@ printf( "as_entry_rfork.ae_length = %d\n", (int)r_size );
     /* calculate total applesingle file size */
     asingle_size = ( AS_HEADERLEN + ( 3 * sizeof( struct as_entry ))
 		+ sizeof( finfo_buf ) + r_size + d_size );
-printf( "  %d\n+ %d\n+ %d\n+ %d\n+ %d\n= %d\n", AS_HEADERLEN,
 	( 3 * sizeof( struct as_entry )),
 	sizeof( finfo_buf ),
 	r_size,
