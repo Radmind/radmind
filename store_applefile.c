@@ -16,8 +16,7 @@
 
 extern struct timeval	timeout;
 extern struct as_header as_header;
-
-/* encode hfs+ file to applesingle format with .as_enc suffix (for now ) */
+extern int		verbose;
 
 /*
  * applesingle format:
@@ -40,46 +39,32 @@ extern struct as_header as_header;
 store_applefile( const char *path, int afd, SNET *sn, int dodots )
 {
     int		    	rfd, r_cc, d_cc, d_size, r_size, err, has_rsrc = 0;
-    extern int		verbose;
     size_t		asingle_size = 0;
     const char	    	*rsrc_suffix = _PATH_RSRCFORKSPEC; /* sys/paths.h */
+    char	    	rsrc_path[ MAXPATHLEN ];
     char		data_buf[ 8192 ];
-    char		finfo_buf[ 32 ];
-    char	    	*rsrc_path;
-    struct stat		*r_stp;	    /* for rsrc fork */
-    struct stat		*d_stp;	    /* for data fork */
+    char		finfo_buf[ 32 ] = { 0 };
+    struct stat		r_stp;	    /* for rsrc fork */
+    struct stat		d_stp;	    /* for data fork */
     struct as_entry	as_entry_finfo = { ASEID_FINFO, 62, 32 };
     struct as_entry	as_entry_rfork = { ASEID_RFORK, 94, 0 };
     struct as_entry	as_entry_dfork = { ASEID_DFORK, 0, 0 };
     struct timeval tv;
     extern struct timeval timeout;
 
-    memset( finfo_buf, 0, sizeof( finfo_buf ));
     tv = timeout;
 
-    /* malloc space for rsrc and data stat structs */
-    if (( r_stp = ( void * )malloc(( int )sizeof( struct stat ))) == NULL
-	|| ( d_stp = ( void * )malloc(( int )sizeof( struct stat ))) == NULL) {
-	perror( "malloc " );
-	exit( 1 );
+    if ( snprintf( rsrc_path, MAXPATHLEN, "%s%s", path, rsrc_suffix )
+		> MAXPATHLEN ) {
+	fprintf( stderr, "%s%s: path too long\n", path, rsrc_suffix );
     }
 
-    /* malloc space for path/..namedfork/rsrc */
-    if (( rsrc_path = ( char * )malloc( strlen( path )
-		+ strlen( _PATH_RSRCFORKSPEC ) + 1 )) == NULL ) {
-	perror( "malloc" );
-	exit( 1 );
-    }
-
-    snprintf( rsrc_path, ( strlen( path ) + strlen( rsrc_suffix ) + 1 ),
-		"%s%s", path, rsrc_suffix );
-
-    if ( lstat( path, d_stp ) != 0 ) {
+    if ( lstat( path, &d_stp ) != 0 ) {
 	perror( path );
 	exit( 1 );
     }
 
-    if 	( lstat( rsrc_path, r_stp ) != 0 ) {
+    if 	( lstat( rsrc_path, &r_stp ) != 0 ) {
 	/* if there's no rsrc fork, but there is finder info,
 	 * assume zero length rsrc fork.
 	 */
@@ -91,10 +76,10 @@ store_applefile( const char *path, int afd, SNET *sn, int dodots )
 	}
     } else {
 	has_rsrc++;
-    	r_size = ( int )r_stp->st_size;
+    	r_size = ( int )r_stp.st_size;
     }
 
-    d_size = ( int )d_stp->st_size;
+    d_size = ( int )d_stp.st_size;
 
     /* open rsrc fork */
     if ( has_rsrc ) {
@@ -206,9 +191,6 @@ store_applefile( const char *path, int afd, SNET *sn, int dodots )
     }
 
     /* free all the alloc'd memory */
-    free( r_stp );
-    free( d_stp );
-    free( rsrc_path );
    
     return( 0 ); 
 }

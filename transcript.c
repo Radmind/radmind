@@ -269,10 +269,17 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
      * after this point, name is in the fs, so if it's 'f', and
      * checksums are on, get the checksum
      */
-    if ( chksum && ( fs->pi_type == 'f' || fs->pi_type == 'a' )) {
-	if ( do_chksum( fs->pi_name, fs->pi_chksum_b64 ) < 0 ) {
-	    perror( fs->pi_name );
-	    exit( 1 );
+    if ( chksum ) {
+	if ( fs->pi_type == 'f' ) {
+	    if ( do_chksum( fs->pi_name, fs->pi_chksum_b64 ) < 0 ) {
+		perror( fs->pi_name );
+		exit( 1 );
+	    }
+	} else if ( fs->pi_type == 'a' ) {
+	    if ( do_achksum( fs->pi_name, fs->pi_chksum_b64 ) < 0 ) {
+		perror( fs->pi_name );
+		exit( 1 );
+	    }
 	}
     }
 

@@ -1,5 +1,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 #ifdef __APPLE__
 #include <sys/paths.h>
 #include <errno.h>
@@ -63,47 +64,34 @@ do_achksum( char *path, char *chksum_b64 )
     unsigned char	md[ SHA_DIGEST_LENGTH ];
     unsigned char	mde[ SZ_BASE64_E( sizeof( md )) ];
     char		data_buf[ 8192 ];
-    char		finfo_buf[ 32 ];
-    char	    	*rsrc_path;
+    char		finfo_buf[ 32 ] = { 0 };
+    char	    	rsrc_path[ MAXPATHLEN ];
     const char	    	*rsrc_suffix = _PATH_RSRCFORKSPEC; /* sys/paths.h */
     struct as_entry	as_entry_finfo = { ASEID_FINFO, 62, 32 };
     struct as_entry	as_entry_rfork = { ASEID_RFORK, 94, 0 };
     struct as_entry	as_entry_dfork = { ASEID_DFORK, 0, 0 };
-    struct stat		*r_stp;	    /* for rsrc fork */
-    struct stat		*d_stp;	    /* for data fork */
+    struct stat		r_stp;	    /* for rsrc fork */
+    struct stat		d_stp;	    /* for data fork */
     SHA_CTX		sha_ctx;
+
+    SHA1_Init( &sha_ctx );
 
     if (( afd = open( path, O_RDONLY, 0 )) < 0 ) {
 	return( -1 );
     }
 
-    SHA1_Init( &sha_ctx );
-
-    memset( finfo_buf, 0, sizeof( finfo_buf ));
-
-    /* malloc space for rsrc and data stat structs */
-    if (( r_stp = ( void * )malloc(( int )sizeof( struct stat ))) == NULL
-	|| ( d_stp = ( void * )malloc(( int )sizeof( struct stat ))) == NULL) {
-	perror( "malloc" );
+    if ( snprintf( rsrc_path, MAXPATHLEN, "%s%s", path, rsrc_suffix ) 
+		> MAXPATHLEN ) {
+	fprintf( stderr, "%s%s: path too long\n", path, rsrc_suffix );
 	return( -1 );
     }
-
-    /* malloc space for path/..namedfork/rsrc */
-    if (( rsrc_path = ( char * )malloc( strlen( path )
-		+ strlen( _PATH_RSRCFORKSPEC ) + 1 )) == NULL ) {
-	perror( "malloc" );
-	return( -1 );
-    }
-
-    snprintf( rsrc_path, ( strlen( path ) + strlen( rsrc_suffix ) + 1 ),
-		"%s%s", path, rsrc_suffix );
-
-    if ( lstat( path, d_stp ) != 0 ) {
+		
+    if ( lstat( path, &d_stp ) != 0 ) {
 	perror( path );
 	return( -1 );
     }
 
-    if 	( lstat( rsrc_path, r_stp ) != 0 ) {
+    if 	( lstat( rsrc_path, &r_stp ) != 0 ) {
 	/* if there's no rsrc fork, but there is finder info,
 	 * assume zero length rsrc fork.
 	 */
@@ -115,10 +103,10 @@ do_achksum( char *path, char *chksum_b64 )
 	}
     } else {
 	has_rsrc++;
-    	r_size = ( int )r_stp->st_size;
+    	r_size = ( int )r_stp.st_size;
     }
 
-    d_size = ( int )d_stp->st_size;
+    d_size = ( int )d_stp.st_size;
 
     /* open rsrc fork */
     if ( has_rsrc ) {
@@ -190,9 +178,6 @@ do_achksum( char *path, char *chksum_b64 )
     }
 
     /* free all the alloc'd memory */
-    free( r_stp );
-    free( d_stp );
-    free( rsrc_path );
    
     SHA1_Final( md, &sha_ctx );
 
