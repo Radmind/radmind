@@ -907,12 +907,12 @@ f_starttls( SNET *sn, int ac, char **av )
 	syslog( LOG_INFO, "CERT Subject: %s\n",
 	    X509_NAME_oneline( X509_get_subject_name( peer ), buf,
 	    sizeof( buf )));
-	X509_free( peer );
 
 	X509_NAME_get_text_by_NID( X509_get_subject_name( peer ),
 	    NID_commonName, buf, sizeof( buf ));
 	if (( remote_cn = strdup( buf )) == NULL ) {
 	    syslog( LOG_ERR, "strdup: %m" );
+	    X509_free( peer );
 	    return( -1 );
 	}
 	X509_free( peer );
