@@ -71,11 +71,12 @@ apply( FILE *f, char *parent, SNET *sn )
 {
     char		tline[ 2 * MAXPATHLEN ];
     char		path[ 2 * MAXPATHLEN ];
+    char		temppath[ 2 * MAXPATHLEN ];
     char		pathdesc[ 2 * MAXPATHLEN ];
     char		chksum_b64[ 29 ];
     int			tac, present, len;
     char		**targv;
-    char		*temppath = NULL, *command = "";
+    char		*command = "";
     char		fstype;
     struct stat		st;
     ACAV		*acav;
@@ -194,8 +195,8 @@ apply( FILE *f, char *parent, SNET *sn )
 		sprintf( pathdesc, "FILE %s %s", transcript, encode( path ));
 	    }
 
-	    if (( temppath = retr( sn, pathdesc, path, NULL, chksum_b64 ))
-		    == NULL ) {
+	    if ( retr( sn, pathdesc, path, NULL, chksum_b64,
+		    (char *)&temppath ) != 0 ) {
 		perror( "download" );
 		return( 1 );
 	    }
@@ -217,7 +218,6 @@ apply( FILE *f, char *parent, SNET *sn )
 		perror( temppath );
 		return( 1 );
 	    }
-	    free( temppath );
 	    goto linedone;
 
 	}

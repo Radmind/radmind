@@ -48,12 +48,12 @@ main( int argc, char **argv, char **envp )
     extern int          optind; 
     extern char		*version;
     char		*host = _RADMIND_HOST;
-    char		*temppath = NULL;
     char		*transcript = NULL;
     char		*file = NULL;
     char		**diffargv;
     char		**argcargv;
     char 		pathdesc[ 2 * MAXPATHLEN ];
+    char 		temppath[ 2 * MAXPATHLEN ];
     char		opt[ 3 ];
     struct servent	*se;
     SNET		*sn;
@@ -180,8 +180,7 @@ main( int argc, char **argv, char **envp )
 	}
     }
 
-    if ( ( temppath = retr( sn, pathdesc, file, location, NULL ) )
-	    == NULL ) {
+    if ( retr( sn, pathdesc, file, location, NULL, (char *)&temppath ) != 0 ) {
 	fprintf( stderr, "%s: retr failed\n", file );
 	exit( 2 );
     }

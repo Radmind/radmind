@@ -20,16 +20,15 @@ extern int		chksum;
 
 /*
  * Download requests path from sn and writes it to disk.  The path to
- * this new file is returned upon success.  This function is not
- * reentrant.
+ * this new file is returned via temppath which must be 2 * MAXPATHLEN.
  */
 
-    char *
-retr( SNET *sn, char *pathdesc, char *path, char *location, char *chksumval ) 
+    int 
+retr( SNET *sn, char *pathdesc, char *path, char *location, char *chksumval,
+    char *temppath ) 
 {
     struct timeval      tv;
     char 		*line;
-    static char          temppath[ MAXPATHLEN ];
     unsigned int	rr;
     int			fd;
     size_t              size;
@@ -39,24 +38,24 @@ retr( SNET *sn, char *pathdesc, char *path, char *location, char *chksumval )
 
     if ( chksum && ( strcmp( chksumval, "-" ) == 0 ) ) {
 	fprintf( stderr, "Chksum not in transcript" );
-	return( NULL );
+	return( -1 );
     }
 
     if( snet_writef( sn, "RETR %s\n", pathdesc ) == NULL ) {
 	fprintf( stderr, "snet_writef" );
-	return( NULL );
+	return( -1 );
     }
     if ( verbose ) printf( ">>> RETR %s\n", pathdesc );
 
     tv = timeout;
     if ( ( line = snet_getline_multi( sn, logger, &tv ) ) == NULL ) {
 	fprintf( stderr, "snet_getline_multi" );
-	return( NULL );
+	return( -1 );
     }
 
     if ( *line != '2' ) {
 	fprintf( stderr, "%s\n", line );
-	return( NULL );
+	return( -1 );
     }
 
     /*Create temp file name*/
@@ -151,13 +150,12 @@ retr( SNET *sn, char *pathdesc, char *path, char *location, char *chksumval )
     }
 
     /* Caller must free temppath */
-    return ( temppath );
+    return ( 0 );
 
 error:
     close( fd );
 error2:
     unlink( temppath );
 error3:
-    free ( temppath );
-    return ( NULL );
+    return ( -1 );
 }

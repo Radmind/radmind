@@ -145,9 +145,10 @@ createspecial( SNET *sn, struct node *head )
     int
 check( SNET *sn, char *type, char *path)
 {
-    char	*schksum, *stats, *temppath;
+    char	*schksum, *stats;
     char	**targv;
     char 	pathdesc[ 2 * MAXPATHLEN ];
+    char 	temppath[ 2 * MAXPATHLEN ];
     char        cchksum[ 29 ];
     int		tac;
     struct stat	st;
@@ -190,8 +191,8 @@ check( SNET *sn, char *type, char *path)
 	    return( 2 );
 	}
 	if ( update ) {
-	    if (( temppath = retr( sn, pathdesc, fullpath, NULL, schksum ))
-		    == NULL ) {
+	    if ( retr( sn, pathdesc, fullpath, NULL, schksum,
+		    (char *)&temppath ) != 0 ) {
 		fprintf( stderr, "retr failed\n" );
 		return( 2 );
 	    }
@@ -215,8 +216,8 @@ check( SNET *sn, char *type, char *path)
 		perror( fullpath );
 		return( 2 );
 	    }
-	    if (( temppath = retr( sn, pathdesc, fullpath, NULL, schksum ))
-		    == NULL ) {
+	    if ( retr( sn, pathdesc, fullpath, NULL, schksum,
+		    (char *)&temppath ) != 0 ) {
 		fprintf( stderr, "retr failed\n" );
 		return( 2 );
 	    }
