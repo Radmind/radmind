@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+
+#ifdef SOLARIS
 #include <sys/mkdev.h>
+#endif
+
 #include <sys/stat.h>
 #include <sys/param.h>
 #include <unistd.h>
@@ -11,7 +16,7 @@
 #include "argcargv.h"
 
 static struct transcript *tran_head;
-static FILE 		 *com;
+static FILE 		 *com = NULL;
 static struct transcript *prev_tran;
 
     static void 
@@ -82,8 +87,12 @@ t_parse( struct transcript *tran )
 	tran->t_info.i_stat.st_mode = strtol( argv[ 1 ], NULL, 8 );
 	tran->t_info.i_stat.st_uid = atoi( argv[ 2 ] );
 	tran->t_info.i_stat.st_gid = atoi( argv[ 3 ] );
+#ifdef notdef
 	tran->t_info.i_maj = atoi( argv[ 4 ] );
 	tran->t_info.i_min = atoi( argv[ 5 ] );
+#endif
+	tran->t_info.i_dev = makedev( ( unsigned )( atoi( argv[ 4 ] )), 
+		( unsigned )( atoi( argv[ 5 ] )));
 	buf = decode( argv[ 6 ] );
 	strcpy( tran->t_info.i_name, buf );
 	break;
@@ -138,8 +147,10 @@ t_convert( int type )
 	return ( 'c' );
     case S_IFBLK:
 	return ( 'b' );
+#ifdef SOLARIS
     case S_IFDOOR:
 	return ( 'D' );
+#endif
     case S_IFIFO:
 	return ( 'p' );
     case S_IFSOCK:
@@ -157,8 +168,11 @@ t_print( struct info *fs, struct transcript *tran, FILE *outtran, int change )
     struct info	*cur;
     char 	*buf;
     char	*link;
+#ifdef notdef
     major_t	maj;
     minor_t	min;
+#endif
+    dev_t	dev;
     extern int  edit_path;
 
     /*
@@ -201,18 +215,20 @@ t_print( struct info *fs, struct transcript *tran, FILE *outtran, int change )
     switch( cur->i_type ) {
     case 'd':
 	fprintf( outtran, "d %4lo %5d %5d %s\n", 
-		( T_MODE & cur->i_stat.st_mode ), 
+		(unsigned long )( T_MODE & cur->i_stat.st_mode ), 
 		(int)cur->i_stat.st_uid, (int)cur->i_stat.st_gid, buf );
 	break;
     case 'l':
 	link = encode( cur->i_link );
-	fprintf( outtran, "l %4lo %s", ( T_MODE & cur->i_stat.st_mode ), link );
+	fprintf( outtran, "l %4lo %s", 
+	(unsigned long )( T_MODE & cur->i_stat.st_mode ), link );
 	buf = encode( cur->i_name );
 	fprintf( outtran, " %s\n", buf );
 	break;
     case 'f':
 	fprintf( outtran, "f %4lo %5d %5d %9d %7d %3d %s\n", 
-		( T_MODE & cur->i_stat.st_mode ), (int)cur->i_stat.st_uid,
+		(unsigned long)( T_MODE & cur->i_stat.st_mode ), 
+		(int)cur->i_stat.st_uid,
 		(int)cur->i_stat.st_gid, (int)cur->i_stat.st_mtime,
 		(int)cur->i_stat.st_size, cur->i_chksum, buf );
 	break;
@@ -222,12 +238,17 @@ t_print( struct info *fs, struct transcript *tran, FILE *outtran, int change )
     case 's':
     case 'D':
     case 'p':
+	dev = cur->i_stat.st_rdev;
+#ifdef notdef
 	maj = major( cur->i_stat.st_rdev );
 	min = minor( cur->i_stat.st_rdev );
+#endif
 	fprintf( outtran, "%c %4lo %4d %5d %5d %5d %s\n", 
-		cur->i_type, ( T_MODE & cur->i_stat.st_mode ), 
+		cur->i_type, 
+		(unsigned long )( T_MODE & cur->i_stat.st_mode ), 
 		(int)cur->i_stat.st_uid,
-		(int)cur->i_stat.st_gid, (int)maj, (int)min, buf );
+		(int)cur->i_stat.st_gid, (int)major(dev), (int)minor(dev), 
+		buf );
 	break;
     } 
 }
@@ -239,8 +260,11 @@ t_compare( struct info *cur, struct transcript *tran, FILE *outtran )
     int		    		ret = -1;
     mode_t    	    		mode;
     mode_t	    		tran_mode;
+#ifdef notdef
     major_t         		maj;
     minor_t         		min;
+#endif
+    dev_t			dev;
 
     /* writing */
     if ( tran->t_flag == T_EOF ) {
@@ -311,12 +335,18 @@ t_compare( struct info *cur, struct transcript *tran, FILE *outtran )
     case 'D':
     case 'p':
     case 's':
+#ifdef notdef
 	maj = major( cur->i_stat.st_rdev );
 	min = minor( cur->i_stat.st_rdev );
+#endif
+	dev = cur->i_stat.st_rdev;
 	if (( cur->i_stat.st_uid != tran->t_info.i_stat.st_uid ) ||
 	    	( cur->i_stat.st_gid != tran->t_info.i_stat.st_gid ) || 
+		( dev != tran->t_info.i_dev ) ||
+#ifdef notdef
 	    	( maj != tran->t_info.i_maj ) || 
 	    	( min != tran->t_info.i_min ) ||
+#endif
 		( mode != tran_mode )) {
 			t_print( cur, tran, outtran, T_MOVE_BOTH );
 	}	
@@ -448,6 +478,7 @@ t_new( char *name, struct transcript *head )
     strcpy( new->t_info.i_name, name );
     new->t_next = head;
     new->t_flag = T_EOF; 
+    new->t_in = NULL;
 
     return( new );
 }
@@ -539,8 +570,12 @@ transcript_free( )
 
     for ( ; tran_head != NULL; tran_head = next ) {
 	next = tran_head->t_next;
-	fclose( tran_head->t_in );
+	if ( tran_head->t_in != NULL ) {
+		fclose( tran_head->t_in );
+	}
 	free( tran_head );
     }
-    free( com );
+    if ( com != NULL ) {
+    	fclose( com );
+    }
 }
