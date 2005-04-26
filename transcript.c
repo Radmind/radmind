@@ -367,7 +367,8 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 	     */
 	    cmp = 1;
 	} else {
-	    cmp = pathcmp( fs->pi_name, tran->t_pinfo.pi_name );
+	    cmp = pathcmp_case( fs->pi_name, tran->t_pinfo.pi_name,
+		case_sensitive );
 	}
     }
 
@@ -547,8 +548,8 @@ transcript_select( void )
 		continue;
 	    }
 	    if ( ! next_tran->t_eof ) {
-		if ( pathcmp( next_tran->t_pinfo.pi_name,
-			begin_tran->t_pinfo.pi_name ) < 0 ) {
+		if ( pathcmp_case( next_tran->t_pinfo.pi_name,
+			begin_tran->t_pinfo.pi_name, case_sensitive ) < 0 ) {
 		    begin_tran = next_tran;
 		}
 	    }
@@ -557,8 +558,8 @@ transcript_select( void )
 	/* move ahead other transcripts that match */
 	for ( next_tran = begin_tran->t_next; next_tran != NULL;
 		next_tran = next_tran->t_next ) {
-	    if ( pathcmp( begin_tran->t_pinfo.pi_name,
-		    next_tran->t_pinfo.pi_name ) == 0 ) {
+	    if ( pathcmp_case( begin_tran->t_pinfo.pi_name,
+		    next_tran->t_pinfo.pi_name, case_sensitive ) == 0 ) {
 		transcript_parse( next_tran );
 	    }
 	}
