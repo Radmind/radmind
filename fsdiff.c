@@ -27,6 +27,7 @@ extern char	*version, *checksumlist;
 void		fs_walk( char *, int, int );
 int		dodots = 0;
 int		lastpercent = -1;
+int		case_sensitive = 1;
 const EVP_MD    *md;
 
     void
@@ -58,7 +59,7 @@ fs_walk( char *path, int start, int finish )
 		return;
 	    }
 
-	    if ( ischild( tran->t_pinfo.pi_name, path )) {
+	    if ( ischild_case( tran->t_pinfo.pi_name, path, case_sensitive )) {
 		/*
 		 * XXX
 		 * This strcpy() is not itself dangerous, because pi_name
@@ -126,7 +127,11 @@ fs_walk( char *path, int start, int finish )
 	new = ll_allocate( temp );
 
 	/* insert new file into the list */
-	ll_insert( &head, new ); 
+	if ( case_sensitive ) {
+	    ll_insert( &head, new ); 
+	} else {
+	    ll_insert_case( &head, new ); 
+	}
     }
 
     chunk = (( finish - start ) / ( float )count );
@@ -162,7 +167,7 @@ main( int argc, char **argv )
     cksum = 0;
     outtran = stdout;
 
-    while (( c = getopt( argc, argv, "%Ac:Co:K:1Vv" )) != EOF ) {
+    while (( c = getopt( argc, argv, "%1ACc:IK:o:Vv" )) != EOF ) {
 	switch( c ) {
 	case '%':
 	case 'v':
@@ -178,6 +183,10 @@ main( int argc, char **argv )
             }
             cksum = 1;
             break;
+
+	case 'I':
+	    case_sensitive = 0;
+	    break;
 
 	case 'o':
 	    if (( outtran = fopen( optarg, "w" )) == NULL ) {
@@ -235,7 +244,7 @@ main( int argc, char **argv )
     }
 
     if ( errflag || ( argc - optind != 1 )) {
-	fprintf( stderr, "usage: %s { -C | -A | -1 } [ -V ] ", argv[ 0 ] );
+	fprintf( stderr, "usage: %s { -C | -A | -1 } [ -IV ] ", argv[ 0 ] );
 	fprintf( stderr, "[ -K command ] " );
 	fprintf( stderr, "[ -c checksum ] [ -o file [ -%% ] ] path\n" );
 	exit ( 2 );

@@ -58,6 +58,7 @@ int			dodots= 0;
 int			quiet = 0;
 int			update = 1;
 int			change = 0;
+int			case_sensitive = 1;
 char			*base_kfile= _RADMIND_COMMANDFILE;
 char			*radmind_path = _RADMIND_PATH;
 char			*kdir= "";

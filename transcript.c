@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <string.h>
 
@@ -32,6 +33,7 @@ int read_kfile( char *kfile, int location );
 struct transcript		*tran_head = NULL;
 static struct transcript	*prev_tran = NULL;
 extern int			edit_path;
+extern int			case_sensitive;
 static int			foundspecial = 0;
 static char			*kdir;
 static struct list		*kfile_list;
@@ -99,7 +101,7 @@ transcript_parse( struct transcript *tran )
 	    tran->t_fullname, tran->t_linenum );
 	exit( 2 );
     }
-    if ( pathcmp( epath, tran->t_pinfo.pi_name ) < 0 ) {
+    if ( pathcmp_case( epath, tran->t_pinfo.pi_name, case_sensitive ) < 0 ) {
 	fprintf( stderr, "%s: line %d: bad sort order\n",
 	    tran->t_fullname, tran->t_linenum );
 	exit( 2 );
@@ -573,7 +575,9 @@ transcript_select( void )
 	    }
 
 	    /* Don't look outside of the initial path. */
-	    if ( !ischild( begin_tran->t_pinfo.pi_name, path_prefix )) {
+	
+	    if ( !ischild_case( begin_tran->t_pinfo.pi_name, path_prefix,
+		    case_sensitive )) {
 		transcript_parse( begin_tran );
 		continue;
 	    }

@@ -45,6 +45,7 @@ int		dodots = 0;
 int		special = 0;
 int		network = 1;
 int		change = 0;
+int		case_sensitive = 1;
 char		transcript[ 2 * MAXPATHLEN ] = { 0 };
 char		prepath[ MAXPATHLEN ]  = { 0 };
 extern char	*version, *checksumlist;
@@ -248,7 +249,7 @@ main( int argc, char **argv )
     int			force = 0;
     int			use_randfile = 0;
 
-    while (( c = getopt ( argc, argv, "%c:Fh:inp:qrVvw:x:y:z:" )) != EOF ) {
+    while (( c = getopt ( argc, argv, "%c:Fh:iInp:qrVvw:x:y:z:" )) != EOF ) {
 	switch( c ) {
 	case '%':
 	    showprogress = 1;
@@ -274,6 +275,10 @@ main( int argc, char **argv )
 
 	case 'i':
 	    setvbuf( stdout, ( char * )NULL, _IOLBF, 0 );
+	    break;
+
+	case 'I':
+	    case_sensitive = 0;
 	    break;
 	
 	case 'n':
@@ -369,7 +374,7 @@ main( int argc, char **argv )
     }
 
     if ( err ) {
-	fprintf( stderr, "usage: %s [ -FinrV ] [ -%% | -q | -v ] ",
+	fprintf( stderr, "usage: %s [ -FiInrV ] [ -%% | -q | -v ] ",
 	    argv[ 0 ] );
 	fprintf( stderr, "[ -c checksum ] [ -h host ] [ -p port ] " );
 	fprintf( stderr, "[ -w auth-level ] [ -x ca-pem-file ] " );
@@ -475,7 +480,7 @@ main( int argc, char **argv )
 
 	/* Check transcript order */
 	if ( prepath != 0 ) {
-	    if ( pathcmp( path, prepath ) < 0 ) {
+	    if ( pathcmp_case( path, prepath, case_sensitive ) < 0 ) {
 		fprintf( stderr, "%s: line %d: bad sort order\n",
 			    transcript, linenum );
 		goto error2;
@@ -530,7 +535,7 @@ dirchecklist:
 		    }
 		    continue;
 		} else {
-		    if ( ischild( path, head->path)) {
+		    if ( ischild_case( path, head->path, case_sensitive )) {
 			/* Add dir to list */
 			if ( present && fstype != *targv[ 0 ] ) {
 			    new_node = create_node( path, tline );
@@ -577,7 +582,7 @@ filechecklist:
 			progressupdate( PROGRESSUNIT, path );
 		    }
 		} else {
-		    if ( ischild( path, head->path)) {
+		    if ( ischild_case( path, head->path, case_sensitive )) {
 			if ( unlink( path ) != 0 ) {
 			    perror( path );
 			    goto error2;
@@ -620,7 +625,8 @@ filechecklist:
 	    }
 	}
 	/* Minimize remove list */
-	while ( head != NULL && !ischild( path, head->path )) {
+	while ( head != NULL && !ischild_case( path, head->path,
+		case_sensitive )) {
 	    /* remove head */
 	    if ( rmdir( head->path ) != 0 ) {
 		perror( head->path );

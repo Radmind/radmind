@@ -21,6 +21,8 @@
 
 const EVP_MD    *md;
 
+int		case_sensitive = 1;
+
 /*
  * exit codes:
  *      0       File found
@@ -98,7 +100,7 @@ main( int argc, char **argv )
     if ( special_list->l_count > 0 ) {
 	for ( node = list_pop_head( special_list ); node != NULL;
 		node = list_pop_head( special_list )) {
-	    if ( pathcmp ( node->n_path, pattern ) == 0 ) {
+	    if ( pathcmp_case( node->n_path, pattern, case_sensitive ) == 0 ) {
 		printf( "# Special\n" );
 		printf( "special.T:\n" );
 		printf( "%s\n", node->n_path );

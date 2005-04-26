@@ -24,6 +24,7 @@
 int		cksum = 1;
 int		verbose = 0;
 int		noupload = 0;
+int		case_sensitive = 1;
 extern char   	*version;
 
 struct node {
@@ -147,7 +148,9 @@ getline:
 
     /* Check transcript order */
     if ( tran->t_prepath != 0 ) {
-	if ( pathcmp( tran->t_filepath, tran->t_prepath ) < 0 ) {
+	 
+	if ( pathcmp_case( tran->t_filepath, tran->t_prepath,
+		case_sensitive ) < 0 ) {
 	    fprintf( stderr, "%s: line %d: bad sort order\n",
 			tran->t_tran_name, tran->t_linenum );
 	    return( 1 );
@@ -191,13 +194,16 @@ main( int argc, char **argv )
     FILE		*ofs;
     mode_t		mask;
 
-    while ( ( c = getopt( argc, argv, "D:fnu:Vv" ) ) != EOF ) {
+    while ( ( c = getopt( argc, argv, "D:fInu:Vv" ) ) != EOF ) {
 	switch( c ) {
 	case 'D':
 	    radmind_path = optarg;
 	    break;
 	case 'f':
 	    force = 1;
+	    break;
+	case 'I':
+	    case_sensitive = 0;
 	    break;
 	case 'n':
 	    noupload = 1;
@@ -240,13 +246,13 @@ main( int argc, char **argv )
     }
 
     if ( err ) {
-	fprintf( stderr, "Usage: %s [-vV] [ -D path ] [ -u umask ] ",
+	fprintf( stderr, "Usage: %s [-vIV] [ -D path ] [ -u umask ] ",
 	    argv[ 0 ] );
 	fprintf( stderr, "transcript... dest\n" );
-	fprintf( stderr, "       %s -f [-vV] [ -D path ] [ -u umask ] ",
+	fprintf( stderr, "       %s -f [-vIV] [ -D path ] [ -u umask ] ",
 	    argv[ 0 ] );
 	fprintf( stderr, "transcript1 transcript2\n" );
-	fprintf( stderr, "       %s -n [-vV] [ -D path ] [ -u umask ] ",
+	fprintf( stderr, "       %s -n [-vIV] [ -D path ] [ -u umask ] ",
 	    argv[ 0 ] );
 	fprintf( stderr, "transcript1 transcript2 dest\n" );
 	exit( 2 );
@@ -399,8 +405,8 @@ main( int argc, char **argv )
 		if ( trans[ j ]->t_eof ) {
 		    continue;
 		}
-		cmpval = pathcmp( trans[ candidate ]->t_filepath,
-		    trans[ j ]->t_filepath );
+		cmpval = pathcmp_case( trans[ candidate ]->t_filepath,
+		    trans[ j ]->t_filepath, case_sensitive );
 		if ( cmpval == 0 ) {
 		    /* File match */
 		    match = 1;

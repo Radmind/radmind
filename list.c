@@ -93,11 +93,9 @@ list_print( struct list *list )
 list_insert( struct list *list, char *path )
 {
     struct node		*new_node, *cur;
-    int 		cmpval;
 
     for ( cur = list->l_head; cur != NULL; cur = cur->n_next ) {
-	cmpval = pathcmp( cur->n_path, path );
-	if ( cmpval > 0 ) {
+	if ( pathcmp( cur->n_path, path ) > 0 ) {
 	    break;
 	}
     }

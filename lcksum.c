@@ -32,6 +32,7 @@ void            (*logger)( char * ) = NULL;
 int		linenum = 0;
 int		cksum = 0;
 int		verbose = 1;
+int		case_sensitive = 1;
 const EVP_MD	*md;
 extern int	showprogress;
 extern off_t	lsize;
@@ -154,7 +155,7 @@ main( int argc, char **argv )
     struct stat		st;
     off_t		cksumsize;
 
-    while ( ( c = getopt ( argc, argv, "%Aac:D:inP:qV" ) ) != EOF ) {
+    while ( ( c = getopt ( argc, argv, "%Aac:D:iInP:qV" ) ) != EOF ) {
 	switch( c ) {
 	case 'a':
 	    checkall = 1;
@@ -180,6 +181,10 @@ main( int argc, char **argv )
 
 	case 'i':
 	    setvbuf( stdout, ( char * )NULL, _IOLBF, 0 );
+	    break;
+
+	case 'I':
+	    case_sensitive = 0;
 	    break;
 
 	case 'D':
@@ -225,7 +230,7 @@ main( int argc, char **argv )
     tpath = argv[ optind ];
 
     if ( err || ( argc - optind != 1 ) ) {
-	fprintf( stderr, "usage: %s [ -%%AiqV ] ", argv[ 0 ] );
+	fprintf( stderr, "usage: %s [ -%%AiIqV ] ", argv[ 0 ] );
 	fprintf( stderr, "[ -D path ] " );
 	fprintf( stderr, "[ -n [ -a ] ] " );
 	fprintf( stderr, "[ -P prefix ] " );
@@ -396,7 +401,7 @@ main( int argc, char **argv )
 
 	/* Check transcript order */
 	if ( prepath != 0 ) {
-	    if ( pathcmp( path, prepath ) < 0 ) {
+	    if ( pathcmp_case( path, prepath, case_sensitive ) < 0 ) {
 		if ( updatetran ) {
 		    fprintf( stderr, "line %d: bad sort order\n", linenum );
 		} else {

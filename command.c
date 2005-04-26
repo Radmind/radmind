@@ -97,6 +97,7 @@ struct list	*access_list = NULL;
 int		ncommands = 0;
 int		authorized = 0;
 int		prevstor = 0;
+int		case_sensitive = 1;
 char		hostname[ MAXHOSTNAMELEN ];
 
 extern int 	authlevel;
