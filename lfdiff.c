@@ -26,7 +26,10 @@
 #include "applefile.h"
 #include "connect.h"
 #include "argcargv.h"
+#include "list.h"
+#include "pathcmp.h"
 #include "tls.h"
+#include "transcript.h"
 #include "code.h"
 
 void output( char* string);
@@ -37,6 +40,7 @@ int			verbose = 0;
 int			dodots = 0;
 int			linenum = 0;
 int			cksum = 0;
+int			case_sensitive = 1;
 const EVP_MD    	*md;
 SSL_CTX  		*ctx;
 
@@ -47,6 +51,60 @@ output( char *string )
 {
     printf( "<<< %s\n", string );
     return;
+}
+
+   static struct transcript *
+precedent_transcript( char *kfile, char *file, int where )
+{
+    extern struct transcript	*tran_head;
+    extern struct list	*special_list;
+    struct transcript	*tran;
+    struct node		*node;
+    int			cmp = 0;
+
+    /* initialize important transcript bits */
+    edit_path = APPLICABLE;
+    transcript_init( kfile, where );
+    outtran = stdout;
+
+    /* identical to code in twhich.c */
+
+    /* check special list */
+    if ( special_list->l_count > 0 ) {
+        for ( node = list_pop_head( special_list ); node != NULL;
+                node = list_pop_head( special_list )) {
+            if ( pathcmp_case( node->n_path, file, case_sensitive ) == 0 ) {
+                printf( "# Special\n" );
+                printf( "special.T:\n" );
+                printf( "%s\n", node->n_path );
+                free( node );
+		break;
+            }
+        }
+    }
+
+    for ( tran = tran_head; !tran->t_eof; tran = tran->t_next ) {
+        while (( cmp = pathcmp_case( tran->t_pinfo.pi_name, file,
+		case_sensitive )) < 0 ) {
+            transcript_parse( tran );
+            if ( tran->t_eof ) {
+                break;
+            }
+        }
+        if ( tran->t_eof ) {
+            continue;
+        }
+
+        if ( cmp > 0 ) {
+            continue;
+        }
+
+        if ( cmp == 0 ) {
+	    return( tran );
+	}	
+    }
+
+    return( NULL );
 }
 
 /*
@@ -67,6 +125,7 @@ main( int argc, char **argv, char **envp )
     char		*host = _RADMIND_HOST;
     char		*transcript = NULL;
     char		*file = NULL;
+    char		*kfile = _RADMIND_COMMANDFILE;
     char		*diff = _PATH_GNU_DIFF;
     char		**diffargv;
     char		**argcargv;
@@ -79,6 +138,7 @@ main( int argc, char **argv, char **envp )
     SNET		*sn;
     int                 authlevel = _RADMIND_AUTHLEVEL;
     int                 use_randfile = 0;
+    struct transcript	*tran;
 
     /* create argv to pass to diff */
     if (( diffargv = (char **)malloc( 1  * sizeof( char * ))) == NULL ) {
@@ -88,9 +148,13 @@ main( int argc, char **argv, char **envp )
     diffargc = 0;
     diffargv[ diffargc++ ] = diff;
 
-    while (( c = getopt ( argc, argv, "h:p:rST:Vvw:x:y:z:bitcefnC:D:sX:" ))
+    while (( c = getopt ( argc, argv, "h:Ip:rST:Vvw:x:y:z:bitcefnC:D:sX:" ))
 	    != EOF ) {
 	switch( c ) {
+	case 'I':
+	    case_sensitive = 0;
+	    break;
+
 	case 'h':
 	    host = optarg;
 	    break;
@@ -211,6 +275,15 @@ main( int argc, char **argv, char **envp )
 	}
     }
 
+    if (( transcript == NULL ) && ( !special )) {
+	if (( file = argv[ argc - 1 ] ) == NULL ) {
+	    err++;
+	} else {
+	    tran = precedent_transcript( kfile, file, K_CLIENT );
+	    transcript = tran->t_shortname;
+	}
+    }
+
     if ((( transcript == NULL ) && ( !special ))
 	    || (( special ) && ( transcript != NULL ))
 	    || ( host == NULL )) {
@@ -219,7 +292,7 @@ main( int argc, char **argv, char **envp )
 
     if ( err || ( argc - optind != 1 )) {
 	fprintf( stderr, "usage: %s ", argv[ 0 ] );
-	fprintf( stderr, "[ -rvV ] " );
+	fprintf( stderr, "[ -IrvV ] " );
 	fprintf( stderr, "[ -T transcript | -S ] " );
 	fprintf( stderr, "[ -h host ] [ -p port ] " );
         fprintf( stderr, "[ -w auth-level ] [ -x ca-pem-file ] " );
