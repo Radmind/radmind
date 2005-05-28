@@ -113,7 +113,8 @@ main( int argc, char **argv )
     }
 
     for ( tran = tran_head; !tran->t_eof; tran = tran->t_next ) {
-	while (( cmp = pathcmp( tran->t_pinfo.pi_name, pattern )) < 0 ) {
+	while (( cmp = pathcmp_case( tran->t_pinfo.pi_name,
+		pattern, case_sensitive )) < 0 ) {
 	    transcript_parse( tran );
 	    if ( tran->t_eof ) {
 		break;
