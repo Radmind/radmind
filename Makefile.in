@@ -76,7 +76,7 @@ LMERGE_OBJ=     version.o lmerge.o argcargv.o code.o pathcmp.o mkdirs.o \
 		root.o
 
 LFDIFF_OBJ=     version.o lfdiff.o argcargv.o connect.o retr.o cksum.o \
-                progress.o base64.o applefile.o code.o tls.o
+                progress.o base64.o applefile.o code.o tls.o pathcmp.o
 
 TWHICH_OBJ=     version.o twhich.o argcargv.o transcript.o llist.o code.o \
                 hardlink.o cksum.o base64.o pathcmp.o radstat.o applefile.o \
