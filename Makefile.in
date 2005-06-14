@@ -42,7 +42,7 @@ INSTALL=	@INSTALL@
 
 CFLAGS=		${DEFS} ${OPTOPTS} @CFLAGS@ ${INCPATH}
 
-BINTARGETS=     fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff twhich
+BINTARGETS=     fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff twhich lsort
 MAN1TARGETS=    fsdiff.1 ktcheck.1 lapply.1 lcksum.1 \
 		lcreate.1 lfdiff.1 lmerge.1 twhich.1
 MAN5TARGETS= 	applefile.5
@@ -76,12 +76,13 @@ LMERGE_OBJ=     version.o lmerge.o argcargv.o code.o pathcmp.o mkdirs.o \
 		root.o
 
 LFDIFF_OBJ=     version.o lfdiff.o argcargv.o connect.o retr.o cksum.o \
-                progress.o base64.o applefile.o code.o tls.o pathcmp.o \
-		transcript.o list.o radstat.o hardlink.o
+                progress.o base64.o applefile.o code.o tls.o
 
 TWHICH_OBJ=     version.o twhich.o argcargv.o transcript.o llist.o code.o \
                 hardlink.o cksum.o base64.o pathcmp.o radstat.o applefile.o \
 		list.o
+
+LSORT_OBJ=     version.o lsort.o pathcmp.o code.o argcargv.o
 
 all : ${TARGETS}
 
@@ -125,7 +126,6 @@ fsdiff.o : fsdiff.c
 lfdiff.o : lfdiff.c
 	${CC} ${CFLAGS} \
 		-D_PATH_GNU_DIFF=\"${GNU_DIFF}\" \
-		-D_RADMIND_COMMANDFILE=\"${COMMANDFILE}\" \
 		-D_RADMIND_HOST=\"${RADMIND_HOST}\" \
 		-D_RADMIND_AUTHLEVEL=${RADMIND_AUTHLEVEL} \
 		-c ${srcdir}/lfdiff.c
@@ -163,6 +163,10 @@ twhich.o : twhich.c
 		-D_RADMIND_COMMANDFILE=\"${COMMANDFILE}\" \
 		-c ${srcdir}/twhich.c
 
+lsort.o : lsort.c
+	${CC} ${CFLAGS} \
+		-c ${srcdir}/lsort.c
+
 tls.o : tls.c
 	${CC} ${CFLAGS} \
 		-D_RADMIND_TLS_CA=\"${TLS_CA}\" \
@@ -195,6 +199,9 @@ lfdiff: ${LFDIFF_OBJ}
 
 twhich: ${TWHICH_OBJ}
 	${CC} -o twhich ${TWHICH_OBJ} ${LDFLAGS}
+
+lsort: ${LSORT_OBJ}
+	${CC} -o lsort ${LSORT_OBJ} ${LDFLAGS}
 
 FRC :
 

@@ -5,12 +5,12 @@
 .SH SYNOPSIS
 .B lfdiff 
 [
-.B \-IrvV
-] [
+.B \-rvV
+] {
 .BI \-T\  transcript
 |
 .B \-S
-] [
+} [
 .BI \-h\  host 
 ] [
 .BI \-p\  port
@@ -34,11 +34,11 @@
 .B lfdiff 
 retrieves 
 .IR file ,
-given as an unencoded path,
+given as an unenconded path,
 from the radmind server 
 .I host 
 and writes it to
-/tmp.
+/tmp.  
 .I file
 is then compared to the local copy of 
 .I file 
@@ -62,9 +62,6 @@ All other
 options are given using the \-X option.
 .sp
 .SH OPTIONS
-.TP 19
-.B \-I
-compare paths case-insensitively
 .TP 19
 .BI \-h\  host
 specifies the radmind server, by default
@@ -133,6 +130,7 @@ An error occurred.
 .BR lcksum (1),
 .BR lcreate (1),
 .BR lmerge (1),
+.BR lsort (1),
 .BR twhich (1),
 .BR radmind (8),
 .BR RAND_load_file (3o).
