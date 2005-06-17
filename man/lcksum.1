@@ -40,12 +40,17 @@ If there is a difference in either the checksum or file size, the
 transcript line is updated using the checksum, file size and
 modification time of the actual file. 
 
-Since
+In update mode,
 .B lcksum
-modifies the file size and/or checksum of
+may modify the file sizes and/or checksums in
 .IR transcript ,
-the user must have write access to
+so the user must have write access to
 .IR transcript .
+If an error occurs during an update of
+.IR transcript ,
+lcksum removes the temporary copy of
+.IR transcript
+that it created and exits with a status of 2.
 
 .B lcksum
 also verifies that 
