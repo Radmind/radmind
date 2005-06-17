@@ -1,3 +1,4 @@
+#include <sys/types.h>
 #include <sys/param.h>
 
 #include <errno.h>
@@ -14,29 +15,29 @@ int	linecount;
 FILE	*outtran;
 
 struct save_line {
-	struct save_line *next;
-	char *key;
-	char *data;
+    struct save_line 	*next;
+    char 		*key;
+    char 		*data;
 } *lines;
 
-void save_it( char *buffer, char *pathname );
-static int lsort_cmp( const void *a1, const void *b1 );
-void sort_them( void );
-void print_them( void );
-void process( char * arg );
+void 			save_it( char *buffer, char *pathname );
+static int 		lsort_cmp( const void *a1, const void *b1 );
+void 			sort_them( void );
+void 			print_them( void );
+void 			process( char * arg );
 
-int		case_sensitive = 1;
+int			case_sensitive = 1;
 
     void
 save_it( char *buffer, char *pathname )
 {
     struct save_line 	*sp;
 
-    sp = malloc(sizeof *sp + strlen(buffer) + strlen(pathname) + 4);
-    sp->key = (char*) (sp+1);
-    strcpy(sp->key, pathname);
-    sp->data = (sp->key + strlen(sp->key) + 1);
-    strcpy(sp->data, buffer);
+    sp = malloc( sizeof( *sp ) + strlen( buffer ) + strlen( pathname ) + 4 );
+    sp->key = (char*)( sp + 1 );
+    strcpy( sp->key, pathname );
+    sp->data = ( sp->key + strlen( sp->key ) + 1 );
+    strcpy( sp->data, buffer );
     sp->next = lines;
     lines = sp;
     linecount++;
@@ -54,11 +55,11 @@ lsort_cmp( const void *a1, const void *b1 )
 }
 
     void
-sort_them()
+sort_them( void )
 {
-    struct save_line **x, *sp, **y;
+    struct save_line	**x, *sp, **y;
 
-    x = (struct save_line**) malloc( sizeof *x * linecount );
+    x = (struct save_line**) malloc( sizeof( *x ) * linecount );
     y = x;
 
     for ( sp = lines; sp; sp = sp->next ) {
@@ -77,22 +78,22 @@ sort_them()
 }
 
     void
-print_them()
+print_them( void )
 {
     struct save_line *sp;
     for ( sp = lines; sp; sp = sp->next ) {
-	fputs(sp->data, outtran );
+	fputs( sp->data, outtran );
 	if ( ferror( outtran )) {
-	    perror( "writing stdout" );
-	    exit( 1 );
+	    perror( "fputs" );
+	    exit( 2 );
 	}
     }
 }
 
     void
-process( char * arg )
+process( char *arg )
 {
-    FILE	*fd;
+    FILE	*f;
     ACAV	*acav;
     char	buffer[4096];
     char	*fn;
@@ -102,20 +103,20 @@ process( char * arg )
 
     if ( strcmp( arg, "-" )) {
 	fn = arg;
-	fd = fopen( arg, "r" );
+	f = fopen( arg, "r" );
     } else {
 	fn = "(stdin)";
-	fd = stdin;
+	f = stdin;
     }
-    if ( !fd ) {
-	    perror(arg);
-	    exit( 1 );
+    if ( !f ) {
+	    perror( arg );
+	    exit( 2 );
     }
 
-    acav = acav_alloc( );
+    acav = acav_alloc();
 
     lineno = 0;
-    while ( fgets( buffer, sizeof buffer, fd )) {
+    while ( fgets( buffer, sizeof buffer, f )) {
 	lineno++;
 
 	if (( line = strdup( buffer )) == NULL ) {
@@ -142,23 +143,20 @@ process( char * arg )
 	}
 
 	if ( argc < 2 ) {
-	    fprintf( stderr,
-		"%s: line %d: not enough fields\n",
-		fn, lineno);
+	    fprintf( stderr, "%s: line %d: not enough fields\n", fn, lineno );
 	    exit( 1 );
 	}
 	save_it( line, decode( argv[ 1 ] ));
     }
 
-    if ( fd == stdin ) {
-	clearerr( fd );
+    if ( f == stdin ) {
+	clearerr( f );
     } else {
-	fclose( fd );
+	fclose( f );
     }
 
     free( line );
     acav_free( acav );
-
 }
 
     int
@@ -172,24 +170,24 @@ main( int argc, char **argv )
 
     while (( c = getopt( argc, argv, "Io:V" )) != EOF ) {
 	switch( c ) {
-	    case 'I':
-		case_sensitive = 0;
-		break;
+	case 'I':
+	    case_sensitive = 0;
+	    break;
 
-	    case 'o':
-		if (( outtran = fopen( optarg, "w" )) == NULL ) {
-		    perror( optarg );
-		    exit( 1 );
-		}
-		break;
+	case 'o':
+	    if (( outtran = fopen( optarg, "w" )) == NULL ) {
+		perror( optarg );
+		exit( 1 );
+	    }
+	    break;
 
-	    case 'V':
-		printf( "%s\n", version );
-		exit( 0 );
+	case 'V':
+	    printf( "%s\n", version );
+	    exit( 0 );
 
-	    default:
-		err++;
-		break;
+	default:
+	    err++;
+	    break;
 	}
     }
 
