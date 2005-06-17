@@ -37,6 +37,7 @@ int			verbose = 0;
 int			dodots = 0;
 int			linenum = 0;
 int			cksum = 0;
+int             	case_sensitive = 1;
 const EVP_MD    	*md;
 SSL_CTX  		*ctx;
 
