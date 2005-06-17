@@ -8,6 +8,8 @@
 [
 .RB \-q\ |\ \-v
 ] [
+.BI \-D\  path
+] [
 .BI \-c\  checksum 
 ] [
 .BI \-K\  command-file 
@@ -73,6 +75,10 @@ clean
 .TP 19
 .BI \-c\  checksum
 enables checksuming.
+.TP 19
+.BI \-D\  path
+specifies the radmind working directory, by default
+.BR _RADMIND_PATH .
 .TP 19
 .BI \-i
 force output line buffering.
