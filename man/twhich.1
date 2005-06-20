@@ -5,7 +5,7 @@
 .SH SYNOPSIS
 .B twhich 
 [
-.RI \-aV
+.RI \-aIV
 ] [
 .BI \-K\  command
 ]
@@ -15,7 +15,7 @@
 .B \-s
 .BI \-K\  command
 [
-.RI \-aV
+.RI \-aIV
 ] 
 .I file
 .sp
@@ -59,6 +59,9 @@ must be in the respective radmind server transcript directory.
 .B \-a
 list all transcripts that contain
 .IR file .
+.TP 19
+.BI \-I
+be case insensitive when compairing paths.
 .TP 19
 .BI \-K\  command
 specifies a command

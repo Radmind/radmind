@@ -44,7 +44,7 @@ main( int argc, char **argv )
     extern struct transcript	*tran_head;
     extern struct list	*special_list;
 
-    while (( c = getopt( argc, argv, "aK:sV" )) != EOF ) {
+    while (( c = getopt( argc, argv, "aIK:sV" )) != EOF ) {
 	switch( c ) {
 	case 'a':
 	    displayall = 1;
@@ -53,6 +53,10 @@ main( int argc, char **argv )
 	case 'K':
 	    defaultkfile = 0;
 	    kfile = optarg;
+	    break;
+
+	case 'I':
+	    case_sensitive = 0;
 	    break;
 
 	case 's':
@@ -80,9 +84,9 @@ main( int argc, char **argv )
     }
 
     if ( err ) {
-        fprintf( stderr, "Usage: %s [ -aV ] [ -K command file ] file\n",
+        fprintf( stderr, "Usage: %s [ -aIV ] [ -K command file ] file\n",
 	    argv[ 0 ] );
-        fprintf( stderr, "Usage: %s -s -K command [ -aV ] file\n",
+        fprintf( stderr, "Usage: %s -s -K command [ -aIV ] file\n",
 	    argv[ 0 ] );
         exit( 2 );
     }
@@ -131,16 +135,16 @@ main( int argc, char **argv )
 	    match++;
 	    switch( tran->t_type ) {
 	    case T_POSITIVE:
-		 printf( "# Positive\n" );
-		 break;
+		printf( "# Positive\n" );
+		break;
 
 	    case T_NEGATIVE:
-		 printf( "# Negative\n" );
-		 break;
+		printf( "# Negative\n" );
+		break;
 
 	    case T_SPECIAL:
-		 printf( "# Special\n" );
-		 break;
+		printf( "# Special\n" );
+		break;
 
 	    default:
 		fprintf( stderr, "unknown transcript type\n" );
