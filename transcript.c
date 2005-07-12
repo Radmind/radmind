@@ -380,10 +380,26 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 
     /*
      * after this point, name is in the fs, so if it's 'f' or an 'a', and
-     * checksums are on, get the checksum.
-     * But no need to if its negative - we don't care what's in it.
+     * checksums are on, get the checksum if:
+     *   - it's create-able, not negative and on both fs and in tran.
+     *     we have to get cksum later if it is negative and gid/uid changed
+     *   - it's apply-able and in both tran and fs.  If it's only
+     *     in fs, we are just going to remove it, so no need for checksum. 
+     *     If it's negative, no need for a checksum either since we don't
+     *     care about the contents.
+     *
+     *		Type	CMP	Tran	cksum	comment
+     *		A	0	P/S	Y
+     *		A	0	N	N	ignore contents
+     *		A	<0	-	N	No need - just going to remove
+     *		C	0	P/S	Y
+     *		C	0	N	N	must do later if uid/gid change
+     *		C	<0	-	Y
      */
-    if ( cksum && tran->t_type != T_NEGATIVE ) {
+    if ( cksum && (( edit_path == CREATABLE &&
+	    !( tran->t_type == T_NEGATIVE && cmp == 0 )) ||
+	    ( edit_path == APPLICABLE && tran->t_type != T_NEGATIVE
+	    && cmp == 0 ))) {
 	if ( fs->pi_type == 'f' ) {
 	    if ( do_cksum( fs->pi_name, fs->pi_cksum_b64 ) < 0 ) {
 		perror( fs->pi_name );
@@ -441,6 +457,22 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 	    if (( tran->t_type == T_NEGATIVE ) && ( edit_path == APPLICABLE )) {
 		t_print( fs, tran, PR_STATUS_NEG );
 	    } else {
+		/* Get checksum if creatable and negative - we don't have it */
+		if (( edit_path == CREATABLE ) &&
+			( tran->t_type == T_NEGATIVE )) {
+		    if ( fs->pi_type == 'f' ) {
+			if ( do_cksum( fs->pi_name, fs->pi_cksum_b64 ) < 0 ) {
+			    perror( fs->pi_name );
+			    exit( 2 );
+			}
+		    } else {
+			if ( do_acksum( fs->pi_name, fs->pi_cksum_b64,
+				&fs->pi_afinfo ) < 0 ) {
+			    perror( fs->pi_name );
+			    exit( 2 );
+			}
+		    }
+		}
 		t_print( fs, tran, PR_STATUS );
 	    }
 	}
@@ -730,6 +762,7 @@ transcript_init( char *kfile, int location )
     }
     if (( p = strrchr( kdir, '/' )) == NULL ) {
         /* No '/' in kfile - use working directory */
+	free( kdir );
         kdir = "./";
     } else {
         p++;
