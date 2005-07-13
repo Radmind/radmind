@@ -414,20 +414,26 @@ main( int argc, char **argv )
 	    }
 
 	    if ( !network ) {
+		/* Check size */
+		if ( radstat( targv[ 1 ], &st, &type, &afinfo ) != 0 ) {
+		    perror( d_path );
+		    exit( 2 );
+		}
+		if ( st.st_size != strtoofft( targv[ 6 ], NULL, 10 )) {
+		    fprintf( stderr, "line %d: size in transcript does "
+			"not match size of file\n", linenum );
+		    exit( 2 );
+		}
 		if ( cksum ) {
 		    if ( *targv[ 0 ] == 'f' ) {
 			size = do_cksum( d_path, cksumval );
 		    } else {
 			/* apple file */
-			size = do_acksum( d_path, cksumval, &afinfo );
-		    }
-		    if ( size < 0 ) {
-			fprintf( stderr, "%s: %s\n", d_path, strerror( errno ));
-			exit( 2 );
-		    } else if ( size != strtoofft( targv[ 6 ], NULL, 10 )) {
-			fprintf( stderr, "line %d: size in transcript does "
-			    "not match size of file\n", linenum );
-			exit( 2 );
+			if ( do_acksum( d_path, cksumval, &afinfo ) < 0  ) {
+			    fprintf( stderr, "%s: %s\n", d_path,
+				strerror( errno ));
+			    exit( 2 );
+			}
 		    }
 		    if ( strcmp( cksumval, targv[ 7 ] ) != 0 ) {
 			fprintf( stderr,
