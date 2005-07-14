@@ -336,7 +336,7 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 	exit( 2 );
 
     default:
-	fprintf( stderr, "PANIC! XXX OOPS!\n" );
+	fprintf( stderr, "%s: Unknown type: %c\n", cur->pi_name, cur->pi_type );
 	exit( 2 );
     } 
 }
@@ -553,7 +553,7 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 	break;
 
     default:
-	fprintf( stderr, "OOPS! XXX DOUBLE PANIC!\n" );
+	fprintf( stderr, "%s: Unknown type: %c\n", fs->pi_name, fs->pi_type );
 	break;
     }
 
