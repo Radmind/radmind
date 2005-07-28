@@ -376,6 +376,27 @@ main( int argc, char **argv )
 	}
 	bytes = 0;
 
+	/* Check transcript order */
+	if ( prepath != 0 ) {
+	    if ( pathcmp_case( path, prepath, case_sensitive ) < 0 ) {
+		if ( updatetran ) {
+		    fprintf( stderr, "line %d: bad sort order\n", linenum );
+		} else {
+		    fprintf( stderr,
+		    "line %d: bad sort order.  Not continuing.\n", linenum );
+		}
+		cleanup( updatetran, upath );
+		exit( 2 );
+	    }
+	}
+
+	if ( strlen( path ) >= MAXPATHLEN ) {
+	    fprintf( stderr, "line %d: path too long\n", linenum );
+	    exitval = 1;
+	    goto done;
+	}
+	strcpy( prepath, path );
+
 	if ((( *targv[ 0 ] != 'f' )  && ( *targv[ 0 ] != 'a' )) || ( remove )) {
 	    if ( updatetran ) {
 		fprintf( ufs, "%s", line );
@@ -398,26 +419,6 @@ main( int argc, char **argv )
 	    exitval = 1;
 	    goto done;
 	}
-
-	/* Check transcript order */
-	if ( prepath != 0 ) {
-	    if ( pathcmp_case( path, prepath, case_sensitive ) < 0 ) {
-		if ( updatetran ) {
-		    fprintf( stderr, "line %d: bad sort order\n", linenum );
-		} else {
-		    fprintf( stderr,
-		    "line %d: bad sort order.  Not continuing.\n", linenum );
-		}
-		cleanup( updatetran, upath );
-		exit( 2 );
-	    }
-	}
-	if ( strlen( path ) >= MAXPATHLEN ) {
-	    fprintf( stderr, "line %d: path too long\n", linenum );
-	    exitval = 1;
-	    goto done;
-	}
-	strcpy( prepath, path );
 
 	/*
 	 * Since this tool is run on the server, all files can be treated
