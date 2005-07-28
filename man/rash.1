@@ -1,0 +1,133 @@
+.TH ra "1" "_RADMIND_BUILD_DATE" "RSUG" "User Commands"
+.SH NAME
+.B ra 
+\- Radmind Assistant
+.SH SYNOPSIS
+.B ra
+[
+.BI -%cltV 
+] [ 
+.BI \-h\ server 
+] [ 
+.BI \-w\ authlevel 
+] {
+.B trip
+|
+.B update
+|
+.B create
+|
+.B auto
+|
+.B force
+|
+.B checkout
+|
+.B checkin
+} 
+.sp 
+.SH DESCRIPTION 
+.B rash 
+is a command line application for running the Radmind
+tool set.  It can be used to run the entire radmind process including
+updating a client, running a tripwire and creating loadsets.  On
+machines with multiple administrators, 
+.B rash 
+can be used to limit
+conflicts from multiple administrators simultaneously using the tool.
+
+.B rash 
+is run with a required option telling it what process to run:
+update, auto, force, create, trip, checkout or checkin.
+
+A machine can be updated by using either the update, auto or force
+option.  update will prompt the user at each step in the process.  auto
+will update the machine without any input, looping when possible to
+handle temporary problems such as networking issues or a busy server. 
+auto is suitable to be run as an automated process.  force runs updates
+a machine without looping or prompting for input and is handy for quick,
+manual updates.
+
+create is used to store a loadset on the radmind server in an
+interactive fashion.  Before creating a transcript, 
+.B rash 
+first checks to
+see if the command file and transcripts are correct and prompts the uses
+to update them if needed.  The user can also edit the transcript before
+it is stored on the server.
+
+trip is used to run a tripwire on the system.  If the command file and
+transcripts are correct, a full tripwire is run with checksums.  Any
+differences are printed to the screen in a format suitable for e-mailed
+machine reporting.
+
+checkout is used to prevent other users from concurrently running 
+.BR rash . 
+It is helpful when an administrator is installing new software or
+configuring a client and does not want their work removed.  Only the
+user who checked out a machine can run 
+.B rash 
+unless a new checkout is
+forced from an interactive 
+.B rash 
+session.  An e-mail is sent to the
+previous users when a checkout is overridden.  As trip does not modify
+the system, it can be run at any time, regardless of who has checked out
+the machine.  checkin is used to release a machine.  Only the user who
+checked out a machine may check it back in.
+
+The -c option can be used to turn on checksums for fsdiff.  The only
+support checksum SHA1.
+
+.B rash 
+supports running arbitrary scripts before and after lapply. 
+Preapply scripts located in PREAPPLY are run before lapply, and
+postapply scripts located in POSTAPPLY are run after.  The first
+argument passed to each script is the full path to apply-able
+transcript.
+.SH OPTIONS
+.TP 19
+.B \-%
+percentage done progress output.
+.TP 19
+.B \-c
+Use sha1 checksums.
+.TP 19
+.BI \-h\  hostname
+specifies the radmind server, by default
+.BR _RADMIND_HOST .
+.TP 19
+.B \-l
+Prompt for remote user name.
+.TP 19
+.B \-t
+Use tempfiles
+.TP 19
+.B \-V
+displays the version of 
+.B ra
+and exits.
+.TP 19
+.BI \-w\  auth-level
+TLS authorization level, by default _RADMIND_AUTHLEVEL.
+0 = no TLS, 1 = server verification, 2 = server and client verification.
+.SH EXIT STATUS
+The following exit values are returned:
+.TP 5
+0
+successful.
+.TP 5
+>1
+An error occurred.
+.sp
+.SH SEE ALSO
+.BR fsdiff (1),
+.BR ktcheck (1),
+.BR lapply (1),
+.BR lcksum (1),
+.BR lcreate (1),
+.BR lfdiff (1),
+.BR lmerge (1),
+.BR lsort (1),
+.BR twhich (1),
+.BR radmind (8).
