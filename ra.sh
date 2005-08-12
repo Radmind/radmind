@@ -161,9 +161,17 @@ update() {
 	exit 0
     fi
     if [ x"$opt" = x"interactive" ]; then
-	Yn "Edit difference transcript?"
-	if [ $? -eq 1 ]; then
-	    ${EDITOR} ${FTMP}
+	infocmp >/dev/null 2>&1
+	if [ $? -ne 0 ]; then
+	    Yn "Unknown terminal $TERM. Print difference transcript to screen?"
+	    if [ $? -eq 1 ]; then
+		cat ${FTMP}
+	    fi
+	else
+	    Yn "Edit difference transcript?"
+	    if [ $? -eq 1 ]; then
+		${EDITOR} ${FTMP}
+	    fi
 	fi
     fi
     
