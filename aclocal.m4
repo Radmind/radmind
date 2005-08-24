@@ -72,3 +72,9 @@ AC_DEFUN([CHECK_ZEROCONF],
 	AC_MSG_RESULT(yes)
     fi
 ])
+
+AC_DEFUN([SET_NO_SASL],
+[
+    ac_configure_args="$ac_configure_extra_args --with-sasl=no";
+    AC_MSG_RESULT(Disabled SASL)
+])

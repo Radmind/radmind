@@ -73,6 +73,7 @@ if test x_$GCC = x_yes; then
 fi
 AC_SUBST(OPTOPTS)
 
+SET_NO_SASL
 AC_CONFIG_SUBDIRS(libsnet)
 AC_CONFIG_FILES(Makefile)
 AC_OUTPUT

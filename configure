@@ -4733,6 +4733,11 @@ fi
 
 
 
+    ac_configure_args="$ac_configure_extra_args --with-sasl=no";
+    echo "$as_me:$LINENO: result: Disabled SASL" >&5
+echo "${ECHO_T}Disabled SASL" >&6
+
+
 
 subdirs="$subdirs libsnet"
 
