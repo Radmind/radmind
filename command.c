@@ -742,7 +742,7 @@ f_stor( SNET *sn, int ac, char *av[] )
 	 * used later to compare in a stor file.
 	 */
 	if ( strlen( av[ 2 ] ) >= MAXPATHLEN ) {
-	    syslog( LOG_ERR, "f_stor: uplaod_xscript path too long" );
+	    syslog( LOG_ERR, "f_stor: upload_xscript path too long" );
 	    snet_writef( sn, "%d Path too long\r\n", 540 );
 	    return( 1 );
 	}
