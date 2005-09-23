@@ -41,7 +41,7 @@
 #include "mkdirs.h"
 #include "rmdirs.h"
 
-void cleandirs( char *path, FILE *f );
+int cleandirs( char *path, struct llist *khead );
 int clean_client_dir( void );
 void output( char* string);
 int check( SNET *sn, char *type, char *path); 
@@ -51,7 +51,7 @@ int read_kfile( char * );
 SNET *sn;
 
 void			(*logger)( char * ) = NULL;
-int		linenum = 0;
+int			linenum = 0;
 int			cksum = 0;
 int			verbose = 0;
 int			dodots= 0;
@@ -70,24 +70,74 @@ extern struct timeval	timeout;
 extern char		*version, *checksumlist;
 extern char             *ca, *cert, *privatekey; 
 
-    void
-cleandirs( char *path, FILE *f )
+    struct llist *
+expand_kfile( char *kfile )
+{
+    struct llist	*kitems = NULL, *new;
+    FILE		*kf;
+    char		path[ MAXPATHLEN ];
+    char		buf[ MAXPATHLEN ];
+    char		**tav;
+    int			tac;
+    size_t		len;
+    unsigned int	line = 0;
+
+    if (( kf = fopen( kfile, "r" )) == NULL ) {
+	perror( kfile );
+	return( NULL );
+    }
+
+    while ( fgets( buf, MAXPATHLEN, kf ) != NULL ) {
+	line++;
+	len = strlen( buf );
+	if ( buf[ len - 1 ] != '\n' ) {
+	    fprintf( stderr, "%s line %d: line too long\n", base_kfile, line );
+	    fclose( kf );
+	    return( NULL );
+	}
+
+	/* skip comments and special lines */
+	if ( *buf == '#' || *buf == 's' ) {
+	    continue;
+	}
+	/* skip blank lines */
+	if (( tac = argcargv( buf, &tav )) == 0 ) {
+	    continue;
+	}
+
+	if ( snprintf( path, MAXPATHLEN, "%s/client/%s",
+			radmind_path, tav[ 1 ] ) >= MAXPATHLEN ) {
+	    fprintf( stderr, "%s/client/%s: path too long\n",
+			radmind_path, tav[ 1 ] );
+	    fclose( kf );
+	    return( NULL );
+	}
+
+	new = ll_allocate( path );
+	ll_insert( &kitems, new );
+    }
+    if ( fclose( kf ) != 0 ) {
+	perror( "fclose" );
+	return( NULL );
+    }
+
+    return( kitems );
+}
+
+    int
+cleandirs( char *path, struct llist *khead )
 {
     DIR			*d;
     struct dirent	*de;
     struct llist	*head = NULL;
-    struct llist	*cur, *new;
+    struct llist	*cur, *new, *kcur;
     struct stat		st;
     char		fsitem[ MAXPATHLEN ];
-    char		kitem[ MAXPATHLEN ];
-    char		tmp[ MAXPATHLEN ], line[ MAXPATHLEN ];
-    char		**tav;
-    int			tac;
     int			match = 0;
 
     if (( d = opendir( path )) == NULL ) {
 	perror( path );
-	exit( 2 );
+	return( -1 );
     }
 
     while (( de = readdir( d )) != NULL ) {
@@ -100,7 +150,7 @@ cleandirs( char *path, FILE *f )
 	if ( snprintf( fsitem, MAXPATHLEN, "%s/%s", path, de->d_name )
 		>= MAXPATHLEN ) {
 	    fprintf( stderr, "%s/%s: path too long\n", path, de->d_name );
-	    exit( 2 );
+	    return( -1 );
 	}
 
 	/* also skip the base command file */
@@ -114,66 +164,50 @@ cleandirs( char *path, FILE *f )
 
     if ( closedir( d ) != 0 ) {
 	perror( "closedir" );
-	exit( 2 );
+	return( -1 );
     }
 
     for ( cur = head; cur != NULL; cur = cur->ll_next ) {
 	if ( lstat( cur->ll_name, &st ) != 0 ) {
 	    perror( cur->ll_name );
-	    exit( 2 );
+	    return( -1 );
 	}
 
-	while ( fgets( tmp, MAXPATHLEN, f ) != NULL ) {
-	    strcpy( line, tmp );
-
-	    tac = argcargv( tmp, &tav );
-	    if ( tac == 0 || **tav == '#' || **tav == 's' ) {
-		continue;
-	    } else if ( tac != 2 ) {
-		fprintf( stderr, "%s: invalid command file line\n", line );
-		exit( 2 );
-	    }
-
-	    if ( snprintf( kitem, MAXPATHLEN, "%s/client/%s", radmind_path,
-			tav[ 1 ] ) >= MAXPATHLEN ) {
-		fprintf( stderr, "%s/client/%s: path too long",
-			radmind_path, tav[ 1 ] );
-		exit( 2 );
-	    }
-
-	    if ( strcmp( cur->ll_name, kitem ) == 0
-			|| ischild( kitem, cur->ll_name )) {
+	for ( kcur = khead; kcur != NULL; kcur = kcur->ll_next ) {
+	    if ( strcmp( cur->ll_name, kcur->ll_name ) == 0
+			|| ischild( kcur->ll_name, cur->ll_name )) {
 		match = 1;
+		break;
 	    }
 	}
-	if ( ferror( f )) {
-	    perror( "fgets" );
-	    exit( 2 );
-	}
-	rewind( f );
 
 	if ( !match ) {
 	    if ( S_ISDIR( st.st_mode )) {
 		rmdirs( cur->ll_name );
+		printf( "unused directory %s deleted\n", cur->ll_name );
 	    } else {
+		printf( "unused file %s deleted\n", cur->ll_name );
 		if ( unlink( cur->ll_name ) != 0 ) {
 		    perror( cur->ll_name );
-		    exit( 2 );
+		    return( -1 );
 		}
 	    }
 	} else if ( S_ISDIR( st.st_mode )) {
-	    cleandirs( cur->ll_name, f );
+	    cleandirs( cur->ll_name, khead );
 	}
 	match = 0;
     }
 
     ll_free( head );
+
+    return( 0 );
 }
 
     int
 clean_client_dir( void )
 {
-    FILE		*kf;
+    struct llist	*khead = NULL, *cur, *tmp, *tmp1;
+    struct node		*node;
     char		clientdir[ MAXPATHLEN ];
 
     if ( snprintf( clientdir, MAXPATHLEN, "%s/client", radmind_path )
@@ -181,17 +215,27 @@ clean_client_dir( void )
 	fprintf( stderr, "%s/client: path too long\n", radmind_path );
 	return( -1 );
     }
-    if (( kf = fopen( base_kfile, "r" )) == NULL ) {
-	perror( base_kfile );
+
+    if (( khead = expand_kfile( base_kfile )) == NULL ) {
 	return( -1 );
     }
 
-    cleandirs( clientdir, kf );
+    while (( node = list_pop_head( kfile_seen )) != NULL ) {
+	if (( tmp = expand_kfile( node->n_path )) == NULL ) {
+	    return( -1 );
+	}
 
-    if ( fclose( kf ) != 0 ) {
-	fprintf( stderr, "fclose: %s\n", strerror( errno ));
-	return( -1 );
+	for ( cur = tmp; cur != NULL; cur = cur->ll_next ) {
+	    tmp1 = ll_allocate( cur->ll_name );
+	    ll_insert( &khead, tmp1 );
+	}
+
+	ll_free( tmp );
     }
+
+    cleandirs( clientdir, khead );
+
+    ll_free( khead );
 
     return( 0 );
 }
@@ -792,7 +836,7 @@ main( int argc, char **argv )
     }
 
 done:
-    if ( clean ) {
+    if ( clean && update ) {
 	clean_client_dir();
     }
 
