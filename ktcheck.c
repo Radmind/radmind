@@ -70,10 +70,10 @@ extern struct timeval	timeout;
 extern char		*version, *checksumlist;
 extern char             *ca, *cert, *privatekey; 
 
-    struct llist *
-expand_kfile( char *kfile )
+    static void
+expand_kfile( struct llist **khead, char *kfile )
 {
-    struct llist	*kitems = NULL, *new;
+    struct llist	*new;
     FILE		*kf;
     char		path[ MAXPATHLEN ];
     char		buf[ MAXPATHLEN ];
@@ -84,7 +84,7 @@ expand_kfile( char *kfile )
 
     if (( kf = fopen( kfile, "r" )) == NULL ) {
 	perror( kfile );
-	return( NULL );
+	exit( 2 );
     }
 
     while ( fgets( buf, MAXPATHLEN, kf ) != NULL ) {
@@ -93,7 +93,7 @@ expand_kfile( char *kfile )
 	if ( buf[ len - 1 ] != '\n' ) {
 	    fprintf( stderr, "%s line %d: line too long\n", base_kfile, line );
 	    fclose( kf );
-	    return( NULL );
+	    exit( 2 );
 	}
 
 	/* skip comments and special lines */
@@ -110,18 +110,17 @@ expand_kfile( char *kfile )
 	    fprintf( stderr, "%s/client/%s: path too long\n",
 			radmind_path, tav[ 1 ] );
 	    fclose( kf );
-	    return( NULL );
+	    exit( 2 );
 	}
 
 	new = ll_allocate( path );
-	ll_insert( &kitems, new );
-    }
-    if ( fclose( kf ) != 0 ) {
-	perror( "fclose" );
-	return( NULL );
+	ll_insert( khead, new );
     }
 
-    return( kitems );
+    if ( fclose( kf ) != 0 ) {
+	perror( "fclose" );
+	exit( 2 );
+    }
 }
 
     int
@@ -129,8 +128,8 @@ cleandirs( char *path, struct llist *khead )
 {
     DIR			*d;
     struct dirent	*de;
-    struct llist	*head = NULL;
-    struct llist	*cur, *new, *kcur;
+    struct llist	*head = NULL, *kcur;
+    struct llist	*cur, *new;
     struct stat		st;
     char		fsitem[ MAXPATHLEN ];
     int			match = 0;
@@ -184,12 +183,16 @@ cleandirs( char *path, struct llist *khead )
 	if ( !match ) {
 	    if ( S_ISDIR( st.st_mode )) {
 		rmdirs( cur->ll_name );
-		printf( "unused directory %s deleted\n", cur->ll_name );
+		if ( verbose ) {
+		    printf( "unused directory %s deleted\n", cur->ll_name );
+		}
 	    } else {
-		printf( "unused file %s deleted\n", cur->ll_name );
 		if ( unlink( cur->ll_name ) != 0 ) {
 		    perror( cur->ll_name );
 		    return( -1 );
+		}
+		if ( verbose ) {
+		    printf( "unused file %s deleted\n", cur->ll_name );
 		}
 	    }
 	} else if ( S_ISDIR( st.st_mode )) {
@@ -206,7 +209,7 @@ cleandirs( char *path, struct llist *khead )
     int
 clean_client_dir( void )
 {
-    struct llist	*khead = NULL, *cur, *tmp, *tmp1;
+    struct llist	*khead = NULL;
     struct node		*node;
     char		clientdir[ MAXPATHLEN ];
 
@@ -216,21 +219,10 @@ clean_client_dir( void )
 	return( -1 );
     }
 
-    if (( khead = expand_kfile( base_kfile )) == NULL ) {
-	return( -1 );
-    }
+    expand_kfile( &khead, base_kfile );
 
     while (( node = list_pop_head( kfile_seen )) != NULL ) {
-	if (( tmp = expand_kfile( node->n_path )) == NULL ) {
-	    return( -1 );
-	}
-
-	for ( cur = tmp; cur != NULL; cur = cur->ll_next ) {
-	    tmp1 = ll_allocate( cur->ll_name );
-	    ll_insert( &khead, tmp1 );
-	}
-
-	ll_free( tmp );
+	expand_kfile( &khead, node->n_path );
     }
 
     cleandirs( clientdir, khead );
