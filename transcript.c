@@ -225,6 +225,10 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 
     if ( edit_path == APPLICABLE ) {
 	cur = &tran->t_pinfo;
+	if (( fs->pi_type != 'd' ) && ( fs->pi_type != 'h' ) &&
+		( fs->pi_stat.st_nlink > 1 )) {
+	    hardlink_changed( fs, 1 );
+	}
     } else {
 	cur = fs;	/* What if this is NULL? */
     }
@@ -308,6 +312,27 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 	}
 
 	/*
+	 * If we don't have a checksum yet, and checksums are on, calculate
+	 * it now.  Note that this can only be the case if "cur" is the
+	 * filesystem, because transcript_parse() won't read lines without
+	 * checksums if they are enabled.
+	 */
+	if (( *cur->pi_cksum_b64 == '-' ) && cksum ) {
+	    if ( cur->pi_type == 'f' ) {
+		if ( do_cksum( cur->pi_name, cur->pi_cksum_b64 ) < 0 ) {
+		    perror( cur->pi_name );
+		    exit( 2 );
+		}
+	    } else if ( cur->pi_type == 'a' ) {
+		if ( do_acksum( cur->pi_name, cur->pi_cksum_b64,
+			&cur->pi_afinfo ) < 0 ) {
+		    perror( cur->pi_name );
+		    exit( 2 );
+		}
+	    }
+	}
+
+	/*
 	 * PR_STATUS_NEG means we've had a permission change on a file,
 	 * but the corresponding transcript is negative, hence, retain
 	 * the file system's mtime.  Woof!
@@ -378,42 +403,6 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 	return T_MOVE_TRAN;
     } 
 
-    /*
-     * after this point, name is in the fs, so if it's 'f' or an 'a', and
-     * checksums are on, get the checksum if:
-     *   - it's create-able, not negative and on both fs and in tran.
-     *     we have to get cksum later if it is negative and gid/uid changed
-     *   - it's apply-able and in both tran and fs.  If it's only
-     *     in fs, we are just going to remove it, so no need for checksum. 
-     *     If it's negative, no need for a checksum either since we don't
-     *     care about the contents.
-     *
-     *		Type	CMP	Tran	cksum	comment
-     *		A	0	P/S	Y
-     *		A	0	N	N	ignore contents
-     *		A	<0	-	N	No need - just going to remove
-     *		C	0	P/S	Y
-     *		C	0	N	N	must do later if uid/gid change
-     *		C	<0	-	Y
-     */
-    if ( cksum && (( edit_path == CREATABLE &&
-	    !( tran->t_type == T_NEGATIVE && cmp == 0 )) ||
-	    ( edit_path == APPLICABLE && tran->t_type != T_NEGATIVE
-	    && cmp == 0 ))) {
-	if ( fs->pi_type == 'f' ) {
-	    if ( do_cksum( fs->pi_name, fs->pi_cksum_b64 ) < 0 ) {
-		perror( fs->pi_name );
-		exit( 2 );
-	    }
-	} else if ( fs->pi_type == 'a' ) {
-	    if ( do_acksum( fs->pi_name, fs->pi_cksum_b64,
-	    	    &fs->pi_afinfo ) < 0 ) {
-		perror( fs->pi_name );
-		exit( 2 );
-	    }
-	}
-    }
-
     if ( cmp < 0 ) {
 	/* name is not in the tran */
 	t_print( fs, tran, PR_FS_ONLY );
@@ -435,13 +424,29 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
     case 'a':			    /* hfs applefile */
     case 'f':			    /* file */
 	if ( tran->t_type != T_NEGATIVE ) {
-	    if (( fs->pi_stat.st_size != tran->t_pinfo.pi_stat.st_size ) ||
-(( !cksum ) ? ( fs->pi_stat.st_mtime != tran->t_pinfo.pi_stat.st_mtime ) :
-( strcmp( fs->pi_cksum_b64, tran->t_pinfo.pi_cksum_b64 ) != 0 ))) {
+	    if ( fs->pi_stat.st_size != tran->t_pinfo.pi_stat.st_size ) {
 		t_print( fs, tran, PR_DOWNLOAD );
-		if (( edit_path == APPLICABLE ) && ( fs->pi_stat.st_nlink > 1 )) {
-		    hardlink_changed( fs, 1 );
+		break;
+	    }
+	    if ( cksum ) {
+		if ( fs->pi_type == 'f' ) {
+		    if ( do_cksum( fs->pi_name, fs->pi_cksum_b64 ) < 0 ) {
+			perror( fs->pi_name );
+			exit( 2 );
+		    }
+		} else if ( fs->pi_type == 'a' ) {
+		    if ( do_acksum( fs->pi_name, fs->pi_cksum_b64,
+			    &fs->pi_afinfo ) < 0 ) {
+			perror( fs->pi_name );
+			exit( 2 );
+		    }
 		}
+		if ( strcmp( fs->pi_cksum_b64, tran->t_pinfo.pi_cksum_b64 ) != 0 ) {
+		    t_print( fs, tran, PR_DOWNLOAD );
+		    break;
+		}
+	    } else if ( fs->pi_stat.st_mtime != tran->t_pinfo.pi_stat.st_mtime ) {
+		t_print( fs, tran, PR_DOWNLOAD );
 		break;
 	    }
 
@@ -457,22 +462,6 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 	    if (( tran->t_type == T_NEGATIVE ) && ( edit_path == APPLICABLE )) {
 		t_print( fs, tran, PR_STATUS_NEG );
 	    } else {
-		/* Get checksum if creatable and negative - we don't have it */
-		if (( edit_path == CREATABLE ) &&
-			( tran->t_type == T_NEGATIVE )) {
-		    if ( fs->pi_type == 'f' ) {
-			if ( do_cksum( fs->pi_name, fs->pi_cksum_b64 ) < 0 ) {
-			    perror( fs->pi_name );
-			    exit( 2 );
-			}
-		    } else {
-			if ( do_acksum( fs->pi_name, fs->pi_cksum_b64,
-				&fs->pi_afinfo ) < 0 ) {
-			    perror( fs->pi_name );
-			    exit( 2 );
-			}
-		    }
-		}
 		t_print( fs, tran, PR_STATUS );
 	    }
 	}
@@ -717,10 +706,14 @@ t_new( int type, char *fullname, char *shortname, char *kfile )
     memset( new, 0, sizeof( struct transcript ));
 
     new->t_type = type;
-    if ( new->t_type == T_NULL ) {
+    switch ( type ) {
+    case T_NULL :
 	new->t_eof = 1; 
+	break;
 
-    } else {
+    case T_POSITIVE :
+    case T_NEGATIVE :
+    case T_SPECIAL :
 	new->t_eof = 0; 
 	new->t_linenum = 0;
 	strcpy( new->t_shortname, shortname );
@@ -731,6 +724,14 @@ t_new( int type, char *fullname, char *shortname, char *kfile )
 	    exit( 2 );
 	}
 	transcript_parse( new );
+	break;
+
+    case T_EXCLUDE :
+	/* read the whole file, keep a list of possibly wild pathnames */
+	break;
+
+    default :
+	break;
     }
 
     new->t_next = tran_head;
@@ -894,6 +895,10 @@ read_kfile( char *kfile, int location )
 
 	case 'p':				/* positive */
 	    t_new( T_POSITIVE, fullpath, av[ 1 ], kfile );
+	    break;
+
+	case 'x':				/* exclude */
+	    t_new( T_EXCLUDE, fullpath, av[ 1 ], kfile );
 	    break;
 
 	case 's':				/* special */

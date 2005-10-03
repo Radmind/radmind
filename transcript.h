@@ -9,6 +9,7 @@
 #define T_POSITIVE	1
 #define T_NEGATIVE	2 
 #define T_SPECIAL	3
+#define T_EXCLUDE	4
 
 #define T_MOVE_TRAN	1
 #define T_MOVE_FS	2
