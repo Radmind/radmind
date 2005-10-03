@@ -125,15 +125,15 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
     char *trancksum )
 {
     int			fd;
-    unsigned char       buf[ 8192 ];
+    char 	      	buf[ 8192 ];
     struct stat         st;
     struct timeval      tv;
     ssize_t             rr, size = 0;
-    int			md_len;
+    unsigned int	md_len;
     extern EVP_MD       *md;
     EVP_MD_CTX          mdctx;
     unsigned char       md_value[ EVP_MAX_MD_SIZE ];
-    unsigned char       cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
+    char       cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
 
     /* Check for checksum in transcript */
     if ( cksum ) {
@@ -254,11 +254,11 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     off_t		size;
     char		buf[ 8192 ];
     struct timeval   	tv;
-    int		      	md_len;
+    unsigned int      	md_len;
     extern EVP_MD      	*md;
     EVP_MD_CTX         	mdctx;
-    unsigned char      	md_value[ EVP_MAX_MD_SIZE ];
-    unsigned char	cksum_b64[ EVP_MAX_MD_SIZE ];
+    unsigned char 	     	md_value[ EVP_MAX_MD_SIZE ];
+    char		cksum_b64[ EVP_MAX_MD_SIZE ];
 
     /* Check for checksum in transcript */
     if ( cksum ) {
@@ -350,7 +350,8 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 
     /* write finder info data to server */
     tv = timeout;
-    if ( snet_write( sn, afinfo->ai.ai_data, FINFOLEN, &tv ) != FINFOLEN ) {
+    if ( snet_write( sn, (char *)afinfo->ai.ai_data, FINFOLEN,
+	    &tv ) != FINFOLEN ) {
 	fprintf( stderr, "stor_applefile %s failed: %s\n", pathdesc,
 	    strerror( errno ));
 	return( -1 );
@@ -468,7 +469,7 @@ n_stor_applefile( SNET *sn, char *pathdesc, char *path )
     /* Setup fake apple file info */
     /* Finder Info */
     memset( &afinfo, 0, sizeof( afinfo ));
-    sprintf( afinfo.ai.ai_data + FI_CREATOR_OFFSET, "%s", "RDMD" );
+    sprintf( (char *)(afinfo.ai.ai_data + FI_CREATOR_OFFSET), "%s", "RDMD" );
     afinfo.as_ents[AS_FIE].ae_id = ASEID_FINFO;
     afinfo.as_ents[AS_FIE].ae_offset = AS_HEADERLEN +
 	( 3 * sizeof( struct as_entry ));               /* 62 */
@@ -534,7 +535,8 @@ n_stor_applefile( SNET *sn, char *pathdesc, char *path )
 
     /* write finder info data to server */
     tv = timeout;
-    if ( snet_write( sn, afinfo.ai.ai_data, FINFOLEN, &tv ) != FINFOLEN ) {
+    if ( snet_write( sn, (char *)afinfo.ai.ai_data, FINFOLEN,
+	    &tv ) != FINFOLEN ) {
 	fprintf( stderr, "n_stor_applefile %s failed: %s\n", pathdesc,
 	    strerror( errno ));
 	return( -1 );

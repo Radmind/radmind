@@ -131,7 +131,7 @@ transcript_parse( struct transcript *tran )
 	tran->t_pinfo.pi_stat.st_gid = atoi( argv[ 4 ] );
 	if ( ac == 6 ) {
 	    base64_d( argv[ 5 ], strlen( argv[ 5 ] ),
-		    tran->t_pinfo.pi_afinfo.ai.ai_data );
+		    (char *)tran->t_pinfo.pi_afinfo.ai.ai_data );
 	} else {
 	    memset( tran->t_pinfo.pi_afinfo.ai.ai_data, 0, FINFOLEN );
 	}
@@ -280,7 +280,7 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 		sizeof( null_buf )) != 0 ) { 
 	    char	finfo_e[ SZ_BASE64_E( FINFOLEN ) ];
 
-	    base64_e( cur->pi_afinfo.ai.ai_data, FINFOLEN, finfo_e );
+	    base64_e( (char *)cur->pi_afinfo.ai.ai_data, FINFOLEN, finfo_e );
 	    fprintf( outtran, "%c %-37s\t%.4lo %5d %5d %s\n", cur->pi_type,
 		    epath,
 		    (unsigned long)( T_MODE & cur->pi_stat.st_mode ), 

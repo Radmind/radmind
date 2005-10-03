@@ -118,7 +118,8 @@ main( int ac, char **av )
     struct sockaddr_in	sin;
     struct in_addr	b_addr;
     struct servent	*se;
-    int			c, s, err = 0, fd, sinlen, trueint;
+    int			c, s, err = 0, fd, trueint;
+    socklen_t		addrlen;
     int			dontrun = 0;
     int			use_randfile = 0;
     char		*prog;
@@ -458,8 +459,8 @@ main( int ac, char **av )
 	    }
 	}
 
-	sinlen = sizeof( struct sockaddr_in );
-	if (( fd = accept( s, (struct sockaddr *)&sin, &sinlen )) < 0 ) {
+	addrlen = sizeof( struct sockaddr_in );
+	if (( fd = accept( s, (struct sockaddr *)&sin, &addrlen )) < 0 ) {
 	    if ( errno != EINTR ) {
 		syslog( LOG_ERR, "accept: %m" );
 	    }

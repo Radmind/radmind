@@ -64,15 +64,16 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, off_t transize,
 {
     struct timeval	tv;
     char		*line;
-    int			fd, md_len;
+    int			fd;
+    unsigned int	md_len;
     int			returnval = -1;
     off_t		size = 0;
-    unsigned char	buf[ 8192 ]; 
+    char		buf[ 8192 ]; 
     ssize_t		rr;
     extern EVP_MD	*md;
     EVP_MD_CTX		mdctx;
     unsigned char	md_value[ EVP_MAX_MD_SIZE ];
-    unsigned char	cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
+    char		cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
 
     if ( cksum ) {
 	if ( strcmp( trancksum, "-" ) == 0 ) {
@@ -213,7 +214,8 @@ error1:
 retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     off_t transize, char *trancksum )
 {
-    int				dfd, rfd, md_len;
+    int				dfd, rfd;
+    unsigned int		md_len;
     int				returnval = -1;
     off_t			size;
     size_t			rsize;
@@ -230,7 +232,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     extern EVP_MD       	*md;
     EVP_MD_CTX   	       	mdctx;
     unsigned char       	md_value[ EVP_MAX_MD_SIZE ];
-    unsigned char       	cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
+    char		       	cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
 
     if ( cksum ) {
         if ( strcmp( trancksum, "-" ) == 0 ) {

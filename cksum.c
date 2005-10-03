@@ -35,7 +35,7 @@
     off_t 
 do_fcksum( int fd, char *cksum_b64 )
 {
-    int			md_len;
+    unsigned int	md_len;
     ssize_t		rr;
     off_t		size = 0;
     unsigned char	buf[ 8192 ];
@@ -99,7 +99,7 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
     char			buf[ 8192 ];
     off_t			size = 0;
     extern struct as_header	as_header;
-    int				md_len;
+    unsigned int		md_len;
     extern EVP_MD		*md;
     EVP_MD_CTX          	mdctx;
     unsigned char       	md_value[ EVP_MAX_MD_SIZE ];

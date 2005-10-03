@@ -117,7 +117,7 @@ invalid_applefile:
     static void
 cleanup( int clean, char *path )
 {
-    if ( ! clean || *path == NULL ) {
+    if ( ! clean || path == NULL ) {
 	return;
     }
 
