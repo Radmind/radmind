@@ -73,7 +73,7 @@ precedent_transcript( char *kfile, char *file, int where )
     if ( special_list->l_count > 0 ) {
         for ( node = list_pop_head( special_list ); node != NULL;
                 node = list_pop_head( special_list )) {
-            if ( pathcmp_case( node->n_path, file, case_sensitive ) == 0 ) {
+            if ( pathcasecmp( node->n_path, file, case_sensitive ) == 0 ) {
                 printf( "# Special\n" );
                 printf( "special.T:\n" );
                 printf( "%s\n", node->n_path );
@@ -84,7 +84,7 @@ precedent_transcript( char *kfile, char *file, int where )
     }
 
     for ( tran = tran_head; !tran->t_eof; tran = tran->t_next ) {
-        while (( cmp = pathcmp_case( tran->t_pinfo.pi_name, file,
+        while (( cmp = pathcasecmp( tran->t_pinfo.pi_name, file,
 		case_sensitive )) < 0 ) {
             transcript_parse( tran );
             if ( tran->t_eof ) {

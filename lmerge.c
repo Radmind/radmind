@@ -149,7 +149,7 @@ getline:
     /* Check transcript order */
     if ( tran->t_prepath != 0 ) {
 	 
-	if ( pathcmp_case( tran->t_filepath, tran->t_prepath,
+	if ( pathcasecmp( tran->t_filepath, tran->t_prepath,
 		case_sensitive ) < 0 ) {
 	    fprintf( stderr, "%s: line %d: bad sort order\n",
 			tran->t_tran_name, tran->t_linenum );
@@ -405,7 +405,7 @@ main( int argc, char **argv )
 		if ( trans[ j ]->t_eof ) {
 		    continue;
 		}
-		cmpval = pathcmp_case( trans[ candidate ]->t_filepath,
+		cmpval = pathcasecmp( trans[ candidate ]->t_filepath,
 		    trans[ j ]->t_filepath, case_sensitive );
 		if ( cmpval == 0 ) {
 		    /* File match */

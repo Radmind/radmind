@@ -378,7 +378,7 @@ main( int argc, char **argv )
 
 	/* Check transcript order */
 	if ( prepath != 0 ) {
-	    if ( pathcmp_case( path, prepath, case_sensitive ) < 0 ) {
+	    if ( pathcasecmp( path, prepath, case_sensitive ) < 0 ) {
 		if ( updatetran ) {
 		    fprintf( stderr, "line %d: bad sort order\n", linenum );
 		} else {

@@ -101,7 +101,7 @@ transcript_parse( struct transcript *tran )
 	    tran->t_fullname, tran->t_linenum );
 	exit( 2 );
     }
-    if ( pathcmp_case( epath, tran->t_pinfo.pi_name, case_sensitive ) < 0 ) {
+    if ( pathcasecmp( epath, tran->t_pinfo.pi_name, case_sensitive ) < 0 ) {
 	fprintf( stderr, "%s: line %d: bad sort order\n",
 	    tran->t_fullname, tran->t_linenum );
 	exit( 2 );
@@ -392,7 +392,7 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 	     */
 	    cmp = 1;
 	} else {
-	    cmp = pathcmp_case( fs->pi_name, tran->t_pinfo.pi_name,
+	    cmp = pathcasecmp( fs->pi_name, tran->t_pinfo.pi_name,
 		case_sensitive );
 	}
     }
@@ -569,7 +569,7 @@ transcript_select( void )
 		continue;
 	    }
 	    if ( ! next_tran->t_eof ) {
-		if ( pathcmp_case( next_tran->t_pinfo.pi_name,
+		if ( pathcasecmp( next_tran->t_pinfo.pi_name,
 			begin_tran->t_pinfo.pi_name, case_sensitive ) < 0 ) {
 		    begin_tran = next_tran;
 		}
@@ -579,7 +579,7 @@ transcript_select( void )
 	/* move ahead other transcripts that match */
 	for ( next_tran = begin_tran->t_next; next_tran != NULL;
 		next_tran = next_tran->t_next ) {
-	    if ( pathcmp_case( begin_tran->t_pinfo.pi_name,
+	    if ( pathcasecmp( begin_tran->t_pinfo.pi_name,
 		    next_tran->t_pinfo.pi_name, case_sensitive ) == 0 ) {
 		transcript_parse( next_tran );
 	    }
@@ -598,7 +598,7 @@ transcript_select( void )
 
 	    /* Don't look outside of the initial path. */
 	
-	    if ( !ischild_case( begin_tran->t_pinfo.pi_name, path_prefix,
+	    if ( !ischildcase( begin_tran->t_pinfo.pi_name, path_prefix,
 		    case_sensitive )) {
 		transcript_parse( begin_tran );
 		continue;

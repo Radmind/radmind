@@ -480,7 +480,7 @@ main( int argc, char **argv )
 
 	/* Check transcript order */
 	if ( prepath != 0 ) {
-	    if ( pathcmp_case( path, prepath, case_sensitive ) < 0 ) {
+	    if ( pathcasecmp( path, prepath, case_sensitive ) < 0 ) {
 		fprintf( stderr, "%s: line %d: bad sort order\n",
 			    transcript, linenum );
 		goto error2;
@@ -535,7 +535,7 @@ dirchecklist:
 		    }
 		    continue;
 		} else {
-		    if ( ischild_case( path, head->path, case_sensitive )) {
+		    if ( ischildcase( path, head->path, case_sensitive )) {
 			/* Add dir to list */
 			if ( present && fstype != *targv[ 0 ] ) {
 			    new_node = create_node( path, tline );
@@ -582,7 +582,7 @@ filechecklist:
 			progressupdate( PROGRESSUNIT, path );
 		    }
 		} else {
-		    if ( ischild_case( path, head->path, case_sensitive )) {
+		    if ( ischildcase( path, head->path, case_sensitive )) {
 			if ( unlink( path ) != 0 ) {
 			    perror( path );
 			    goto error2;
@@ -625,7 +625,7 @@ filechecklist:
 	    }
 	}
 	/* Minimize remove list */
-	while ( head != NULL && !ischild_case( path, head->path,
+	while ( head != NULL && !ischildcase( path, head->path,
 		case_sensitive )) {
 	    /* remove head */
 	    if ( rmdir( head->path ) != 0 ) {

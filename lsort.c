@@ -51,7 +51,7 @@ lsort_cmp( const void *a1, const void *b1 )
     a = (const struct save_line**)a1;
     b = (const struct save_line**)b1;
 
-    return( pathcmp_case((*a)->key, (*b)->key, case_sensitive ));
+    return( pathcasecmp((*a)->key, (*b)->key, case_sensitive ));
 }
 
     void

@@ -59,7 +59,7 @@ fs_walk( char *path, int start, int finish )
 		return;
 	    }
 
-	    if ( ischild_case( tran->t_pinfo.pi_name, path, case_sensitive )) {
+	    if ( ischildcase( tran->t_pinfo.pi_name, path, case_sensitive )) {
 		/*
 		 * XXX
 		 * This strcpy() is not itself dangerous, because pi_name
