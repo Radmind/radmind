@@ -647,8 +647,9 @@ main( int argc, char **argv )
 
     if ( err || ( argc - optind != 0 )) {
 	fprintf( stderr, "usage: %s ", argv[ 0 ] );
-	fprintf( stderr, "[ -DCinrV ] [ -q | -v ] " );
-	fprintf( stderr, "[ -c checksum ] [ -K command file ] " );
+	fprintf( stderr, "[ -CinrV ] [ -q | -v ] " );
+	fprintf( stderr, "[ -c checksum ] [ -D radmind_path ] " );
+	fprintf( stderr, "[ -K command file ] " );
 	fprintf( stderr, "[ -h host ] [ -p port ] " );
 	fprintf( stderr, "[ -w auth-level ] [ -x ca-pem-file ] " );
 	fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ]\n" );
