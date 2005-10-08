@@ -225,8 +225,8 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 
     if ( edit_path == APPLICABLE ) {
 	cur = &tran->t_pinfo;
-	if (( fs->pi_type != 'd' ) && ( fs->pi_type != 'h' ) &&
-		( fs->pi_stat.st_nlink > 1 )) {
+	if (( fs != NULL ) && ( fs->pi_type != 'd' ) &&
+		( fs->pi_type != 'h' ) && ( fs->pi_stat.st_nlink > 1 )) {
 	    hardlink_changed( fs, 1 );
 	}
     } else {
