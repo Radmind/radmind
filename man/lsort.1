@@ -1,0 +1,53 @@
+.TH lsort "1" "_RADMIND_BUILD_DATE" "RSUG" "User Commands"
+.SH NAME
+.B lsort 
+\- sort transcripts
+.SH SYNOPSIS
+.B lsort 
+[
+.RI \-IV
+] [
+.BI \-o\  file
+] [
+.I transcript ...
+]
+.SH DESCRIPTION
+.B lsort
+sorts each 
+.I transcript 
+together together and prints the results to the standard output. 
+If
+.I transcript
+is not given,
+.B lsort
+will use the standard input for reading.
+.SH OPTIONS
+.TP 19
+.BI \-I
+be case insensitive when sorting transcripts.
+.TP 19
+.BI \-o\  file
+specifies an output file, default is the standard output.
+.TP 19
+.B \-V
+displays the version number of
+.BR lsort
+and exits.
+.SH EXIT STATUS
+The following exit values are returned:
+.TP 5
+0
+No errors.
+.TP 5
+>0
+An error occurred.
+.SH SEE ALSO
+.BR fsdiff (1),
+.BR ktcheck (1),
+.BR lapply (1),
+.BR lcksum (1),
+.BR lcreate (1),
+.BR lfdiff (1),
+.BR lmerge (1),
+.BR lsort (1),
+.BR radmind (8).
