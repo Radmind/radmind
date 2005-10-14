@@ -91,7 +91,6 @@ main( int argc, char **argv )
     FILE		*tran = NULL;
     struct stat		st;
     struct applefileinfo	afinfo;
-    off_t		size = 0;
     int                 authlevel = _RADMIND_AUTHLEVEL;
     int                 use_randfile = 0;
     int                 login = 0;
@@ -415,7 +414,7 @@ main( int argc, char **argv )
 
 	    if ( !network ) {
 		/* Check size */
-		if ( radstat( targv[ 1 ], &st, &type, &afinfo ) != 0 ) {
+		if ( radstat( d_path, &st, &type, &afinfo ) != 0 ) {
 		    perror( d_path );
 		    exit( 2 );
 		}
@@ -426,12 +425,14 @@ main( int argc, char **argv )
 		}
 		if ( cksum ) {
 		    if ( *targv[ 0 ] == 'f' ) {
-			size = do_cksum( d_path, cksumval );
+			if ( do_cksum( d_path, cksumval ) < 0 ) {
+			    perror( d_path );
+			    exit( 2 );
+			}
 		    } else {
 			/* apple file */
 			if ( do_acksum( d_path, cksumval, &afinfo ) < 0  ) {
-			    fprintf( stderr, "%s: %s\n", d_path,
-				strerror( errno ));
+			    perror( d_path );
 			    exit( 2 );
 			}
 		    }
@@ -441,10 +442,11 @@ main( int argc, char **argv )
 			    linenum );
 			return( -1 );
 		    }
-		}
-		if ( access( d_path,  R_OK ) < 0 ) {
-		    perror( d_path );
-		    exit( 2 );
+		} else {
+		    if ( access( d_path,  R_OK ) < 0 ) {
+			perror( d_path );
+			exit( 2 );
+		    }
 		}
 	    } else {
 		if ( snprintf( pathdesc, MAXPATHLEN * 2, "STOR FILE %s %s", 

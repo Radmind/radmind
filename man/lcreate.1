@@ -42,7 +42,20 @@ will store the file on the server and give a warning.
 .sp
 If the -n option is given, no files or transcripts are uploaded.  Instead,
 .B lcreate
-uses access(2) to verify that all files in the transcript exist in the filesystem and are readable by the user.
+verifies that all files exist in the filesystem and have
+the same size as listed in the transcript.  If used with the -c option,
+checksums are also verified.
+
+If the -n option is given, no files or transcripts are uploaded.  Instead,
+.B lcreate
+uses 
+.BR access (2)
+to verify that all files in the transcript exist in the
+filesystem, are readable by the user and have the same size as listed in the
+transcript.  If used with the -c option, rather than calling
+.BR access (2),
+checksums are caluclated to 
+verify file contents and user access.
 .sp
 If the -N option is
 given, indicating the transcript specified for upload is negative,
@@ -99,8 +112,9 @@ uploads a
 transcript then uploads all corresponding files as zero length.
 .TP 19
 .B \-n
-Don't upload any files or transcripts. Uses access(2) to verify all
-files in the transcript exist in the filesystem and are readable.
+Don't upload any files or transcripts.  Verify all
+files in the transcript exist in the filesystem and have the size listed
+in the transcript.
 .TP 19
 .BI \-p\  port
 specifies a port, by default
