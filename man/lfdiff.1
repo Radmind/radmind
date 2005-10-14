@@ -15,6 +15,8 @@
 ] [
 .BI \-p\  port
 ] [
+.BI \-u\  umask
+] [
 .BI \-w\  auth-level
 ] [
 .BI \-x\  ca-pem-file
@@ -87,6 +89,9 @@ is a special file.
 transcript that 
 .I file 
 is listed in.
+.TP
+.BI \-u\  umask
+specifies the umask for temporary files, by default 0077
 .TP 19
 .B \-V
 displays the version of 

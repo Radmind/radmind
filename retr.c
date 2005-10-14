@@ -128,7 +128,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, off_t transize,
 	return( -1 );
     }
     /* Open file */
-    if (( fd = open( temppath, O_WRONLY | O_CREAT, 0600 )) < 0 ) {
+    if (( fd = open( temppath, O_WRONLY | O_CREAT, 0644 )) < 0 ) {
 	perror( temppath );
 	return( -1 );
     }
@@ -366,7 +366,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     }
 
     /* data fork must exist to write to rsrc fork */        
-    if (( dfd = open( temppath, O_CREAT | O_EXCL | O_WRONLY, 0600 )) < 0 ) {
+    if (( dfd = open( temppath, O_CREAT | O_EXCL | O_WRONLY, 0644 )) < 0 ) {
 	perror( temppath );
 	return( -1 );
     }

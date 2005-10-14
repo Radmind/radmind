@@ -14,6 +14,8 @@
 ] [
 .BI \-p\  port
 ] [
+.BI \-u\  umask
+] [
 .BI \-w\  auth-level
 ] [
 .BI \-x\  ca-pem-file
@@ -100,6 +102,9 @@ suppress all messages.
 use random seed file $RANDFILE if that environment variable is set,
 $HOME/.rnd otherwise.  See
 .BR RAND_load_file (3o).
+.TP
+.BI \-u\  umask
+specifies the umask for temporary files, by default 0077
 .TP 19
 .B \-V
 displays the version number of

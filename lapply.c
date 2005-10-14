@@ -249,7 +249,15 @@ main( int argc, char **argv )
     int			force = 0;
     int			use_randfile = 0;
 
-    while (( c = getopt ( argc, argv, "%c:Fh:iInp:qrVvw:x:y:z:" )) != EOF ) {
+    /*
+     * retr() uses a default mode of 0644 for downloaded files.  Since
+     * some of them might be sensitive, we change the umask here
+     * so only the user can see the temp files before they are set
+     * with the correct permissions.  -u can change this umask.
+     */
+    umask( S_IRWXG | S_IRWXO );
+
+    while (( c = getopt ( argc, argv, "%c:Fh:iInp:qru:Vvw:x:y:z:" )) != EOF ) {
 	switch( c ) {
 	case '%':
 	    showprogress = 1;
@@ -302,6 +310,10 @@ main( int argc, char **argv )
 	case 'r':
 	    use_randfile = 1;
 	    break;
+
+        case 'u' :              /* umask */
+            umask( (mode_t)strtol( optarg, (char **)NULL, 0 ));
+            break;
 
 	case 'V':
 	    printf( "%s\n", version );
@@ -377,6 +389,7 @@ main( int argc, char **argv )
 	fprintf( stderr, "usage: %s [ -FiInrV ] [ -%% | -q | -v ] ",
 	    argv[ 0 ] );
 	fprintf( stderr, "[ -c checksum ] [ -h host ] [ -p port ] " );
+	fprintf( stderr, "[ -u umask ] " );
 	fprintf( stderr, "[ -w auth-level ] [ -x ca-pem-file ] " );
 	fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ] " );
 	fprintf( stderr, "[ appliable-transcript ]\n" );

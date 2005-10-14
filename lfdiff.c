@@ -140,6 +140,14 @@ main( int argc, char **argv, char **envp )
     int                 use_randfile = 0;
     struct transcript	*tran;
 
+    /*
+     * retr() uses a default mode of 0644 for downloaded files.  Since
+     * some of them might be sensitive, we change the umask here
+     * so only the user can see the temp files before they are set
+     * with the correct permissions.  -u can change this umask.
+     */
+    umask( S_IRWXG | S_IRWXO );
+
     /* create argv to pass to diff */
     if (( diffargv = (char **)malloc( 1  * sizeof( char * ))) == NULL ) {
 	perror( "malloc" );
@@ -148,7 +156,7 @@ main( int argc, char **argv, char **envp )
     diffargc = 0;
     diffargv[ diffargc++ ] = diff;
 
-    while (( c = getopt ( argc, argv, "h:Ip:rST:Vvw:x:y:z:bitcefnC:D:sX:" ))
+    while (( c = getopt ( argc, argv, "h:Ip:rST:u:Vvw:x:y:z:bitcefnC:D:sX:" ))
 	    != EOF ) {
 	switch( c ) {
 	case 'I':
@@ -180,6 +188,10 @@ main( int argc, char **argv, char **envp )
 	case 'T':
 	    transcript = optarg;
 	    break;
+
+        case 'u' :              /* umask */
+            umask( (mode_t)strtol( optarg, (char **)NULL, 0 ));
+            break;
 
 	case 'V':
 	    printf( "%s\n", version );
@@ -294,7 +306,7 @@ main( int argc, char **argv, char **envp )
 	fprintf( stderr, "usage: %s ", argv[ 0 ] );
 	fprintf( stderr, "[ -IrvV ] " );
 	fprintf( stderr, "[ -T transcript | -S ] " );
-	fprintf( stderr, "[ -h host ] [ -p port ] " );
+	fprintf( stderr, "[ -h host ] [ -p port ] [ -u umask ] " );
         fprintf( stderr, "[ -w auth-level ] [ -x ca-pem-file ] " );
         fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ] " );
 	fprintf( stderr, "[ supported diff options ] " );
