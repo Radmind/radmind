@@ -58,9 +58,16 @@ precedent_transcript( char *kfile, char *file, int where )
 {
     extern struct transcript	*tran_head;
     extern struct list	*special_list;
+    struct stat		st;
     struct transcript	*tran;
     struct node		*node;
     int			cmp = 0;
+
+    /* verify that file exists on the local system */
+    if ( lstat( file, &st ) < 0 ) {
+	perror( file );
+	exit( 2 );
+    }
 
     /* initialize important transcript bits */
     edit_path = APPLICABLE;
@@ -291,7 +298,11 @@ main( int argc, char **argv, char **envp )
 	if (( file = argv[ argc - 1 ] ) == NULL ) {
 	    err++;
 	} else {
-	    tran = precedent_transcript( kfile, file, K_CLIENT );
+	    if (( tran = precedent_transcript( kfile,
+			file, K_CLIENT )) == NULL ) {
+		fprintf( stderr, "%s not found in any transcript\n", file );
+		exit( 2 );
+	    }
 	    transcript = tran->t_shortname;
 	}
     }
