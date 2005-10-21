@@ -304,6 +304,12 @@ main( int argc, char **argv, char **envp )
 		exit( 2 );
 	    }
 	    transcript = tran->t_shortname;
+
+	    /* check for special */
+	    if ( strcmp( transcript, "special.T" ) == 0 ) {
+		transcript = NULL;
+		special = 1;
+	    }
 	}
     }
 
