@@ -303,12 +303,11 @@ main( int argc, char **argv, char **envp )
 		fprintf( stderr, "%s not found in any transcript\n", file );
 		exit( 2 );
 	    }
-	    transcript = tran->t_shortname;
-
 	    /* check for special */
-	    if ( strcmp( transcript, "special.T" ) == 0 ) {
-		transcript = NULL;
+	    if ( strcmp( tran->t_shortname, "special.T" ) == 0 ) {
 		special = 1;
+	    } else {
+		transcript = tran->t_shortname;
 	    }
 	}
     }
