@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>edu.umich.radmind</string>
+    <key>ServiceDescription</key>
+    <string>Radmind</string>
+    <key>OnDemand</key>
+    <false/>
+    <key>ProgramArguments</key>
+    <array>
+            <string>/usr/local/sbin/radmind</string>
+            <string>-f</string>
+	    <string>-u</string>
+	    <string>077</string>
+    </array>
+    <key>ServiceIPC</key>
+    <false/>
+</dict>
+</plist>
