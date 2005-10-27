@@ -120,7 +120,7 @@ main( int ac, char **av )
     struct servent	*se;
     int			c, s, err = 0, fd, trueint;
     socklen_t		addrlen;
-    int			dontrun = 0;
+    int			dontrun = 0, fg = 0;
     int			use_randfile = 0;
     char		*prog;
     unsigned short	port = 0;
@@ -147,7 +147,7 @@ main( int ac, char **av )
 
      b_addr.s_addr = htonl( INADDR_ANY );
 
-    while (( c = getopt( ac, av, "a:b:dD:F:L:m:p:Ru:UVw:x:y:z:" )) != EOF ) {
+    while (( c = getopt( ac, av, "a:b:dD:F:fL:m:p:Ru:UVw:x:y:z:" )) != EOF ) {
 	switch ( c ) {
 	case 'a' :		/* bind address */ 
 	    if ( !inet_aton( optarg, &b_addr )) {
@@ -174,6 +174,10 @@ main( int ac, char **av )
 			prog, optarg );
 		exit( 1 );
 	    }
+	    break;
+
+	case 'f':		/* run in foreground */
+	    fg = 1;
 	    break;
 
 	case 'L' :		/* syslog level */
@@ -359,7 +363,7 @@ main( int ac, char **av )
     /*
      * Disassociate from controlling tty.
      */
-    if ( !debug ) {
+    if ( !debug && !fg ) {
 	int		i, dt;
 
 	switch ( fork()) {
