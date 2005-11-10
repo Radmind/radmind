@@ -97,22 +97,17 @@ is the file's path as listed in the transcript.
 All special files are stored in
 .BR special .
 The special files for a given host are stored in
-.BI special/ <host>
-where
-.I <host>
-is the fully qualified domain name or IP address of the client.
-Individual special files are stored in
+.BI special/ <key>
+where 
+.I <key>
+is the client's CN, fully qualified domain name or IP address as matched
+in the config file.  Individual special files are stored in
 .BI special/ <host>\c
 .RI / <path>
 where
 .I <path>
 is the path of the special file as listed in the client's
 command file.
-The IP address of the client will be used for
-.I <host>
-if there
-is no domain name returned by
-.BR gethostbyname() .
 .TP 19
 .B tmp/file
 All files stored on the server using the STOR command are saved in
