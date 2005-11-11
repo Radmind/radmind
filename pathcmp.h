@@ -3,7 +3,9 @@
  * All Rights Reserved.  See COPYRIGHT.
  */
 
-int pathcasecmp( char *, char *, int case_sensitive );
-int pathcmp( char *, char * );
-int ischildcase( char *, char *, int case_sensitive );
-int ischild( char *, char * );
+int pathcasecmp( const unsigned char *, const unsigned char *,
+	int case_sensitive );
+int pathcmp( const unsigned char *, const unsigned char * );
+int ischildcase( const unsigned char *, const unsigned char *,
+	int case_sensitive );
+int ischild( const unsigned char *, const unsigned char * );
