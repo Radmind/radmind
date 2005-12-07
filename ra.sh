@@ -20,6 +20,7 @@
 # lcreate -l -U
 # -c sha1
 
+KFILE="_RADMIND_COMMANDFILE"
 SERVER="_RADMIND_HOST"
 TLSLEVEL="_RADMIND_AUTHLEVEL"
 EDITOR=${EDITOR:-vi}
@@ -87,7 +88,7 @@ cleanup() {
 
 dopreapply() {
     if [ -d ${PREAPPLY} ]; then
-	SCRIPTS=`ls ${PREAPPLY}`
+	SCRIPTS=`find ${PREAPPLY} -perm +u+x \! -type d | sort`
 	if [ ${SCRIPTS} ]; then
 	    for script in ${SCRIPTS}; do
 		${script} "$1"
@@ -98,7 +99,7 @@ dopreapply() {
 
 dopostapply() {
     if [ -d ${POSTAPPLY} ]; then
-	SCRIPTS=`ls ${POSTAPPLY}`
+	SCRIPTS=`find ${POSTAPPLY} -perm +u+x \! -type d | sort`
 	if [ ${SCRIPTS} ]; then
 	    for script in ${SCRIPTS}; do
 		${script} "$1"
@@ -110,6 +111,7 @@ dopostapply() {
 update() {
     opt="$1"
     kopt=
+    apply=ask
 
     checkedout
     if [ $? -eq 1 ]; then
@@ -130,13 +132,15 @@ update() {
 
     ktcheck ${kopt} -w ${TLSLEVEL} -h ${SERVER} -c sha1
     case "$?" in
-    0)  if [ x"$opt" = x"hook" -a ! -f "${FLAG}" ]; then
+    0)  
+	if [ x"$opt" = x"hook" -a ! -f "${FLAG}" ]; then
 	    cleanup
 	    exit 0
 	fi
 	;;
 
-    1)	if [ x"$opt" = x"interactive" ]; then
+    1)
+	if [ x"$opt" = x"interactive" ]; then
 	    Yn "Update command file and/or transcripts?"
 	    if [ $? -eq 1 ]; then
 		ktcheck -w ${TLSLEVEL} -h ${SERVER} -c sha1
@@ -150,12 +154,13 @@ update() {
 	fi
 	;;
 
-    *)	cleanup
+    *)	
+	cleanup
     	exit $?
 	;;
     esac
 
-    fsdiff -A -% ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
+    fsdiff -A ${FPROGRESS} ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
     if [ $? -ne 0 ]; then
 	cleanup
 	exit 1
@@ -167,21 +172,23 @@ update() {
 	exit 0
     fi
     if [ x"$opt" = x"interactive" ]; then
+	cat ${FTMP}
 	infocmp >/dev/null 2>&1
-	if [ $? -ne 0 ]; then
-	    Yn "Unknown terminal $TERM. Print difference transcript to screen?"
-	    if [ $? -eq 1 ]; then
-		cat ${FTMP}
-	    fi
-	else
-	    Yn "Edit difference transcript?"
+	if [ $? -eq 0 ]; then
+	    Yn "Edit difference transcript (or apply)?"
 	    if [ $? -eq 1 ]; then
 		${EDITOR} ${FTMP}
 	    fi
+	    # shortcut apply prompt with a|A
+	    case $ans in
+	    a|A|apply)
+		apply=yes
+		;;
+	    esac
 	fi
     fi
     
-    if [ x"$opt" = x"interactive" -a -d "${PREAPPLY}" ]; then
+    if [ x"$opt" = x"interactive" -a -d "${PREAPPLY}" -a ! -z "`ls ${PREAPPLY} 2>/dev/null`" ]; then
 	Yn "Run pre-apply scripts on difference transcript?"
         if [ $? -eq 1 ]; then
             dopreapply ${FTMP}
@@ -189,7 +196,7 @@ update() {
     elif [ x"$opt" != x"interactive" ]; then
 	dopreapply ${FTMP}
     fi
-    if [ x"$opt" = x"interactive" ]; then
+    if [ x"$opt" = x"interactive" -a $apply = ask ]; then
 	Yn "Apply difference transcript?"
 	if [ $? -ne 1 ]; then
 	    cleanup
@@ -214,7 +221,7 @@ update() {
 	return 1
 	;;
     esac
-    if [ x"$opt" = x"interactive" -a -d "${POSTAPPLY}" ]; then
+    if [ x"$opt" = x"interactive" -a -d "${POSTAPPLY}" -a ! -z "`ls ${POSTAPPLY} 2>/dev/null`" ]; then
 	Yn "Run post-apply scripts on difference transcript?"
         if [ $? -eq 1 ]; then
             dopostapply ${FMTP}
@@ -233,9 +240,13 @@ if [ -f "${DEFAULTS}" ]; then
     . "${DEFAULTS}"
 fi
 
-while getopts %ch:ltVw: opt; do
+while getopts %ch:lqtVw: opt; do
     case $opt in
     %)  PROGRESS="-%"
+	FPROGRESS="-%"
+	;;
+
+    q)  PROGRESS="-q"
 	;;
 
     c)	CHECKSUM="-csha1"
@@ -344,7 +355,7 @@ create)
 	TNAME=`hostname | cut -d. -f1`-`date +%Y%m%d`-${USER}.T
     fi
     FTMP="${TMPDIR}/${TNAME}"
-    fsdiff -C -% ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
+    fsdiff -C ${FPROGRESS} ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
     if [ $? -ne 0 ]; then
 	cleanup
 	exit 1;
@@ -376,6 +387,11 @@ create)
     ;;
 
 trip)
+    if [ ! -f ${KFILE} ]; then
+	echo Command file missing, skipping tripwire.
+	cleanup
+	exit 1
+    fi
     # Since trip does not modify the system, no need for checkedout
     ktcheck -w ${TLSLEVEL} -h ${SERVER} -qn -c sha1
     case "$?" in
@@ -433,7 +449,7 @@ auto)
 		exit 1
 	    fi
 	    if [ -s ${FTMP} ]; then
-		lapply -w ${TLSLEVEL} -h ${SERVER} -q ${CHECKSUM} \
+		lapply -w ${PROGRESS} ${TLSLEVEL} -h ${SERVER} -q ${CHECKSUM} \
 			${FTMP} 2>&1 > ${LTMP}
 		case $? in
 		0)
@@ -478,7 +494,7 @@ force)
 	;;
     esac
 
-    fsdiff -A -% ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
+    fsdiff -A ${FPROGRESS} ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
     if [ $? -ne 0 ]; then
 	cleanup
 	exit 1
