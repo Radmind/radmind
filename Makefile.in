@@ -217,7 +217,7 @@ dist   : distclean
 	mkdir ${DISTDIR}
 	tar -c -f - -X EXCLUDE . | tar xpf - -C ${DISTDIR}
 	echo ${VERSION} > ${DISTDIR}/VERSION
-	mkdir ${DISTDIR}/tmp
+	-mkdir ${DISTDIR}/tmp
 	for i in ${MANTARGETS}; do \
 	    sed -e 's@_RADMIND_BUILD_DATE@${RADMIND_BUILD_DATE}@g' \
 		${DISTDIR}/man/$$i > ${DISTDIR}/tmp/$$i; \
