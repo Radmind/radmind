@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <sys/param.h>
 #include <stdlib.h>
 #include <stdio.h>
