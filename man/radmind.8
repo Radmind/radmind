@@ -247,7 +247,9 @@ The following example of _RADMIND_PATH/config defines four known clients,
 each using one of three different command files.  Also, any client that ends
 with ".lab.umich.edu" will get lab.K as its config file and clients
 in the IP range 212.12.243.1 through 212.12.243.50 will get solaris8.K as their 
-config file.
+config file.  Note that numeric ranges ignore leading zeros.  Therefore the
+last line will match clients with hostnames of mac1.umich.edu, mac01.umich.edu,
+mac001.umich,edu, etc.
 .sp
 .RS
 .nf
@@ -260,6 +262,7 @@ ben.umich.edu          apple-test.K
 oreo.umich.edu         solaris8.K
 *.lab.umich.edu        lab.K
 212.12.243.<1-50>      solaris8.K
+mac<1-15>.umich.edu    apple.K
 .fi
 .RE
 .LP
