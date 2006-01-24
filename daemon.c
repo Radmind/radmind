@@ -34,6 +34,10 @@
 #include <DNSServiceDiscovery/DNSServiceDiscovery.h>
 #endif /* HAVE_ZEROCONF */
 
+#ifdef HAVE_ZLIB
+#include <zlib.h>
+#endif /* HAVE_ZLIB */
+
 #include <snet.h>
 
 #include "command.h"
@@ -52,8 +56,13 @@ int		checkuser = 0;
 int		connections = 0;
 int             child_signal = 0;
 int		maxconnections = _RADMIND_MAXCONNECTIONS; /* 0 = no limit */
+int		rap_extensions = 0;
 char		*radmind_path = _RADMIND_PATH;
 SSL_CTX         *ctx = NULL;
+
+#ifdef HAVE_ZLIB
+extern int 	max_zlib_level;
+#endif /* HAVE_ZLIB */
 
 extern char	*version;
 
@@ -133,6 +142,7 @@ main( int ac, char **av )
     char		*privatekey = "cert/cert.pem";
     pid_t		pid;
     int			status;
+    struct rusage	usage;
 #ifdef HAVE_ZEROCONF
     int			regservice = 0;
     dns_service_discovery_ref	mdnsref = NULL;
@@ -147,7 +157,7 @@ main( int ac, char **av )
 
      b_addr.s_addr = htonl( INADDR_ANY );
 
-    while (( c = getopt( ac, av, "a:b:dD:F:fL:m:p:Ru:UVw:x:y:z:" )) != EOF ) {
+    while (( c = getopt( ac, av, "a:b:dD:F:fL:m:p:Ru:UVw:x:y:z:Z:" )) != EOF ) {
 	switch ( c ) {
 	case 'a' :		/* bind address */ 
 	    if ( !inet_aton( optarg, &b_addr )) {
@@ -162,6 +172,7 @@ main( int ac, char **av )
 
 	case 'd' :		/* debug */
 	    debug++;
+	    verbose++;
 	    break;
 
 	case 'D':		/* Set radmind path */
@@ -241,6 +252,22 @@ main( int ac, char **av )
 	    privatekey = optarg;
 	    break;
 
+	case 'Z':
+#ifdef HAVE_ZLIB
+	    max_zlib_level = atoi(optarg);
+	    if (( max_zlib_level < 0 ) || ( max_zlib_level > 9 )) {
+		fprintf( stderr, "Invalid compression level\n" );
+		exit( 1 );
+	    }
+	    if ( max_zlib_level > 0 ) {
+		rap_extensions++;
+	    }
+	    break;
+#else /* HAVE_ZLIB */
+	    fprintf( stderr, "Zlib not supported.\n" );
+	    exit( 1 );
+#endif /* HAVE_ZLIB */
+
 	default :
 	    err++;
 	}
@@ -252,7 +279,8 @@ main( int ac, char **av )
 	fprintf( stderr, "[ -L syslog-level ] [ -m max-connections ] " );
 	fprintf( stderr, "[ -p port ] [ -u umask ] " );
 	fprintf( stderr, "[ -w auth-level ] [ -x ca-pem-file ] " );
-	fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ]\n" );
+	fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ] " );
+	fprintf( stderr, "[ -Z max-compression-level ]\n" );
 	exit( 1 );
     }
 
@@ -439,14 +467,37 @@ main( int ac, char **av )
     for (;;) {
 
 	if ( child_signal > 0 ) {
+	    double	utime, stime;
+
 	    child_signal = 0;
 	    /* check to see if any children need to be accounted for */
-	    while (( pid = waitpid( 0, &status, WNOHANG )) > 0 ) {
+	    while (( pid = wait4( 0, &status, WNOHANG, &usage )) > 0 ) {
 		connections--;
+
+		/* Print stats */
+		utime = usage.ru_utime.tv_sec
+		    + 1.e-6 * (double) usage.ru_utime.tv_usec;
+		stime = (double) usage.ru_stime.tv_sec
+		    + 1.e-6 * (double) usage.ru_stime.tv_usec;
+		if ( debug ) {
+		    printf( 
+			"User time %.3f, System time %.3f\n", utime, stime );
+		} else {
+		    syslog( LOG_ERR,
+			"child %d User time %.3f, System time %.3f\n",
+			pid, utime, stime );
+		}
+
 		if ( WIFEXITED( status )) {
 		    if ( WEXITSTATUS( status )) {
-			syslog( LOG_ERR, "child %d exited with %d", pid,
-				WEXITSTATUS( status ));
+			if ( debug ) {
+			    printf( "child %d exited with %d", pid,
+				    WEXITSTATUS( status ));
+			} else {
+			    syslog( LOG_ERR, "child %d exited with %d", pid,
+				    WEXITSTATUS( status ));
+			}
+
 		    } else {
 			syslog( LOG_INFO, "child %d done", pid );
 		    }
