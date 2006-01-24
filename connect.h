@@ -5,6 +5,12 @@
 
 SNET * connectsn( char *host, int port );
 int closesn( SNET *sn );
+char **get_capabilities( SNET * );
+#ifdef HAVE_ZLIB
+int negotiate_compression( SNET *, char ** );
+int print_stats( SNET * );
+extern int zlib_level;
+#endif /* HAVE_ZLIB */
 
 int retr( SNET *sn, char *pathdesc, char *path, char *temppath,
     off_t transize, char *trancksum );

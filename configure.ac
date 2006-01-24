@@ -64,6 +64,7 @@ AC_CHECK_LIB([pam], [pam_start],
     ] 
 )
 
+CHECK_ZLIB
 CHECK_ZEROCONF
 
 

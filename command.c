@@ -39,6 +39,10 @@
 
 extern SSL_CTX  *ctx;
 
+#ifdef HAVE_ZLIB
+#include <zlib.h>
+#endif /* HAVE_ZLIB */
+
 #include <snet.h>
 
 #include "applefile.h"
@@ -51,6 +55,7 @@ extern SSL_CTX  *ctx;
 #include "wildcard.h"
 #include "largefile.h"
 #include "mkdirs.h"
+#include "connect.h"
 
 #ifdef sun
 #define MIN(a,b)	((a)<(b)?(a):(b))
@@ -82,6 +87,9 @@ int		f_login( SNET *, int, char *[] );
 int 		exchange( int num_msg, struct pam_message **msgm,
 		    struct pam_response **response, void *appdata_ptr );
 #endif /* HAVE_LIBPAM */
+#ifdef HAVE_ZLIB
+int		f_compress( SNET *, int, char *[] );
+#endif /* HAVE_ZLIB */
 
 
 char		*user = NULL;
@@ -99,6 +107,11 @@ int		authorized = 0;
 int		prevstor = 0;
 int		case_sensitive = 1;
 char		hostname[ MAXHOSTNAMELEN ];
+#ifdef HAVE_ZLIB
+int		max_zlib_level = 0;
+#endif /* HAVE_ZLIB */
+
+extern int	debug;
 
 extern int 	authlevel;
 extern int 	checkuser;
@@ -114,6 +127,9 @@ struct command	notls[] = {
 #ifdef HAVE_LIBPAM
     { "LOGIn",       	f_notls },
 #endif /* HAVE_LIBPAM */
+#ifdef HAVE_ZLIB
+    { "COMPress",	f_notls },
+#endif /* HAVE_ZLIB */
 };
 
 struct command	noauth[] = {
@@ -126,6 +142,9 @@ struct command	noauth[] = {
 #ifdef HAVE_LIBPAM
     { "LOGIn",       	f_noauth },
 #endif /* HAVE_LIBPAM */
+#ifdef HAVE_ZLIB
+    { "COMPress",	f_noauth },
+#endif /* HAVE_ZLIB */
 };
 
 struct command	auth[] = {
@@ -139,6 +158,9 @@ struct command	auth[] = {
 #ifdef HAVE_LIBPAM
     { "LOGIn",       	f_login },
 #endif /* HAVE_LIBPAM */
+#ifdef HAVE_ZLIB
+    { "COMPress",	f_compress },
+#endif /* HAVE_ZLIB */
 };
 
 struct command *commands  = NULL;
@@ -147,6 +169,11 @@ struct command *commands  = NULL;
 f_quit( SNET *sn, int ac, char **av )
 {
     snet_writef( sn, "%d QUIT OK, closing connection\r\n", 201 );
+#ifdef HAVE_ZLIB
+    if ( debug && max_zlib_level > 0) {
+	print_stats( sn );
+    }
+#endif /* HAVE_ZLIB */
     exit( 0 );
 }
 
@@ -584,6 +611,7 @@ f_stat( SNET *sn, int ac, char *av[] )
     OpenSSL_add_all_digests();
     md = EVP_get_digestbyname( "sha1" );
     if ( !md ) {
+	/* XXX */
 	fprintf( stderr, "%s: unsupported checksum\n", "sha1" );
 	exit( 1 );
     }
@@ -1109,6 +1137,52 @@ f_login( SNET *sn, int ac, char **av )
 }
 #endif /* HAVE_LIBPAM */
 
+#ifdef HAVE_ZLIB
+    int
+f_compress( SNET *sn, int ac, char **av )
+{
+    int		level;
+
+    if ( max_zlib_level <= 0 ) {
+	syslog( LOG_WARNING, "f_compress: compression not enabled" );
+	snet_writef( sn, "501 Compression not enabled\r\n" );
+	return( 1 );
+    }
+
+    if ( ac != 2 && ac != 3 ) {
+	syslog( LOG_WARNING, "f_compress: syntax error" );
+	snet_writef( sn, "%d Syntax error\r\n", 501 );
+	return( 1 );
+    }
+    if ( snet_flags( sn ) & SNET_ZLIB ) {
+	syslog( LOG_WARNING, "f_compress: compression already enabled" );
+	snet_writef( sn, "%d Compression already enabled\r\n", 501 );
+	return( 1 );
+    }
+    if ( strcasecmp( av[ 1 ], "ZLIB" ) == 0 ) {
+	if( ac == 3 ) {
+	    level = atoi( av[2] );
+	    level = MAX( level, 1 );
+	    level = MIN( level, max_zlib_level );
+	} else {
+	    /* If no level given, use max compression */
+	    level = max_zlib_level;
+	}
+	snet_writef( sn, "320 Ready to start ZLIB compression level %d\r\n", level );
+	if ( snet_setcompression( sn, SNET_ZLIB, level ) != 0 ) {
+	    syslog( LOG_ERR, "f_compress: snet_setcompression failed" );
+	    return( -1 );
+	}
+	snet_writef( sn, "220 ZLIB compression level %d enabled\r\n", level );
+    } else {
+	syslog( LOG_WARNING, "%s: Unknown compression requested", av[ 1 ] );
+	snet_writef( sn, "525 %s: unknown compression type\r\n", av[ 1 ] );
+    }
+    return( 0 );
+}
+#endif /* HAVE_ZLIB */
+
+
 /* sets command file for connected host */
     int
 command_k( char *path_config )
@@ -1347,7 +1421,7 @@ cmdloop( int fd, struct sockaddr_in *sin )
     extern char		*version;
     extern int		connections;
     extern int		maxconnections;
-
+    extern int		rap_extensions;
 
     if ( authlevel == 0 ) {
 	commands = noauth;
@@ -1419,8 +1493,11 @@ cmdloop( int fd, struct sockaddr_in *sin )
 	exit( 1 );
     }
 
-    snet_writef( sn, "%d RAP 1 %s %s radmind access protocol\r\n", 200,
-	    hostname, version );
+    snet_writef( sn, "200%sRAP 1 %s %s radmind access protocol\r\n",
+	rap_extensions ? "-" : " ", hostname, version );
+    if ( rap_extensions ) {
+	snet_writef( sn, "200 CAPA ZLIB\r\n" ); 
+    }
 
     /*
      * 60 minutes
@@ -1432,6 +1509,11 @@ cmdloop( int fd, struct sockaddr_in *sin )
     while (( line = snet_getline( sn, &tv )) != NULL ) {
 	tv.tv_sec = 60 * 60;
 	tv.tv_usec = 0; 
+
+	if ( debug ) {
+	    fprintf( stderr, "<<< %s\n", line );
+	}
+
 	if (( ac = argcargv( line, &av )) < 0 ) {
 	    syslog( LOG_ERR, "argcargv: %m" );
 	    return( 1 );

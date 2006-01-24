@@ -24,6 +24,11 @@
 #include <openssl/err.h>
 
 #include <openssl/evp.h>
+
+#ifdef HAVE_ZLIB
+#include <zlib.h>
+#endif /* HAVE_ZLIB */
+
 #include <snet.h>
 
 #include "applefile.h"

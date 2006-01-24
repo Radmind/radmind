@@ -16,16 +16,22 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <syslog.h>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/sha.h>
+
+#ifdef HAVE_ZLIB
+#include <zlib.h>
+#endif /* HAVE_ZLIB */
 
 #include <snet.h>
 
 #include "applefile.h"
 #include "cksum.h"
 #include "connect.h"
+#include "argcargv.h"
 
 extern void            (*logger)( char * );
 extern int              verbose;
@@ -33,13 +39,15 @@ struct timeval          timeout = { 60, 0 };
 extern int		errno;
 extern SSL_CTX  	*ctx;
 
+#ifdef HAVE_ZLIB
+int zlib_level = 0;
+#endif
+
     static SNET *
 connectsn2( struct sockaddr_in *sin )
 {
     int			s;
     int			one = 1;
-    char		*line;
-    struct timeval      tv;
     SNET                *sn = NULL; 
     struct protoent	*proto;
 
@@ -71,19 +79,6 @@ connectsn2( struct sockaddr_in *sin )
     if (( sn = snet_attach( s, 1024 * 1024 )) == NULL ) {
 	perror( "snet_attach" );
 	exit( 2 );
-    }
-
-    tv = timeout;
-    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
-	fprintf( stderr, "connection to %s failed\n",
-		inet_ntoa( sin->sin_addr ));
-	snet_close( sn );
-	return( NULL );
-    }
-    if ( *line != '2' ) {
-	fprintf( stderr, "%s\n", line );
-	snet_close( sn );
-	return( NULL );
     }
 
     return( sn );
@@ -153,3 +148,141 @@ closesn( SNET *sn )
     }
     return( 0 );
 }
+
+	char **
+get_capabilities( SNET *sn )
+{
+    char		*line;
+    char		temp[ MAXPATHLEN ];
+    char		**capa = NULL;
+    int			i, ac;
+    char		**av;
+    struct timeval	tv;
+
+    while( 1 ) {
+	tv = timeout;
+	if (( line = snet_getline( sn, &tv )) == NULL ) {
+	    fprintf( stderr, "connection failed\n" );
+	    return( NULL );
+	}
+	if ( *line != '2' ) {
+	    fprintf( stderr, "%s\n", line );
+	    return( NULL );
+	}
+	if ( verbose ) printf( "<<< %s\n", line );
+	strcpy( temp, line+4 );
+	if (( ac = argcargv( temp, &av )) != 0 ) {
+	    if ( strncasecmp( "CAPAbilities", av[0], MIN( 12, strlen( av[0] ))) == 0 ) {
+		capa = malloc( sizeof(char *)*ac );
+		for ( i = 0; i+1 < ac; i++ ) {
+		    capa[i] = strdup( av[i+1] );
+		}
+		capa[i] = NULL;
+	    }
+	}
+	switch( line[3] ) {
+	case ' ':
+	    if( !capa ) {
+		capa = malloc( sizeof( char * ));
+		*capa = NULL;
+	    }
+	    return ( capa );
+	case '-':
+	    break;
+	default:
+	    fprintf ( stderr, "%s\n", line );
+	    return ( NULL );
+	}
+    }
+}
+
+#ifdef HAVE_ZLIB
+    int
+negotiate_compression( SNET *sn, char **capa )
+{
+    char         	**p;
+    char          	*name = NULL;
+    char          	*line;
+    int            	type = 0;
+    int		   	level = 0;
+    struct timeval	tv;
+
+    /* Place compression algorithms in descending order of desirability */
+    if ( zlib_level ) { 
+	/* walk through capabilities looking for "ZLIB" */
+	for( p = capa; *p; p++ ) {
+	    if( !strncasecmp( "ZLIB", *p, MIN( 4, strlen( *p )))) {
+		name = "ZLIB";
+		type = SNET_ZLIB;
+		level = zlib_level;
+	    }
+	}
+	if ( level == 0 ) {
+	    fprintf( stderr, "compression capability mismatch, "
+		"compression disabled\n" );
+	    return( 0 );
+	}
+    }
+
+    if ( verbose ) printf( ">>> COMP %s %d\n", name, level );
+    snet_writef( sn, "COMP %s %d\r\n", name, level );
+
+    tv = timeout;
+    if (( line = snet_getline( sn, &tv )) == NULL ) {
+	perror( "snet_getline" );
+	return( -1 );
+    }
+    if( verbose ) printf( "<<< %s\n", line );
+    if ( *line != '3' ) {
+	fprintf( stderr, "%s\n",  line );
+	return( -1 );
+    }
+
+    if ( snet_setcompression( sn, type, level ) < 0 ) {
+	perror( "snet_setcompression" );
+	return( -1 );
+    }
+
+    tv = timeout;
+    if (( line = snet_getline( sn, &tv )) == NULL ) {
+	perror( "snet_getline" );
+	return( -1 );
+    }
+    if( verbose ) printf( "<<< %s\n", line );
+    if ( *line != '2' ) {
+	fprintf( stderr, "%s\n",  line );
+	return( -1 );
+    }
+
+    return( 0 );
+}
+
+    int
+print_stats( SNET *sn )
+{
+    z_stream		in_stream, out_stream;
+
+    if ( snet_flags( sn ) & SNET_ZLIB ) {
+    	in_stream = snet_zistream( sn );
+	out_stream = snet_zostream( sn );
+
+#define RATIO(a,b) (((double)(a))/((double)(b)))
+	if ( verbose ) {
+	    printf( "zlib stats +++ In: %lu:%lu (%.3f:1) "
+		"+++ Out: %lu:%lu (%.3f:1)\n",
+		in_stream.total_out, in_stream.total_in,
+		RATIO( in_stream.total_out, in_stream.total_in ),
+		out_stream.total_in, out_stream.total_out,
+		RATIO( out_stream.total_in, out_stream.total_out ));
+	} else {
+	    syslog( LOG_INFO, "zlib stats +++ In: %lu:%lu (%.3f:1) "
+		"+++ Out: %lu:%lu (%.3f:1)\n",
+		in_stream.total_out, in_stream.total_in,
+		RATIO( in_stream.total_out, in_stream.total_in ),
+		out_stream.total_in, out_stream.total_out,
+		RATIO( out_stream.total_in, out_stream.total_out ));
+	    }
+    }
+    return( 0 );
+}
+#endif /* HAVE_ZLIB */

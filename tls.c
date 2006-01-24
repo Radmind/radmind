@@ -21,6 +21,10 @@
 
 #include <string.h>
 
+#ifdef HAVE_ZLIB
+#include <zlib.h>
+#endif /* HAVE_ZLIB */
+
 #include <snet.h>
 
 /* what kind of hostname were we given? */

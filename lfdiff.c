@@ -21,6 +21,11 @@
 #include <openssl/err.h>
 
 #include <openssl/evp.h>
+
+#ifdef HAVE_ZLIB
+#include <zlib.h>
+#endif /* HAVE_ZLIB */
+
 #include <snet.h>
 
 #include "applefile.h"
@@ -141,6 +146,7 @@ main( int argc, char **argv, char **envp )
     char 		temppath[ MAXPATHLEN ];
     char		opt[ 3 ];
     char		*epath;		/* encoded path */
+	char        **capa = NULL; /* capabilities */
     struct servent	*se;
     SNET		*sn;
     int                 authlevel = _RADMIND_AUTHLEVEL;
@@ -163,7 +169,7 @@ main( int argc, char **argv, char **envp )
     diffargc = 0;
     diffargv[ diffargc++ ] = diff;
 
-    while (( c = getopt ( argc, argv, "h:Ip:rST:u:Vvw:x:y:z:bitcefnC:D:sX:" ))
+    while (( c = getopt ( argc, argv, "h:Ip:rST:u:Vvw:x:y:z:Z:bitcefnC:D:sX:" ))
 	    != EOF ) {
 	switch( c ) {
 	case 'I':
@@ -232,6 +238,19 @@ main( int argc, char **argv, char **envp )
         case 'z' :              /* private key */
             privatekey = optarg;
             break;
+
+        case 'Z':
+#ifdef HAVE_ZLIB
+            zlib_level = atoi(optarg);
+            if (( zlib_level < 0 ) || ( zlib_level > 9 )) {
+                fprintf( stderr, "Invalid compression level\n" );
+                exit( 1 );
+            }
+            break;
+#else /* HAVE_ZLIB */
+            fprintf( stderr, "Zlib not supported.\n" );
+            exit( 1 );
+#endif /* HAVE_ZLIB */
 
 	/* diff options */
 	case 'b': case 'i': case 't':
@@ -325,6 +344,7 @@ main( int argc, char **argv, char **envp )
 	fprintf( stderr, "[ -h host ] [ -p port ] [ -u umask ] " );
         fprintf( stderr, "[ -w auth-level ] [ -x ca-pem-file ] " );
         fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ] " );
+	fprintf( stderr, "[ -Z compression-level ] " );
 	fprintf( stderr, "[ supported diff options ] " );
 	fprintf( stderr, "[ -X \"unsupported diff options\" ] " );
 	fprintf( stderr, "file\n" );
@@ -343,12 +363,25 @@ main( int argc, char **argv, char **envp )
     if (( sn = connectsn( host, port )) == NULL ) {
 	exit( 2 );
     }
+    if (( capa = get_capabilities( sn )) == NULL ) {
+	    exit( 2 );
+    }           
+
     if ( authlevel != 0 ) {
 	if ( tls_client_start( sn, host, authlevel ) != 0 ) {
 	    /* error message printed in tls_cleint_starttls */
 	    exit( 2 );
 	}
     }
+
+#ifdef HAVE_ZLIB
+    /* Enable compression */
+    if ( zlib_level > 0 ) {
+	if ( negotiate_compression( sn, capa ) != 0 ) {
+		exit( 2 );
+	}
+    }
+#endif /* HAVE_ZLIB */
 
     /* encode path */
     if (( epath = encode( file )) == NULL ) {
@@ -381,6 +414,9 @@ main( int argc, char **argv, char **envp )
 	fprintf( stderr, "can not close sn\n" );
 	exit( 2 );
     }
+#ifdef HAVE_ZLIB
+    if( verbose && zlib_level > 0 ) print_stats(sn);
+#endif /* HAVE_ZLIB */
 
     if (( fd = open( temppath, O_RDONLY )) < 0 ) {
 	perror( temppath );

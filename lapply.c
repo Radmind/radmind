@@ -21,6 +21,11 @@
 #include <openssl/err.h>
 
 #include <openssl/evp.h>
+
+#ifdef HAVE_ZLIB
+#include <zlib.h>
+#endif /* HAVE_ZLIB */
+
 #include <snet.h>
 
 #include "applefile.h"
@@ -248,6 +253,7 @@ main( int argc, char **argv )
     int			authlevel = _RADMIND_AUTHLEVEL;
     int			force = 0;
     int			use_randfile = 0;
+	char        **capa = NULL; /* capabilities */
 
     /*
      * retr() uses a default mode of 0644 for downloaded files.  Since
@@ -257,7 +263,7 @@ main( int argc, char **argv )
      */
     umask( S_IRWXG | S_IRWXO );
 
-    while (( c = getopt ( argc, argv, "%c:Fh:iInp:qru:Vvw:x:y:z:" )) != EOF ) {
+    while (( c = getopt ( argc, argv, "%c:Fh:iInp:qru:Vvw:x:y:z:Z:" )) != EOF ) {
 	switch( c ) {
 	case '%':
 	    showprogress = 1;
@@ -349,6 +355,19 @@ main( int argc, char **argv )
             privatekey = optarg;
             break;
 
+        case 'Z':
+#ifdef HAVE_ZLIB
+            zlib_level = atoi(optarg);
+            if (( zlib_level < 0 ) || ( zlib_level > 9 )) {
+                fprintf( stderr, "Invalid compression level\n" );
+                exit( 1 );
+            }
+            break;
+#else /* HAVE_ZLIB */
+            fprintf( stderr, "Zlib not supported.\n" );
+            exit( 1 );
+#endif /* HAVE_ZLIB */
+
 	case '?':
 	    err++;
 	    break;
@@ -391,7 +410,8 @@ main( int argc, char **argv )
 	fprintf( stderr, "[ -c checksum ] [ -h host ] [ -p port ] " );
 	fprintf( stderr, "[ -u umask ] " );
 	fprintf( stderr, "[ -w auth-level ] [ -x ca-pem-file ] " );
-	fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ] " );
+	fprintf( stderr, "[ -y cert-pem-file ] [ -z key-pem-file ] " );
+	fprintf( stderr, "[ -Z compression-level ] " );
 	fprintf( stderr, "[ appliable-transcript ]\n" );
 	exit( 2 );
     }
@@ -412,6 +432,11 @@ main( int argc, char **argv )
 	if (( sn = connectsn( host, port )) == NULL ) {
 	    exit( 2 );
 	}
+	if (( capa = get_capabilities( sn )) == NULL ) {
+		exit( 2 );
+	}
+
+
 	if ( authlevel != 0 ) {
 	    if ( tls_client_start( sn, host, authlevel ) != 0 ) {
 		/* error message printed in tls_cleint_starttls */
@@ -421,6 +446,15 @@ main( int argc, char **argv )
     } else {
 	if ( !quiet ) printf( "No network connection\n" );
     }
+
+#ifdef HAVE_ZLIB
+    /* Enable compression */
+    if ( zlib_level > 0 ) {
+	if ( negotiate_compression( sn, capa ) != 0 ) {
+		exit( 2 );
+	}
+    }
+#endif /* HAVE_ZLIB */
 
     acav = acav_alloc( );
 
@@ -701,6 +735,9 @@ filechecklist:
 	    fprintf( stderr, "can not close sn\n" );
 	    exit( 2 );
 	}
+#ifdef HAVE_ZLIB
+	if( verbose && zlib_level < 0 ) print_stats(sn);
+#endif /* HAVE_ZLIB */
     }
 
     exit( 0 );
@@ -709,6 +746,9 @@ error2:
     fclose( f );
 error1:
     if ( network ) {
+#ifdef HAVE_ZLIB
+	if( verbose && zlib_level < 0 ) print_stats(sn);
+#endif /* HAVE_ZLIB */
 	closesn( sn );
     }
     if ( change ) {

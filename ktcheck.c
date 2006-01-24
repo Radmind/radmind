@@ -26,6 +26,11 @@
 #include <openssl/err.h>
 
 #include <openssl/evp.h>
+
+#ifdef HAVE_ZLIB
+#include <zlib.h>
+#endif /* HAVE_ZLIB */
+
 #include <snet.h>
 
 #include "applefile.h"
@@ -546,8 +551,9 @@ main( int argc, char **argv )
     char		tempfile[ MAXPATHLEN ];
     struct servent	*se;
     struct node		*node;
+    char	        **capa = NULL;		/* capabilities */
 
-    while (( c = getopt( argc, argv, "Cc:D:h:iK:np:qrvVw:x:y:z:" )) != EOF ) {
+    while (( c = getopt( argc, argv, "Cc:D:h:iK:np:qrvVw:x:y:z:Z:" )) != EOF ) {
 	switch( c ) {
 	case 'C':	/* clean up _RADMIND_PATH/client */
 	    clean = 1;
@@ -635,6 +641,19 @@ main( int argc, char **argv )
             privatekey = optarg;
             break;
 
+        case 'Z':
+#ifdef HAVE_ZLIB
+            zlib_level = atoi(optarg);
+            if (( zlib_level < 0 ) || ( zlib_level > 9 )) {
+                fprintf( stderr, "Invalid compression level\n" );
+                exit( 1 );
+            }
+            break;
+#else /* HAVE_ZLIB */
+            fprintf( stderr, "Zlib not supported.\n" );
+            exit( 1 );
+#endif /* HAVE_ZLIB */
+
 	default:
 	    err++;
 	    break;
@@ -652,7 +671,8 @@ main( int argc, char **argv )
 	fprintf( stderr, "[ -K command file ] " );
 	fprintf( stderr, "[ -h host ] [ -p port ] " );
 	fprintf( stderr, "[ -w auth-level ] [ -x ca-pem-file ] " );
-	fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ]\n" );
+	fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ] " );
+	fprintf( stderr, "[ -Z compression-level ]\n" );
 	exit( 2 );
     }
 
@@ -689,6 +709,9 @@ main( int argc, char **argv )
     if (( sn = connectsn( host, port )) == NULL ) {
 	exit( 2 );
     }
+    if (( capa = get_capabilities( sn )) == NULL ) {
+	    exit( 2 );
+    }           
 
     if ( authlevel != 0 ) {
 	if ( tls_client_setup( use_randfile, authlevel, ca, cert,
@@ -701,6 +724,15 @@ main( int argc, char **argv )
 	    exit( 2 );
 	}
     }
+
+#ifdef HAVE_ZLIB
+    /* Enable compression */
+    if ( zlib_level > 0 ) {
+	if ( negotiate_compression( sn, capa ) != 0 ) {
+	    exit( 2 );
+	}
+    }
+#endif /* HAVE_ZLIB */
 
     /* Chack/get correct base command file */
     switch( check( sn, "COMMAND", NULL )) { 
@@ -827,6 +859,9 @@ main( int argc, char **argv )
 	fprintf( stderr, "can not close sn\n" );
 	exit( 2 );
     }
+#ifdef HAVE_ZLIB
+    if( verbose && zlib_level > 0 ) print_stats(sn);
+#endif /* HAVE_ZLIB */
 
 done:
     if ( clean && update ) {
