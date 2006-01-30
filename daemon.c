@@ -484,7 +484,7 @@ main( int ac, char **av )
 			"User time %.3f, System time %.3f\n", utime, stime );
 		} else {
 		    syslog( LOG_ERR,
-			"child %d User time %.3f, System time %.3f\n",
+			"child %d User time %.3f, System time %.3f",
 			pid, utime, stime );
 		}
 
