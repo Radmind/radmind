@@ -25,9 +25,10 @@
 .BI \-y\  cert-pem-file
 ] [ 
 .BI \-z\  private-key-file
+] [
+.BI \-Z\  compression-level
 ]
 .I create-able-transcript
-.sp
 .SH DESCRIPTION
 .B lcreate
 reads and uploads a transcript and all corresponding files to the
@@ -45,7 +46,7 @@ If the -n option is given, no files or transcripts are uploaded.  Instead,
 verifies that all files exist in the filesystem and have
 the same size as listed in the transcript.  If used with the -c option,
 checksums are also verified.
-
+.sp
 If the -n option is given, no files or transcripts are uploaded.  Instead,
 .B lcreate
 uses 
@@ -84,7 +85,6 @@ on the server.  With the -N option, applefiles are stored with a zero length
 resource fork, zero length data fork and a creator type of RDMD.
 Systems running Mac OS X on UFS-formatted drives do not need
 this special support.
-.sp
 .SH OPTIONS
 .TP 19
 .BI \-%
@@ -152,7 +152,6 @@ order of preference and then exits.
 .B \-v
 increase the verbosity.  -v produces one line for each file stored on the
 server.  -vv displays all communication with the radmind server.
-.sp
 .TP 19
 .BI \-w\  auth-level
 TLS authorization level, by default _RADMIND_AUTHLEVEL.
@@ -166,6 +165,11 @@ Client's public certificate, by default _RADMIND_TLS_CERT.
 .TP 19
 .BI \-z\  private-key-file
 Client's private key, by default _RADMIND_TLS_CERT.
+.TP 19
+.BI \-Z\  compression-level
+Compress all outbound data.  compression-level can be between 0 and 9:
+1 gives best speed, 9 gives best compression, 0 gives no compression at
+all (the input data is simply copied a block at a time).
 .SH SEE ALSO
 .BR fsdiff (1),
 .BR ktcheck (1),

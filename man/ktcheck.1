@@ -25,8 +25,9 @@
 .BI \-y\  cert-pem-file
 ] [ 
 .BI \-z\  private-key-file
+] [
+.BI \-Z\  compression-level
 ]
-.sp
 .SH DESCRIPTION
 .B ktcheck 
 verifies a client's command file with the radmind server 
@@ -66,7 +67,6 @@ When run with the \-n option,
 .B ktcheck
 verifies but never downloads the command files or transcripts.  A tempory 
 special.T is created for verification and is removed on exit.
-.sp
 .SH OPTIONS
 .TP 19
 .BI \-C
@@ -127,7 +127,11 @@ Client's public certificate, by default _RADMIND_TLS_CERT.
 .TP 19
 .BI \-z\  private-key-file
 Client's private key, by default _RADMIND_TLS_CERT.
-.sp
+.TP 19
+.BI \-Z\  compression-level
+Compress all outbound data.  compression-level can be between 0 and 9:
+1 gives best speed, 9 gives best compression, 0 gives no compression at
+all (the input data is simply copied a block at a time).
 .SH FILES
 .TP 19
 .B _RADMIND_COMMANDFILE
@@ -135,7 +139,6 @@ name of the default command file.
 .TP 19
 .B special.T 
 name of the special transcript.
-.sp
 .SH EXIT STATUS
 The following exit values are returned:
 .TP 5
@@ -147,7 +150,6 @@ Differences were found.
 .TP 5
 >1
 An error occurred.
-.sp
 .SH SEE ALSO
 .BR fsdiff (1),
 .BR lapply (1),

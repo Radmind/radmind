@@ -30,8 +30,9 @@
 .BI \-y\  cert-pem-file
 ] [ 
 .BI \-z\  private-key-file
+] [
+.BI \-Z\  max-compression-level
 ]
-.sp
 .SH DESCRIPTION
 Radmind uses the radmind access protocol to communicate with radmind
 clients.
@@ -69,7 +70,6 @@ can be used to escape any character.
 A client is only given access to command files and transcripts
 listed in their base command file as determined by the config
 file.
-.sp
 .SH DIRECTORY STRUCTURE
 .TP 19
 .B command
@@ -123,11 +123,9 @@ as given in the STOR command.
 .B tmp/transcript
 All transcripts stored on the server using the STOR command are saved in
 .BR tmp/transcript .
-.sp
 .SH RADMIND ACCESS PROTOCOL
 Radmind currently supports the following Radmind Access Protocol ( RAP )
 requests:
-.sp
 .TP 10
 QUIT
 terminate session
@@ -173,7 +171,9 @@ command must be given before a client can send a STAT, RETR, or STOR.
 LOGI
 Login user.  This command is only valid after TLS has been
 started. 
-.sp
+.TP 10
+COMP
+start compression
 .SH OPTIONS
 .TP 19
 .BI \-a\  bind-address
@@ -241,7 +241,14 @@ Server's public certificate, by default _RADMIND_TLS_CERT.
 .TP 19
 .BI \-z\  private-key-file
 Server's private key, by default _RADMIND_TLS_CERT.
-.sp
+.TP 19
+.BI \-z\  max-compression-level
+Offer compression to clients.  If client requests compression, the server will
+compresses all outbound data using using the lower value of
+max_compression_level or compression level set by client.
+max-compression-level can be between 0 and 9:
+1 gives best speed, 9 gives best compression, 0 gives no compression at
+all (the input data is simply copied a block at a time).
 .SH EXAMPLES
 The following example of _RADMIND_PATH/config defines four known clients,
 each using one of three different command files.  Also, any client that ends
@@ -266,10 +273,8 @@ mac<1-15>.umich.edu    apple.K
 .fi
 .RE
 .LP
-.sp
 .SH FILES
 _RADMIND_PATH/config
-.sp
 .SH SEE ALSO
 .BR fsdiff (1),
 .BR ktcheck (1),

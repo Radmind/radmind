@@ -25,13 +25,14 @@
 ] [ 
 .BI \-z\  private-key-file
 ] [
+.BI \-Z\  compression-level
+] [
 .I supported\ diff\ options
 ] [
 .B \-X
 .I unsupported\ diff\ options
 ]
 .I file 
-.sp
 .SH DESCRIPTION
 .B lfdiff 
 retrieves 
@@ -62,7 +63,6 @@ options not duplicated in
 All other
 .BR diff (1) 
 options are given using the \-X option.
-.sp
 .SH OPTIONS
 .TP 19
 .B \-I
@@ -117,7 +117,11 @@ Client's public certificate, by default _RADMIND_TLS_CERT.
 .TP 19
 .BI \-z\  private-key-file
 Client's private key, by default _RADMIND_TLS_CERT.
-.sp
+.TP 19
+.BI \-Z\  compression-level
+Compress all outbound data.  compression-level can be between 0 and 9:
+1 gives best speed, 9 gives best compression, 0 gives no compression at
+all (the input data is simply copied a block at a time).
 .SH EXIT STATUS 
 The following exit values are returned:
 .TP 5
@@ -129,7 +133,6 @@ Differences were found.
 .TP 5
 >1
 An error occurred.
-.sp
 .SH SEE ALSO
 .BR diff (1),
 .BR fsdiff (1),

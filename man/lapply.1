@@ -23,10 +23,11 @@
 .BI \-y\  cert-pem-file
 ] [ 
 .BI \-z\  private-key-file
+] [
+.BI \-Z\  compression-level
 ] {
 .I appliable-transcript
 }
-.sp
 .SH DESCRIPTION
 lapply reads an appliable transcript line-by-line, modifying the file
 system to match the transcript. Transcript lines are applied in order
@@ -34,7 +35,7 @@ unless they are directories marked for deletion.  In such cases,
 subsequent transcript lines are first applied until the file system object 
 listed is outside of the directory.  If another directory marked for
 deletion is encountered, the process is started recursively.
-
+.sp
 lapply downloads missing files indicated by a "+" from the radmind server
 .I host.
 .I file
@@ -42,21 +43,20 @@ is applied to the system with the attributes as described in
 the transcript line.  File system objects marked with a "-" are removed.
 Other transcript lines indicate that a file system
 object must be modified or created if missing.  lapply is not able to create doors or sockets.
-
+.sp
 File system objects listed in the transcript and present in the
 file system as a different type are automatically removed.
-
+.sp
 The radmind tools are unaware of user defined file flags, some of which
 may prevent lapply from successfully completing.  Using the -F option,
 .B lapply
 will remove all user defined flags.
-
+.sp
 If
 .I appliable-transcript
 is not given,
 .B lapply
 will use the standard input for reading.
-
 .sp
 .B lapply
 is also capable of decoding
@@ -65,7 +65,6 @@ stored on the server by
 .B lcreate(1),
 restoring the files' Mac OS HFS+ metadata to the client machine. (Mac OS X,
 HFS+-formatted drives only.)
-.sp
 .SH OPTIONS
 .TP 19
 .BI \-%
@@ -126,7 +125,11 @@ Client's public certificate, by default _RADMIND_TLS_CERT.
 .TP 19
 .BI \-z\  private-key-file
 Client's private key, by default _RADMIND_TLS_CERT.
-.sp
+.TP 19
+.BI \-Z\  compression-level
+Compress all outbound data.  compression-level can be between 0 and 9:
+1 gives best speed, 9 gives best compression, 0 gives no compression at
+all (the input data is simply copied a block at a time).
 .SH EXIT STATUS
 The following exit values are returned:
 .TP 5
@@ -138,7 +141,6 @@ An error occurred, system was modified.
 .TP 5
 2
 An error occurred, system was not modified.
-.sp
 .SH SEE ALSO
 .BR fsdiff (1),
 .BR ktcheck (1),
