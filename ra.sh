@@ -24,6 +24,7 @@ KFILE="_RADMIND_COMMANDFILE"
 SERVER="_RADMIND_HOST"
 TLSLEVEL="_RADMIND_AUTHLEVEL"
 EDITOR=${EDITOR:-vi}
+USER=${SUDO_USER:-$USER}
 DEFAULTS="/etc/defaults/radmind"
 FSDIFFROOT="."
 FLAG="_RADMIND_DIR/client/.RadmindRunning"
@@ -293,13 +294,17 @@ trap cleanup HUP INT PIPE QUIT TERM TRAP XCPU XFSZ
 
 case "$1" in
 checkout)
+    if [ ${USER} = root ]; then
+	echo -n "Username? [root] "
+	read ans
+	USER=${ans:-root}
+    fi
     checkedout
     if [ $? -eq 1 ]; then
+	echo "Already checked out by ${OWNER}"
 	if [ x${OWNER} = x${USER} ]; then
-	    echo "Already checked out"
 	    exit 1
 	fi
-	echo "Already checked out by ${OWNER}"
 	Yn "Force checkout?"
 	if [ $? -eq 0 ]; then
 	    exit 1
@@ -314,6 +319,11 @@ checkin)
     if [ $? -eq 0 ]; then
 	echo "Not checked out"
 	exit 1
+    fi
+    if [ ${USER} = root ]; then
+	echo -n "Username? [root] "
+	read ans
+	USER=${ans:-root}
     fi
     if [ x${OWNER} != x${USER} ]; then
 	echo "Currently checked out by ${OWNER}"
