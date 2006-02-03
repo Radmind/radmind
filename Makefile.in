@@ -215,7 +215,7 @@ DISTDIR=../radmind-${VERSION}
 
 dist   : distclean
 	mkdir ${DISTDIR}
-	tar -c -f - -X EXCLUDE . | tar xpf - -C ${DISTDIR}
+	tar -h -c -f - -X EXCLUDE . | tar xpf - -C ${DISTDIR}
 	echo ${VERSION} > ${DISTDIR}/VERSION
 	-mkdir ${DISTDIR}/tmp
 	for i in ${MANTARGETS}; do \
