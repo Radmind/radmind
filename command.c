@@ -1209,9 +1209,9 @@ command_k( char *path_config )
 	if ( ( ac == 0 ) || ( *av[ 0 ] == '#' ) ) {
 	    continue;
 	}
-	if ( ac != 2 ) {
-	    syslog( LOG_ERR, "config file: line %d: invalid number of \
-		arguments\n", linenum );
+	if (( ac < 2 ) || (( ac > 2 ) && ( *av[ 2 ] != '#' ))) { 
+	    syslog( LOG_ERR, "config file: line %d: invalid number of "
+		"arguments", linenum );
 	    continue;
 	}
 

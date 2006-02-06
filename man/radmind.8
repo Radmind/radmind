@@ -54,7 +54,9 @@ CN, domain name or IP address of the client and the client's
 command file.  The server checks each line of the config file, first
 checking to see if the connecting client's CN, domain name, and 
 finally IP address match in that order.  CNs and
-domain names are case insensitive.
+domain names are case insensitive.  If the optional third field begins
+with a '#', it is ignored and treated as an in-line comment.
+.sp
 Lines that are blank or begin with '#' are ignored.  '*' is a wildcard and
 will match any string.  A number range can be given 
 by "<\c
@@ -261,9 +263,9 @@ mac001.umich,edu, etc.
 .RS
 .nf
 #
-# Client               command file
+# Client               command file	optional-comment
 #
-amber.umich.edu        apple.K
+amber.umich.edu        apple.K		# mail server
 josh.umich.edu         apple.K
 ben.umich.edu          apple-test.K
 oreo.umich.edu         solaris8.K
