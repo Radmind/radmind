@@ -624,6 +624,7 @@ skipline:
 	    /* Don't duplicate remove line if it's not a match, or 
 	     * we got -f and we're just outputing the last
 	     * transcript.
+	     */
 	    if (( trans[ candidate ]->t_remove )
 		    && !match
 		    && (!( force && ( candidate == 1 )))) {
