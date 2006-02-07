@@ -318,7 +318,9 @@ package	: all man info rash
 	    ${INSTALL} -m 0644 -c tmp/man/$$i ${PKGDIR}/${MANDIR}/man8/; \
 	done
 	-mkdir -p -m 0755 ${PKGDIR}${CERTDIR}
-	-mkdir -p -m 0755 ${PKGDIR}${CLIENTDIR}
+	-mkdir -p -m 0755 ${PKGDIR}${PREAPPLYDIR}
+	-mkdir -p -m 0755 ${PKGDIR}${POSTAPPLYDIR}
+	-mkdir -p -m 0755 ${PKGDIR}${RADMINDDIR}/client
 	-mkdir -p -m 0755 ${PKGRSRCDIR}
 	${INSTALL} -m 0644 -c OS_X/License.rtf ${PKGRSRCDIR}
 	${INSTALL} -m 0644 -c OS_X/ReadMe.rtf ${PKGRSRCDIR}
