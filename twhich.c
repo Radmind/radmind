@@ -116,7 +116,13 @@ main( int argc, char **argv )
 	}
     }
 
-    for ( tran = tran_head; !tran->t_eof; tran = tran->t_next ) {
+    for ( tran = tran_head; tran->t_next != NULL; tran = tran->t_next ) {
+
+	/* Skip NULL/empty transcripts */
+	if ( tran->t_eof ) {
+	    continue;
+	}
+
 	while (( cmp = pathcmp( tran->t_pinfo.pi_name, pattern )) < 0 ) {
 	    transcript_parse( tran );
 	    if ( tran->t_eof ) {
