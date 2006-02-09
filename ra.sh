@@ -90,7 +90,7 @@ cleanup() {
 dopreapply() {
     if [ -d ${PREAPPLY} ]; then
 	SCRIPTS=`find ${PREAPPLY} -perm +u+x \! -type d | sort`
-	if [ ${SCRIPTS} ]; then
+	if [ "${SCRIPTS}" ]; then
 	    for script in ${SCRIPTS}; do
 		${script} "$1"
 	    done
@@ -101,7 +101,7 @@ dopreapply() {
 dopostapply() {
     if [ -d ${POSTAPPLY} ]; then
 	SCRIPTS=`find ${POSTAPPLY} -perm +u+x \! -type d | sort`
-	if [ ${SCRIPTS} ]; then
+	if [ "${SCRIPTS}" ]; then
 	    for script in ${SCRIPTS}; do
 		${script} "$1"
 	    done
