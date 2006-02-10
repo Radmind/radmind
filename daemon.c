@@ -481,10 +481,10 @@ main( int ac, char **av )
 		    + 1.e-6 * (double) usage.ru_stime.tv_usec;
 		if ( debug ) {
 		    printf( 
-			"User time %.3f, System time %.3f\n", utime, stime );
+			"User time %.3fs, System time %.3fs, I/O %ld/%ld blocks\n", utime, stime, usage.ru_inblock, usage.ru_oublock );
 		} else {
 		    syslog( LOG_ERR,
-			"child %d User time %.3f, System time %.3f",
+			"child %d User time %.3fs, System time %.3fs",
 			pid, utime, stime );
 		}
 

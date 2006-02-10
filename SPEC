@@ -50,3 +50,9 @@ STOR
     S: 250 File stored "\r\n"
 
 AUTH works per rfc2222 SASL.
+
+COMPress
+
+    C: COMP <compression> [optional-data] "\r\n"
+    S: 320 Ready to start "\r\n"
+    S: 220 <compression> compression [optional-string] enabled "\r\n"

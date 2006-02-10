@@ -855,6 +855,7 @@ main( int argc, char **argv )
 	}
     }
 
+done:
     if (( closesn( sn )) !=0 ) {
 	fprintf( stderr, "can not close sn\n" );
 	exit( 2 );
@@ -863,7 +864,6 @@ main( int argc, char **argv )
     if( verbose && zlib_level > 0 ) print_stats(sn);
 #endif /* HAVE_ZLIB */
 
-done:
     if ( clean && update ) {
 	clean_client_dir();
     }
