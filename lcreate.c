@@ -483,8 +483,8 @@ main( int argc, char **argv )
 	    } else {
 		if ( snprintf( pathdesc, MAXPATHLEN * 2, "STOR FILE %s %s", 
 			tname, targv[ 1 ] ) > ( MAXPATHLEN * 2 ) - 1 ) {
-		    fprintf( stderr, "STOR FILE %s %s: path description too \
-			long\n", tname, d_path );
+		    fprintf( stderr, "STOR FILE %s %s: path description too"
+			    " long\n", tname, d_path );
 		    exit( 2 );
 		}
 
