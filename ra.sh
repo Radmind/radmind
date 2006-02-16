@@ -113,6 +113,7 @@ update() {
     opt="$1"
     kopt=
     apply=ask
+    can_edit=no
 
     checkedout
     if [ $? -eq 1 ]; then
@@ -176,20 +177,12 @@ update() {
 	cat ${FTMP}
 	infocmp >/dev/null 2>&1
 	if [ $? -eq 0 ]; then
-	    Yn "Edit difference transcript (or apply)?"
-	    if [ $? -eq 1 ]; then
-		${EDITOR} ${FTMP}
-	    fi
-	    # shortcut apply prompt with a|A
-	    case $ans in
-	    a|A|apply)
-		apply=yes
-		;;
-	    esac
+	    can_edit=yes
 	fi
     fi
     
-    if [ x"$opt" = x"interactive" -a -d "${PREAPPLY}" -a ! -z "`ls ${PREAPPLY} 2>/dev/null`" ]; then
+    if [ x"$opt" = x"interactive" -a -d "${PREAPPLY}" \
+		-a ! -z "`ls ${PREAPPLY} 2>/dev/null`" ]; then
 	Yn "Run pre-apply scripts on difference transcript?"
         if [ $? -eq 1 ]; then
             dopreapply ${FTMP}
@@ -197,13 +190,38 @@ update() {
     elif [ x"$opt" != x"interactive" ]; then
 	dopreapply ${FTMP}
     fi
-    if [ x"$opt" = x"interactive" -a $apply = ask ]; then
-	Yn "Apply difference transcript?"
-	if [ $? -ne 1 ]; then
-	    cleanup
-	    exit 0
-	fi
+    if [ x"${opt}" = x"interactive" ]; then
+	while [ 1 ]; do
+	    if [ x"${can_edit}" = x"yes" ]; then
+		echo -n "(e)dit difference transcript, "
+	    fi
+	    echo -n "(a)pply or (c)ancel? "
+
+	    read ans
+	    case "${ans}" in
+	    a|A)
+		break
+		;;
+
+	    c|C)
+		echo
+		echo Update cancelled
+		cleanup
+		exit 0
+		;;
+
+	    e|E)
+		if [ x"${can_edit}" = x"yes" ]; then
+		    ${EDITOR} ${FTMP}
+		fi
+		;;
+
+	    *)
+		;;
+	    esac
+	done
     fi
+		
     lapply ${PROGRESS} -w ${TLSLEVEL} -h ${SERVER} ${CHECKSUM} ${FTMP}
     case "$?" in
     0)	;;
@@ -222,7 +240,8 @@ update() {
 	return 1
 	;;
     esac
-    if [ x"$opt" = x"interactive" -a -d "${POSTAPPLY}" -a ! -z "`ls ${POSTAPPLY} 2>/dev/null`" ]; then
+    if [ x"$opt" = x"interactive" -a -d "${POSTAPPLY}" \
+		-a ! -z "`ls ${POSTAPPLY} 2>/dev/null`" ]; then
 	Yn "Run post-apply scripts on difference transcript?"
         if [ $? -eq 1 ]; then
             dopostapply ${FMTP}
