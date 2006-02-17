@@ -96,7 +96,7 @@ do_cksum( char *path, char *cksum_b64 )
 do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
 {
     int		    	    	dfd, rfd, rc;
-    char			buf[ 8192 ];
+    char			buf[ 8192 ], rsrc_path[ MAXPATHLEN ];
     off_t			size = 0;
     extern struct as_header	as_header;
     unsigned int		md_len;
@@ -121,7 +121,13 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
 
     /* checksum rsrc fork data */
     if ( afinfo->as_ents[ AS_RFE ].ae_length > 0 ) {
-	if (( rfd = open( afinfo->rsrc_path, O_RDONLY )) < 0 ) {
+        if ( snprintf( rsrc_path, MAXPATHLEN, "%s%s",
+		path, _PATH_RSRCFORKSPEC ) >= MAXPATHLEN ) {
+            errno = ENAMETOOLONG;
+            return( -1 );
+        }
+
+	if (( rfd = open( rsrc_path, O_RDONLY )) < 0 ) {
 	    return( -1 );
 	}
 	while (( rc = read( rfd, buf, sizeof( buf ))) > 0 ) {

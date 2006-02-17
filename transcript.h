@@ -58,7 +58,7 @@ struct transcript {
     FILE		*t_in;
 };
 
-int			transcript( char * );
+int			transcript( char *, struct stat *, char *, struct applefileinfo * );
 void			transcript_init( char *kfile, int location );
 struct transcript	*transcript_select( void );
 void			transcript_parse( struct transcript * );

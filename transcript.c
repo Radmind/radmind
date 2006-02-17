@@ -22,7 +22,6 @@
 #include "transcript.h"
 #include "argcargv.h"
 #include "code.h"
-#include "radstat.h"
 #include "cksum.h"
 #include "pathcmp.h"
 #include "largefile.h"
@@ -610,7 +609,7 @@ transcript_select( void )
 }
 
     int
-transcript( char *path )
+transcript( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 {
     struct pathinfo	pi;
     int			enter = 0;
@@ -624,25 +623,10 @@ transcript( char *path )
      * exhausted, to consume any remaining transcripts.
      */
     if ( path != NULL ) {
-	switch ( radstat( path, &pi.pi_stat, &pi.pi_type,
-		&pi.pi_afinfo )) {
-	case 0:
-	    break;
-	case 1:
-	    fprintf( stderr, "%s is of an unknown type\n", path );
-	    exit( 2 );
-	default:
-	    if (( errno == ENOTDIR ) || ( errno == ENOENT )) {
-		memset( &pi.pi_stat, 0, sizeof( struct stat ));
-		pi.pi_type = 'X';
-		break;
-	    } else {
-		perror( path );
-		exit( 2 );
-	    }
-	}
-
 	strcpy( pi.pi_name, path );
+	pi.pi_stat = *st;
+	pi.pi_type = *type;
+	pi.pi_afinfo = *afinfo;
 
 	/* if it's multiply referenced, check if it's a hardlink */
 	if ( !S_ISDIR( pi.pi_stat.st_mode ) && ( pi.pi_stat.st_nlink > 1 ) &&
@@ -935,7 +919,7 @@ transcript_free( )
      * Call transcript() with NULL to indicate that we've run out of
      * filesystem to compare against.
      */
-    transcript( NULL );
+    transcript( NULL, NULL, NULL, NULL );
 
     while ( tran_head != NULL ) {
 	next = tran_head->t_next;

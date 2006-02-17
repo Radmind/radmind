@@ -5,44 +5,91 @@
 
 #include "config.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
 #include <dirent.h>
 #include <stdio.h>
 #include <string.h>
+#include <fcntl.h>
 
 #include <openssl/evp.h>
 
 #include "applefile.h"
 #include "transcript.h"
-#include "llist.h"
 #include "pathcmp.h"
+#include "radstat.h"
 
 void            (*logger)( char * ) = NULL;
 
 extern char	*version, *checksumlist;
 
-void		fs_walk( char *, int, int );
+void		fs_walk( char *, struct stat *, char *, struct applefileinfo *,
+	int, int );
 int		dodots = 0;
+int		dotfd;
 int		lastpercent = -1;
 int		case_sensitive = 1;
 const EVP_MD    *md;
 
+static struct fs_list *fs_insert( struct fs_list **, struct fs_list *,
+	char *, int (*)( char *, char * ));
+
+struct fs_list {
+    struct fs_list		*fl_next;
+    char			*fl_name;
+    struct stat			fl_stat;
+    char			fl_type;
+    struct applefileinfo	fl_afinfo;
+};
+
+    static struct fs_list *
+fs_insert( struct fs_list **head, struct fs_list *last,
+	char *name, int (*cmp)( char *, char * ))
+{
+    struct fs_list	**current, *new;
+
+    if (( last != NULL ) && ( (*cmp)( name, last->fl_name ) > 0 )) {
+	current = &last->fl_next;
+    } else {
+	current = head;
+    }
+
+    /* find where in the list to put the new entry */
+    for ( ; *current != NULL; current = &(*current)->fl_next) {
+	if ( (*cmp)( name, (*current)->fl_name ) <= 0 ) {
+	    break;
+	}
+    }
+
+    if (( new = malloc( sizeof( struct fs_list ))) == NULL ) {
+	return( NULL );
+    }
+    if (( new->fl_name = strdup( name )) == NULL ) {
+	free( new );
+	return( NULL );
+    }
+
+    new->fl_next = *current;
+    *current = new; 
+    return( new ); 
+}
+
     void
-fs_walk( char *path, int start, int finish ) 
+fs_walk( char *path, struct stat *st, char *type, struct applefileinfo *afinfo,
+	int start, int finish ) 
 {
     DIR			*dir;
     struct dirent	*de;
-    struct llist	*head = NULL;
-    struct llist	*new;
-    struct llist	*cur;
+    struct fs_list	*head = NULL, *cur, *new = NULL, *next;
     int			len;
     int			count = 0;
     float		chunk, f = start;
     char		temp[ MAXPATHLEN ];
     struct transcript	*tran;
+    int			(*cmp)( char *, char * );
 
     if (( finish > 0 ) && ( start != lastpercent )) {
 	lastpercent = start;
@@ -51,7 +98,7 @@ fs_walk( char *path, int start, int finish )
     }
 
     /* call the transcript code */
-    switch ( transcript( path )) {
+    switch ( transcript( path, st, type, afinfo )) {
     case 2 :			/* negative directory */
 	for (;;) {
 	    tran = transcript_select();
@@ -60,14 +107,25 @@ fs_walk( char *path, int start, int finish )
 	    }
 
 	    if ( ischildcase( tran->t_pinfo.pi_name, path, case_sensitive )) {
-		/*
-		 * XXX
-		 * This strcpy() is not itself dangerous, because pi_name
-		 * is a MAXPATHLEN-sized buffer.  However, it does not appear
-		 * that copies into pi_name are carefully checked.
-		 */
+		struct stat		st0;
+		char			type0;
+		struct applefileinfo	afinfo0;
+
 		strcpy( temp, tran->t_pinfo.pi_name );
-		fs_walk( temp, start, finish );
+		switch ( radstat( temp, &st0, &type0, &afinfo0 ) < 0 ) {
+		case 0:
+		    break;
+		case 1:
+		    fprintf( stderr, "%s is of an unknown type\n", temp );
+		    exit( 2 );
+		default:
+		    if (( errno != ENOTDIR ) && ( errno != ENOENT )) {
+			perror( path );
+			exit( 2 );
+		    }
+		}
+
+		fs_walk( temp, &st0, &type0, &afinfo0, start, finish );
 	    } else {
 		return;
 	    }
@@ -85,8 +143,19 @@ fs_walk( char *path, int start, int finish )
 	exit( 2 );
     }
 
+    if ( case_sensitive ) {
+	cmp = strcmp;
+    } else {
+	cmp = strcasecmp;
+    }
+
+    if ( chdir( path ) < 0 ) {
+	perror( path );
+	exit( 2 );
+    }
+
     /* open directory */
-    if (( dir = opendir( path )) == NULL ) {
+    if (( dir = opendir( "." )) == NULL ) {
 	perror( path );
 	exit( 2 );	
     }
@@ -101,53 +170,66 @@ fs_walk( char *path, int start, int finish )
 	}
 
 	count++;
-	len = strlen( path );
 
-	/* absolute pathname. add 2 for / and NULL termination.  */
-	if (( len + strlen( de->d_name ) + 2 ) > MAXPATHLEN ) {
-	    fprintf( stderr, "Absolute pathname too long\n" );
-	    exit( 2 );
+	if (( new = fs_insert( &head, new, de->d_name, cmp )) == NULL ) {
+	    perror( "malloc" );
+	    exit( 1 );
 	}
 
-	if ( path[ len - 1 ] == '/' ) {
-	    if ( snprintf( temp, MAXPATHLEN, "%s%s", path, de->d_name )
-		    >= MAXPATHLEN ) {
-                fprintf( stderr, "%s%s: path too long\n", path, de->d_name );
+	switch ( radstat( new->fl_name, &new->fl_stat, &new->fl_type,
+		&new->fl_afinfo ) < 0 ) {
+	case 0:
+	    break;
+	case 1:
+	    fprintf( stderr, "%s is of an unknown type\n", path );
+	    exit( 2 );
+	default:
+	    if (( errno != ENOTDIR ) && ( errno != ENOENT )) {
+		perror( path );
 		exit( 2 );
 	    }
-	} else {
-            if ( snprintf( temp, MAXPATHLEN, "%s/%s", path, de->d_name )
-		    >= MAXPATHLEN ) {
-                fprintf( stderr, "%s/%s: path too long\n", path, de->d_name );
-                exit( 2 );
-            }
-	}
-
-	/* allocate new node for newly created relative pathname */
-	new = ll_allocate( temp );
-
-	/* insert new file into the list */
-	if ( case_sensitive ) {
-	    ll_insert( &head, new ); 
-	} else {
-	    ll_insert_case( &head, new ); 
 	}
     }
-
-    chunk = (( finish - start ) / ( float )count );
 
     if ( closedir( dir ) != 0 ) {
 	perror( "closedir" );
 	exit( 2 );
     }
 
-    /* call fswalk on each element in the sorted list */
-    for ( cur = head; cur != NULL; cur = cur->ll_next ) {
-	fs_walk( cur->ll_name, ( int )f, ( int )( f + chunk ));
-	f += chunk;
+    if ( fchdir( dotfd ) < 0 ) {
+	perror( "OOPS!" );
+	exit( 2 );
     }
 
-    ll_free( head );
+    chunk = (( finish - start ) / ( float )count );
+
+    len = strlen( path );
+
+    /* call fswalk on each element in the sorted list */
+    for ( cur = head; cur != NULL; cur = next ) {
+	if ( path[ len - 1 ] == '/' ) {
+	    if ( snprintf( temp, MAXPATHLEN, "%s%s", path, cur->fl_name )
+		    >= MAXPATHLEN ) {
+                fprintf( stderr, "%s%s: path too long\n", path, cur->fl_name );
+		exit( 2 );
+	    }
+	} else {
+            if ( snprintf( temp, MAXPATHLEN, "%s/%s", path, cur->fl_name )
+		    >= MAXPATHLEN ) {
+                fprintf( stderr, "%s/%s: path too long\n", path, cur->fl_name );
+                exit( 2 );
+            }
+	}
+
+	fs_walk( temp, &cur->fl_stat, &cur->fl_type, &cur->fl_afinfo,
+		(int)f, (int)( f + chunk ));
+
+	f += chunk;
+
+	next = cur->fl_next;
+	free( cur->fl_name );
+	free( cur );
+    }
 
     return;
 }
@@ -162,6 +244,8 @@ main( int argc, char **argv )
     int 		errflag = 0, use_outfile = 0;
     int			finish = 0;
     struct stat		st;
+    char		type;
+    struct applefileinfo	afinfo;
 
     edit_path = CREATABLE;
     cksum = 0;
@@ -257,16 +341,20 @@ main( int argc, char **argv )
 	path_prefix[ len - 1] = '\0';
     }
 
-    /* verify the path we've been given exists */
-    if ( stat( path_prefix, &st ) != 0 ) {
+    if ( radstat( path_prefix, &st, &type, &afinfo ) != 0 ) {
 	perror( path_prefix );
+	exit( 2 );
+    }
+
+    if (( dotfd = open( ".", O_RDONLY, 0 )) < 0 ) {
+	perror( "OOPS!" );
 	exit( 2 );
     }
 
     /* initialize the transcripts */
     transcript_init( kfile, K_CLIENT );
 
-    fs_walk( path_prefix, 0, finish );
+    fs_walk( path_prefix, &st, &type, &afinfo, 0, finish );
 
     if ( finish > 0 ) {
 	printf( "%%%d\n", ( int )finish );

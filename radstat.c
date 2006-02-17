@@ -37,6 +37,10 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 #endif /* __APPLE__ */
 
     if ( lstat( path, st ) != 0 ) {
+	if (( errno == ENOTDIR ) || ( errno == ENOENT )) {
+	    memset( st, 0, sizeof( struct stat ));
+	    *type = 'X';
+	}
 	return( -1 );
     }
 
@@ -102,12 +106,6 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 #ifdef __APPLE__
     /* Calculate full size of applefile */
     if ( *type == 'a' ) {
- 
-        if ( snprintf( afinfo->rsrc_path, MAXPATHLEN,
-                "%s%s", path, _PATH_RSRCFORKSPEC ) > MAXPATHLEN - 1 ) {
-            errno = ENAMETOOLONG;
-            return( -1 );
-        }
 
 	/* Finder Info */
 	afinfo->as_ents[AS_FIE].ae_id = ASEID_FINFO;

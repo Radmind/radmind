@@ -257,7 +257,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 {
     int			rc = 0, dfd = 0, rfd = 0;
     off_t		size;
-    char		buf[ 8192 ];
+    char		buf[ 8192 ], rsrc_path[ MAXPATHLEN ];
     struct timeval   	tv;
     unsigned int      	md_len;
     extern EVP_MD      	*md;
@@ -293,8 +293,13 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 	exit( 2 );
     }
     if ( afinfo->as_ents[ AS_RFE ].ae_length > 0 ) {
-	if (( rfd = open( afinfo->rsrc_path, O_RDONLY )) < 0 ) {
-	    perror( afinfo->rsrc_path );
+        if ( snprintf( rsrc_path, MAXPATHLEN, "%s%s",
+		path, _PATH_RSRCFORKSPEC ) >= MAXPATHLEN ) {
+            errno = ENAMETOOLONG;
+            return( -1 );
+        }
+	if (( rfd = open( rsrc_path, O_RDONLY )) < 0 ) {
+	    perror( rsrc_path );
 	    close( dfd );
 	    exit( 2 );
 	}
@@ -444,7 +449,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     }
     if ( afinfo->as_ents[ AS_RFE ].ae_length > 0 ) {
 	if ( close( rfd ) < 0 ) {
-	    perror( afinfo->rsrc_path );
+	    perror( rsrc_path );
 	    exit( 2 );
 	}
     }
