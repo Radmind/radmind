@@ -57,11 +57,6 @@ extern SSL_CTX  *ctx;
 #include "mkdirs.h"
 #include "connect.h"
 
-#ifdef sun
-#define MIN(a,b)	((a)<(b)?(a):(b))
-#define MAX(a,b)	((a)>(b)?(a):(b))
-#endif /* sun */
-
 #define	DEFAULT_MODE 0444
 #define DEFAULT_UID     0
 #define DEFAULT_GID     0

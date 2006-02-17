@@ -39,10 +39,6 @@
 #include "largefile.h"
 #include "progress.h"
 
-#ifdef sun
-#define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
-#endif /* sun */
-
 extern void            (*logger)( char * );
 extern struct timeval  	timeout;
 extern int 		linenum;
