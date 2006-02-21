@@ -73,7 +73,7 @@ AC_DEFUN([CHECK_ZLIB],
 		if test "$dir" != "/usr"; then
 			CPPFLAGS="$CPPFLAGS -I$zlibdir/include";
 			LDFLAGS="$LDFLAGS -L$zlibdir/lib";
- 	   		ac_configure_extra_args="$ac_configure_extra_args --with-zlib=$dir";
+ 	   		ac_configure_args="$ac_configure_args --with-zlib=$dir";
 	    fi
 		LIBS="$LIBS -lz";
 	    AC_DEFINE(HAVE_ZLIB)
@@ -82,7 +82,7 @@ AC_DEFUN([CHECK_ZLIB],
 	    AC_MSG_RESULT(no)
 	fi
     else
- 	   ac_configure_extra_args="$ac_configure_extra_args --with-zlib=no";
+ 	   ac_configure_args="$ac_configure_args --with-zlib=no";
 		AC_MSG_RESULT(no)
     fi
 ])
@@ -112,6 +112,6 @@ AC_DEFUN([CHECK_ZEROCONF],
 
 AC_DEFUN([SET_NO_SASL],
 [
-    ac_configure_args="$ac_configure_extra_args --with-sasl=no";
+    ac_configure_args="$ac_configure_args --with-sasl=no";
     AC_MSG_RESULT(Disabled SASL)
 ])
