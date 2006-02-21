@@ -9,6 +9,8 @@
 ] [ 
 .BI \-h\ server 
 ] [ 
+.BI \-U\ user 
+] [ 
 .BI \-w\ authlevel 
 ] {
 .B trip
@@ -76,6 +78,9 @@ the system, it can be run at any time, regardless of who has checked out
 the machine.  checkin is used to release a machine.  Only the user who
 checked out a machine may check it back in.
 
+checkin and checkout both use $USER to determine who is performing
+the command.  $USER can be overridden using the -U option.
+
 The -c option can be used to turn on checksums for fsdiff.  The only
 supported checksum SHA1.
 
@@ -98,10 +103,14 @@ specifies the radmind server, by default
 .BR _RADMIND_HOST .
 .TP 19
 .B \-l
-Prompt for remote user name.
+Prompt for remote user name.  The -U option disables this prompt.
 .TP 19
 .B \-t
 use tempfiles
+.TP 19
+.BI \-U\  user
+specifies the user.  By default, $USER 
+will be used.
 .TP 19
 .B \-V
 displays the version of 

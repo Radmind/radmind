@@ -90,7 +90,7 @@ cleanup() {
 dopreapply() {
     if [ -d ${PREAPPLY} ]; then
 	SCRIPTS=`find ${PREAPPLY} -perm +u+x \! -type d | sort`
-	if [ "${SCRIPTS}" ]; then
+	if [ ${SCRIPTS} ]; then
 	    for script in ${SCRIPTS}; do
 		${script} "$1"
 	    done
@@ -101,7 +101,7 @@ dopreapply() {
 dopostapply() {
     if [ -d ${POSTAPPLY} ]; then
 	SCRIPTS=`find ${POSTAPPLY} -perm +u+x \! -type d | sort`
-	if [ "${SCRIPTS}" ]; then
+	if [ ${SCRIPTS} ]; then
 	    for script in ${SCRIPTS}; do
 		${script} "$1"
 	    done
@@ -113,7 +113,6 @@ update() {
     opt="$1"
     kopt=
     apply=ask
-    can_edit=no
 
     checkedout
     if [ $? -eq 1 ]; then
@@ -177,12 +176,20 @@ update() {
 	cat ${FTMP}
 	infocmp >/dev/null 2>&1
 	if [ $? -eq 0 ]; then
-	    can_edit=yes
+	    Yn "Edit difference transcript (or apply)?"
+	    if [ $? -eq 1 ]; then
+		${EDITOR} ${FTMP}
+	    fi
+	    # shortcut apply prompt with a|A
+	    case $ans in
+	    a|A|apply)
+		apply=yes
+		;;
+	    esac
 	fi
     fi
     
-    if [ x"$opt" = x"interactive" -a -d "${PREAPPLY}" \
-		-a ! -z "`ls ${PREAPPLY} 2>/dev/null`" ]; then
+    if [ x"$opt" = x"interactive" -a -d "${PREAPPLY}" -a ! -z "`ls ${PREAPPLY} 2>/dev/null`" ]; then
 	Yn "Run pre-apply scripts on difference transcript?"
         if [ $? -eq 1 ]; then
             dopreapply ${FTMP}
@@ -190,38 +197,13 @@ update() {
     elif [ x"$opt" != x"interactive" ]; then
 	dopreapply ${FTMP}
     fi
-    if [ x"${opt}" = x"interactive" ]; then
-	while [ 1 ]; do
-	    if [ x"${can_edit}" = x"yes" ]; then
-		echo -n "(e)dit difference transcript, "
-	    fi
-	    echo -n "(a)pply or (c)ancel? "
-
-	    read ans
-	    case "${ans}" in
-	    a|A)
-		break
-		;;
-
-	    c|C)
-		echo
-		echo Update cancelled
-		cleanup
-		exit 0
-		;;
-
-	    e|E)
-		if [ x"${can_edit}" = x"yes" ]; then
-		    ${EDITOR} ${FTMP}
-		fi
-		;;
-
-	    *)
-		;;
-	    esac
-	done
+    if [ x"$opt" = x"interactive" -a $apply = ask ]; then
+	Yn "Apply difference transcript?"
+	if [ $? -ne 1 ]; then
+	    cleanup
+	    exit 0
+	fi
     fi
-		
     lapply ${PROGRESS} -w ${TLSLEVEL} -h ${SERVER} ${CHECKSUM} ${FTMP}
     case "$?" in
     0)	;;
@@ -240,8 +222,7 @@ update() {
 	return 1
 	;;
     esac
-    if [ x"$opt" = x"interactive" -a -d "${POSTAPPLY}" \
-		-a ! -z "`ls ${POSTAPPLY} 2>/dev/null`" ]; then
+    if [ x"$opt" = x"interactive" -a -d "${POSTAPPLY}" -a ! -z "`ls ${POSTAPPLY} 2>/dev/null`" ]; then
 	Yn "Run post-apply scripts on difference transcript?"
         if [ $? -eq 1 ]; then
             dopostapply ${FMTP}
@@ -260,7 +241,7 @@ if [ -f "${DEFAULTS}" ]; then
     . "${DEFAULTS}"
 fi
 
-while getopts %ch:lqtVw: opt; do
+while getopts %ch:lqtU:Vw: opt; do
     case $opt in
     %)  PROGRESS="-%"
 	FPROGRESS="-%"
@@ -279,6 +260,10 @@ while getopts %ch:lqtVw: opt; do
 	;;
 
     t)	TEMPFILES="TRUE"
+    	;;
+
+    U)	USER="$OPTARG"
+	USERNAME="$OPTARG"
     	;;
 
     V)	echo ${VERSION}
@@ -401,8 +386,10 @@ create)
     Yn "Store loadset ${TNAME}?"
     if [ $? -eq 1 ]; then
 	if [ -n "${USERAUTH}" ]; then
-	    echo -n "username: "
-	    read USERNAME
+	    if [ -z "${USERNAME}" ]; then
+		echo -n "username: "
+		read USERNAME
+	    fi
 	    USERNAME="-U ${USERNAME}"
 	fi
 	lcreate ${PROGRESS} -w ${TLSLEVEL} ${USERAUTH} ${USERNAME} \
