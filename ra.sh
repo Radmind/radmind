@@ -260,7 +260,7 @@ if [ -f "${DEFAULTS}" ]; then
     . "${DEFAULTS}"
 fi
 
-while getopts %ch:lqtVw: opt; do
+while getopts %ch:lqtU:Vw: opt; do
     case $opt in
     %)  PROGRESS="-%"
 	FPROGRESS="-%"
@@ -279,6 +279,10 @@ while getopts %ch:lqtVw: opt; do
 	;;
 
     t)	TEMPFILES="TRUE"
+    	;;
+
+    U)	USER="$OPTARG"
+	USERNAME="$OPTARG"
     	;;
 
     V)	echo ${VERSION}
@@ -401,8 +405,10 @@ create)
     Yn "Store loadset ${TNAME}?"
     if [ $? -eq 1 ]; then
 	if [ -n "${USERAUTH}" ]; then
-	    echo -n "username: "
-	    read USERNAME
+	    if [ -z "${USERNAME}" ]; then
+		echo -n "username: "
+		read USERNAME
+	    fi
 	    USERNAME="-U ${USERNAME}"
 	fi
 	lcreate ${PROGRESS} -w ${TLSLEVEL} ${USERAUTH} ${USERNAME} \
