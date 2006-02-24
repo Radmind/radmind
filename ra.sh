@@ -260,7 +260,7 @@ if [ -f "${DEFAULTS}" ]; then
     . "${DEFAULTS}"
 fi
 
-while getopts %ch:lqtU:Vw: opt; do
+while getopts %ch:lqr:tU:Vw: opt; do
     case $opt in
     %)  PROGRESS="-%"
 	FPROGRESS="-%"
@@ -276,6 +276,9 @@ while getopts %ch:lqtU:Vw: opt; do
     	;;
 
     l)  USERAUTH="-l"
+	;;
+
+    r)  FSDIFFROOT="$OPTARG"
 	;;
 
     t)	TEMPFILES="TRUE"
