@@ -9,6 +9,8 @@
 ] [ 
 .BI \-h\ server 
 ] [ 
+.BI \-r\ path 
+] [ 
 .BI \-U\ user 
 ] [ 
 .BI \-w\ authlevel 
@@ -82,7 +84,7 @@ checkin and checkout both use $USER to determine who is performing
 the command.  $USER can be overridden using the -U option.
 
 The -c option can be used to turn on checksums for fsdiff.  The only
-supported checksum SHA1.
+supported checksum is SHA1.
 
 .B rash 
 supports running arbitrary scripts before and after lapply. 
@@ -104,6 +106,10 @@ specifies the radmind server, by default
 .TP 19
 .B \-l
 Prompt for remote user name.  The -U option disables this prompt.
+.TP 19
+.BI \-r\  path
+specifies root path from which fsdiff will start its scan of the
+filesystem
 .TP 19
 .B \-t
 use tempfiles
