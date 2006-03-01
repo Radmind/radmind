@@ -372,6 +372,15 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	return( -1 );
     }
 
+    /*
+     * endian handling: swap bytes to architecture
+     * native from AppleSingle big-endian.
+     *
+     * This doesn't affect the checksum, since we
+     * already summed the header entries above.
+     */
+    as_entry_hostswap( &ae_ents[ AS_RFE ] );
+
     if ( ae_ents[ AS_RFE ].ae_length > 0 ) {
 	/* make rsrc fork name */
 	if ( snprintf( rsrc_path, MAXPATHLEN, "%s%s", temppath,
@@ -388,7 +397,8 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	    goto error2;
 	};  
 
-	for ( rsize = ae_ents[ AS_RFE ].ae_length; rsize > 0; rsize -= rc ) {
+	for ( rsize = ae_ents[ AS_RFE ].ae_length;
+					rsize > 0; rsize -= rc ) {
 	    tv = timeout;
 	    if (( rc = snet_read( sn, buf, ( int )MIN( sizeof( buf ), rsize ),
 		    &tv )) <= 0 ) {

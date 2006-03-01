@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -99,6 +100,7 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
     char			buf[ 8192 ], rsrc_path[ MAXPATHLEN ];
     off_t			size = 0;
     extern struct as_header	as_header;
+    struct as_entry		as_entries_endian[ 3 ];
     unsigned int		md_len;
     extern EVP_MD		*md;
     EVP_MD_CTX          	mdctx;
@@ -110,8 +112,15 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
     EVP_DigestUpdate( &mdctx, (char *)&as_header, AS_HEADERLEN );
     size += (size_t)AS_HEADERLEN;
 
+    /* endian handling, sum big-endian header entries */
+    memcpy( &as_entries_endian, &afinfo->as_ents,
+		( 3 * sizeof( struct as_entry )));
+    as_entry_netswap( &as_entries_endian[ AS_FIE ] );
+    as_entry_netswap( &as_entries_endian[ AS_RFE ] );
+    as_entry_netswap( &as_entries_endian[ AS_DFE ] );
+
     /* checksum header entries */
-    EVP_DigestUpdate( &mdctx, (char *)&afinfo->as_ents,
+    EVP_DigestUpdate( &mdctx, (char *)&as_entries_endian,
 		(unsigned int)( 3 * sizeof( struct as_entry )));
     size += sizeof( 3 * sizeof( struct as_entry ));
 
