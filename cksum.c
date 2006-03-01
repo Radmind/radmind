@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -96,9 +97,10 @@ do_cksum( char *path, char *cksum_b64 )
 do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
 {
     int		    	    	dfd, rfd, rc;
-    char			buf[ 8192 ], rsrc_path[ MAXPATHLEN ];
+    char			buf[ 8192 ];
     off_t			size = 0;
     extern struct as_header	as_header;
+    struct as_entry		as_entries_endian[ 3 ];
     unsigned int		md_len;
     extern EVP_MD		*md;
     EVP_MD_CTX          	mdctx;
@@ -110,8 +112,15 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
     EVP_DigestUpdate( &mdctx, (char *)&as_header, AS_HEADERLEN );
     size += (size_t)AS_HEADERLEN;
 
+    /* endian handling, sum big-endian header entries */
+    memcpy( &as_entries_endian, &afinfo->as_ents,
+		( 3 * sizeof( struct as_entry )));
+    as_entry_netswap( &as_entries_endian[ AS_FIE ] );
+    as_entry_netswap( &as_entries_endian[ AS_RFE ] );
+    as_entry_netswap( &as_entries_endian[ AS_DFE ] );
+
     /* checksum header entries */
-    EVP_DigestUpdate( &mdctx, (char *)&afinfo->as_ents,
+    EVP_DigestUpdate( &mdctx, (char *)&as_entries_endian,
 		(unsigned int)( 3 * sizeof( struct as_entry )));
     size += sizeof( 3 * sizeof( struct as_entry ));
 
@@ -121,13 +130,7 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
 
     /* checksum rsrc fork data */
     if ( afinfo->as_ents[ AS_RFE ].ae_length > 0 ) {
-        if ( snprintf( rsrc_path, MAXPATHLEN, "%s%s",
-		path, _PATH_RSRCFORKSPEC ) >= MAXPATHLEN ) {
-            errno = ENAMETOOLONG;
-            return( -1 );
-        }
-
-	if (( rfd = open( rsrc_path, O_RDONLY )) < 0 ) {
+	if (( rfd = open( afinfo->rsrc_path, O_RDONLY )) < 0 ) {
 	    return( -1 );
 	}
 	while (( rc = read( rfd, buf, sizeof( buf ))) > 0 ) {

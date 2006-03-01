@@ -257,12 +257,13 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 {
     int			rc = 0, dfd = 0, rfd = 0;
     off_t		size;
-    char		buf[ 8192 ], rsrc_path[ MAXPATHLEN ];
+    char		buf[ 8192 ];
     struct timeval   	tv;
     unsigned int      	md_len;
+    unsigned int	rsrc_len;
     extern EVP_MD      	*md;
     EVP_MD_CTX         	mdctx;
-    unsigned char 	     	md_value[ EVP_MAX_MD_SIZE ];
+    unsigned char 	md_value[ EVP_MAX_MD_SIZE ];
     char		cksum_b64[ EVP_MAX_MD_SIZE ];
 
     /* Check for checksum in transcript */
@@ -287,19 +288,20 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     }
     size = afinfo->as_size;
 
+     /* endian handling, swap header entries if necessary */
+     rsrc_len = afinfo->as_ents[ AS_RFE ].ae_length;
+     as_entry_netswap( &afinfo->as_ents[ AS_FIE ] );
+     as_entry_netswap( &afinfo->as_ents[ AS_RFE ] );
+     as_entry_netswap( &afinfo->as_ents[ AS_DFE ] );
+
     /* open data and rsrc fork */
     if (( dfd = open( path, O_RDONLY )) < 0 ) {
 	perror( path );
 	exit( 2 );
     }
-    if ( afinfo->as_ents[ AS_RFE ].ae_length > 0 ) {
-        if ( snprintf( rsrc_path, MAXPATHLEN, "%s%s",
-		path, _PATH_RSRCFORKSPEC ) >= MAXPATHLEN ) {
-            errno = ENAMETOOLONG;
-            return( -1 );
-        }
-	if (( rfd = open( rsrc_path, O_RDONLY )) < 0 ) {
-	    perror( rsrc_path );
+    if ( rsrc_len > 0 ) {
+	if (( rfd = open( afinfo->rsrc_path, O_RDONLY )) < 0 ) {
+	    perror( afinfo->rsrc_path );
 	    close( dfd );
 	    exit( 2 );
 	}
@@ -376,7 +378,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     }
 
     /* write rsrc fork data to server */
-    if ( afinfo->as_ents[ AS_RFE ].ae_length > 0 ) {
+    if ( rsrc_len > 0 ) {
 	while (( rc = read( rfd, buf, sizeof( buf ))) > 0 ) {
 	    tv = timeout;
 	    if ( snet_write( sn, buf, rc, &tv ) != rc ) {
@@ -449,7 +451,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     }
     if ( afinfo->as_ents[ AS_RFE ].ae_length > 0 ) {
 	if ( close( rfd ) < 0 ) {
-	    perror( rsrc_path );
+	    perror( afinfo->rsrc_path );
 	    exit( 2 );
 	}
     }
@@ -530,6 +532,11 @@ n_stor_applefile( SNET *sn, char *pathdesc, char *path )
     }
     size -= AS_HEADERLEN;
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
+
+    /* endian handling, convert to valid AppleSingle format, if necessary */
+    as_entry_netswap( &afinfo.as_ents[ AS_FIE ] );
+    as_entry_netswap( &afinfo.as_ents[ AS_RFE ] );
+    as_entry_netswap( &afinfo.as_ents[ AS_DFE ] );
 
     /* write header entries to server */
     tv = timeout;

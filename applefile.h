@@ -25,13 +25,24 @@
 #include <inttypes.h>
 
 #define AS_HEADERLEN	26
-#define AS_MAGIC	0x00051600
-#define AS_VERSION	0x00020000
-#define AS_NENTRIES	3
 
-#define ASEID_DFORK	1
-#define ASEID_RFORK	2
-#define ASEID_FINFO	9
+#ifdef __BIG_ENDIAN__
+
+#define AS_MAGIC       0x00051600
+#define AS_VERSION     0x00020000
+#define AS_NENTRIES    0x0003
+
+#else /* __BIG_ENDIAN__ */
+
+#define AS_MAGIC       0x00160500
+#define AS_VERSION     0x00000200
+#define AS_NENTRIES    0x0300
+
+#endif /* __BIG_ENDIAN__ */
+
+#define ASEID_DFORK    1
+#define ASEID_RFORK    2
+#define ASEID_FINFO    9
 
 #define AS_FIE		0	/* for array of ae_entry structs */
 #define AS_RFE		1
@@ -63,10 +74,15 @@ struct attr_info {
 };
 
 struct applefileinfo {
+#ifdef __APPLE__
+    char                rsrc_path[ MAXPATHLEN ];
+#endif /* __APPLE__ */
     struct attr_info	ai;		// finder info
     struct as_entry	as_ents[ 3 ];	// Apple Single entries
 					// For Finder info, rcrs and data forks
     off_t		as_size;	// Total apple single file size 
 };
 
+void as_entry_netswap( struct as_entry *e );
+void as_entry_hostswap( struct as_entry *e );
 off_t ckapplefile( char *applefile, int afd );

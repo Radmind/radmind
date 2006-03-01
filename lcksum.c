@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
+#include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -61,6 +62,7 @@ ckapplefile( char *applefile, int afd )
 	perror( "read" );
 	exit( 2 );
     }
+
     if ( rr != AS_HEADERLEN ||
 		memcmp( &as_header, &header, AS_HEADERLEN ) != 0 ) {
 	goto invalid_applefile;
@@ -78,6 +80,10 @@ ckapplefile( char *applefile, int afd )
     }
     size += rr;
 
+    as_entry_netswap( &as_ents[ AS_FIE ] );
+    as_entry_netswap( &as_ents[ AS_RFE ] );
+    as_entry_netswap( &as_ents[ AS_DFE ] );
+
     /* check entry IDs */
     if ( as_ents[ AS_FIE ].ae_id != ASEID_FINFO ||
 	    as_ents[ AS_RFE ].ae_id != ASEID_RFORK ||
@@ -92,12 +98,14 @@ ckapplefile( char *applefile, int afd )
 	return( -1 );
     }
     if ( as_ents[ AS_RFE ].ae_offset != 
-		( as_ents[ AS_FIE ].ae_offset + as_ents[ AS_FIE ].ae_length )) {
+	    	( as_ents[ AS_FIE ].ae_offset +
+		as_ents[ AS_FIE ].ae_length )) {
 	fprintf( stderr, "%s: incorrect rsrc fork offset\n", applefile );
 	return( -1 );
     }
     if ( as_ents[ AS_DFE ].ae_offset !=
-		( as_ents[ AS_RFE ].ae_offset + as_ents[ AS_RFE ].ae_length )) {
+		( as_ents[ AS_RFE ].ae_offset +
+		as_ents[ AS_RFE ].ae_length )) {
 	fprintf( stderr, "%s: incorrect data fork offset\n", applefile );
 	return( -1 );
     }
