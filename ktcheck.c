@@ -458,7 +458,7 @@ check( SNET *sn, char *type, char *file )
 	    /* Local file is missing */
 	    if ( update ) {
 		if ( !quiet ) { printf( "%s:", path ); fflush( stdout ); }
-		if ( retr( sn, pathdesc, path, (char *)&tempfile,
+		if ( retr( sn, pathdesc, path, (char *)&tempfile, 0666, 
 			strtoofft( targv[ 6 ], NULL, 10 ), targv[ 7 ] ) != 0 ) {
 		    return( 2 );
 		}
@@ -506,7 +506,7 @@ check( SNET *sn, char *type, char *file )
 		perror( path );
 		return( 2 );
 	    }
-	    if ( retr( sn, pathdesc, path, (char *)&tempfile,
+	    if ( retr( sn, pathdesc, path, (char *)&tempfile, 0666, 
 		    strtoofft( targv[ 6 ], NULL, 10 ), targv[ 7 ] ) != 0 ) {
 		return( 2 );
 	    }

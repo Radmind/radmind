@@ -13,9 +13,9 @@ extern int zlib_level;
 #endif /* HAVE_ZLIB */
 
 int retr( SNET *sn, char *pathdesc, char *path, char *temppath,
-    off_t transize, char *trancksum );
+    mode_t tempmode, off_t transize, char *trancksum );
 int retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
-    off_t transize, char *trancksum );
+    mode_t tempmode, off_t transize, char *trancksum );
 
 int n_stor_file( SNET *sn, char *pathdesc, char *path );
 int stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,

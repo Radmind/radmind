@@ -60,8 +60,8 @@ extern SSL_CTX  	*ctx;
  */
 
     int 
-retr( SNET *sn, char *pathdesc, char *path, char *temppath, off_t transize,
-    char *trancksum )
+retr( SNET *sn, char *pathdesc, char *path, char *temppath, mode_t tempmode,
+    off_t transize, char *trancksum )
 {
     struct timeval	tv;
     char		*line;
@@ -129,7 +129,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, off_t transize,
 	return( -1 );
     }
     /* Open file */
-    if (( fd = open( temppath, O_WRONLY | O_CREAT, 0644 )) < 0 ) {
+    if (( fd = open( temppath, O_WRONLY | O_CREAT, tempmode )) < 0 ) {
 	perror( temppath );
 	return( -1 );
     }
@@ -213,7 +213,7 @@ error1:
 
     int
 retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
-    off_t transize, char *trancksum )
+    mode_t tempmode, off_t transize, char *trancksum )
 {
     int				dfd, rfd;
     unsigned int		md_len;
@@ -367,7 +367,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     }
 
     /* data fork must exist to write to rsrc fork */        
-    if (( dfd = open( temppath, O_CREAT | O_EXCL | O_WRONLY, 0644 )) < 0 ) {
+    if (( dfd = open( temppath, O_CREAT | O_EXCL | O_WRONLY, tempmode )) < 0 ) {
 	perror( temppath );
 	return( -1 );
     }
