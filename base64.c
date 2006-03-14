@@ -395,9 +395,9 @@ base64_e( unsigned char *d, int dlen, char *e )
 	e[ 3 ] = '=';
 	e[ 4 ] = '\0';
 	return;
-    
+
     default :
-	e[ 4 ] = '\0';
+	e[ 0 ] = '\0';
 	return;
     }
 }
