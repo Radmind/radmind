@@ -16,13 +16,16 @@
 ]
 .BI \-c\ checksum
 .I transcript 
+.I ...
 .sp
 .SH DESCRIPTION
 .B lcksum
 verifies and updates the checksums and file sizes of the 
-appliable transcript 
+transcript 
 .I transcript 
-line-by-line.
+line-by-line. If more than one transcript is passed to
+.B lcksum,
+all transcripts will be verified and updated. 
 .B lcksum
 compares the checksum and
 file size listed in

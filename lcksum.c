@@ -30,13 +30,18 @@
 
 void            (*logger)( char * ) = NULL;
 
-int		linenum = 0;
 int		cksum = 0;
 int		verbose = 1;
+int		amode = R_OK | W_OK;
 int		case_sensitive = 1;
+int		checkall = 0;
+int		checkapplefile = 0;
+int		updatetran = 1;
+char		*prefix = NULL;
+char		*radmind_path = _RADMIND_PATH;
 const EVP_MD	*md;
-extern int	showprogress;
-extern off_t	lsize;
+extern int	showprogress, progress;
+extern off_t	lsize, total;
 extern char	*version, *checksumlist;
 char            prepath[ MAXPATHLEN ] = {0};
 
@@ -135,21 +140,19 @@ cleanup( int clean, char *path )
     }
 }
 
-    int
-main( int argc, char **argv )
+    static int
+do_lcksum( char *tpath )
 {
-    int			fd, ufd, c, err = 0, updatetran = 1, updateline = 0;
-    int			ucount = 0, len, tac = 0, amode = R_OK | W_OK;
+    int			fd, ufd, updateline = 0;
+    int			ucount = 0, len, tac = 0;
     int			prefixfound = 0;
-    int			checkall = 0;
-    int			remove = 0, checkapplefile = 0;
+    int			remove = 0;
+    int			linenum = 0;
     int			exitval = 0;
     ssize_t		bytes = 0;
-    extern int          optind;
-    char		*tpath = NULL, *line = NULL;
-    char		*prefix = NULL, *d_path = NULL;
+    char		*line = NULL;
+    char		*d_path = NULL;
     char                **targv;
-    char		*radmind_path = _RADMIND_PATH;
     char		cwd[ MAXPATHLEN ];
     char		temp[ MAXPATHLEN ];
     char		file_root[ MAXPATHLEN ];
@@ -163,93 +166,11 @@ main( int argc, char **argv )
     struct stat		st;
     off_t		cksumsize;
 
-    while ( ( c = getopt ( argc, argv, "%Aac:D:iInP:qV" ) ) != EOF ) {
-	switch( c ) {
-	case 'a':
-	    checkall = 1;
-	    break;
-
-	case 'A':
-	    checkapplefile = 1;
-	    break;
-
-	case '%':
-	    showprogress = 1;
-	    break;
-
-	case 'c':
-	    OpenSSL_add_all_digests();
-	    md = EVP_get_digestbyname( optarg );
-	    if ( !md ) {
-		fprintf( stderr, "%s: unsupported checksum\n", optarg );
-		exit( 2 );
-	    }
-	    cksum = 1;  
-	    break;
-
-	case 'i':
-	    setvbuf( stdout, ( char * )NULL, _IOLBF, 0 );
-	    break;
-
-	case 'I':
-	    case_sensitive = 0;
-	    break;
-
-	case 'D':
-	    radmind_path = optarg;
-	    break;
-
-	case 'P':
-	    prefix = optarg;
-	    break;
-
-	case 'n':
-	    amode = R_OK;
-	    updatetran = 0;
-	    break;
-
-	case 'q':
-	    verbose = 0;
-	    break;
-
-	case 'V':
-	    printf( "%s\n", version );
-	    printf( "%s\n", checksumlist );
-	    exit( 0 );
-
-	case '?':
-	    err++;
-	    break;
-	    
-	default:
-	    err++;
-	    break;
-	}
-    }
-
-    if ( cksum == 0 ) {
-	err++;
-    }
-
-    if ( checkall && updatetran ) {
-	err++;
-    }
-
-    tpath = argv[ optind ];
-
-    if ( err || ( argc - optind != 1 ) ) {
-	fprintf( stderr, "usage: %s [ -%%AiIqV ] ", argv[ 0 ] );
-	fprintf( stderr, "[ -D path ] " );
-	fprintf( stderr, "[ -n [ -a ] ] " );
-	fprintf( stderr, "[ -P prefix ] " );
-	fprintf( stderr, "-c checksum transcript\n" );
-	exit( 2 );
-    }
-
     if ( getcwd( cwd, MAXPATHLEN ) == NULL ) {
 	perror( "getcwd" );
 	exit( 2 );
     }
+
     if ( *tpath == '/' ) {
 	if ( strlen( tpath ) >= MAXPATHLEN ) {
 	    fprintf( stderr, "%s: path too long\n", tpath );
@@ -276,12 +197,12 @@ main( int argc, char **argv )
 	return( 2 );
     }
 
-    if ( access( tpath, amode ) !=0 ) {
+    if ( access( tpath, amode ) != 0 ) {
 	perror( tpath );
 	exit( 2 );
     }
 
-    if ( ( f = fopen( tpath, "r" ) ) == NULL ) {
+    if (( f = fopen( tpath, "r" )) == NULL ) {
 	perror( tpath );
 	exit( 2 );
     }
@@ -299,12 +220,12 @@ main( int argc, char **argv )
 	}
 
 	/* Open file */
-	if ( ( ufd = open( upath, O_WRONLY | O_CREAT | O_EXCL,
-		st.st_mode ) ) < 0 ) {
+	if (( ufd = open( upath, O_WRONLY | O_CREAT | O_EXCL,
+		st.st_mode )) < 0 ) {
 	    perror( upath );
 	    exit( 2 );
 	}
-	if ( ( ufs = fdopen( ufd, "w" ) ) == NULL ) {
+	if (( ufs = fdopen( ufd, "w" )) == NULL ) {
 	    perror( upath );
 	    cleanup( updatetran, upath );
 	    exit( 2 );
@@ -314,7 +235,13 @@ main( int argc, char **argv )
     if ( showprogress ) {
 	/* calculate the loadset size */
 	lsize = lcksum_loadsetsize( f, prefix );
+	
+	/* reset progress variables */
+	total = 0;
+	progress = -1;
     }
+
+    memset( prepath, 0, sizeof( prepath ));
 
     while ( fgets( tline, MAXPATHLEN, f ) != NULL ) {
 	linenum++;
@@ -552,22 +479,121 @@ done:
 		exit( 2 );
 	    }
 	    if ( verbose ) printf( "%s: updated\n", tran_name );
-	    exit( 1 );
+	    return( 1 );
 	} else {
 	    if ( unlink( upath ) != 0 ) {
 		perror( upath );
 		exit( 2 );
 	    }
 	    if ( verbose ) printf( "%s: verified\n", tran_name );
-	    exit( 0 );
+	    return( 0 );
 	}
     } else {
 	if ( exitval == 0 ) {
 	    if ( verbose ) printf( "%s: verified\n", tran_name );
-	    exit( 0 );
+	    return( 0 );
 	} else {
 	    if ( verbose ) printf( "%s: incorrect\n", tran_name );
-	    exit( 1 );
+	    return( 1 );
 	}
     }
+}
+
+    int
+main( int argc, char **argv )
+{
+    int			c, i, err = 0;
+    extern int          optind;
+    char		*tpath = NULL;
+
+    while (( c = getopt( argc, argv, "%Aac:D:iInP:qV" )) != EOF ) {
+	switch( c ) {
+	case 'a':
+	    checkall = 1;
+	    break;
+
+	case 'A':
+	    checkapplefile = 1;
+	    break;
+
+	case '%':
+	    showprogress = 1;
+	    break;
+
+	case 'c':
+	    OpenSSL_add_all_digests();
+	    md = EVP_get_digestbyname( optarg );
+	    if ( !md ) {
+		fprintf( stderr, "%s: unsupported checksum\n", optarg );
+		exit( 2 );
+	    }
+	    cksum = 1;  
+	    break;
+
+	case 'i':
+	    setvbuf( stdout, ( char * )NULL, _IOLBF, 0 );
+	    break;
+
+	case 'I':
+	    case_sensitive = 0;
+	    break;
+
+	case 'D':
+	    radmind_path = optarg;
+	    break;
+
+	case 'P':
+	    prefix = optarg;
+	    break;
+
+	case 'n':
+	    amode = R_OK;
+	    updatetran = 0;
+	    break;
+
+	case 'q':
+	    verbose = 0;
+	    break;
+
+	case 'V':
+	    printf( "%s\n", version );
+	    printf( "%s\n", checksumlist );
+	    exit( 0 );
+
+	case '?':
+	    err++;
+	    break;
+	    
+	default:
+	    err++;
+	    break;
+	}
+    }
+
+    if ( cksum == 0 ) {
+	err++;
+    }
+
+    if ( checkall && updatetran ) {
+	err++;
+    }
+
+    if ( err || (( argc - optind ) == 0 )) {
+	fprintf( stderr, "usage: %s [ -%%AiIqV ] ", argv[ 0 ] );
+	fprintf( stderr, "[ -D path ] " );
+	fprintf( stderr, "[ -n [ -a ] ] " );
+	fprintf( stderr, "[ -P prefix ] " );
+	fprintf( stderr, "-c checksum transcript\n" );
+	exit( 2 );
+    }
+
+    for ( i = optind; i < argc; i++ ) {
+	tpath = argv[ i ];
+
+	if ( do_lcksum( tpath ) == 2 ) {
+	    exit( 2 );
+	}
+    }
+
+    return( 0 );
 }
