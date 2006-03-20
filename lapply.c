@@ -158,7 +158,7 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
 	    }
 	}
 	if ( *targv[ 0 ] == 'a' ) {
-	    switch ( retr_applefile( sn, pathdesc, path, temppath,
+	    switch ( retr_applefile( sn, pathdesc, path, temppath, 0600,
 		strtoofft( targv[ 6 ], NULL, 10 ), cksum_b64 )) {
 	    case -1:
 		/* Network problem */
@@ -170,7 +170,7 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
 		break;
 	    }
 	} else {
-	    switch ( retr( sn, pathdesc, path, (char *)&temppath,
+	    switch ( retr( sn, pathdesc, path, (char *)&temppath, 0600,
 		strtoofft( targv[ 6 ], NULL, 10 ), cksum_b64 ) != 0 ) {
 	    case -1:
 		/* Network problem */
@@ -254,14 +254,6 @@ main( int argc, char **argv )
     int			force = 0;
     int			use_randfile = 0;
 	char        **capa = NULL; /* capabilities */
-
-    /*
-     * retr() uses a default mode of 0644 for downloaded files.  Since
-     * some of them might be sensitive, we change the umask here
-     * so only the user can see the temp files before they are set
-     * with the correct permissions.  -u can change this umask.
-     */
-    umask( S_IRWXG | S_IRWXO );
 
     while (( c = getopt ( argc, argv, "%c:Fh:iInp:qru:Vvw:x:y:z:Z:" )) != EOF ) {
 	switch( c ) {

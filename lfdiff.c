@@ -153,14 +153,6 @@ main( int argc, char **argv, char **envp )
     int                 use_randfile = 0;
     struct transcript	*tran;
 
-    /*
-     * retr() uses a default mode of 0644 for downloaded files.  Since
-     * some of them might be sensitive, we change the umask here
-     * so only the user can see the temp files before they are set
-     * with the correct permissions.  -u can change this umask.
-     */
-    umask( S_IRWXG | S_IRWXO );
-
     /* create argv to pass to diff */
     if (( diffargv = (char **)malloc( 1  * sizeof( char * ))) == NULL ) {
 	perror( "malloc" );
@@ -406,7 +398,7 @@ main( int argc, char **argv, char **envp )
 	}
     }
 
-    if ( retr( sn, pathdesc, path, (char *)&temppath, -1, "-" ) != 0 ) {
+    if ( retr( sn, pathdesc, path, (char *)&temppath, 0600, -1, "-" ) != 0 ) {
 	exit( 2 );
     }
 
