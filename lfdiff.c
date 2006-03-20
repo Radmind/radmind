@@ -415,7 +415,7 @@ main( int argc, char **argv, char **envp )
 	exit( 2 );
     }
 #ifdef HAVE_ZLIB
-    if( verbose && zlib_level > 0 ) print_stats(sn);
+    if ( verbose && zlib_level > 0 ) print_stats( sn );
 #endif /* HAVE_ZLIB */
 
     if (( fd = open( temppath, O_RDONLY )) < 0 ) {

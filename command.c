@@ -165,9 +165,7 @@ f_quit( SNET *sn, int ac, char **av )
 {
     snet_writef( sn, "%d QUIT OK, closing connection\r\n", 201 );
 #ifdef HAVE_ZLIB
-    if ( debug && max_zlib_level > 0) {
-	print_stats( sn );
-    }
+    if ( debug && max_zlib_level > 0 ) print_stats( sn );
 #endif /* HAVE_ZLIB */
     exit( 0 );
 }
