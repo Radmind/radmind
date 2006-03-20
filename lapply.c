@@ -728,7 +728,7 @@ filechecklist:
 	    exit( 2 );
 	}
 #ifdef HAVE_ZLIB
-	if( verbose && zlib_level < 0 ) print_stats(sn);
+	if ( verbose && zlib_level > 0 ) print_stats( sn );
 #endif /* HAVE_ZLIB */
     }
 
