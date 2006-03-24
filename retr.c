@@ -514,7 +514,7 @@ error1:
 
     int
 retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
-    off_t transize, char *trancksum )
+    mode_t tempmode, off_t transize, char *trancksum )
 {
     errno = EINVAL;
     return( -1 );
