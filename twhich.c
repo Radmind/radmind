@@ -30,75 +30,14 @@ int		case_sensitive = 1;
  *      >1     	An error occurred. 
  */
 
-    int
-main( int argc, char **argv )
+    static int
+twhich( char *pattern, int displayall )
 {
-
-    int			c, err = 0, defaultkfile = 1, cmp = 0;
-    int			server = 0, displayall = 0, match = 0;
-    extern char		*version;
-    char		*kfile = _RADMIND_COMMANDFILE;
-    char		*pattern;
     struct node		*node;
     struct transcript	*tran;
     extern struct transcript	*tran_head;
     extern struct list	*special_list;
-
-    while (( c = getopt( argc, argv, "aIK:sV" )) != EOF ) {
-	switch( c ) {
-	case 'a':
-	    displayall = 1;
-	    break;
-
-	case 'K':
-	    defaultkfile = 0;
-	    kfile = optarg;
-	    break;
-
-	case 'I':
-	    case_sensitive = 0;
-	    break;
-
-	case 's':
-	    server = 1;
-	    break;
-	
-	case 'V':
-	    printf( "%s\n", version );
-	    exit( 0 );
-
-	default:
-	    err++;
-	    break;
-	}
-    }
-
-    if (( argc - optind ) != 1 ) {
-	err++;
-    }
-
-    pattern = argv[ argc - 1 ];
-
-    if ( server && defaultkfile ) {
-	err++;
-    }
-
-    if ( err ) {
-        fprintf( stderr, "Usage: %s [ -aIV ] [ -K command file ] file\n",
-	    argv[ 0 ] );
-        fprintf( stderr, "Usage: %s -s -K command [ -aIV ] file\n",
-	    argv[ 0 ] );
-        exit( 2 );
-    }
-
-    /* initialize the transcripts */
-    edit_path = APPLICABLE;
-    if ( server ) {
-	transcript_init( kfile, K_SERVER );
-    } else {
-	transcript_init( kfile, K_CLIENT );
-    }
-    outtran = stdout;
+    int			cmp = 0, match = 0;
 
     /* check special list */
     if ( special_list->l_count > 0 ) {
@@ -174,8 +113,94 @@ main( int argc, char **argv )
 
 done:
     if ( match ) {
-	exit( 0 );
+	return( 0 );
     } else {
-	exit( 1 );
+	return( 1 );
     }
+}
+
+    int
+main( int argc, char **argv )
+{
+    int			c, err = 0, defaultkfile = 1, rc = 0;
+    int			server = 0, displayall = 0, recursive = 0;
+    extern char		*version;
+    char		*kfile = _RADMIND_COMMANDFILE;
+    char		*pattern, *p;
+
+    while (( c = getopt( argc, argv, "aIK:rsV" )) != EOF ) {
+	switch( c ) {
+	case 'a':
+	    displayall = 1;
+	    break;
+
+	case 'K':
+	    defaultkfile = 0;
+	    kfile = optarg;
+	    break;
+
+	case 'I':
+	    case_sensitive = 0;
+	    break;
+
+	case 'r':		/* recursively twhich all path elements */
+	    recursive = 1;
+	    break;
+
+	case 's':
+	    server = 1;
+	    break;
+	
+	case 'V':
+	    printf( "%s\n", version );
+	    exit( 0 );
+
+	default:
+	    err++;
+	    break;
+	}
+    }
+
+    if (( argc - optind ) != 1 ) {
+	err++;
+    }
+
+    pattern = argv[ argc - 1 ];
+
+    if ( server && defaultkfile ) {
+	err++;
+    }
+
+    if ( err ) {
+        fprintf( stderr, "Usage: %s [ -aIV ] [ -K command file ] file\n",
+	    argv[ 0 ] );
+        fprintf( stderr, "Usage: %s -s -K command [ -aIV ] file\n",
+	    argv[ 0 ] );
+        exit( 2 );
+    }
+
+    /* initialize the transcripts */
+    edit_path = APPLICABLE;
+    if ( server ) {
+	transcript_init( kfile, K_SERVER );
+    } else {
+	transcript_init( kfile, K_CLIENT );
+    }
+    outtran = stdout;
+
+    if ( recursive ) {
+	for ( p = pattern; *p == '/'; p++ )
+	    ;
+	for ( p = strchr( p, '/' ); p != NULL; p = strchr( p, '/' )) {
+	    *p = '\0';
+	    if ( twhich( pattern, displayall ) != 0 ) {
+		printf( "# %s: not found\n", pattern );
+	    }
+
+	    *p++ = '/';
+	}
+    }
+    rc = twhich( pattern, displayall );
+
+    exit( rc );
 }

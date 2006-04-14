@@ -5,7 +5,7 @@
 .SH SYNOPSIS
 .B twhich 
 [
-.RI \-aIV
+.RI \-aIrV
 ] [
 .BI \-K\  command
 ]
@@ -33,7 +33,7 @@ listed, the
 .B special.T
 transcript will have the absolute highest precedence.
 .I file
-must be the full, encoded path (See
+must be the full decoded path (See
 .BR fsdiff (1)),
 as listed in the transcript. 
 
@@ -46,6 +46,14 @@ number and matching line, and then exits.  With the -a option,
 .B twhich
 will continue to search all transcripts listed in the command file for
 .IR file .
+With the -r option,
+.B twhich
+will search for each path component, progressively building to
+.IR file ,
+behaving as above when matches are found. If a path element in
+.I file
+is missing, twhich will print "not found" and continue looking for
+the next element. 
 
 The -s option is used to run
 .B twhich
@@ -72,6 +80,10 @@ file, by default
 indicates that
 .B twhich
 is running on a radmind server.
+.TP 19
+.B \-r
+searches for each path element in
+.IR file .
 .TP 19
 .B \-V
 displays the version number of
