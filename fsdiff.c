@@ -35,7 +35,7 @@ int		case_sensitive = 1;
 const EVP_MD    *md;
 
 static struct fs_list *fs_insert( struct fs_list **, struct fs_list *,
-	char *, int (*)( char *, char * ));
+	char *, int (*)( const char *, const char * ));
 
 struct fs_list {
     struct fs_list		*fl_next;
@@ -47,7 +47,7 @@ struct fs_list {
 
     static struct fs_list *
 fs_insert( struct fs_list **head, struct fs_list *last,
-	char *name, int (*cmp)( char *, char * ))
+	char *name, int (*cmp)( const char *, const char * ))
 {
     struct fs_list	**current, *new;
 
@@ -89,7 +89,7 @@ fs_walk( char *path, struct stat *st, char *type, struct applefileinfo *afinfo,
     float		chunk, f = start;
     char		temp[ MAXPATHLEN ];
     struct transcript	*tran;
-    int			(*cmp)( char *, char * );
+    int			(*cmp)( const char *, const char * );
 
     if (( finish > 0 ) && ( start != lastpercent )) {
 	lastpercent = start;
