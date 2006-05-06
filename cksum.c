@@ -55,7 +55,7 @@ do_fcksum( int fd, char *cksum_b64 )
     }
 
     EVP_DigestFinal( &mdctx, md_value, &md_len );
-    base64_e( ( char*)&md_value, md_len, cksum_b64 );
+    base64_e( md_value, md_len, cksum_b64 );
 
     return( size );
 }

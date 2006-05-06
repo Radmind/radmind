@@ -238,7 +238,7 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
     /* cksum data sent */
     if ( cksum ) {
 	EVP_DigestFinal( &mdctx, md_value, &md_len );
-	base64_e( ( char*)&md_value, md_len, cksum_b64 );
+	base64_e( md_value, md_len, cksum_b64 );
         if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
 	    fprintf( stderr,
 		"line %d: checksum listed in transcript wrong\n", linenum );
