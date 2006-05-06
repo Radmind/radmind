@@ -112,7 +112,7 @@ fs_walk( char *path, struct stat *st, char *type, struct applefileinfo *afinfo,
 		struct applefileinfo	afinfo0;
 
 		strcpy( temp, tran->t_pinfo.pi_name );
-		switch ( radstat( temp, &st0, &type0, &afinfo0 ) < 0 ) {
+		switch ( radstat( temp, &st0, &type0, &afinfo0 )) {
 		case 0:
 		    break;
 		case 1:
@@ -177,7 +177,7 @@ fs_walk( char *path, struct stat *st, char *type, struct applefileinfo *afinfo,
 	}
 
 	switch ( radstat( new->fl_name, &new->fl_stat, &new->fl_type,
-		&new->fl_afinfo ) < 0 ) {
+		&new->fl_afinfo )) {
 	case 0:
 	    break;
 	case 1:
