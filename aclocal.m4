@@ -115,3 +115,24 @@ AC_DEFUN([SET_NO_SASL],
     ac_configure_args="$ac_configure_args --with-sasl=no";
     AC_MSG_RESULT(Disabled SASL)
 ])
+
+AC_DEFUN([CHECK_UNIVERSAL_BINARIES],
+[
+    AC_ARG_ENABLE(universal_binaries,
+        AC_HELP_STRING([--enable-universal_binaries], [build universal binaries (default=no)]),
+        ,[enable_universal_binaries=no])
+    if test "${enable_universal_binaries}" = "yes"; then
+        AC_CANONICAL_SYSTEM
+        case "${host_os}" in
+          darwin*)
+            echo ===========================================================
+            echo Setting up universal binaries for ${host_os}
+            echo ===========================================================
+            OPTOPTS="$OPTOPTS -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch i386 -arch ppc"
+            ;;
+          *)
+            AC_MSG_ERROR([Building universal binaries on ${host_os} is not supported])
+          esac
+    fi
+])
+

@@ -179,31 +179,31 @@ radmind : libsnet/libsnet.la ${RADMIND_OBJ} Makefile
 	${CC} ${CFLAGS} -o radmind ${RADMIND_OBJ} ${LDFLAGS}
 
 fsdiff : ${FSDIFF_OBJ}
-	${CC} -o fsdiff ${FSDIFF_OBJ} ${LDFLAGS}
+	${CC} ${CFLAGS} -o fsdiff ${FSDIFF_OBJ} ${LDFLAGS}
 
 ktcheck: ${KTCHECK_OBJ}
-	${CC} -o ktcheck ${KTCHECK_OBJ} ${LDFLAGS}
+	${CC} ${CFLAGS} -o ktcheck ${KTCHECK_OBJ} ${LDFLAGS}
 
 lapply: ${LAPPLY_OBJ}
-	${CC} -o lapply ${LAPPLY_OBJ} ${LDFLAGS}
+	${CC} ${CFLAGS} -o lapply ${LAPPLY_OBJ} ${LDFLAGS}
 
 lcksum: ${LCKSUM_OBJ}
-	${CC} -o lcksum ${LCKSUM_OBJ} ${LDFLAGS}
+	${CC} ${CFLAGS} -o lcksum ${LCKSUM_OBJ} ${LDFLAGS}
 
 lcreate: ${LCREATE_OBJ}
-	${CC} -o lcreate ${LCREATE_OBJ} ${LDFLAGS}
+	${CC} ${CFLAGS} -o lcreate ${LCREATE_OBJ} ${LDFLAGS}
 
 lmerge: ${LMERGE_OBJ}
-	${CC} -o lmerge ${LMERGE_OBJ} ${LDFLAGS}
+	${CC} ${CFLAGS} -o lmerge ${LMERGE_OBJ} ${LDFLAGS}
 
 lfdiff: ${LFDIFF_OBJ}
-	${CC} -o lfdiff ${LFDIFF_OBJ} ${LDFLAGS}
+	${CC} ${CFLAGS} -o lfdiff ${LFDIFF_OBJ} ${LDFLAGS}
 
 twhich: ${TWHICH_OBJ}
-	${CC} -o twhich ${TWHICH_OBJ} ${LDFLAGS}
+	${CC} ${CFLAGS} -o twhich ${TWHICH_OBJ} ${LDFLAGS}
 
 lsort: ${LSORT_OBJ}
-	${CC} -o lsort ${LSORT_OBJ} ${LDFLAGS}
+	${CC} ${CFLAGS} -o lsort ${LSORT_OBJ} ${LDFLAGS}
 
 FRC :
 

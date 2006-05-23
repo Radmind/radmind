@@ -30,6 +30,8 @@ AC_SUBST(build_date)
 #AC_ARG_WITH(certdir, AC_HELP_STRING([--cert=DIR], [default certificate location]), certdir="$withval", certdir="/var/radmind/cert" )
 #AC_SUBST(certdir) 
 
+CHECK_UNIVERSAL_BINARIES
+
 # Checks for programs.
 AC_PROG_AWK
 AC_PROG_CC
