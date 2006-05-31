@@ -511,6 +511,10 @@ auto)
 		    ktcheck -w ${TLSLEVEL} -h ${SERVER} -q -c sha1
 		    ;;
 		esac
+	    else
+		echo Nothing to apply.
+		cleanup
+		exit 0
 	    fi
 	done
     fi
