@@ -162,7 +162,7 @@ update() {
 	;;
     esac
 
-    fsdiff -A ${FPROGRESS} ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
+    fsdiff -A ${CASE} ${FPROGRESS} ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
     if [ $? -ne 0 ]; then
 	cleanup
 	exit 1
@@ -222,7 +222,7 @@ update() {
 	done
     fi
 		
-    lapply ${PROGRESS} -w ${TLSLEVEL} -h ${SERVER} ${CHECKSUM} ${FTMP}
+    lapply ${CASE} ${PROGRESS} -w ${TLSLEVEL} -h ${SERVER} ${CHECKSUM} ${FTMP}
     case "$?" in
     0)	;;
 
@@ -260,7 +260,7 @@ if [ -f "${DEFAULTS}" ]; then
     . "${DEFAULTS}"
 fi
 
-while getopts %ch:lqr:tU:Vw: opt; do
+while getopts %ch:Ilqr:tU:Vw: opt; do
     case $opt in
     %)  PROGRESS="-%"
 	FPROGRESS="-%"
@@ -274,6 +274,9 @@ while getopts %ch:lqr:tU:Vw: opt; do
 
     h)	SERVER="$OPTARG"
     	;;
+
+    I)	CASE="-I"
+	;;
 
     l)  USERAUTH="-l"
 	;;
@@ -391,7 +394,7 @@ create)
 	TNAME=`hostname | cut -d. -f1`-`date +%Y%m%d`-${USER}.T
     fi
     FTMP="${TMPDIR}/${TNAME}"
-    fsdiff -C ${FPROGRESS} ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
+    fsdiff -C ${CASE} ${FPROGRESS} ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
     if [ $? -ne 0 ]; then
 	cleanup
 	exit 1;
@@ -444,7 +447,7 @@ trip)
 	;;
     esac
 
-    fsdiff -C ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
+    fsdiff -C ${CASE} ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
     if [ $? -ne 0 ]; then
 	cleanup
 	exit 1
@@ -463,7 +466,7 @@ auto)
 	echo "Checked out by ${OWNER}"
 	exit 1
     fi
-    fsdiff -C ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
+    fsdiff -C ${CASE} ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
     if [ $? -ne 0 ]; then
 	echo Auto failure: `hostname` fsdiff
 	cleanup
@@ -480,15 +483,15 @@ auto)
     ktcheck -w ${TLSLEVEL} -h ${SERVER} -q -c sha1
     if [ $? -eq 1 ]; then
 	while true; do
-	    fsdiff -A ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
+	    fsdiff -A ${CASE} ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
 	    if [ $? -ne 0 ]; then
 		echo Auto failure: `hostname`: fsdiff
 		cleanup
 		exit 1
 	    fi
 	    if [ -s ${FTMP} ]; then
-		lapply -w ${PROGRESS} ${TLSLEVEL} -h ${SERVER} -q ${CHECKSUM} \
-			${FTMP} 2>&1 > ${LTMP}
+		lapply -w ${TLSLEVEL} ${CASE} ${PROGRESS} -h ${SERVER} \
+			-q ${CHECKSUM} ${FTMP} 2>&1 > ${LTMP}
 		case $? in
 		0)
 		    echo Auto update: `hostname`
@@ -536,7 +539,7 @@ force)
 	;;
     esac
 
-    fsdiff -A ${FPROGRESS} ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
+    fsdiff -A ${CASE} ${FPROGRESS} ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
     if [ $? -ne 0 ]; then
 	cleanup
 	exit 1
@@ -549,7 +552,7 @@ force)
     fi
     
     dopreapply ${FTMP}
-    lapply ${PROGRESS} -w ${TLSLEVEL} -h ${SERVER} ${CHECKSUM} ${FTMP}
+    lapply ${CASE} ${PROGRESS} -w ${TLSLEVEL} -h ${SERVER} ${CHECKSUM} ${FTMP}
     case "$?" in
     0)	;;
 
