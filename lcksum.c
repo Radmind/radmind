@@ -194,7 +194,7 @@ do_lcksum( char *tpath )
     }
     if ( !S_ISREG( st.st_mode )) {
 	fprintf( stderr, "%s: not a regular file\n", tpath );
-	return( 2 );
+	exit( 2 );
     }
 
     if ( access( tpath, amode ) != 0 ) {
