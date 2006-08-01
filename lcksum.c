@@ -591,7 +591,7 @@ main( int argc, char **argv )
 	tpath = argv[ i ];
 
 	if (( rc = do_lcksum( tpath )) == 1 && !updatetran ) {
-	    exit( 2 );
+	    exit( 1 );
 	}
     }
 
