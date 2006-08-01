@@ -502,7 +502,7 @@ done:
     int
 main( int argc, char **argv )
 {
-    int			c, i, err = 0, rc = 0;
+    int			c, i, err = 0;
     extern int          optind;
     char		*tpath = NULL;
 
@@ -590,10 +590,22 @@ main( int argc, char **argv )
     for ( i = optind; i < argc; i++ ) {
 	tpath = argv[ i ];
 
-	if (( rc = do_lcksum( tpath )) == 1 && !updatetran ) {
-	    exit( 1 );
+	switch ( do_lcksum( tpath )) {
+	case 2:
+	    exit( 2 );
+	    break;
+
+	case 1:
+	    err = 1;
+	    if ( !updatetran ) {
+		exit( 1 );
+	    }
+	    break;
+
+	default:
+	    break;
 	}
     }
 
-    return( rc );
+    exit( err );
 }
