@@ -856,7 +856,7 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --enable-universal_binaries
+  --enable-universal-binaries
                           build universal binaries (default=no)
   --disable-largefile     omit support for large files
 
