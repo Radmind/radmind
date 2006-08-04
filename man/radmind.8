@@ -57,8 +57,9 @@ finally IP address match in that order.  CNs and
 domain names are case insensitive.  If the optional third field begins
 with a '#', it is ignored and treated as an in-line comment.
 .sp
-Lines that are blank or begin with '#' are ignored.  '*' is a wildcard and
-will match any string.  A number range can be given 
+Lines that are blank or begin with '#' are ignored. There are several
+supported wildcard patterns similar to shell globbing.
+'*' will match any string.  A number range can be given 
 by "<\c
 .IR min -\c
 .IR max >"
@@ -66,8 +67,12 @@ where
 .I min
 is the lower bound and
 .I max
-is the upper bound.  '\\'
-can be used to escape any character.
+is the upper bound. '?' matches any single character. The square bracket
+character list, "[abcd]",
+will match any single character within the brackets. Comma-separated
+values contained in curly braces, "{riverrun,past,Eve}"
+will match the first whole string found. '\\'
+can be used to escape any character. 
 .sp
 A client is only given access to command files and transcripts
 listed in their base command file as determined by the config
