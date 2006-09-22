@@ -5,7 +5,7 @@
 .SH SYNOPSIS
 .B radmind
 [
-.B \-dRrUV
+.B \-dBrUV
 ] [
 .BI \-a\  bind-address
 ] [
@@ -188,6 +188,9 @@ specifies the address on which the server should listen, e.g.
 127.0.0.1.  By default the server listens on all available interfaces
 (wildcard address).
 .TP 19
+.B \-B
+register daemon as a Bonjour service
+.TP 19
 .BI \-b\  backlog
 Defines the maximum queue of pending connections to
 .BR listen (2),
@@ -202,6 +205,9 @@ debug mode. Does not disassociate from controlling tty.
 .BI \-F\  syslog-facility
 specifies to which syslog facility to log messages.
 .TP 19
+.B \-f
+run in foreground
+.TP 19
 .BI \-L\  syslog-level
 specifies at which syslog level to log messages.
 .TP 19
@@ -213,9 +219,6 @@ Value must be greater than or equal to 0 with 0 indicating no limit.
 .BI \-p\  port 
 specifies the port of the radmind server, by default
 .BR 6662 .
-.TP 19
-.BI \-R
-registers daemon as a Rendezvous service (Mac OS X only).
 .TP 19
 .B \-r
 use random seed file $RANDFILE if that environment variable is set,

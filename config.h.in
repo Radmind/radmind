@@ -25,6 +25,7 @@
 #undef HAVE_PAM_PAM_APPL_H
 #undef HAVE_SECURITY_PAM_APPL_H
 
+#undef HAVE_DNSSD
 #undef HAVE_ZLIB
 
 #ifndef MIN

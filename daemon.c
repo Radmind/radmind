@@ -31,9 +31,9 @@
 /*
  * for zeroconf, currently only available on Mac OS X
  */
-#ifdef HAVE_ZEROCONF
-#include <DNSServiceDiscovery/DNSServiceDiscovery.h>
-#endif /* HAVE_ZEROCONF */
+#ifdef HAVE_DNSSD
+#include <dns_sd.h>
+#endif /* HAVE_DNSSD */
 
 #ifdef HAVE_ZLIB
 #include <zlib.h>
@@ -86,40 +86,43 @@ chld( int sig )
 
 }
 
-/*
- * Callback with return value of zeroconf name registration attempt
- */
-#ifdef HAVE_ZEROCONF
+#ifdef HAVE_DNSSD
     static void
-dnsreg_reply( DNSServiceRegistrationReplyErrorType rc, void *context )
+dnsreg_callback( DNSServiceRef dnssrv, DNSServiceFlags flags,
+	DNSServiceErrorType error, const char *name, const char *regtype,
+	const char *domain, void *context )
 {
-    switch ( rc ) {
-    case kDNSServiceDiscoveryNoError:
-	syslog( LOG_INFO, "Rendezvous name now registered and active.\n" );
-	break;
-    case kDNSServiceDiscoveryNameConflict:
-	syslog( LOG_ERR, "Rendezvous name in use, please choose another.\n" );
-	break;
-    default:
-	syslog( LOG_ERR, "An error occurred registering the name.\n" );
-	break;
+    if ( error == kDNSServiceErr_NoError ) {
+	syslog( LOG_NOTICE, "DNSServiceRegister successful. Name: %s "
+		"Type: %s Domain: %s", name, regtype, domain );
+    } else {
+	syslog( LOG_ERR, "DNSServiceRegister error: %d", ( int )error );
     }
 }
 
-/*
- * Register as a zeroconf service
- */
-    static dns_service_discovery_ref
-register_service( unsigned int port, DNSServiceRegistrationReply callback )
+    static DNSServiceErrorType
+register_service( DNSServiceRef *dnssrv, unsigned int port,
+		DNSServiceRegisterReply callback )
 {
-    dns_service_discovery_ref	dsdref = NULL;
+    DNSServiceErrorType	err;
 
-    dsdref = DNSServiceRegistrationCreate( "", "_radmind._tcp", "",
-					    port, "", callback, NULL );
+    /* see dns_sd.h for API details */
+    err = DNSServiceRegister( dnssrv,			/* registered service */
+				0,			/* service flags */
+				0,			/* interface index */
+				NULL,			/* service name */
+				"_radmind._tcp",	/* service type */
+				NULL,			/* domain */
+				NULL,			/* SRV target host */
+				port,			/* port */
+				0,			/* TXT len */
+				NULL,			/* TXT record */
+				callback,		/* callback */
+				NULL );			/* context pointer */
 
-    return( dsdref );
+    return( err );
 }
-#endif /* HAVE_ZEROCONF */
+#endif /* HAVE_DNSSD */
 
     int
 main( int ac, char **av )
@@ -144,10 +147,11 @@ main( int ac, char **av )
     pid_t		pid;
     int			status;
     struct rusage	usage;
-#ifdef HAVE_ZEROCONF
+#ifdef HAVE_DNSSD
     int			regservice = 0;
-    dns_service_discovery_ref	mdnsref = NULL;
-#endif /* HAVE_ZEROCONF */
+    DNSServiceRef	dnssrv;
+    DNSServiceErrorType	dnsreg_err;
+#endif /* HAVE_DNSSD */
 
 
     if (( prog = strrchr( av[ 0 ], '/' )) == NULL ) {
@@ -158,7 +162,8 @@ main( int ac, char **av )
 
      b_addr.s_addr = htonl( INADDR_ANY );
 
-    while (( c = getopt( ac, av, "a:b:dD:F:fL:m:p:Ru:UVw:x:y:z:Z:" )) != EOF ) {
+    while (( c = getopt( ac, av, "a:Bb:dD:F:fL:m:p:Ru:UVw:x:y:z:Z:" ))
+		!= EOF ) {
 	switch ( c ) {
 	case 'a' :		/* bind address */ 
 	    if ( !inet_aton( optarg, &b_addr )) {
@@ -166,6 +171,16 @@ main( int ac, char **av )
 		exit( 1 );
 	    }
 	    break;
+
+	case 'B':		/* register as a Bonjour service */
+	case 'R':		/* -R: deprecated in favor of -B */
+#ifdef HAVE_DNSSD
+	    regservice = 1;
+	    break;
+#else /* HAVE_DNSSD */
+	    fprintf( stderr, "Bonjour not supported.\n" );
+	    exit( 1 );
+#endif /* HAVE_DNSSD */
 
 	case 'b' :		/* listen backlog */
 	    backlog = atoi( optarg );
@@ -210,15 +225,6 @@ main( int ac, char **av )
 	case 'r' :
 	    use_randfile = 1;
 	    break;
-
-	case 'R' :		/* register as Rendezvous service */
-#ifdef HAVE_ZEROCONF
-	    regservice = 1;
-	    break;
-#else
-	    fprintf( stderr, "Rendezvous not supported.\n" );
-	    exit( 1 );
-#endif /* HAVE_ZEROCONF */
 
 	case 'u' :		/* umask */
 	    umask( (mode_t)strtol( optarg, (char **)NULL, 0 ));
@@ -449,18 +455,18 @@ main( int ac, char **av )
     syslog( LOG_INFO, "restart %s", version );
 
     /*
-     * Register as rendezvous service, if requested.
+     * Register as Bonjour service, if requested.
      * We have to wait till we've started 
      * listening for this registration to work.
      */
-#ifdef HAVE_ZEROCONF
+#ifdef HAVE_DNSSD
     if ( regservice ) {
-	mdnsref = register_service( sin.sin_port, dnsreg_reply );
-	if ( ! mdnsref ) {
-	    syslog( LOG_ERR, "Failed to register as rendezvous service." );
+	dnsreg_err = register_service( &dnssrv, sin.sin_port, dnsreg_callback );
+	if ( dnsreg_err != kDNSServiceErr_NoError ) {
+	    syslog( LOG_ERR, "Failed to register as a Bonjour service." );
 	}
     }
-#endif /* HAVE_ZEROCONF */
+#endif /* HAVE_DNSSD */
 
     /*
      * Begin accepting connections.
@@ -555,8 +561,8 @@ main( int ac, char **av )
 	}
     }
     
-#ifdef HAVE_ZEROCONF
+#ifdef HAVE_DNSSD
     if ( regservice ) 
-	DNSServiceDiscoveryDeallocate( mdnsref );
-#endif /* HAVE_ZEROCONF */
+	DNSServiceRefDeallocate( dnssrv );
+#endif /* HAVE_DNSSD */
 }

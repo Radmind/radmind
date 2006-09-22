@@ -65,10 +65,9 @@ AC_CHECK_LIB([pam], [pam_start],
     LIBS="$LIBS -lpam";
     ] 
 )
+AC_CHECK_HEADER([dns_sd.h], [AC_DEFINE(HAVE_DNSSD)], [], [])
 
 CHECK_ZLIB
-CHECK_ZEROCONF
-
 
 # Miscellaneous:
 if test x_$GCC = x_yes; then
