@@ -217,6 +217,7 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
     struct pathinfo	*cur;
     char		*epath;
     dev_t		dev;
+    int			print_minus = 0;
 
 #ifdef __APPLE__
     static char         null_buf[ 32 ] = { 0 };
@@ -247,16 +248,20 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
      */
     if ( edit_path == APPLICABLE ) {
 	if ( flag == PR_FS_ONLY ) {
-	    fprintf( outtran, "- " );
+	    print_minus = 1;
 	    cur = fs;
 	} else if ( flag == PR_STATUS_MINUS ) {
 	    fprintf( outtran, "- " );
 	}
     } else if (( edit_path ==  CREATABLE ) &&
 	    (( flag == PR_TRAN_ONLY ) || ( fs->pi_type == 'X' ))) {
-	fprintf( outtran, "- " );
+	print_minus = 1;
 	cur = &tran->t_pinfo;
     } 
+
+    if ( print_minus ) {
+	fprintf( outtran, "- " );
+    }
 
     if (( epath = encode( cur->pi_name )) == NULL ) {
 	fprintf( stderr, "Filename too long: %s\n", cur->pi_name );
@@ -314,9 +319,10 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 	 * If we don't have a checksum yet, and checksums are on, calculate
 	 * it now.  Note that this can only be the case if "cur" is the
 	 * filesystem, because transcript_parse() won't read lines without
-	 * checksums if they are enabled.
+	 * checksums if they are enabled.  But, don't get the checksum
+	 * if we are just going to remove the file.
 	 */
-	if (( *cur->pi_cksum_b64 == '-' ) && cksum ) {
+	if (( *cur->pi_cksum_b64 == '-' ) && cksum && !print_minus ) {
 	    if ( cur->pi_type == 'f' ) {
 		if ( do_cksum( cur->pi_name, cur->pi_cksum_b64 ) < 0 ) {
 		    perror( cur->pi_name );
