@@ -716,7 +716,7 @@ filechecklist:
 
     if ( network ) {
 	if (( closesn( sn )) != 0 ) {
-	    fprintf( stderr, "can not close sn\n" );
+	    fprintf( stderr, "cannot close sn\n" );
 	    exit( 2 );
 	}
 #ifdef HAVE_ZLIB

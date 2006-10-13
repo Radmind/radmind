@@ -702,7 +702,7 @@ main( int argc, char **argv )
 	exit( 2 );
     }
     if (( capa = get_capabilities( sn )) == NULL ) {
-	    exit( 2 );
+	exit( 2 );
     }           
 
     if ( authlevel != 0 ) {
