@@ -734,7 +734,7 @@ main( int argc, char **argv )
     }
 #endif /* HAVE_ZLIB */
 
-    /* Chack/get correct base command file */
+    /* Check/get correct base command file */
     switch( check( sn, "COMMAND", NULL )) { 
     case 0:
 	break;
