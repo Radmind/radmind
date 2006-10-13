@@ -68,13 +68,6 @@ SSL_CTX  	*ctx;
 
 extern char             *ca, *cert, *privatekey;
 
-    static void
-v_logger( char *line )
-{
-    printf( "<<< %s\n", line );
-    return;
-}
-
     int
 main( int argc, char **argv )
 {

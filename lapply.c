@@ -71,7 +71,6 @@ struct node {
 struct node* create_node( char *path, char *tline );
 void free_node( struct node *node );
 int do_line( char *tline, int present, struct stat *st, SNET *sn );
-void output( char *string);
 
    struct node *
 create_node( char *path, char *tline )
@@ -96,13 +95,6 @@ free_node( struct node *node )
 {
     free( node->path );
     free( node );
-}
-
-    void
-output( char *string )
-{
-    printf( "<<< %s\n", string );
-    return;
 }
 
     int
@@ -320,7 +312,7 @@ main( int argc, char **argv )
 
 	case 'v':
 	    verbose = 1;
-	    logger = output;
+	    logger = v_logger;
 	    if ( isatty( fileno( stdout ))) {
 		dodots = 1;
 	    }

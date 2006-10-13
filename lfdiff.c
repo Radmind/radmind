@@ -37,8 +37,6 @@
 #include "transcript.h"
 #include "code.h"
 
-void output( char* string);
-
 void			(*logger)( char * ) = NULL;
 extern struct timeval	timeout;
 int			verbose = 0;
@@ -50,13 +48,6 @@ const EVP_MD    	*md;
 SSL_CTX  		*ctx;
 
 extern char             *ca, *cert, *privatekey;
-
-    void
-output( char *string )
-{
-    printf( "<<< %s\n", string );
-    return;
-}
 
    static struct transcript *
 precedent_transcript( char *kfile, char *file, int where )
@@ -204,7 +195,7 @@ main( int argc, char **argv, char **envp )
 
 	case 'v':
 	    verbose = 1;
-	    logger = output;
+	    logger = v_logger;
 	    if ( isatty( fileno( stdout ))) {
 		dodots = 1;
 	    }

@@ -48,7 +48,6 @@
 
 int cleandirs( char *path, struct llist *khead );
 int clean_client_dir( void );
-void output( char* string);
 int check( SNET *sn, char *type, char *path); 
 int createspecial( SNET *sn, struct list *special_list );
 int getstat( SNET *sn, char *description, char *stats );
@@ -274,13 +273,6 @@ getstat( SNET *sn, char *description, char *stats )
     if ( verbose ) printf( "<<< %s\n", stats );
 
     return( 0 );
-}
-
-    void
-output( char *string )
-{
-    printf( "<<< %s\n", string );
-    return;
 }
 
     int
@@ -609,7 +601,7 @@ main( int argc, char **argv )
 
 	case 'v':
 	    verbose = 1;
-	    logger = output;
+	    logger = v_logger;
 	    if ( isatty( fileno( stdout ))) {
 		dodots = 1;
 	    }

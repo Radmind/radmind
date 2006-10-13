@@ -24,3 +24,4 @@ int n_stor_applefile( SNET *sn, char *pathdesc, char *path );
 int stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     char *trancksum, struct applefileinfo *afinfo );
 int stor_response( SNET *sn, int *respcount, struct timeval * );
+void v_logger( char *string);

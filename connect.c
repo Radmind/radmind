@@ -43,6 +43,13 @@ extern SSL_CTX  	*ctx;
 int zlib_level = 0;
 #endif
 
+    void
+v_logger( char *line )
+{
+    printf( "<<< %s\n", line );
+    return;
+}
+
     static SNET *
 connectsn2( struct sockaddr_in *sin )
 {
