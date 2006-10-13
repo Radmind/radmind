@@ -235,7 +235,7 @@ keyword( int ac, char *av[] )
 	}
 
 	if ( strlen( av[ 1 ] ) + strlen( av[ 2 ] ) +
-		strlen( remote_host) + 5 > MAXPATHLEN ) {
+		strlen( remote_host ) + 5 > MAXPATHLEN ) {
 	    syslog( LOG_WARNING,
 		    "Overflow attempt: %s/%s-%s longer than MAXPATHLEN",
 		    av[ 1 ], av[ 2 ], remote_host );
