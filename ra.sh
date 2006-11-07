@@ -87,6 +87,11 @@ cleanup() {
     fi
 }
 
+cleanup_and_exit() {
+    cleanup
+    exit 1
+fi
+
 dopreapply() {
     if [ -d ${PREAPPLY} ]; then
 	SCRIPTS=`find ${PREAPPLY} -perm +u+x \! -type d | sort`
@@ -198,6 +203,10 @@ update() {
 	    echo -n "(a)pply or (c)ancel? "
 
 	    read ans
+	    if [ $? -ne 0 ]; then
+		cleanup_and_exit
+	    fi
+
 	    case "${ans}" in
 	    a|A)
 		break
@@ -218,6 +227,7 @@ update() {
 
 	    *)
 		;;
+
 	    esac
 	done
     fi
@@ -244,7 +254,7 @@ update() {
 		-a ! -z "`ls ${POSTAPPLY} 2>/dev/null`" ]; then
 	Yn "Run post-apply scripts on difference transcript?"
         if [ $? -eq 1 ]; then
-            dopostapply ${FMTP}
+            dopostapply ${FTMP}
         fi
     elif [ x"$opt" != x"interactive" ]; then
 	dopostapply ${FTMP}
@@ -319,7 +329,7 @@ if [ ! -d ${TMPDIR} ]; then
 fi
 
 # Trap meaningful signals
-trap cleanup HUP INT PIPE QUIT TERM TRAP XCPU XFSZ
+trap cleanup_and_exit HUP INT PIPE QUIT TERM TRAP XCPU XFSZ
 
 case "$1" in
 checkout)
