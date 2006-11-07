@@ -62,6 +62,9 @@ fi
 Yn() {
     echo -n "$*" "[Yn] "
     read ans
+    if [ $? -ne 0 ]; then
+	return 0
+    fi
     if [ -z "$ans" -o X"$ans" = Xy -o X"$ans" = XY -o X"$ans" = Xyes ]; then
 	return 1
     fi
