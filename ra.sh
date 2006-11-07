@@ -25,6 +25,7 @@ SERVER="_RADMIND_HOST"
 TLSLEVEL="_RADMIND_AUTHLEVEL"
 EDITOR=${EDITOR:-vi}
 USER=${SUDO_USER:-$USER}
+TMPDIR="${TMPDIR:=/tmp}"
 DEFAULTS="/etc/defaults/radmind"
 FSDIFFROOT="."
 FLAG="_RADMIND_DIR/client/.RadmindRunning"
@@ -40,16 +41,16 @@ RETRY=10
 
 MKTEMP="_RADMIND_MKTEMP"
 TEMPFILES=FALSE
-TMPDIR="/tmp/.ra.$$"
-if [ -f "${MKTEMP}" ]; then
-    TMPDIR=`${MKTEMP} -qd /tmp/.ra.$$.XXXXXX`
+RASHTMP="${TMPDIR}/.ra.$$"
+if [ -f "${MKTEMP}"  ]; then
+    RASHTMP=`${MKTEMP} -qd "${TMPDIR}/.ra.$$.XXXXXX"`
     if [ $? -ne 0 ]; then
 	echo "mktemp failed"
 	exit 1
     fi
 fi
-LTMP="${TMPDIR}/lapply.out"
-FTMP="${TMPDIR}/fsdiff.out"
+LTMP="${RASHTMP}/lapply.out"
+FTMP="${RASHTMP}/fsdiff.out"
 
 # different systems use different default dirs
 if [ ! -f "${DEFAULTS}" ]; then
@@ -86,7 +87,7 @@ usage() {
 
 cleanup() {
     if [ "$TEMPFILES" = FALSE ]; then
-	rm -fr "${TMPDIR}"
+	rm -fr "${RASHTMP}"
     fi
 }
 
@@ -323,10 +324,10 @@ fi
 
 cd /
 
-if [ ! -d ${TMPDIR} ]; then
-    mkdir -m 700 ${TMPDIR} 
+if [ ! -d "${RASHTMP}" ]; then
+    mkdir -m 700 "${RASHTMP}"
     if [ $? -ne 0 ]; then
-        echo "Cannot create temporary directory $TMPDIR" 
+        echo "Cannot create temporary directory $RASHTMP" 
 	exit 1
     fi
 fi
@@ -406,7 +407,7 @@ create)
     if [ -z "${TNAME}" ]; then
 	TNAME=`hostname | cut -d. -f1`-`date +%Y%m%d`-${USER}.T
     fi
-    FTMP="${TMPDIR}/${TNAME}"
+    FTMP="${RASHTMP}/${TNAME}"
     fsdiff -C ${CASE} ${FPROGRESS} ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
     if [ $? -ne 0 ]; then
 	cleanup
