@@ -1,0 +1,88 @@
+.TH repo "1" "_RADMIND_BUILD_DATE" "RSUG" "User Commands"
+.SH NAME
+.B repo 
+\- report events to a radmind server
+.SH SYNOPSIS
+.B repo
+.BI \-e\ event
+[
+.RI \-Vv
+] [
+.BI \-h\  host
+] [
+.BI \-p\  port
+] [
+.BI \-w\  auth-level
+] [
+.BI \-x\  ca-pem-file
+] [
+.BI \-y\  cert-pem-file
+] [
+.BI \-z\  private-key-file
+] [
+.BI \-Z\  compression-level
+] [
+.I event message ...
+]
+.SH DESCRIPTION
+.B repo
+reports status messages to the radmind server. The administrator defines
+the
+.I event
+type with the -e option. The
+.I message
+is read from the command line or from standard input. The
+.I event
+and the
+.I message
+are logged by the server if
+.B repo
+succeeds.
+.SH OPTIONS
+.TP 19
+.BI \-e\  event
+the event type to report. This is an arbitrary string.
+.TP 19
+.BI \-h\  host
+specifies the radmind server, by default
+.BR _RADMIND_HOST .
+.TP 19
+.BI \-p\  port
+specifies a port, by default
+.B 6662.
+.TP 19
+.B \-V
+displays the version of
+.BR repo ,
+and exits.
+.TP 19
+.B \-v
+displays communication with the radmind server.
+.TP 19
+.BI \-w\  auth-level
+TLS authorization level, by default _RADMIND_AUTHLEVEL.
+0 = no TLS, 1 = server verification, 2 = server and client verification.
+.TP 19
+.BI \-x\  ca-pem-file
+Certificate authority's public certificate, by default _RADMIND_TLS_CA.
+.TP 19
+.BI \-y\  cert-pem-file
+Client's public certificate, by default _RADMIND_TLS_CERT.
+.TP 19
+.BI \-z\  private-key-file
+Client's private key, by default _RADMIND_TLS_CERT.
+.TP 19
+.BI \-Z\  compression-level
+Compress all outbound data.  compression-level can be between 0 and 9:
+1 gives best speed, 9 gives best compression, 0 gives no compression at
+all (the input data is simply copied a block at a time).
+.SH EXIT STATUS
+The following exit values are returned:
+.TP 5
+0
+No errors.
+.TP 5
+>0
+An error occurred.
+.SH SEE ALSO
+.BR radmind (8).
