@@ -77,6 +77,7 @@ int		f_stor( SNET *, int, char *[] );
 int		f_noauth( SNET *, int, char *[] );
 int		f_notls( SNET *, int, char *[] );
 int		f_starttls( SNET *, int, char *[] );
+int		f_repo( SNET *, int, char *[] );
 #ifdef HAVE_LIBPAM
 int		f_login( SNET *, int, char *[] );
 int 		exchange( int num_msg, struct pam_message **msgm,
@@ -119,6 +120,7 @@ struct command	notls[] = {
     { "RETRieve",	f_notls },
     { "STORe",		f_notls },
     { "STARttls",       f_starttls },
+    { "REPOrt",         f_notls },
 #ifdef HAVE_LIBPAM
     { "LOGIn",       	f_notls },
 #endif /* HAVE_LIBPAM */
@@ -134,6 +136,7 @@ struct command	noauth[] = {
     { "STATus",		f_noauth },
     { "RETRieve",	f_noauth },
     { "STORe",		f_noauth },
+    { "REPOrt",         f_noauth },
 #ifdef HAVE_LIBPAM
     { "LOGIn",       	f_noauth },
 #endif /* HAVE_LIBPAM */
@@ -150,6 +153,7 @@ struct command	auth[] = {
     { "RETRieve",	f_retr },
     { "STORe",		f_stor },
     { "STARttls",       f_starttls },
+    { "REPOrt",         f_repo },
 #ifdef HAVE_LIBPAM
     { "LOGIn",       	f_login },
 #endif /* HAVE_LIBPAM */
@@ -899,6 +903,37 @@ f_stor( SNET *sn, int ac, char *av[] )
     }
 
     snet_writef( sn, "%d File stored\r\n", 250 );
+    return( 0 );
+}
+
+    int
+f_repo( SNET *sn, int ac, char **av )
+{
+    char			*cn = "-";
+    char			*d_msg;
+
+    if ( ac != 3 ) {
+	snet_writef( sn, "%d Syntax error (invalid parameters)\r\n", 501 );
+	return( 1 );
+    }
+
+    if (( d_msg = decode( av[ 2 ] )) == NULL ) {
+	syslog( LOG_ERR, "f_repo: decode: buffer too small" );
+	snet_writef( sn, "%d Syntax error (invalid parameter)\r\n", 501 );
+	return( 1 );
+    }
+
+    if ( remote_cn != NULL ) {
+	cn = remote_cn;
+    }
+
+    syslog( LOG_NOTICE, "report %s %s %s %s %s %s",
+		remote_host, remote_addr,
+		cn, "-", /* reserve for user specified ID, e.g. sasl */
+		av[ 1 ], d_msg );
+
+    snet_writef( sn, "%d Report successful\r\n", 215 );
+    
     return( 0 );
 }
 

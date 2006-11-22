@@ -181,6 +181,11 @@ started.
 .TP 10
 COMP
 start compression
+.TP 10
+REPO
+report a client status message. The daemon logs the message and some of the
+reporting client's attributes, including client name, client IP address,
+client CN, and the report event type. 
 .SH OPTIONS
 .TP 19
 .BI \-a\  bind-address
@@ -298,6 +303,7 @@ _RADMIND_PATH/config
 .BR lfdiff (1),
 .BR lmerge (1),
 .BR lsort (1),
+.BR repo (1),
 .BR twhich (1),
 .BR pam.conf (4),
 .BR RAND_load_file (3o).

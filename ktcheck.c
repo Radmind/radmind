@@ -45,6 +45,7 @@
 #include "largefile.h"
 #include "mkdirs.h"
 #include "rmdirs.h"
+#include "report.h"
 
 int cleandirs( char *path, struct llist *khead );
 int clean_client_dir( void );
@@ -739,6 +740,7 @@ main( int argc, char **argv )
 	break;
 
     case 2:
+	report_event( sn, "ktcheck", "Error" );
 	exit( 2 );
     }
 
@@ -848,10 +850,6 @@ main( int argc, char **argv )
     }
 
 done:
-    if (( closesn( sn )) !=0 ) {
-	fprintf( stderr, "can not close sn\n" );
-	exit( 2 );
-    }
 #ifdef HAVE_ZLIB
     if ( verbose && zlib_level > 0 ) print_stats( sn );
 #endif /* HAVE_ZLIB */
@@ -861,11 +859,32 @@ done:
     }
 
     if ( change ) {
-	exit( 1 );
+	if ( update ) {
+	    if ( report_event( sn, "ktcheck", "Updates retrieved" ) != 0 ) {
+		fprintf( stderr, "warning: could not report event\n" );
+	    }
+	} else {
+	    if ( report_event( sn, "ktcheck", "Updates available" ) != 0 ) {
+		fprintf( stderr, "warning: could not report event\n" );
+	    }
+	}
     } else {
-	if ( !quiet ) printf( "No updates needed\n" );
-	exit( 0 );
+	if ( report_event( sn, "ktcheck", "No updates needed" ) != 0 ) {
+	    fprintf( stderr, "warning: could not report event\n" );
+	}
     }
+
+    if (( closesn( sn )) != 0 ) {
+	fprintf( stderr, "cannot close sn\n" );
+	exit( 2 );
+    }
+
+    if ( change ) {
+	exit( 1 );
+    }
+
+    if ( !quiet ) printf( "No updates needed\n" );
+    exit( 0 );
 }
 
     int
@@ -930,6 +949,7 @@ read_kfile( char * kfile )
 		}
 		break;
 	    case 2:
+		report_event( sn, "ktcheck", "Error" );
 		goto error;
 	    }
 	    break;
@@ -956,6 +976,7 @@ read_kfile( char * kfile )
 		}
 		break;
 	    case 2:
+		report_event( sn, "ktcheck", "Error" );
 		exit( 2 );
 	    }
 	    break;
@@ -976,6 +997,7 @@ done:
 	return( -1 );
     }
     if ( !update && change ) {
+	report_event( sn, "ktcheck", "Updates available" );
 	exit( 1 );
     }
     return( 0 );

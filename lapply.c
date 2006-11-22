@@ -40,6 +40,7 @@
 #include "tls.h"
 #include "largefile.h"
 #include "progress.h"
+#include "report.h"
 
 void		(*logger)( char * ) = NULL;
 int		linenum = 0;
@@ -715,6 +716,10 @@ filechecklist:
     }
 
     if ( network ) {
+	if ( report_event( sn, "lapply",
+                "Changes applied successfully" ) != 0 ) {
+            fprintf( stderr, "warning: could not report event\n" );
+        }
 	if (( closesn( sn )) != 0 ) {
 	    fprintf( stderr, "cannot close sn\n" );
 	    exit( 2 );
@@ -733,6 +738,15 @@ error1:
 #ifdef HAVE_ZLIB
 	if( verbose && zlib_level < 0 ) print_stats(sn);
 #endif /* HAVE_ZLIB */
+	if ( change ) {
+	    if ( report_event( sn, "lapply", "Error, changes made" ) != 0 ) {
+		fprintf( stderr, "warning: could not report event\n" );
+	    }
+	} else {
+	    if ( report_event( sn, "lapply", "Error, no changes made" ) != 0 ) {
+		fprintf( stderr, "warning: could not report event\n" );
+	    }
+	}
 	closesn( sn );
     }
     if ( change ) {

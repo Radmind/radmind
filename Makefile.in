@@ -42,7 +42,8 @@ INSTALL=	@INSTALL@
 
 CFLAGS=		${DEFS} ${OPTOPTS} @CFLAGS@ ${INCPATH}
 
-BINTARGETS=     fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff twhich lsort
+BINTARGETS=     fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff repo \
+		twhich lsort
 MAN1TARGETS=    fsdiff.1 ktcheck.1 lapply.1 lcksum.1 \
 		lcreate.1 lfdiff.1 lmerge.1 twhich.1 rash.1 lsort.1
 MAN5TARGETS= 	applefile.5
@@ -60,11 +61,11 @@ FSDIFF_OBJ=     version.o fsdiff.o argcargv.o transcript.o llist.o code.o \
 
 KTCHECK_OBJ=    version.o ktcheck.o argcargv.o retr.o base64.o code.o \
                 cksum.o list.o llist.o connect.o applefile.o tls.o pathcmp.o \
-		progress.o mkdirs.o rmdirs.o
+		progress.o mkdirs.o report.o rmdirs.o
 
 LAPPLY_OBJ=     version.o lapply.o argcargv.o code.o base64.o retr.o \
                 radstat.o update.o cksum.o connect.o pathcmp.o progress.o \
-                applefile.o tls.o
+                applefile.o report.o tls.o
 
 LCREATE_OBJ=    version.o lcreate.o argcargv.o code.o connect.o progress.o \
                 stor.o applefile.o base64.o cksum.o radstat.o tls.o
@@ -78,6 +79,8 @@ LMERGE_OBJ=     version.o lmerge.o argcargv.o code.o pathcmp.o mkdirs.o \
 LFDIFF_OBJ=     version.o lfdiff.o argcargv.o connect.o retr.o cksum.o \
                 progress.o base64.o applefile.o code.o tls.o pathcmp.o \
 		transcript.o list.o radstat.o hardlink.o
+
+REPO_OBJ=	version.o repo.o report.o argcargv.o connect.o code.o tls.o
 
 TWHICH_OBJ=     version.o twhich.o argcargv.o transcript.o llist.o code.o \
                 hardlink.o cksum.o base64.o pathcmp.o radstat.o applefile.o \
@@ -156,6 +159,16 @@ progress.o : progress.c
 	${CC} ${CFLAGS} \
 		-c ${srcdir}/progress.c
 
+report.o : report.c
+	${CC} ${CFLAGS} \
+		-c ${srcdir}/report.c
+
+repo.o : repo.c
+	${CC} ${CFLAGS} \
+		-D_RADMIND_HOST=\"${RADMIND_HOST}\" \
+		-D_RADMIND_AUTHLEVEL=${RADMIND_AUTHLEVEL} \
+		-c ${srcdir}/repo.c
+
 root.o : root.c
 	${CC} ${CFLAGS} \
 		-c ${srcdir}/root.c
@@ -198,6 +211,9 @@ lmerge: ${LMERGE_OBJ}
 
 lfdiff: ${LFDIFF_OBJ}
 	${CC} ${CFLAGS} -o lfdiff ${LFDIFF_OBJ} ${LDFLAGS}
+
+repo : ${REPO_OBJ}
+	${CC} ${CFLAGS} -o repo ${REPO_OBJ} ${LDFLAGS}
 
 twhich: ${TWHICH_OBJ}
 	${CC} ${CFLAGS} -o twhich ${TWHICH_OBJ} ${LDFLAGS}
