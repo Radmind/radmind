@@ -28,6 +28,7 @@
 #include <snet.h>
 
 #include "code.h"
+#include "applefile.h"
 #include "connect.h"
 #include "report.h"
 #include "tls.h"
