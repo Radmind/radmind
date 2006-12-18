@@ -1,6 +1,5 @@
 EXCLUDE
 CVS
 Makefile
-configure.ac
 config.log
 config.status
