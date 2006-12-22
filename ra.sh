@@ -81,7 +81,7 @@ checkedout() {
 }
 
 usage() {
-    echo "Usage:	$0 [ -ctV ] [ -h server ] [ -w authlevel ] { trip | update | create | auto | force | checkout | checkin }" >&2
+    echo "Usage:	$0 [ -ctV ] [ -h server ] [ -w authlevel ] { trip | update | create | auto | force | checkout | checkin } [ /path/or/file ]" >&2
     exit 1
 }
 
@@ -318,8 +318,10 @@ while getopts %ch:Ilqr:tU:Vw: opt; do
 done
 shift `expr $OPTIND - 1`
 
-if [ $# -ne 1 ]; then
-	usage
+if [ $# -eq 2 ]; then
+    FSDIFFROOT=$2
+elif [ $# -ne 1 ]; then
+    usage
 fi
 
 cd /
