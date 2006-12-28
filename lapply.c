@@ -52,8 +52,10 @@ int		special = 0;
 int		network = 1;
 int		change = 0;
 int		case_sensitive = 1;
+int		report = 1;
 char		transcript[ 2 * MAXPATHLEN ] = { 0 };
 char		prepath[ MAXPATHLEN ]  = { 0 };
+
 extern char	*version, *checksumlist;
 extern off_t	lsize;
 extern int	showprogress;
@@ -421,7 +423,6 @@ main( int argc, char **argv )
 		exit( 2 );
 	}
 
-
 	if ( authlevel != 0 ) {
 	    if ( tls_client_start( sn, host, authlevel ) != 0 ) {
 		/* error message printed in tls_cleint_starttls */
@@ -440,6 +441,11 @@ main( int argc, char **argv )
 	}
     }
 #endif /* HAVE_ZLIB */
+
+    /* Turn off reporting if server doesn't support it */
+    if ( check_capability( "REPO", capa ) == 0 ) {
+	report = 0;
+    }
 
     acav = acav_alloc( );
 
@@ -716,10 +722,12 @@ filechecklist:
     }
 
     if ( network ) {
-	if ( report_event( sn, "lapply",
-                "Changes applied successfully" ) != 0 ) {
-            fprintf( stderr, "warning: could not report event\n" );
-        }
+	if ( report ) {
+	    if ( report_event( sn, "lapply",
+		    "Changes applied successfully" ) != 0 ) {
+		fprintf( stderr, "warning: could not report event\n" );
+	    }
+	}
 	if (( closesn( sn )) != 0 ) {
 	    fprintf( stderr, "cannot close sn\n" );
 	    exit( 2 );
@@ -739,12 +747,18 @@ error1:
 	if( verbose && zlib_level < 0 ) print_stats(sn);
 #endif /* HAVE_ZLIB */
 	if ( change ) {
-	    if ( report_event( sn, "lapply", "Error, changes made" ) != 0 ) {
-		fprintf( stderr, "warning: could not report event\n" );
+	    if ( report ) {
+		if ( report_event( sn, "lapply",
+			"Error, changes made" ) != 0 ) {
+		    fprintf( stderr, "warning: could not report event\n" );
+		}
 	    }
 	} else {
-	    if ( report_event( sn, "lapply", "Error, no changes made" ) != 0 ) {
-		fprintf( stderr, "warning: could not report event\n" );
+	    if ( report ) {
+		if ( report_event( sn, "lapply",
+			"Error, no changes made" ) != 0 ) {
+		    fprintf( stderr, "warning: could not report event\n" );
+		}
 	    }
 	}
 	closesn( sn );

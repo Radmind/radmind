@@ -188,10 +188,16 @@ main( int argc, char *argv[] )
     /* Enable compression */
     if ( zlib_level > 0 ) {
         if ( negotiate_compression( sn, capa ) != 0 ) {
+	    fprintf( stderr, "%s: server does not support reporting\n", host );
             exit( 2 );
         }
     }
 #endif /* HAVE_ZLIB */
+
+    /* Check to see if server supports reporting */
+    if ( check_capability( "REPO", capa ) == 0 ) {
+	exit( 2 );
+    }
 
     if ( report_event( sn, event, repodata ) != 0 ) {
 	exit( 2 );

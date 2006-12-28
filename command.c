@@ -1530,6 +1530,7 @@ cmdloop( int fd, struct sockaddr_in *sin )
 	    snet_writef( sn, " ZLIB" ); 
 	}
 #endif /* HAVE_ZLIB */
+	snet_writef( sn, " REPO" ); 
 	snet_writef( sn, "\r\n" ); 
     }
 

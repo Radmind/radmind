@@ -64,6 +64,7 @@ int			quiet = 0;
 int			update = 1;
 int			change = 0;
 int			case_sensitive = 1;
+int			report = 1;
 char			*base_kfile= _RADMIND_COMMANDFILE;
 char			*radmind_path = _RADMIND_PATH;
 char			*kdir= "";
@@ -727,6 +728,11 @@ main( int argc, char **argv )
     }
 #endif /* HAVE_ZLIB */
 
+    /* Turn off reporting if server doesn't support it */
+    if ( check_capability( "REPO", capa ) == 0 ) {
+	report = 0;
+    }
+
     /* Check/get correct base command file */
     switch( check( sn, "COMMAND", NULL )) { 
     case 0:
@@ -740,7 +746,7 @@ main( int argc, char **argv )
 	break;
 
     case 2:
-	report_event( sn, "ktcheck", "Error" );
+	if ( report ) report_event( sn, "ktcheck", "Error" );
 	exit( 2 );
     }
 
@@ -860,17 +866,23 @@ done:
 
     if ( change ) {
 	if ( update ) {
-	    if ( report_event( sn, "ktcheck", "Updates retrieved" ) != 0 ) {
-		fprintf( stderr, "warning: could not report event\n" );
+	    if ( report ) {
+		if ( report_event( sn, "ktcheck", "Updates retrieved" ) != 0 ) {
+		    fprintf( stderr, "warning: could not report event\n" );
+		}
 	    }
 	} else {
-	    if ( report_event( sn, "ktcheck", "Updates available" ) != 0 ) {
-		fprintf( stderr, "warning: could not report event\n" );
+	    if ( report ) {
+		if ( report_event( sn, "ktcheck", "Updates available" ) != 0 ) {
+		    fprintf( stderr, "warning: could not report event\n" );
+		}
 	    }
 	}
     } else {
-	if ( report_event( sn, "ktcheck", "No updates needed" ) != 0 ) {
-	    fprintf( stderr, "warning: could not report event\n" );
+	if ( report ) {
+	    if ( report_event( sn, "ktcheck", "No updates needed" ) != 0 ) {
+		fprintf( stderr, "warning: could not report event\n" );
+	    }
 	}
     }
 
@@ -949,7 +961,7 @@ read_kfile( char * kfile )
 		}
 		break;
 	    case 2:
-		report_event( sn, "ktcheck", "Error" );
+		if ( report ) report_event( sn, "ktcheck", "Error" );
 		goto error;
 	    }
 	    break;
@@ -976,7 +988,7 @@ read_kfile( char * kfile )
 		}
 		break;
 	    case 2:
-		report_event( sn, "ktcheck", "Error" );
+		if ( report ) report_event( sn, "ktcheck", "Error" );
 		exit( 2 );
 	    }
 	    break;
@@ -997,7 +1009,7 @@ done:
 	return( -1 );
     }
     if ( !update && change ) {
-	report_event( sn, "ktcheck", "Updates available" );
+	if ( report ) report_event( sn, "ktcheck", "Updates available" );
 	exit( 1 );
     }
     return( 0 );
