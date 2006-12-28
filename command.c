@@ -1524,7 +1524,13 @@ cmdloop( int fd, struct sockaddr_in *sin )
     snet_writef( sn, "200%sRAP 1 %s %s radmind access protocol\r\n",
 	rap_extensions ? "-" : " ", hostname, version );
     if ( rap_extensions ) {
-	snet_writef( sn, "200 CAPA ZLIB\r\n" ); 
+	snet_writef( sn, "200 CAPA" ); 
+#ifdef HAVE_ZLIB
+	if ( max_zlib_level > 0 ) {
+	    snet_writef( sn, " ZLIB\r\n" ); 
+	}
+#endif /* HAVE_ZLIB */
+	snet_writef( sn, "\r\n" ); 
     }
 
     /*
