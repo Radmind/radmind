@@ -207,7 +207,6 @@ get_capabilities( SNET *sn )
     int
 negotiate_compression( SNET *sn, char **capa )
 {
-    char         	**p;
     char          	*name = NULL;
     char          	*line;
     int            	type = 0;
@@ -217,13 +216,12 @@ negotiate_compression( SNET *sn, char **capa )
     /* Place compression algorithms in descending order of desirability */
     if ( zlib_level ) { 
 	/* walk through capabilities looking for "ZLIB" */
-	for( p = capa; *p; p++ ) {
-	    if( !strncasecmp( "ZLIB", *p, MIN( 4, strlen( *p )))) {
-		name = "ZLIB";
-		type = SNET_ZLIB;
-		level = zlib_level;
-	    }
+	if ( check_capability( "ZLIB", capa ) == 1 ) {
+	    name = "ZLIB";
+	    type = SNET_ZLIB;
+	    level = zlib_level;
 	}
+
 	if ( level == 0 ) {
 	    fprintf( stderr, "compression capability mismatch, "
 		"compression disabled\n" );
@@ -293,3 +291,24 @@ print_stats( SNET *sn )
     return( 0 );
 }
 #endif /* HAVE_ZLIB */
+
+/*
+ * check_capabilities: check to see if type is a listed capability
+ *
+ * return codes:
+ *      0:      type not in capability list
+ *      1:      type in capability list
+ */
+    int
+check_capability( char *type, char **capa )
+{
+    char **p;
+
+    /* walk through capabilities looking for "REPO" */
+    for ( p = capa; *p; p++ ) {
+        if ( !strncasecmp( type, *p, MIN( 4, strlen( *p )))) {
+            return( 1 );
+        }   
+    }
+    return( 0 );
+} 
