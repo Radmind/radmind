@@ -94,7 +94,7 @@ cleanup() {
 cleanup_and_exit() {
     cleanup
     exit 1
-fi
+}
 
 dopreapply() {
     if [ -d ${PREAPPLY} ]; then
