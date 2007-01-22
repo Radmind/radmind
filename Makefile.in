@@ -224,7 +224,7 @@ lsort: ${LSORT_OBJ}
 FRC :
 
 libsnet/libsnet.la : FRC
-	cd libsnet; ${MAKE} ${MFLAGS} CC=${CC}
+	cd libsnet; ${MAKE}
 
 VERSION=$(shell date +%Y%m%d)
 DISTDIR=../radmind-${VERSION}
@@ -352,7 +352,7 @@ package	: all man info rash
 	   -d ${PKGSRCDIR}/tmp/OS_X/Description.plist
 
 clean :
-	(cd libsnet; ${MAKE} ${MAKEFLAGS} clean)
+	(cd libsnet; ${MAKE} clean)
 	rm -f *.o a.out core
 	rm -f ${TARGETS}
 	rm -rf tmp
