@@ -813,7 +813,8 @@ read_kfile( char *kfile, int location )
 	linenum++;
 	length = strlen( line );
 	if ( line[ length - 1 ] != '\n' ) {
-	    fprintf( stderr, "command: line %d: line too long\n", linenum );
+	    fprintf( stderr, "command file %s: line %d: line too long\n",
+		kfile, linenum );
 	    return( -1 );
 	}
 
@@ -823,8 +824,9 @@ read_kfile( char *kfile, int location )
 	}
 
 	if ( ac != 2 ) {
-	    fprintf( stderr, "command: line %d: expected 2 arguments, got %d\n",
-		    linenum, ac );
+	    fprintf( stderr,
+		"command file %s: line %d: expected 2 arguments, got %d\n",
+		kfile, linenum, ac );
 	    return( -1 );
 	} 
 
@@ -832,10 +834,10 @@ read_kfile( char *kfile, int location )
 	case K_CLIENT:
 	    if ( snprintf( fullpath, MAXPATHLEN, "%s%s", kdir,
 		    av[ 1 ] ) >= MAXPATHLEN ) {
-		fprintf( stderr, "command: line %d: path too long\n",
-			linenum );
-		fprintf( stderr, "command: line %d: %s%s\n",
-			linenum, kdir, av[ 1 ] );
+		fprintf( stderr, "comand file %s: line %d: path too long\n",
+			kfile, linenum );
+		fprintf( stderr, "command file %s: line %d: %s%s\n",
+			kfile, linenum, kdir, av[ 1 ] );
 		return( -1 );
 	    }
 	    break;
@@ -848,10 +850,10 @@ read_kfile( char *kfile, int location )
 	    }
 	    if ( snprintf( fullpath, MAXPATHLEN, "%s/%s/%s", _RADMIND_PATH,
 			subpath, av[ 1 ] ) >= MAXPATHLEN ) {
-		fprintf( stderr, "command: line %d: path too long\n",
-			linenum );
-		fprintf( stderr, "command: line %d: %s%s\n",
-			linenum, kdir, av[ 1 ] );
+		fprintf( stderr, "command file %s: line %d: path too long\n",
+			kfile, linenum );
+		fprintf( stderr, "command file %s: line %d: %s%s\n",
+			kfile, linenum, kdir, av[ 1 ] );
 		return( -1 );
 	    }
 	    break;
@@ -865,7 +867,7 @@ read_kfile( char *kfile, int location )
 	case 'k':				/* command file */
 	    if ( list_check( kfile_list, fullpath )) {
 		fprintf( stderr,
-		    "%s: line %d: command file loop: %s already included\n",
+		    "command file %s: line %d: command file loop: %s already included\n",
 		    kfile, linenum, av[ 1 ] );
 		return( -1 );
 	    }
@@ -902,8 +904,8 @@ read_kfile( char *kfile, int location )
 	    continue;
 
 	default:
-	    fprintf( stderr, "command: line %d: '%s' invalid\n",
-		    linenum, av[ 0 ] );
+	    fprintf( stderr, "command file %s: line %d: '%s' invalid\n",
+		    kfile, linenum, av[ 0 ] );
 	    return( -1 );
 	}
     }
