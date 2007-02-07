@@ -98,7 +98,7 @@ cleanup_and_exit() {
 
 dopreapply() {
     if [ -d ${PREAPPLY} ]; then
-	SCRIPTS=`find ${PREAPPLY} -perm +u+x \! -type d | sort`
+	SCRIPTS=`find ${PREAPPLY} -perm -u+x \! -type d | sort`
 	if [ "${SCRIPTS}" ]; then
 	    for script in ${SCRIPTS}; do
 		${script} "$1"
@@ -109,7 +109,7 @@ dopreapply() {
 
 dopostapply() {
     if [ -d ${POSTAPPLY} ]; then
-	SCRIPTS=`find ${POSTAPPLY} -perm +u+x \! -type d | sort`
+	SCRIPTS=`find ${POSTAPPLY} -perm -u+x \! -type d | sort`
 	if [ "${SCRIPTS}" ]; then
 	    for script in ${SCRIPTS}; do
 		${script} "$1"
