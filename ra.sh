@@ -505,6 +505,7 @@ auto)
 		cleanup
 		exit 1
 	    fi
+	    dopreapply ${FTMP}
 	    if [ -s ${FTMP} ]; then
 		lapply -w ${TLSLEVEL} ${CASE} ${PROGRESS} -h ${SERVER} \
 			-q ${CHECKSUM} ${FTMP} 2>&1 > ${LTMP}
@@ -512,6 +513,7 @@ auto)
 		0)
 		    echo Auto update: `hostname`
 		    cat ${FTMP}
+		    dopostapply ${FTMP}
 		    cleanup
 		    break
 		    ;;
