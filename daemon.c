@@ -57,7 +57,7 @@ int		checkuser = 0;
 int		connections = 0;
 int             child_signal = 0;
 int		maxconnections = _RADMIND_MAXCONNECTIONS; /* 0 = no limit */
-int		rap_extensions = 0;
+int		rap_extensions = 1;			/* 1 for REPO */
 char		*radmind_path = _RADMIND_PATH;
 SSL_CTX         *ctx = NULL;
 
