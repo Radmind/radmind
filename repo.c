@@ -45,7 +45,7 @@ main( int argc, char *argv[] )
 {
     SNET		*sn;
     int			c, port = htons( 6662 );
-    int			i = 0, err = 0, len;
+    int			i = 1, err = 0, len;
     int			authlevel = _RADMIND_AUTHLEVEL;
     int			use_randfile = 0;
     extern int		optind;
