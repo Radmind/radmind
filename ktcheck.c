@@ -258,7 +258,11 @@ getstat( SNET *sn, char *description, char *stats )
     }
     if ( *line != '2' ) {
 	fprintf( stderr, "%s\n",  line );
-	return( -1 );
+	if ( *line == '5' ) {
+	    exit( 2 );
+	} else {
+	    return( -1 );
+	}
     }
 
     tv = timeout;
