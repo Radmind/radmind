@@ -1339,9 +1339,9 @@ read_kfile( SNET *sn, char *kfile )
     }
 
     if (( f = fopen( path, "r" )) == NULL ) {
+	syslog( LOG_ERR, "fopen: %s: %m", path );
 	snet_writef( sn,
 	    "%d Service not available, closing transmission channel\r\n", 421 );
-	syslog( LOG_ERR, "fopen: %s: %m", path );
 	return( -1 );
     }
 
