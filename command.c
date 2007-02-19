@@ -613,8 +613,8 @@ f_stat( SNET *sn, int ac, char *av[] )
 	exit( 1 );
     }
     if ( do_cksum( path, cksum_b64 ) < 0 ) {
-	snet_writef( sn, "%d Checksum Error: %s: %m\r\n", 500, path );
 	syslog( LOG_ERR, "do_cksum: %s: %m", path );
+	snet_writef( sn, "%d Checksum Error: %s: %m\r\n", 500, path );
 	return( 1 );
     }
 
@@ -1128,33 +1128,33 @@ f_login( SNET *sn, int ac, char **av )
 
     if (( retval =  pam_start( "radmind", user, &pam_conv,
 	    &pamh )) != PAM_SUCCESS ) {
-        snet_writef( sn, "%d Authentication Failed\r\n", 535 );
         syslog( LOG_ERR, "f_login: pam_start: %s\n",
 	    pam_strerror( pamh, retval ));
+        snet_writef( sn, "%d Authentication Failed\r\n", 535 );
 	return( 1 );
     }
 
     /* is user really user? */
     if (( retval =  pam_authenticate( pamh, PAM_SILENT )) != PAM_SUCCESS ) {
-        snet_writef( sn, "%d Authentication Failed\r\n", 535 );
         syslog( LOG_ERR, "f_login: pam_authenticate: %s\n",
 	    pam_strerror( pamh, retval ));
+        snet_writef( sn, "%d Authentication Failed\r\n", 535 );
 	return( 1 );
     }
     free( password );
 
     /* permitted access? */
     if (( retval = pam_acct_mgmt( pamh, 0 )) != PAM_SUCCESS ) {
-        snet_writef( sn, "%d Authentication Failed\r\n", 535 );
         syslog( LOG_ERR, "f_login: pam_acct_mgmt: %s\n",
 	    pam_strerror( pamh, retval ));
+        snet_writef( sn, "%d Authentication Failed\r\n", 535 );
 	return( 1 );
     }
 
     if (( retval = pam_end( pamh, retval )) != PAM_SUCCESS ) {
-        snet_writef( sn, "%d Authentication Failed\r\n", 535 );
         syslog( LOG_ERR, "f_login: pam_end: %s\n",
 	    pam_strerror( pamh, retval ));
+        snet_writef( sn, "%d Authentication Failed\r\n", 535 );
 	return( 1 );
     }
     syslog( LOG_INFO, "%s: successfully logged in\n", user );
@@ -1325,16 +1325,16 @@ read_kfile( SNET *sn, char *kfile )
     FILE	*f;
 
     if ( snprintf( path, MAXPATHLEN, "command/%s", kfile ) >= MAXPATHLEN ) {
+	syslog( LOG_ERR, "read_kfile: command/%s: path too long", kfile );
 	snet_writef( sn,
 	    "%d Service not available, closing transmission channel\r\n", 421 );
-	syslog( LOG_ERR, "read_kfile: command/%s: path too long", kfile );
 	return( -1 );
     }
 
     if (( acav = acav_alloc( )) == NULL ) {
+	syslog( LOG_ERR, "acav_alloc: %m" );
 	snet_writef( sn,
 	    "%d Service not available, closing transmission channel\r\n", 421 );
-	syslog( LOG_ERR, "acav_alloc: %m" );
 	return( -1 );
     }
 
@@ -1355,11 +1355,11 @@ read_kfile( SNET *sn, char *kfile )
 	}
 
 	if ( ac != 2 ) {
+	    syslog( LOG_ERR, "%s: line %d: invalid number of arguments",
+		kfile, linenum );
 	    snet_writef( sn,
 		"%d Service not available, closing transmission channel\r\n",
 		421 );
-	    syslog( LOG_ERR, "%s: line %d: invalid number of arguments",
-		kfile, linenum );
 	    goto error;
 	}
 
@@ -1367,9 +1367,9 @@ read_kfile( SNET *sn, char *kfile )
 	case 'k':
 	    if ( !list_check( access_list, av[ 1 ] )) {
 		if ( list_insert( access_list, av[ 1 ] ) != 0 ) {
+		    syslog( LOG_ERR, "list_insert: %m" );
 		    snet_writef( sn,
 	"%d Service not available, closing transmission channel\r\n", 421 );
-			syslog( LOG_ERR, "list_insert: %m" );
 		    goto error;
 		}
 		if ( read_kfile( sn, av[ 1 ] ) != 0 ) {
@@ -1382,9 +1382,9 @@ read_kfile( SNET *sn, char *kfile )
 	case 'n':
 	    if ( !list_check( access_list, av[ 1 ] )) {
 		if ( list_insert( access_list, av[ 1 ] ) != 0 ) {
+		    syslog( LOG_ERR, "list_insert: %m" );
 		    snet_writef( sn,
 	"%d Service not available, closing transmission channel\r\n", 421 );
-			syslog( LOG_ERR, "list_insert: %m" );
 		    goto error;
 		}
 	    }
@@ -1394,35 +1394,35 @@ read_kfile( SNET *sn, char *kfile )
 	    break;
 
 	default:
+	    syslog( LOG_ERR, "%s: line %d: %c: unknown file type", kfile,
+		linenum, *av[ 0 ] );
 	    snet_writef( sn,
 		"%d Service not available, closing transmission channel\r\n",
 		421 );
-	    syslog( LOG_ERR, "%s: line %d: %c: unknown file type", kfile,
-		linenum, *av[ 0 ] );
 	    goto error;
 
 	}
 
 	if ( ferror( f )) {
+	    syslog( LOG_ERR, "fgets: %m" );
 	    snet_writef( sn,
 		"%d Service not available, closing transmission channel\r\n",
 		421 );
-	    syslog( LOG_ERR, "fgets: %m" );
 	    goto error;
 	}
     }
 
     if ( fclose( f ) != 0 ) {
+	syslog( LOG_ERR, "fclose: %m" );
 	snet_writef( sn,
 	    "%d Service not available, closing transmission channel\r\n", 421 );
-	syslog( LOG_ERR, "fclose: %m" );
 	goto error;
     }
 
     if ( acav_free( acav ) != 0 ) {
+	syslog( LOG_ERR, "acav_free: %m" );
 	snet_writef( sn,
 	    "%d Service not available, closing transmission channel\r\n", 421 );
-	syslog( LOG_ERR, "acav_free: %m" );
 	return( -1 );
     }
 
@@ -1485,26 +1485,26 @@ cmdloop( int fd, struct sockaddr_in *sin )
 
     if ( maxconnections != 0 ) {
 	if ( connections > maxconnections ) {
-	    snet_writef( sn, "%d Server busy\r\n", 420 );
 	    syslog( LOG_INFO, "%s: connection refused: server busy\r\n",
 		    remote_host );
+	    snet_writef( sn, "%d Server busy\r\n", 420 );
 	    exit( 1 );
 	}
     }
 
     if (( access_list = list_new( )) == NULL ) {
+	syslog( LOG_ERR, "new_list: %m" );
 	snet_writef( sn,
 	    "%d Service not available, closing transmission channel\r\n", 421 );
-	syslog( LOG_ERR, "new_list: %m" );
 	return( -1 );
     }
     
     if ( authlevel == 0 ) {
 	/* lookup proper command file based on the hostname, IP or CN */
 	if ( command_k( "config" ) < 0 ) {
-	    snet_writef( sn, "%d No access for %s\r\n", 500, remote_host );
 	    syslog( LOG_INFO, "%s: Access denied: Not in config file",
-		    remote_host );
+		remote_host );
+	    snet_writef( sn, "%d No access for %s\r\n", 500, remote_host );
 	    exit( 1 );
 	} else {
 	    if ( read_kfile( sn, command_file ) != 0 ) {
