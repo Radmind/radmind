@@ -133,7 +133,7 @@ main( int argc, char *argv[] )
 	fprintf( stderr, "[ -h host ] [ -p port ] " );
 	fprintf( stderr, "[ -w auth-level ] [ -x ca-pem-file ] " );
 	fprintf( stderr, "[ -y cert-pem-file ] [ -z key-pem-file ] " );
-	fprintf( stderr, "[ -Z compression-level ] [ event message ... ]\n" );
+	fprintf( stderr, "[ -Z compression-level ] [ message ... ]\n" );
 	exit( 1 );
     }
 
