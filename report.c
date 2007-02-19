@@ -67,6 +67,8 @@ report_event( SNET *sn, char *event, char *repodata )
 	return( 1 );
     }
 
+    if ( verbose ) printf( "<<< %s\n", line );
+
     return( 0 );
 }
 
