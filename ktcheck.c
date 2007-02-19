@@ -257,12 +257,8 @@ getstat( SNET *sn, char *description, char *stats )
 	return( -1 );
     }
     if ( *line != '2' ) {
-	fprintf( stderr, "%s\n",  line );
-	if ( *line == '5' ) {
-	    exit( 2 );
-	} else {
-	    return( -1 );
-	}
+	fprintf( stderr, "%s\n", line );
+	exit( 2 );
     }
 
     tv = timeout;
