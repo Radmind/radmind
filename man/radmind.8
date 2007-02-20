@@ -183,9 +183,17 @@ COMP
 start compression
 .TP 10
 REPO
-report a client status message. The daemon logs the message and some of the
-reporting client's attributes, including client name, client IP address,
-client CN, and the report event type. 
+report a client status message. The daemon logs the message in the following format:
+.sp
+.RS 
+report HOSTNAME IP CN - EVENT MESSAGE...
+.sp
+First the string "report", followed by the client's hostname and
+IP address.  If the client authenticates to the server with a certificate,
+its common name will be listed next.  If the client does not present a
+certificate, a '-' will be listed.
+Next, a '-' is printed as a placeholder for a future
+field.  Finally, the event and message are logged as reported by the client.
 .SH OPTIONS
 .TP 19
 .BI \-a\  bind-address
