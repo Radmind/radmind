@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Regents of The University of Michigan.
+ * Copyright (c) 2006, 2007 Regents of The University of Michigan.
  * All Rights Reserved. See COPYRIGHT.
  */
 

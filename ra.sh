@@ -1,5 +1,8 @@
 #!/bin/sh
 #
+# Copyright (c) 2004, 2007 Regents of The University of Michigan.
+# All Rights Reserved.  See COPYRIGHT.
+#
 # Radmind Assistant shell script (rash)
 # Basic client side functions include:
 #
