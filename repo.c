@@ -9,6 +9,7 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <netinet/in.h>
+#include <ctype.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <string.h>
@@ -45,7 +46,7 @@ main( int argc, char *argv[] )
 {
     SNET		*sn;
     int			c, port = htons( 6662 );
-    int			i = 1, err = 0, len;
+    int			i = 0, err = 0, len;
     int			authlevel = _RADMIND_AUTHLEVEL;
     int			use_randfile = 0;
     extern int		optind;
@@ -124,8 +125,21 @@ main( int argc, char *argv[] )
 	}
     }
 
+    /* Make sure event doesn't contain any white space */
     if ( event == NULL ) {
 	err++;
+    } else {
+	len = strlen( event );
+	if ( len == 0 ) {
+	    err++;
+	} else {
+	    for ( i = 0; i < len; i++ ) {
+		if ( isspace( event[ i ] )) {
+		    err++;
+		    break;
+		}
+	    }
+	}
     }
 
     if ( err || (( argc - optind ) < 0 )) {
@@ -156,6 +170,8 @@ main( int argc, char *argv[] )
 	}
 	strcpy( repodata, argv[ optind ] );
 
+	/* Skip first token in message */
+	i = 1;
 	for ( i += optind; i < argc; i++ ) {
 	    if (( strlen( repodata ) + strlen( argv[ i ] ) + 2 )
 			>= sizeof( repodata )) {
