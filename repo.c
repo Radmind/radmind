@@ -196,6 +196,7 @@ main( int argc, char *argv[] )
 
     /* Check to see if server supports reporting */
     if ( check_capability( "REPO", capa ) == 0 ) {
+	fprintf( stderr, "%s: server does not support reporting\n", host );
 	exit( 2 );
     }
 
