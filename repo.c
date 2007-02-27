@@ -83,7 +83,7 @@ main( int argc, char *argv[] )
 
 	case 'V':
 	    printf( "%s\n", version );
-	    break;
+	    exit( 0 );
 
 	case 'w':
 	    authlevel = atoi( optarg );
