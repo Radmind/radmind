@@ -497,7 +497,7 @@ main( int ac, char **av )
 		if ( WIFEXITED( status )) {
 		    if ( WEXITSTATUS( status )) {
 			if ( debug ) {
-			    printf( "child %d exited with %d", pid,
+			    printf( "child %d exited with %d\n", pid,
 				    WEXITSTATUS( status ));
 			} else {
 			    syslog( LOG_ERR, "child %d exited with %d", pid,
