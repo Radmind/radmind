@@ -66,6 +66,7 @@ AC_CHECK_LIB([pam], [pam_start],
     ] 
 )
 AC_CHECK_HEADER([dns_sd.h], [AC_DEFINE(HAVE_DNSSD)], [], [])
+AC_CHECK_LIB(dns_sd, DNSServiceRegister)
 
 CHECK_ZLIB
 
