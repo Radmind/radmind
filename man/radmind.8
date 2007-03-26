@@ -164,8 +164,8 @@ no command file is specified, the server returns the base
 command file as indicated in the config file.
 .TP 10
 STOR
-store a file or transcript.  If user authentication been
-turned on,
+store a file or transcript.  If user authentication is
+enabled,
 this command is only valid after the client sends a successful LOGI.
 .TP 10
 STAR
@@ -268,7 +268,7 @@ Server's private key, by default _RADMIND_TLS_CERT.
 .TP 19
 .BI \-Z\  max-compression-level
 Offer compression to clients.  If client requests compression, the server will
-compresses all outbound data using using the lower value of
+compress all outbound data using using the lower value of
 max_compression_level or compression level set by client.
 max-compression-level can be between 0 and 9:
 1 gives best speed, 9 gives best compression, 0 gives no compression at

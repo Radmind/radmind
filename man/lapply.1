@@ -1,7 +1,7 @@
 .TH lapply "1" "_RADMIND_BUILD_DATE" "RSUG" "User Commands"
 .SH NAME
 .B lapply 
-\- modify file system to match appliable-transcript 
+\- modify file system to match apply-able-transcript 
 .SH SYNOPSIS
 .B lapply
 .RB [ \-FiInrV ]
@@ -26,10 +26,10 @@
 ] [
 .BI \-Z\  compression-level
 ] {
-.I appliable-transcript
+.I apply-able-transcript
 }
 .SH DESCRIPTION
-lapply reads an appliable transcript line-by-line, modifying the file
+lapply reads an apply-able transcript line-by-line, modifying the file
 system to match the transcript. Transcript lines are applied in order
 unless they are directories marked for deletion.  In such cases,
 subsequent transcript lines are first applied until the file system object 
@@ -53,7 +53,7 @@ may prevent lapply from successfully completing.  Using the -F option,
 will remove all user defined flags.
 .sp
 If
-.I appliable-transcript
+.I apply-able-transcript
 is not given,
 .B lapply
 will use the standard input for reading.
@@ -81,14 +81,14 @@ specifies the radmind server, by default
 force output linebuffering.
 .TP 19
 .BI \-I
-be case insensitive when compairing paths.
+be case insensitive when comparing paths.
 .TP 19
 .B \-F
 remove all user defined flags for a file if they exist.
 .TP 19
 .B \-n
 no network connection will be made, causing only file system removals and
-updates to be applied.  auth-level is implicit set to 0.
+updates to be applied.  auth-level is implicitly set to 0.
 .TP 19
 .BI \-p\  port
 specifies the port of the radmind server, by default
