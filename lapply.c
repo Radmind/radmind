@@ -429,22 +429,22 @@ main( int argc, char **argv )
 		exit( 2 );
 	    }
         }
-    } else {
-	if ( !quiet ) printf( "No network connection\n" );
-    }
 
 #ifdef HAVE_ZLIB
-    /* Enable compression */
-    if ( zlib_level > 0 ) {
-	if ( negotiate_compression( sn, capa ) != 0 ) {
-		exit( 2 );
+	/* Enable compression */
+	if ( zlib_level > 0 ) {
+	    if ( negotiate_compression( sn, capa ) != 0 ) {
+		    exit( 2 );
+	    }
 	}
-    }
 #endif /* HAVE_ZLIB */
 
-    /* Turn off reporting if server doesn't support it */
-    if ( check_capability( "REPO", capa ) == 0 ) {
-	report = 0;
+	/* Turn off reporting if server doesn't support it */
+	if ( check_capability( "REPO", capa ) == 0 ) {
+	    report = 0;
+	}
+    } else {
+	if ( !quiet ) printf( "No network connection\n" );
     }
 
     acav = acav_alloc( );
@@ -747,14 +747,14 @@ error1:
 	if( verbose && zlib_level < 0 ) print_stats(sn);
 #endif /* HAVE_ZLIB */
 	if ( change ) {
-	    if ( report ) {
+	    if ( network && report ) {
 		if ( report_event( sn, "lapply",
 			"Error, changes made" ) != 0 ) {
 		    fprintf( stderr, "warning: could not report event\n" );
 		}
 	    }
 	} else {
-	    if ( report ) {
+	    if ( network && report ) {
 		if ( report_event( sn, "lapply",
 			"Error, no changes made" ) != 0 ) {
 		    fprintf( stderr, "warning: could not report event\n" );
