@@ -23,6 +23,7 @@ POSTAPPLYDIR=${RADMINDDIR}/postapply
 TLS_CA=${CERTDIR}/ca.pem
 TLS_CERT=${CERTDIR}/cert.pem
 GNU_DIFF=@diffpath@
+ECHO=@echopath@
 MKTEMP=@mktemppath@
 RADMIND_HOST=@server@
 RADMIND_AUTHLEVEL=@authlevel@
@@ -252,6 +253,7 @@ rash : FRC
 	    -e 's@_RADMIND_MAIL_DOMAIN@${RADMIND_MAIL_DOMAIN}@g' \
 	    -e 's@_RADMIND_COMMANDFILE@${COMMANDFILE}@g' \
 	    -e 's@_RADMIND_VERSION@$(shell cat VERSION)@g' \
+	    -e 's@_RADMIND_ECHO_PATH@${ECHOPATH}@g' \
 	    ${srcdir}/ra.sh > tmp/ra.sh; 
 
 man : FRC

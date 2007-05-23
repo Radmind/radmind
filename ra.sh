@@ -34,6 +34,7 @@ FSDIFFROOT="."
 FLAG="_RADMIND_DIR/client/.RadmindRunning"
 CHECKEDOUT="_RADMIND_DIR/client/.CheckedOut"
 MAILDOMAIN="_RADMIND_MAIL_DOMAIN"
+ECHO="_RADMIND_ECHO_PATH"
 VERSION=_RADMIND_VERSION
 
 PREAPPLY="_RADMIND_PREAPPLY"
@@ -48,7 +49,7 @@ RASHTMP="${TMPDIR}/.ra.$$"
 if [ -f "${MKTEMP}"  ]; then
     RASHTMP=`${MKTEMP} -qd "${TMPDIR}/.ra.$$.XXXXXX"`
     if [ $? -ne 0 ]; then
-	echo "mktemp failed"
+	$ECHO "mktemp failed"
 	exit 1
     fi
 fi
@@ -64,7 +65,7 @@ if [ ! -f "${DEFAULTS}" ]; then
 fi
 
 Yn() {
-    echo -n "$*" "[Yn] "
+    $ECHO -n "$*" "[Yn] "
     read ans
     if [ $? -ne 0 ]; then
 	return 0
@@ -84,7 +85,7 @@ checkedout() {
 }
 
 usage() {
-    echo "Usage:	$0 [ -ctV ] [ -h server ] [ -w authlevel ] { trip | update | create | auto | force | checkout | checkin } [ /path/or/file ]" >&2
+    $ECHO "Usage:	$0 [ -ctV ] [ -h server ] [ -w authlevel ] { trip | update | create | auto | force | checkout | checkin } [ /path/or/file ]" >&2
     exit 1
 }
 
@@ -129,7 +130,7 @@ update() {
 
     checkedout
     if [ $? -eq 1 ]; then
-	echo "Checked out by ${OWNER}"
+	$ECHO "Checked out by ${OWNER}"
 	if [ x"$opt" = x"interactive" -a x"$USER" = x"$OWNER" ]; then
 	    Yn "Continue with update?"
 	    if [ $? -eq 0 ]; then
@@ -160,7 +161,7 @@ update() {
 		ktcheck -w ${TLSLEVEL} -h ${SERVER} -c sha1
 		RC=$?
 		if [ $RC -ne 1 ]; then
-		    echo Nothing to update
+		    $ECHO Nothing to update
 		    cleanup
 		    exit $RC
 		fi
@@ -181,7 +182,7 @@ update() {
     fi
 
     if [ ! -s ${FTMP} ]; then
-	echo Nothing to apply.
+	$ECHO Nothing to apply.
 	cleanup
 	exit 0
     fi
@@ -205,9 +206,9 @@ update() {
     if [ x"${opt}" = x"interactive" ]; then
 	while [ 1 ]; do
 	    if [ x"${can_edit}" = x"yes" ]; then
-		echo -n "(e)dit difference transcript, "
+		$ECHO -n "(e)dit difference transcript, "
 	    fi
-	    echo -n "(a)pply or (c)ancel? "
+	    $ECHO -n "(a)pply or (c)ancel? "
 
 	    read ans
 	    if [ $? -ne 0 ]; then
@@ -220,8 +221,8 @@ update() {
 		;;
 
 	    c|C)
-		echo
-		echo Update cancelled
+		$ECHO
+		$ECHO Update cancelled
 		cleanup
 		exit 0
 		;;
@@ -244,13 +245,13 @@ update() {
     0)	;;
 
     *)  if [ x"$opt" = x"hook" ]; then
-	    echo -n "Applying changes failed, trying again "
-	    echo "in ${RETRY} seconds..."
+	    $ECHO -n "Applying changes failed, trying again "
+	    $ECHO "in ${RETRY} seconds..."
 	    sleep ${RETRY}
 	    RETRY=${RETRY}0
 
-	    echo %OPENDRAWER
-	    echo %BEGINPOLE
+	    $ECHO %OPENDRAWER
+	    $ECHO %BEGINPOLE
     	else 
 	    cleanup
 	fi
@@ -308,7 +309,7 @@ while getopts %ch:Ilqr:tU:Vw: opt; do
 	USERNAME="$OPTARG"
     	;;
 
-    V)	echo ${VERSION}
+    V)	$ECHO ${VERSION}
 	exit 0
 	;;
 
@@ -332,7 +333,7 @@ cd /
 if [ ! -d "${RASHTMP}" ]; then
     mkdir -m 700 "${RASHTMP}"
     if [ $? -ne 0 ]; then
-        echo "Cannot create temporary directory $RASHTMP" 
+        $ECHO "Cannot create temporary directory $RASHTMP" 
 	exit 1
     fi
 fi
@@ -343,13 +344,13 @@ trap cleanup_and_exit HUP INT PIPE QUIT TERM TRAP XCPU XFSZ
 case "$1" in
 checkout)
     if [ ${USER} = root ]; then
-	echo -n "Username? [root] "
+	$ECHO -n "Username? [root] "
 	read ans
 	USER=${ans:-root}
     fi
     checkedout
     if [ $? -eq 1 ]; then
-	echo "Already checked out by ${OWNER}"
+	$ECHO "Already checked out by ${OWNER}"
 	if [ x${OWNER} = x${USER} ]; then
 	    exit 1
 	fi
@@ -357,24 +358,24 @@ checkout)
 	if [ $? -eq 0 ]; then
 	    exit 1
 	fi
-	echo ${USER} has removed your checkout on `hostname` | mail -s `hostname`": Checkout broken" ${OWNER}@${MAILDOMAIN:-`hostname`}
+	$ECHO ${USER} has removed your checkout on `hostname` | mail -s `hostname`": Checkout broken" ${OWNER}@${MAILDOMAIN:-`hostname`}
     fi
-    echo ${USER} > ${CHECKEDOUT}
+    $ECHO ${USER} > ${CHECKEDOUT}
     ;;
 
 checkin)
     checkedout
     if [ $? -eq 0 ]; then
-	echo "Not checked out"
+	$ECHO "Not checked out"
 	exit 1
     fi
     if [ ${USER} = root ]; then
-	echo -n "Username? [root] "
+	$ECHO -n "Username? [root] "
 	read ans
 	USER=${ans:-root}
     fi
     if [ x${OWNER} != x${USER} ]; then
-	echo "Currently checked out by ${OWNER}"
+	$ECHO "Currently checked out by ${OWNER}"
 	exit 1
     fi
     rm ${CHECKEDOUT}
@@ -396,7 +397,7 @@ create)
 	    ktcheck -w ${TLSLEVEL} -h ${SERVER} -c sha1
 	    RC=$?
 	    if [ $RC -ne 1 ]; then
-		echo Nothing to update
+		$ECHO Nothing to update
 		cleanup
 		exit $RC
 	    fi
@@ -407,7 +408,7 @@ create)
    	exit $?
     	;;
     esac
-    echo -n "Enter new transcript name [`hostname | cut -d. -f1`-`date +%Y%m%d`-${USER}.T]: "
+    $ECHO -n "Enter new transcript name [`hostname | cut -d. -f1`-`date +%Y%m%d`-${USER}.T]: "
     read TNAME
     if [ -z "${TNAME}" ]; then
 	TNAME=`hostname | cut -d. -f1`-`date +%Y%m%d`-${USER}.T
@@ -419,7 +420,7 @@ create)
 	exit 1;
     fi
     if [ ! -s ${FTMP} ]; then
-	echo Nothing to create.
+	$ECHO Nothing to create.
 	cleanup
 	exit 1
     fi
@@ -431,7 +432,7 @@ create)
     if [ $? -eq 1 ]; then
 	if [ -n "${USERAUTH}" ]; then
 	    if [ -z "${USERNAME}" ]; then
-		echo -n "username: "
+		$ECHO -n "username: "
 		read USERNAME
 	    fi
 	    USERNAME="-U ${USERNAME}"
@@ -448,7 +449,7 @@ create)
 
 trip)
     if [ ! -f ${KFILE} ]; then
-	echo Command file missing, skipping tripwire.
+	$ECHO Command file missing, skipping tripwire.
 	cleanup
 	exit 1
     fi
@@ -458,7 +459,7 @@ trip)
     0)
 	;;
     1)
-	echo Command file and/or transcripts are out of date.
+	$ECHO Command file and/or transcripts are out of date.
 	;;
     *)
 	cleanup
@@ -472,7 +473,7 @@ trip)
 	exit 1
     fi
     if [ -s ${FTMP} ]; then
-	echo Trip failure: `hostname`
+	$ECHO Trip failure: `hostname`
 	cat ${FTMP}
 	cleanup
 	exit 0
@@ -482,17 +483,17 @@ trip)
 auto)
     checkedout
     if [ $? -eq 1 ]; then
-	echo "Checked out by ${OWNER}"
+	$ECHO "Checked out by ${OWNER}"
 	exit 1
     fi
     fsdiff -C ${CASE} ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
     if [ $? -ne 0 ]; then
-	echo Auto failure: `hostname` fsdiff
+	$ECHO Auto failure: `hostname` fsdiff
 	cleanup
 	exit 1
     fi
     if [ -s ${FTMP} ]; then
-	echo Auto failure: `hostname` trip
+	$ECHO Auto failure: `hostname` trip
 	cat ${FTMP}
 	cleanup
 	exit 1
@@ -504,7 +505,7 @@ auto)
 	while true; do
 	    fsdiff -A ${CASE} ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
 	    if [ $? -ne 0 ]; then
-		echo Auto failure: `hostname`: fsdiff
+		$ECHO Auto failure: `hostname`: fsdiff
 		cleanup
 		exit 1
 	    fi
@@ -514,7 +515,7 @@ auto)
 			-q ${CHECKSUM} ${FTMP} 2>&1 > ${LTMP}
 		case $? in
 		0)
-		    echo Auto update: `hostname`
+		    $ECHO Auto update: `hostname`
 		    cat ${FTMP}
 		    dopostapply ${FTMP}
 		    cleanup
@@ -523,12 +524,12 @@ auto)
 
 		*)
 		    if [ ${RETRY} -gt 10000 ]; then
-			echo Auto failure: `hostname`
+			$ECHO Auto failure: `hostname`
 			cat ${LTMP}
 			cleanup
 			exit 1
 		    fi
-		    echo Auto failure: `hostname` retrying
+		    $ECHO Auto failure: `hostname` retrying
 		    cat ${LTMP}
 		    sleep ${RETRY}
 		    RETRY=${RETRY}0
@@ -536,7 +537,7 @@ auto)
 		    ;;
 		esac
 	    else
-		echo Nothing to apply.
+		$ECHO Nothing to apply.
 		cleanup
 		exit 0
 	    fi
@@ -547,7 +548,7 @@ auto)
 force)
     checkedout
     if [ $? -eq 1 ]; then
-	echo "Checked out by ${OWNER}"
+	$ECHO "Checked out by ${OWNER}"
 	exit 1
     fi
     ktcheck -w ${TLSLEVEL} -h ${SERVER} -c sha1
@@ -567,7 +568,7 @@ force)
     fi
 
     if [ ! -s ${FTMP} ]; then
-	echo Nothing to apply.
+	$ECHO Nothing to apply.
 	cleanup
 	exit 0
     fi

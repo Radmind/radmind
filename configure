@@ -314,7 +314,7 @@ ac_includes_default="\
 #endif"
 
 ac_subdirs_all="$ac_subdirs_all libsnet"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS diffpath server authlevel radminddir maxconnections maildomain build_date build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os AWK CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA mktemppath CPP EGREP OPTOPTS subdirs LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS diffpath echopath server authlevel radminddir maxconnections maildomain build_date build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os AWK CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA mktemppath CPP EGREP OPTOPTS subdirs LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -759,6 +759,10 @@ ac_env_diffpath_set=${diffpath+set}
 ac_env_diffpath_value=$diffpath
 ac_cv_env_diffpath_set=${diffpath+set}
 ac_cv_env_diffpath_value=$diffpath
+ac_env_echopath_set=${echopath+set}
+ac_env_echopath_value=$echopath
+ac_cv_env_echopath_set=${echopath+set}
+ac_cv_env_echopath_value=$echopath
 ac_env_CC_set=${CC+set}
 ac_env_CC_value=$CC
 ac_cv_env_CC_set=${CC+set}
@@ -876,6 +880,7 @@ Optional Packages:
 
 Some influential environment variables:
   diffpath    path to diff utility
+  echopath    path to echo utility
   CC          C compiler command
   CFLAGS      C compiler flags
   LDFLAGS     linker flags, e.g. -L<lib dir> if you have libraries in a
@@ -1342,6 +1347,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 # Set up variables
+
 
 
 
@@ -2615,6 +2621,45 @@ diffpath=$ac_cv_path_diffpath
 if test -n "$diffpath"; then
   echo "$as_me:$LINENO: result: $diffpath" >&5
 echo "${ECHO_T}$diffpath" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+# Extract the first word of "echo", so it can be a program name with args.
+set dummy echo; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_echopath+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $echopath in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_echopath="$echopath" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_echopath="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  ;;
+esac
+fi
+echopath=$ac_cv_path_echopath
+
+if test -n "$echopath"; then
+  echo "$as_me:$LINENO: result: $echopath" >&5
+echo "${ECHO_T}$echopath" >&6
 else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
@@ -6023,6 +6068,7 @@ s,@ECHO_N@,$ECHO_N,;t t
 s,@ECHO_T@,$ECHO_T,;t t
 s,@LIBS@,$LIBS,;t t
 s,@diffpath@,$diffpath,;t t
+s,@echopath@,$echopath,;t t
 s,@server@,$server,;t t
 s,@authlevel@,$authlevel,;t t
 s,@radminddir@,$radminddir,;t t

@@ -8,6 +8,7 @@ AC_CONFIG_SRCDIR([applefile.c])
 
 # Set up variables
 AC_ARG_VAR(diffpath, [path to diff utility])
+AC_ARG_VAR(echopath, [path to echo utility])
 
 AC_ARG_WITH(server, AC_HELP_STRING([--with-server=SERVER], [default radmind server]), server="$withval", server="radmind" )
 AC_SUBST(server) 
@@ -37,6 +38,7 @@ AC_PROG_AWK
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_PATH_PROG(diffpath, diff)
+AC_PATH_PROG(echopath, echo)
 AC_PATH_PROG(mktemppath, mktemp)
 AC_SYS_LARGEFILE
 
