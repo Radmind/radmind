@@ -5,7 +5,7 @@
 .SH SYNOPSIS
 .B radmind
 [
-.B \-dBRrUV
+.B \-dBrUV
 ] [
 .BI \-a\  bind-address
 ] [
@@ -199,7 +199,9 @@ specifies the address on which the server should listen, e.g.
 (wildcard address).
 .TP 19
 .B \-B
-register daemon as a Bonjour service
+register daemon as a Bonjour service. Replaces deprecated
+.BR \-R
+option.
 .TP 19
 .BI \-b\  backlog
 Defines the maximum queue of pending connections to
@@ -229,10 +231,6 @@ Value must be greater than or equal to 0 with 0 indicating no limit.
 .BI \-p\  port 
 specifies the port of the radmind server, by default
 .BR 6662 .
-.TP 19
-.B \-R
-register daemon as a Bonjour service. Deprecated in favor of
-.BR \-B .
 .TP 19
 .B \-r
 use random seed file $RANDFILE if that environment variable is set,
