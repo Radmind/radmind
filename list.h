@@ -17,6 +17,8 @@ struct node
     struct node 	*n_prev;
 };
 
+#define list_size( list )   ((list)->l_count)
+
 struct list *	list_new( void );
 void		list_clear( struct list *list );
 void		list_free( struct list *list );
@@ -25,6 +27,7 @@ int 		list_insert( struct list *list, char *path );
 int 		list_insert_case( struct list *list, char *path );
 int 		list_insert_head( struct list *list, char *path );
 int 		list_insert_tail( struct list *list, char *path );
+int 		list_remove( struct list *list, char *path );
 void 		list_remove_head( struct list *list );
 void 		list_remove_tail( struct list *list );
 struct node *	list_pop_head( struct list *list );

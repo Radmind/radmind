@@ -70,16 +70,6 @@ list_print( struct list *list )
     struct node		*cur;
     u_int		i;
 
-    if ( list->l_head != NULL ) {
-	printf( "head -> %s\n", list->l_head->n_path );
-    } else {
-	printf( "head -> NULL\n" );
-    }
-    if ( list->l_tail != NULL ) {
-	printf( "tail -> %s\n", list->l_tail->n_path );
-    } else {
-	printf( "tail -> NULL\n" );
-    }
     printf( "count: %d\n", list->l_count );
     for ( cur = list->l_head, i = 1; cur != NULL; cur = cur->n_next, i++ ) {
 	printf( "%d: %s ( prev %s next %s )\n", i, cur->n_path,
@@ -163,6 +153,37 @@ list_insert_tail( struct list *list, char *path )
 
     list->l_count++;
     return( 0 );
+}
+
+    int
+list_remove( struct list *list, char *path )
+{
+    int			count = 0;
+    struct node		*cur;
+
+    for ( cur = list->l_head; cur != NULL; cur = cur->n_next ) {
+	if ( pathcmp( cur->n_path, path ) == 0 ) {
+
+	    if ( list->l_head == cur ) {
+		list_remove_head( list );
+		count++;
+		
+	    } else if ( list->l_tail == cur ) {
+		list_remove_tail( list );
+		count++;
+
+	    } else {
+		/* Remove item */
+		cur->n_prev->n_next = cur->n_next;
+		cur->n_next->n_prev = cur->n_prev;
+		free( cur );
+		list->l_count--;
+		count++;
+	    }
+	}
+    }
+
+    return( count );
 }
 
     void
