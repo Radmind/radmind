@@ -70,7 +70,7 @@ char			*radmind_path = _RADMIND_PATH;
 char			*kdir= "";
 const EVP_MD		*md;
 SSL_CTX  		*ctx;
-struct list		*special_list, *kfile_list, *kfile_seen;
+struct list		*special_list, *kfile_seen;
 
 extern struct timeval	timeout;
 extern char		*version, *checksumlist;
@@ -544,7 +544,6 @@ main( int argc, char **argv )
     char		path[ MAXPATHLEN ];
     char		tempfile[ MAXPATHLEN ];
     struct servent	*se;
-    struct node		*node;
     char	        **capa = NULL;		/* capabilities */
 
     while (( c = getopt( argc, argv, "Cc:D:h:iK:np:qrvVw:x:y:z:Z:" )) != EOF ) {
@@ -674,10 +673,6 @@ main( int argc, char **argv )
 	perror( "list_new" );
 	exit( 2 );
     }
-    if (( kfile_list = list_new( )) == NULL ) {
-	perror( "list_new" );
-	exit( 2 );
-    }
     if (( kfile_seen = list_new( )) == NULL ) {
 	perror( "list_new" );
 	exit( 2 );
@@ -754,16 +749,11 @@ main( int argc, char **argv )
 	exit( 2 );
     }
 
-    /* Parse any included command files */
-    while (( node = list_pop_head( kfile_list )) != NULL ) {
-	if ( read_kfile( node->n_path ) != 0 ) {
-	    exit( 2 );
-	}
-	free( node );
-
-	if ( !update && change ) {
-	    exit( 1 );
-	}
+    /* Exit here if there's already been a change to avoid processing
+     * the special transcript.
+     */
+    if ( !update && change ) {
+	exit( 1 );
     }
 
     if ( special_list->l_count > 0 ) {
@@ -902,7 +892,7 @@ done:
     int
 read_kfile( char * kfile )
 {
-    int		ac;
+    int		ac, minus = 0;
     char	**av;
     char        line[ MAXPATHLEN ];
     char	path[ MAXPATHLEN ];
@@ -928,6 +918,20 @@ read_kfile( char * kfile )
 	    continue;
 	}
 
+	/* Skip non-special minus lines */
+	if ( *av[ 0 ] == '-' ) {
+	    if ( *av[ 1 ] == 's' ) {
+		minus = 1;
+		av++;
+		ac--;
+	    } else {
+		continue;
+	    }
+	} else {
+	    /* Set incase previous line was a minus */
+	    minus = 0;
+	}
+
 	if ( ac != 2 ) {
 	    fprintf( stderr, "%s: %d: invalid command line\n",
 		kfile, linenum );
@@ -942,15 +946,15 @@ read_kfile( char * kfile )
 		goto error;
 	    }
 	    if ( !list_check( kfile_seen, path )) {
-		if ( list_insert_tail( kfile_list, path ) != 0 ) {
-		    perror( "list_insert_tail" );
-		    goto error;
-		}
 		if ( list_insert_tail( kfile_seen, path ) != 0 ) {
 		    perror( "list_insert_tail" );
 		    goto error;
 		}
+		if ( read_kfile( path ) != 0 ) {
+		    exit( 2 );
+		}
 	    }
+
 	    switch( check( sn, "COMMAND", av[ ac - 1] )) {
 	    case 0:
 		break;
@@ -968,10 +972,16 @@ read_kfile( char * kfile )
 
 	case 's':
 	    /* Added special file if it's not already in the list */
-	    if ( !list_check( special_list, av[ 1 ] )) {
-		if ( list_insert( special_list, av[ 1 ] ) != 0 ) {
-		    perror( "list_insert" );
-		    exit( 2 );
+	    if ( minus ) {
+		if ( list_check( special_list, av[ 1 ] )) {
+		    list_remove( special_list, av[ 1 ] );
+		}
+	    } else {
+		if ( !list_check( special_list, av[ 1 ] )) {
+		    if ( list_insert( special_list, av[ 1 ] ) != 0 ) {
+			perror( "list_insert" );
+			exit( 2 );
+		    }
 		}
 	    }
 	    continue;

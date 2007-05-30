@@ -48,8 +48,10 @@ struct pathinfo {
 
 struct transcript {
     struct transcript	*t_next;
+    struct transcript	*t_prev;
     struct pathinfo	t_pinfo;
     int 		t_type;
+    int			t_num;
     char		t_fullname[ MAXPATHLEN ];
     char		t_shortname[ MAXPATHLEN ];
     char		t_kfile[ MAXPATHLEN ];

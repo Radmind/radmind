@@ -28,12 +28,14 @@
 #include "list.h"
 
 int read_kfile( char *kfile, int location );
+static void t_new( int type, char *fullname, char *shortname, char *kfile );
+static void t_remove( int type, char *shortname );
+static void t_display( void );
 
 struct transcript		*tran_head = NULL;
 static struct transcript	*prev_tran = NULL;
 extern int			edit_path;
 extern int			case_sensitive;
-static int			foundspecial = 0;
 static char			*kdir;
 static struct list		*kfile_list;
 struct list			*special_list;
@@ -725,8 +727,68 @@ t_new( int type, char *fullname, char *shortname, char *kfile )
     }
 
     new->t_next = tran_head;
+    if ( tran_head != NULL ) {
+	tran_head->t_prev = new;
+	new->t_num = new->t_next->t_num + 1;
+    }
     tran_head = new;
 
+    return;
+}
+
+    static void
+t_remove( int type, char *shortname )
+{
+    struct transcript		*cur, *next = NULL;
+
+    cur = tran_head;
+    while ( cur->t_type != T_NULL ) {
+	next = cur->t_next;
+	if (( cur->t_type == type )
+		&& ( strcmp( cur->t_shortname, shortname ) == 0 )) {
+	    if ( cur == tran_head ) {
+		tran_head = cur->t_next;
+		free( cur );
+	    } else {
+		cur->t_prev->t_next = cur->t_next;
+		cur->t_next->t_prev = cur->t_prev;
+		free( cur );
+	    }
+	}
+	cur = next;
+    }
+    return;
+}
+
+    static void
+t_display( void )
+{
+    struct transcript		*cur = NULL;
+
+    for ( cur = tran_head; cur != NULL; cur = cur->t_next ) {
+	printf( "%d: ", cur->t_num );
+	switch( cur->t_type ) {
+	case T_POSITIVE:
+	    printf( "p %s\n", cur->t_shortname );
+	    break;
+
+	case T_NEGATIVE:
+	    printf( "n %s\n", cur->t_shortname );
+	    break;
+
+	case T_SPECIAL:
+	    printf( "s %s\n", cur->t_shortname );
+	    break;
+
+	case T_NULL:
+	    printf( "NULL\n" );
+	    break;
+
+	default:
+	    printf( "? %s\n", cur->t_shortname );
+	    break;
+	}
+    }
     return;
 }
 
@@ -775,7 +837,7 @@ transcript_init( char *kfile, int location )
 	exit( 2 );
     }
 
-    if ( foundspecial && ( location == K_CLIENT )) {
+    if (( list_size( special_list ) > 0 ) && ( location == K_CLIENT )) {
 	/* open the special transcript if there were any special files */
 	if ( strlen( kdir ) + strlen( special ) + 2 > MAXPATHLEN ) {
 	    fprintf( stderr, 
@@ -797,7 +859,7 @@ transcript_init( char *kfile, int location )
     int
 read_kfile( char *kfile, int location )
 {
-    int		length, ac, linenum = 0;
+    int		length, ac, linenum = 0, minus = 0;
     char	line[ MAXPATHLEN ];
     char	fullpath[ MAXPATHLEN ];
     char	*subpath;
@@ -821,6 +883,14 @@ read_kfile( char *kfile, int location )
 	/* skips blank lines and comments */
 	if ((( ac = argcargv( line, &av )) == 0 ) || ( *av[ 0 ] == '#' )) {
 	    continue;
+	}
+
+	if ( *av[ 0 ] == '-' ) {
+	    minus = 0;
+	    av++;
+	    ac--;
+	} else {
+	    minus = 1;
 	}
 
 	if ( ac != 2 ) {
@@ -865,43 +935,68 @@ read_kfile( char *kfile, int location )
 
 	switch( *av[ 0 ] ) {
 	case 'k':				/* command file */
-	    if ( list_check( kfile_list, fullpath )) {
-		fprintf( stderr,
-		    "command file %s: line %d: command file loop: %s already included\n",
-		    kfile, linenum, av[ 1 ] );
+	    if ( minus ) {
+		/* Error on minus command files for now */
+		fprintf( stderr, "command file %s: line %d: "
+		    "minus 'k' not supported\n", kfile, linenum );
 		return( -1 );
-	    }
-	    if ( list_insert( kfile_list, fullpath ) != 0 ) {
-		perror( "list_insert" );
-		return( -1 );
-	    }
-
-	    if ( read_kfile( fullpath, location ) != 0 ) {
-		return( -1 );
-	    }
-	    break;
-
-	case 'n':				/* negative */
-	    t_new( T_NEGATIVE, fullpath, av[ 1 ], kfile );
-	    break;
-
-	case 'p':				/* positive */
-	    t_new( T_POSITIVE, fullpath, av[ 1 ], kfile );
-	    break;
-
-	case 'x':				/* exclude */
-	    t_new( T_EXCLUDE, fullpath, av[ 1 ], kfile );
-	    break;
-
-	case 's':				/* special */
-	    foundspecial++;
-	    if ( location == K_SERVER ) {
-		if ( list_insert( special_list, av[ 1 ] ) != 0 ) {
+	    } else {
+		if ( list_check( kfile_list, fullpath )) {
+		    fprintf( stderr,
+			"command file %s: line %d: command file loop: %s already included\n",
+			kfile, linenum, av[ 1 ] );
+		    return( -1 );
+		}
+		if ( list_insert( kfile_list, fullpath ) != 0 ) {
 		    perror( "list_insert" );
 		    return( -1 );
 		}
+		if ( read_kfile( fullpath, location ) != 0 ) {
+		    return( -1 );
+		}
 	    }
-	    continue;
+
+	    break;
+
+	case 'n':				/* negative */
+	    if ( minus ) { 
+		t_remove( T_NEGATIVE, av[ 1 ] );
+	    } else {
+		t_new( T_NEGATIVE, fullpath, av[ 1 ], kfile );
+	    }
+	    break;
+
+	case 'p':				/* positive */
+	    if ( minus ) {
+		t_remove( T_POSITIVE, av[ 1 ] );
+	    } else {
+		t_new( T_POSITIVE, fullpath, av[ 1 ], kfile );
+	    }
+	    break;
+
+	case 'x':				/* exclude */
+	    if ( minus ) {
+		t_remove( T_EXCLUDE, av[ 1 ] );
+	    } else {
+		t_new( T_EXCLUDE, fullpath, av[ 1 ], kfile );
+	    }
+	    break;
+
+	case 's':				/* special */
+	    if ( minus ) {
+		if ( list_check( special_list, av[ 1 ] )) {
+		    list_remove( special_list, av[ 1 ] );
+		}
+	    } else {
+		if ( !list_check( special_list, av[ 1 ] )) {
+		    if ( list_insert( special_list, av[ 1 ] ) != 0 ) {
+			perror( "list_insert" );
+			return( -1 );
+		    }
+		}
+
+	    }
+	    break;
 
 	default:
 	    fprintf( stderr, "command file %s: line %d: '%s' invalid\n",

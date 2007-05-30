@@ -1354,6 +1354,17 @@ read_kfile( SNET *sn, char *kfile )
 	    continue;
 	}
 
+	/* Skip minus lines in command files for now.  Eventually,
+	 * the server should not give access to command files, special files
+	 * and transcripts that have been ultimately removed with a '-'.
+	 * This is difficult as ktcheck reads command files line by line
+	 * and will request info on a file that might be removed with a
+	 * later '-'.
+	 */
+	if ( *av[ 0 ] == '-' ) {
+	    continue;
+	}
+
 	if ( ac != 2 ) {
 	    syslog( LOG_ERR, "%s: line %d: invalid number of arguments",
 		kfile, linenum );
