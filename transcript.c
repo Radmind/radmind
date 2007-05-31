@@ -886,11 +886,11 @@ read_kfile( char *kfile, int location )
 	}
 
 	if ( *av[ 0 ] == '-' ) {
-	    minus = 0;
+	    minus = 1;
 	    av++;
 	    ac--;
 	} else {
-	    minus = 1;
+	    minus = 0;
 	}
 
 	if ( ac != 2 ) {
