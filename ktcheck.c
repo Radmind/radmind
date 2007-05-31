@@ -961,9 +961,6 @@ read_kfile( char * kfile )
 		    perror( "list_insert_tail" );
 		    goto error;
 		}
-		if ( read_kfile( path ) != 0 ) {
-		    exit( 2 );
-		}
 	    }
 
 	    switch( check( sn, "COMMAND", av[ ac - 1] )) {
@@ -978,6 +975,9 @@ read_kfile( char * kfile )
 	    case 2:
 		if ( report ) report_event( sn, "ktcheck", "Error" );
 		goto error;
+	    }
+	    if ( read_kfile( path ) != 0 ) {
+		exit( 2 );
 	    }
 	    break;
 
