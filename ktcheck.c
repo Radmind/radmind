@@ -102,8 +102,8 @@ expand_kfile( struct llist **khead, char *kfile )
 	    exit( 2 );
 	}
 
-	/* skip comments and special lines */
-	if ( *buf == '#' || *buf == 's' ) {
+	/* skip comments, special and minus lines */
+	if ( *buf == '#' || *buf == 's' || *buf == '-' ) {
 	    continue;
 	}
 	/* skip blank lines */
@@ -111,10 +111,10 @@ expand_kfile( struct llist **khead, char *kfile )
 	    continue;
 	}
 
-	if ( snprintf( path, MAXPATHLEN, "%s/client/%s",
-			radmind_path, tav[ 1 ] ) >= MAXPATHLEN ) {
-	    fprintf( stderr, "%s/client/%s: path too long\n",
-			radmind_path, tav[ 1 ] );
+	if ( snprintf( path, MAXPATHLEN, "%s%s",
+			kdir, tav[ 1 ] ) >= MAXPATHLEN ) {
+	    fprintf( stderr, "%s%s: path too long\n",
+			kdir, tav[ 1 ] );
 	    fclose( kf );
 	    exit( 2 );
 	}
@@ -158,10 +158,17 @@ cleandirs( char *path, struct llist *khead )
 	    return( -1 );
 	}
 
-	/* also skip the base command file */
-	if ( strcmp( fsitem, base_kfile ) == 0 ) {
+	/*
+	 * also skip the base command file. second case
+	 * handles "-K kfile.K", where kfile path is
+	 * same as "./kfile.K", but is passed as "kfile.K"
+	 */
+	if ( strcmp( fsitem, base_kfile ) == 0 ||
+		( strncmp( kdir, path, strlen( path )) == 0
+		&& strcmp( base_kfile, de->d_name )) == 0 ) {
 	    continue;
 	}
+
 
 	new = ll_allocate( fsitem );
 	ll_insert( &head, new );
@@ -217,13 +224,8 @@ clean_client_dir( void )
 {
     struct llist	*khead = NULL;
     struct node		*node;
-    char		clientdir[ MAXPATHLEN ];
-
-    if ( snprintf( clientdir, MAXPATHLEN, "%s/client", radmind_path )
-		>= MAXPATHLEN ) {
-	fprintf( stderr, "%s/client: path too long\n", radmind_path );
-	return( -1 );
-    }
+    char		dir[ MAXPATHLEN ];
+    char		*p;
 
     expand_kfile( &khead, base_kfile );
 
@@ -231,7 +233,16 @@ clean_client_dir( void )
 	expand_kfile( &khead, node->n_path );
     }
 
-    cleandirs( clientdir, khead );
+    /*
+     * can't pass in kdir, since it has a trailing slash.
+     * bounds checking done when creating kdir in main().
+     */
+    strcpy( dir, kdir );
+    if (( p = strrchr( dir, '/' )) != NULL ) {
+	*p = '\0';
+    }
+
+    cleandirs( dir, khead );
 
     ll_free( khead );
 
@@ -548,7 +559,7 @@ main( int argc, char **argv )
 
     while (( c = getopt( argc, argv, "Cc:D:h:iK:np:qrvVw:x:y:z:Z:" )) != EOF ) {
 	switch( c ) {
-	case 'C':	/* clean up _RADMIND_PATH/client */
+	case 'C':	/* clean up dir containing command.K */
 	    clean = 1;
 	    break;
 
