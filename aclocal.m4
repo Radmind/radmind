@@ -69,7 +69,7 @@ AC_DEFUN([CHECK_ZLIB],
 			break;
 		fi
 	done
-	if test x_$found_zlib == x_yes; then
+	if test x_$found_zlib = x_yes; then
 		if test "$dir" != "/usr"; then
 			CPPFLAGS="$CPPFLAGS -I$zlibdir/include";
 			LDFLAGS="$LDFLAGS -L$zlibdir/lib";

@@ -478,7 +478,11 @@ main( int ac, char **av )
 
 	    child_signal = 0;
 	    /* check to see if any children need to be accounted for */
+#ifdef HAVE_WAIT4
 	    while (( pid = wait4( 0, &status, WNOHANG, &usage )) > 0 ) {
+#else
+            while (( pid = wait3(&status, WNOHANG, &usage )) > 0 ) {
+#endif
 		connections--;
 
 		/* Print stats */

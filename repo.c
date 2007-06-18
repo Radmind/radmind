@@ -9,6 +9,7 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <ctype.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -134,7 +135,7 @@ main( int argc, char *argv[] )
 	    err++;
 	} else {
 	    for ( i = 0; i < len; i++ ) {
-		if ( isspace( event[ i ] )) {
+		if ( isspace( (int)event[ i ] )) {
 		    err++;
 		    break;
 		}

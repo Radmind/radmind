@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <sys/param.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <errno.h>
 #include <netdb.h>
 #include <stdio.h>

@@ -28,6 +28,9 @@
 #undef HAVE_DNSSD
 #undef HAVE_ZLIB
 
+#undef HAVE_WAIT4
+#undef HAVE_STRTOLL
+
 #ifndef MIN
 #define MIN(a,b)        ((a)<(b)?(a):(b))
 #endif /* MIN */

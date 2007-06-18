@@ -72,9 +72,17 @@ AC_CHECK_LIB(dns_sd, DNSServiceRegister)
 
 CHECK_ZLIB
 
+# HPUX lacks wait4 and strtoll
+AC_CHECK_FUNCS(wait4 strtoll)
+
 # Miscellaneous:
-if test x_$GCC = x_yes; then
-    OPTOPTS=${OPTOPTS:-"-Wall -Wmissing-prototypes"}
+if test x_$OPTOPTS = x_; then
+    if test x_$GCC = x_yes; then
+        OPTOPTS="$OPTOPTS -Wall -Wmissing-prototypes"
+    fi
+    if test x_$build_vendor = x_hp; then
+        OPTOPTS="$OPTOPTS -D_XOPEN_SOURCE -D_XOPEN_SOURCE_EXTENDED=1"
+    fi
 fi
 AC_SUBST(OPTOPTS)
 
