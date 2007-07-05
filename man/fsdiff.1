@@ -186,7 +186,7 @@ or in the case of type special, a full pathname.
 .br
 .br
 .sp
-# example command file
+	# example command file
 .br
 	k	linux-base.K
 .br
@@ -207,6 +207,29 @@ This means
 will print out a difference line for every object in the
 filesystem, eg. a filesystem snapshot. 
 .sp
+Positive and negative transcripts and special files can be removed from a command file by using minus lines.  These lines effectively remove all previously  referenced lines that match both the type and path of the minus line.  Minus lines begin with a '-', followed by some amount of whitespace.
+.sp
+Minus lines only apply to transcripts and special files that have already been read from a command file.  If a subsequent line or included command file lists the same transcript or special file, it will be once again included.
+.sp
+For example, if you wanted to remove the special file /etc/fstab from the previous example, you could use this command file:
+.br
+.br
+.sp
+	# example command file
+.br
+	k	linux-base.K
+.br
+	p	test/denser-10.T
+.br
+	p	simta-032.T
+.br
+	n	simta-neg.T
+.br
+	s	/etc/fstab
+.br
+	-  s	/etc/fstab
+.sp
+The minus line in this example would match the special file /etc/fstab, causing it to be effectively removed from the command file.
 .SH EXAMPLES
 In this example, fsdiff is used to generate a line for the negative
 transcript for /tmp.
