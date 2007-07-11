@@ -520,8 +520,7 @@ main( int argc, char **argv )
 	/* Check transcript order */
 	if ( prepath != 0 ) {
 	    if ( pathcasecmp( path, prepath, case_sensitive ) < 0 ) {
-		fprintf( stderr, "%s: line %d: bad sort order\n",
-			    transcript, linenum );
+		fprintf( stderr, "line %d: bad sort order\n", linenum );
 		goto error2;
 	    }
 	}
