@@ -45,6 +45,8 @@ int			dodots = 0;
 int			linenum = 0;
 int			cksum = 0;
 int             	case_sensitive = 1;
+int			create_prefix = 0;
+int			quiet = 1;
 const EVP_MD    	*md;
 SSL_CTX  		*ctx;
 

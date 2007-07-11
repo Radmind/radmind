@@ -14,6 +14,7 @@
 #ifdef __APPLE__
 #include <sys/attr.h>
 #endif /* __APPLE__ */
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,10 +28,12 @@
 #include "radstat.h"
 #include "transcript.h"
 #include "progress.h"
+#include "mkdirs.h"
 
 extern int quiet;
 extern int linenum;
 extern int showprogress;
+extern int create_prefix;
 
     int
 update( const char *path, char *displaypath, int present, int newfile,
@@ -86,8 +89,20 @@ update( const char *path, char *displaypath, int present, int newfile,
 
 	if ( !present ) {
 	    if ( mkdir( path, mode ) != 0 ) {
-		perror( path );
-		return( 1 );
+		if ( create_prefix && errno == ENOENT ) {
+		    errno = 0;
+		    if ( mkprefix( path ) != 0 ) {
+			perror( path );
+			return( 1 );
+		    }
+		    if ( mkdir( path, mode ) != 0 ) {
+			perror( path );
+			return( 1 );
+		    }
+		} else {
+		    perror( path );
+		    return( 1 );
+		}
 	    }
 	    newfile = 1;
 	    if ( radstat( (char*)path, st, &type, afinfo ) < 0 ) {
@@ -127,8 +142,20 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    return( 1 );
 	} 
 	if ( link( d_target, path ) != 0 ) {
-	    perror( path );
-	    return( 1 );
+	    if ( create_prefix && errno == ENOENT ) {
+		errno = 0;
+		if ( mkprefix( path ) != 0 ) {
+		    perror( path );
+		    return( 1 );
+		}
+		if ( link( d_target, path ) != 0 ) {
+		    perror( path );
+		    return( 1 );
+		}
+	    } else {
+		perror( path );
+		return( 1 );
+	    }
 	}
 	if ( !quiet && !showprogress ) {
 	    printf( "%s: hard linked to %s", displaypath, d_target);
@@ -153,8 +180,20 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    return( 1 );
 	} 
 	if ( symlink( d_target, path ) != 0 ) {
-	    perror( path );
-	    return( 1 );
+	    if ( create_prefix && errno == ENOENT ) {
+		errno = 0;
+		if ( mkprefix( path ) != 0 ) {
+		    perror( path );
+		    return( 1 );
+		}
+		if ( symlink( d_target, path ) != 0 ) {
+		    perror( path );
+		    return( 1 );
+		}
+	    } else {
+		perror( path );
+		return( 1 );
+	    }
 	}
 	if ( !quiet && !showprogress ) printf( "%s: symbolic linked to %s",
 		displaypath, d_target );
@@ -171,8 +210,20 @@ update( const char *path, char *displaypath, int present, int newfile,
 
 	if ( !present ) {
 	    if ( mkfifo( path, mode ) != 0 ){
-		perror( path );
-		return( 1 );
+		if ( create_prefix && errno == ENOENT ) {
+		    errno = 0;
+		    if ( mkprefix( path ) != 0 ) {
+			perror( path );
+			return( 1 );
+		    }
+		    if ( mkfifo( path, mode ) != 0 ) {
+			perror( path );
+			return( 1 );
+		    }
+		} else {
+		    perror( path );
+		    return( 1 );
+		}
 	    }
 	    if ( lstat( path, st ) != 0 ) {
 		perror( path );
@@ -220,8 +271,20 @@ update( const char *path, char *displaypath, int present, int newfile,
 	    }
 
 	    if ( mknod( path, mode, dev ) != 0 ) {
-		perror( path );
-		return( 1 );
+		if ( create_prefix && errno == ENOENT ) {
+		    errno = 0;
+		    if ( mkprefix( path ) != 0 ) {
+			perror( path );
+			return( 1 );
+		    }
+		    if ( mknod( path, mode, dev ) != 0 ) {
+			perror( path );
+			return( 1 );
+		    }
+		} else {
+		    perror( path );
+		    return( 1 );
+		}
 	    }
 	    if ( lstat( path, st ) != 0 ) {
 		perror( path );

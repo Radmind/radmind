@@ -62,11 +62,11 @@ FSDIFF_OBJ=     version.o fsdiff.o argcargv.o transcript.o llist.o code.o \
 
 KTCHECK_OBJ=    version.o ktcheck.o argcargv.o retr.o base64.o code.o \
                 cksum.o list.o llist.o connect.o applefile.o tls.o pathcmp.o \
-		progress.o mkdirs.o report.o rmdirs.o
+		progress.o mkdirs.o report.o rmdirs.o mkprefix.o
 
 LAPPLY_OBJ=     version.o lapply.o argcargv.o code.o base64.o retr.o \
                 radstat.o update.o cksum.o connect.o pathcmp.o progress.o \
-                applefile.o report.o tls.o
+                applefile.o report.o tls.o mkprefix.o
 
 LCREATE_OBJ=    version.o lcreate.o argcargv.o code.o connect.o progress.o \
                 stor.o applefile.o base64.o cksum.o radstat.o tls.o
@@ -79,7 +79,7 @@ LMERGE_OBJ=     version.o lmerge.o argcargv.o code.o pathcmp.o mkdirs.o \
 
 LFDIFF_OBJ=     version.o lfdiff.o argcargv.o connect.o retr.o cksum.o \
                 progress.o base64.o applefile.o code.o tls.o pathcmp.o \
-		transcript.o list.o radstat.o hardlink.o
+		transcript.o list.o radstat.o hardlink.o mkprefix.o
 
 REPO_OBJ=	version.o repo.o report.o argcargv.o connect.o code.o tls.o
 

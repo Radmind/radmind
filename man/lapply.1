@@ -4,7 +4,7 @@
 \- modify file system to match apply-able-transcript 
 .SH SYNOPSIS
 .B lapply
-.RB [ \-FiInrV ]
+.RB [ \-CFiInrV ]
 [
 .RB \-%\ |\ \-q\ |\ \-v
 ] [
@@ -42,10 +42,20 @@ lapply downloads missing files indicated by a "+" from the radmind server
 is applied to the system with the attributes as described in
 the transcript line.  File system objects marked with a "-" are removed.
 Other transcript lines indicate that a file system
-object must be modified or created if missing.  lapply is not able to create doors or sockets.
+object must be modified or created if missing.  lapply is not able to create
+doors or sockets.
 .sp
 File system objects listed in the transcript and present in the
 file system as a different type are automatically removed.
+.sp
+By default,
+.B lapply
+will exit with an error if an object's full path is not present on the file
+system.  When run with the -C option,
+.B lapply
+will attempt to create any intermediate directories that are missing. 
+Intermediated directories inherit the owner, group and permissions of its
+parent directory.
 .sp
 The radmind tools are unaware of user defined file flags, some of which
 may prevent lapply from successfully completing.  Using the -F option,
@@ -72,6 +82,9 @@ percentage done progress output.
 .TP 19
 .BI \-c\  checksum
 enables checksuming.
+.TP 19
+.BI \-C
+create missing intermediate directories.
 .TP 19
 .BI \-h\  host
 specifies the radmind server, by default

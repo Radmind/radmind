@@ -38,6 +38,7 @@
 #include "code.h"
 #include "largefile.h"
 #include "progress.h"
+#include "mkprefix.h"
 
 extern void            (*logger)( char * );
 extern struct timeval  	timeout;
@@ -47,6 +48,7 @@ extern int		showprogress;
 extern int		dodots;
 extern int		cksum;
 extern int		errno;
+extern int		create_prefix;
 extern SSL_CTX  	*ctx;
 
 /*
@@ -119,7 +121,6 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, mode_t tempmode,
 	fprintf( stderr, "%s\n", pathdesc );
 	return( -1 );
     }
-    if ( verbose ) printf( "<<< " );
 
     /*Create temp file name*/
     if ( snprintf( temppath, MAXPATHLEN, "%s.radmind.%i",
@@ -130,9 +131,23 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, mode_t tempmode,
     }
     /* Open file */
     if (( fd = open( temppath, O_WRONLY | O_CREAT, tempmode )) < 0 ) {
-	perror( temppath );
-	return( -1 );
+	if ( create_prefix && errno == ENOENT ) {
+	    errno = 0;
+	    if ( mkprefix( temppath ) != 0 ) {
+		perror( temppath );
+		return( -1 );
+	    }
+	    if (( fd = open( temppath, O_WRONLY | O_CREAT, tempmode )) < 0 ) {
+		perror( temppath );
+		return( -1 );
+	    }
+	} else {
+	    perror( temppath );
+	    return( -1 );
+	}
     }
+
+    if ( verbose ) printf( "<<< " );
 
     /* Get file from server */
     while ( size > 0 ) {
@@ -278,7 +293,6 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	fprintf( stderr, "%s\n", pathdesc );
 	return( -1 );
     }  
-    if ( verbose ) printf( "<<< " );
     if ( size < ( AS_HEADERLEN + ( 3 * sizeof( struct as_entry )) +
 	    FINFOLEN )) {
 	fprintf( stderr,
@@ -304,6 +318,35 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     if ( cksum ) {
 	EVP_DigestUpdate( &mdctx, (char *)&ah, (unsigned int)rc );
     }
+
+    /* name temp file */
+    if ( snprintf( temppath, MAXPATHLEN, "%s.radmind.%i", path,
+	    getpid()) >= MAXPATHLEN ) {
+	fprintf( stderr, "%s.radmind.%i: too long", path, ( int )getpid());
+	return( -1 );
+    }
+
+    /* data fork must exist to write to rsrc fork */        
+    /* Open here so messages from mkprefix don't verbose dots */
+    if (( dfd = open( temppath, O_CREAT | O_EXCL | O_WRONLY, tempmode )) < 0 ) {
+	if ( create_prefix && errno == ENOENT ) {
+	    errno = 0;
+	    if ( mkprefix( temppath ) != 0 ) {
+		perror( temppath );
+		return( -1 );
+	    }
+	    if (( dfd = open( temppath, O_CREAT | O_EXCL | O_WRONLY,
+		    tempmode )) < 0 ) {
+		perror( temppath );
+		return( -1 );
+	    }
+	} else {
+	    perror( temppath );
+	    return( -1 );
+	}
+    }
+
+    if ( verbose ) printf( "<<< " );
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
     size -= rc;
     if ( showprogress ) {
@@ -316,13 +359,15 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	    ( 3 * sizeof( struct as_entry )), &tv )) <= 0 ) {
 	fprintf( stderr, "retrieve applefile %s failed: 5-%s\n", pathdesc,
 	    strerror( errno ));
-	return( -1 );
+	returnval = -1;
+	goto error2;
     }
     if ( rc != ( 3 * sizeof( struct as_entry ))) {
 	fprintf( stderr,
 	    "retrieve applefile %s failed: corrupt AppleSingle-encoded file\n",
 	    path );
-	return( -1 );
+	returnval = -1;
+	goto error2;
     }
 
     /* Should we check for valid ae_ents here? YES! */
@@ -342,13 +387,15 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     if (( rc = snet_read( sn, finfo, FINFOLEN, &tv )) <= 0 ) {
 	fprintf( stderr, "retrieve applefile %s failed: 6-%s\n", pathdesc,
 	    strerror( errno ));
-	return( -1 );
+	returnval = -1;
+	goto error2;
     }
     if ( rc != FINFOLEN ) {
 	fprintf( stderr,
 	    "retrieve applefile %s failed: corrupt AppleSingle-encoded file\n",
 	    path );
-	return( -1 );
+	returnval = -1;
+	goto error2;
     }
     if ( cksum ) {
 	EVP_DigestUpdate( &mdctx, finfo, (unsigned int)rc );
@@ -357,19 +404,6 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     size -= rc;
     if ( showprogress ) {
 	progressupdate( rc, path );
-    }
-
-    /* name temp file */
-    if ( snprintf( temppath, MAXPATHLEN, "%s.radmind.%i", path,
-	    getpid()) >= MAXPATHLEN ) {
-	fprintf( stderr, "%s.radmind.%i: too long", path, ( int )getpid());
-	return( -1 );
-    }
-
-    /* data fork must exist to write to rsrc fork */        
-    if (( dfd = open( temppath, O_CREAT | O_EXCL | O_WRONLY, tempmode )) < 0 ) {
-	perror( temppath );
-	return( -1 );
     }
 
     /*
@@ -391,11 +425,12 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	    goto error2;
 	}
 
+	/* No need to mkprefix as dfd is already present */
 	if (( rfd = open( rsrc_path, O_WRONLY, 0 )) < 0 ) {
 	    perror( rsrc_path );
 	    returnval = -1;
 	    goto error2;
-	};  
+	}
 
 	for ( rsize = ae_ents[ AS_RFE ].ae_length;
 					rsize > 0; rsize -= rc ) {

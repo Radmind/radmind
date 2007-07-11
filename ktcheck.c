@@ -47,6 +47,7 @@
 #include "mkdirs.h"
 #include "rmdirs.h"
 #include "report.h"
+#include "mkprefix.h"
 
 int cleandirs( char *path, struct llist *khead );
 int clean_client_dir( void );
@@ -66,6 +67,7 @@ int			update = 1;
 int			change = 0;
 int			case_sensitive = 1;
 int			report = 1;
+int			create_prefix = 0;
 char			*base_kfile= _RADMIND_COMMANDFILE;
 char			*radmind_path = _RADMIND_PATH;
 char			*kdir= "";

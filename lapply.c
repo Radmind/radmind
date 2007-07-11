@@ -54,6 +54,7 @@ int		network = 1;
 int		change = 0;
 int		case_sensitive = 1;
 int		report = 1;
+int		create_prefix = 0;
 char		transcript[ 2 * MAXPATHLEN ] = { 0 };
 char		prepath[ MAXPATHLEN ]  = { 0 };
 
@@ -251,7 +252,8 @@ main( int argc, char **argv )
     int			use_randfile = 0;
 	char        **capa = NULL; /* capabilities */
 
-    while (( c = getopt ( argc, argv, "%c:Fh:iInp:qru:Vvw:x:y:z:Z:" )) != EOF ) {
+    while (( c = getopt( argc, argv,
+	    "%c:CFh:iInp:qru:Vvw:x:y:z:Z:" )) != EOF ) {
 	switch( c ) {
 	case '%':
 	    showprogress = 1;
@@ -266,6 +268,10 @@ main( int argc, char **argv )
             }
             cksum = 1;
             break;
+
+	case 'C':
+	    create_prefix = 1;
+	    break;
 
 	case 'F':
 	    force = 1;
@@ -393,7 +399,7 @@ main( int argc, char **argv )
     }
 
     if ( err ) {
-	fprintf( stderr, "usage: %s [ -FiInrV ] [ -%% | -q | -v ] ",
+	fprintf( stderr, "usage: %s [ -CFiInrV ] [ -%% | -q | -v ] ",
 	    argv[ 0 ] );
 	fprintf( stderr, "[ -c checksum ] [ -h host ] [ -p port ] " );
 	fprintf( stderr, "[ -u umask ] " );
