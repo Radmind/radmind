@@ -29,6 +29,7 @@
 #include "transcript.h"
 #include "progress.h"
 #include "mkdirs.h"
+#include "mkprefix.h"
 
 extern int quiet;
 extern int linenum;
