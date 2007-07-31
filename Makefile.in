@@ -241,6 +241,7 @@ dist   : distclean
 	done
 	rm -rf ${DISTDIR}/man
 	mv ${DISTDIR}/tmp ${DISTDIR}/man
+	tar cvfz ${DISTDIR}.tar.gz ${DISTDIR}
 
 rash : FRC
 	-mkdir tmp
