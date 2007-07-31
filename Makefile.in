@@ -354,6 +354,7 @@ package	: all man info rash
 	   -i ${PKGSRCDIR}/tmp/OS_X/Info.plist \
 	   -d ${PKGSRCDIR}/tmp/OS_X/Description.plist
 	tar cvfz ../${PKGNAME}.pkg.tar.gz ../${PKGNAME}.pkg
+	sudo rm -rf ${PKGDIR}
 
 clean :
 	(cd libsnet; ${MAKE} clean)
