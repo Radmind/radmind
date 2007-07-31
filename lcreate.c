@@ -67,7 +67,7 @@ extern struct timeval   timeout;
 const EVP_MD    *md;
 SSL_CTX  	*ctx;
 
-extern char             *ca, *cert, *privatekey;
+extern char             *caFile, *caDir, *cert, *privatekey;
 
     int
 main( int argc, char **argv )
@@ -97,7 +97,7 @@ main( int argc, char **argv )
     char                *password = NULL;
 	char               **capa = NULL; /* capabilities */
 
-    while (( c = getopt( argc, argv, "%c:Fh:ilnNp:qrt:TU:vVw:x:y:z:Z:" ))
+    while (( c = getopt( argc, argv, "%c:Fh:ilnNp:P:qrt:TU:vVw:x:y:z:Z:" ))
 	    != EOF ) {
 	switch( c ) {
 	case '%':
@@ -148,6 +148,10 @@ main( int argc, char **argv )
 	    }
 	    break;
 
+        case 'P' :              /* ca dir */
+            caDir = optarg;
+            break;
+
 	case 'q':
 	    quiet = 1;
 	    break;
@@ -192,7 +196,7 @@ main( int argc, char **argv )
             break;
 
         case 'x' :              /* ca file */
-            ca = optarg;
+            caFile = optarg;
             break;
 
         case 'y' :              /* cert file */
@@ -235,7 +239,7 @@ main( int argc, char **argv )
     if ( err || ( argc - optind != 1 ))   {
 	fprintf( stderr, "usage: lcreate [ -%%FlnNrTV ] [ -q | -v | -i ] " );
 	fprintf( stderr, "[ -c checksum ] " );
-	fprintf( stderr, "[ -h host ] [ -p port ] " );
+	fprintf( stderr, "[ -h host ] [ -p port ] [ -P ca-pem-directory ] " );
 	fprintf( stderr, "[ -t stored-name ] [ -U user ] " );
         fprintf( stderr, "[ -w auth-level ] [ -x ca-pem-file ] " );
         fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ] " );
@@ -265,8 +269,8 @@ main( int argc, char **argv )
 	}
 
 	if ( authlevel != 0 ) {
-	    if ( tls_client_setup( use_randfile, authlevel, ca, cert, 
-		    privatekey ) != 0 ) {
+	    if ( tls_client_setup( use_randfile, authlevel, caFile, caDir,
+		    cert, privatekey ) != 0 ) {
 		/* error message printed in tls_setup */
 		exit( 2 );
 	    }

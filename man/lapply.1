@@ -14,6 +14,8 @@
 ] [
 .BI \-p\  port
 ] [
+.BI \-P\  ca-pem-directory
+] [
 .BI \-u\  umask
 ] [
 .BI \-w\  auth-level
@@ -107,6 +109,10 @@ updates to be applied.  auth-level is implicitly set to 0.
 specifies the port of the radmind server, by default
 .BR 6662 .
 .TP 19
+.BI \-P\  ca-pem-directory
+specifies a directory that contains certificates to be used when verifying the server.  Certificates must be in PEM format and the directory must have been
+processed with the openssl c_rehash utility. 
+.TP 19
 .B \-q
 suppress all messages.
 .TP 19
@@ -132,6 +138,7 @@ TLS authorization level, by default _RADMIND_AUTHLEVEL.
 .TP 19
 .BI \-x\  ca-pem-file
 Certificate authority's public certificate, by default _RADMIND_TLS_CA.
+The default is not used when -P is specified.
 .TP 19
 .BI \-y\  cert-pem-file
 Client's public certificate, by default _RADMIND_TLS_CERT.

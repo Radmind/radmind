@@ -39,7 +39,7 @@ int			verbose = 0;
 void			(*logger)( char * ) = NULL;
 extern struct timeval	timeout;
 extern char		*version;
-extern char		*ca, *cert, *privatekey;
+extern char		*caFile, *caDir, *cert, *privatekey;
 SSL_CTX			*ctx;
 
     int
@@ -57,7 +57,7 @@ main( int argc, char *argv[] )
     char		repodata[ MAXPATHLEN * 2 ];
     char		**capa = NULL; /* server capabilities */
 
-    while (( c = getopt( argc, argv, "e:h:p:vVw:x:y:Z:z:" )) != EOF ) {
+    while (( c = getopt( argc, argv, "e:h:p:P:vVw:x:y:Z:z:" )) != EOF ) {
 	switch ( c ) {
 	case 'e':		/* event to report */
 	    event = optarg;
@@ -75,6 +75,10 @@ main( int argc, char *argv[] )
 		}
 		port = se->s_port;
 	    }
+	    break;
+
+	case 'P':
+	    caDir = optarg;
 	    break;
 
 	case 'v':
@@ -96,7 +100,7 @@ main( int argc, char *argv[] )
 	    break;
 
 	case 'x':
-	    ca = optarg;
+	    caFile = optarg;
 	    break;
 
 	case 'y':
@@ -145,7 +149,7 @@ main( int argc, char *argv[] )
 
     if ( err || (( argc - optind ) < 0 )) {
 	fprintf( stderr, "usage: %s -e event [ -Vv ] ", argv[ 0 ] );
-	fprintf( stderr, "[ -h host ] [ -p port ] " );
+	fprintf( stderr, "[ -h host ] [ -p port ] [ -P ca-pem-directory ] " );
 	fprintf( stderr, "[ -w auth-level ] [ -x ca-pem-file ] " );
 	fprintf( stderr, "[ -y cert-pem-file ] [ -z key-pem-file ] " );
 	fprintf( stderr, "[ -Z compression-level ] [ message ... ]\n" );
@@ -192,7 +196,7 @@ main( int argc, char *argv[] )
     }
 
     if ( authlevel != 0 ) {
-	if ( tls_client_setup( use_randfile, authlevel, ca, cert,
+	if ( tls_client_setup( use_randfile, authlevel, caFile, caDir, cert,
 		privatekey ) != 0 ) {
 	    exit( 2 );
 	}

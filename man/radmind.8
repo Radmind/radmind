@@ -19,6 +19,8 @@
 ] [
 .BI \-m\  max-connections 
 ] [
+.BI \-P\  ca-directory
+] [
 .BI \-p\  port
 ] [
 .BI \-u\  umask 
@@ -232,6 +234,10 @@ Value must be greater than or equal to 0 with 0 indicating no limit.
 specifies the port of the radmind server, by default
 .BR 6662 .
 .TP 19
+.BI \-P\  ca-directory
+specifies a directory that contains certificates to be used when verifying a client.  Certificates must be in PEM format and the directory must have been
+processed with the openssl c_rehash utility.
+.TP 19
 .B \-r
 use random seed file $RANDFILE if that environment variable is set,
 $HOME/.rnd otherwise.  See
@@ -257,6 +263,7 @@ TLS authorization level, by default _RADMIND_AUTHLEVEL.
 .TP 19
 .BI \-x\  ca-pem-file
 Certificate authority's public certificate, by default _RADMIND_TLS_CA.
+The default is not used when -P is specified.
 .TP 19
 .BI \-y\  cert-pem-file
 Server's public certificate, by default _RADMIND_TLS_CERT.

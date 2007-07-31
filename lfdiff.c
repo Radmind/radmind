@@ -50,7 +50,7 @@ int			quiet = 1;
 const EVP_MD    	*md;
 SSL_CTX  		*ctx;
 
-extern char             *ca, *cert, *privatekey;
+extern char             *caFile, *caDir, *cert, *privatekey;
 
    static struct transcript *
 precedent_transcript( char *kfile, char *file, int where )
@@ -155,8 +155,8 @@ main( int argc, char **argv, char **envp )
     diffargc = 0;
     diffargv[ diffargc++ ] = diff;
 
-    while (( c = getopt ( argc, argv, "h:Ip:rST:u:Vvw:x:y:z:Z:bitcefnC:D:sX:" ))
-	    != EOF ) {
+    while (( c = getopt ( argc, argv,
+	    "h:Ip:P:rST:u:Vvw:x:y:z:Z:bitcefnC:D:sX:" )) != EOF ) {
 	switch( c ) {
 	case 'I':
 	    case_sensitive = 0;
@@ -175,6 +175,10 @@ main( int argc, char **argv, char **envp )
 		port = se->s_port;
 	    }
 	    break;
+
+        case 'P' :              /* ca dir */
+            caDir = optarg;
+            break;
 
 	case 'r':
 	    use_randfile = 1;
@@ -214,7 +218,7 @@ main( int argc, char **argv, char **envp )
             break;
 
         case 'x' :              /* ca file */
-            ca = optarg;
+            caFile = optarg;
             break;
 
         case 'y' :              /* cert file */
@@ -327,7 +331,8 @@ main( int argc, char **argv, char **envp )
 	fprintf( stderr, "usage: %s ", argv[ 0 ] );
 	fprintf( stderr, "[ -IrvV ] " );
 	fprintf( stderr, "[ -T transcript | -S ] " );
-	fprintf( stderr, "[ -h host ] [ -p port ] [ -u umask ] " );
+	fprintf( stderr, "[ -h host ] [ -p port ] [ -P ca-pem-directory ] " );
+	fprintf( stderr, "[ -u umask ] " );
         fprintf( stderr, "[ -w auth-level ] [ -x ca-pem-file ] " );
         fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ] " );
 	fprintf( stderr, "[ -Z compression-level ] " );
@@ -339,7 +344,7 @@ main( int argc, char **argv, char **envp )
     file = argv[ optind ];
 
     if ( authlevel != 0 ) {
-        if ( tls_client_setup( use_randfile, authlevel, ca, cert, 
+        if ( tls_client_setup( use_randfile, authlevel, caFile, caDir, cert, 
                 privatekey ) != 0 ) {
             /* error message printed in tls_setup */
             exit( 2 );

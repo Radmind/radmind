@@ -77,7 +77,7 @@ struct list		*special_list, *kfile_seen;
 
 extern struct timeval	timeout;
 extern char		*version, *checksumlist;
-extern char             *ca, *cert, *privatekey; 
+extern char             *caFile, *caDir, *cert, *privatekey; 
 
     static void
 expand_kfile( struct llist **khead, char *kfile )
@@ -560,7 +560,8 @@ main( int argc, char **argv )
     struct servent	*se;
     char	        **capa = NULL;		/* capabilities */
 
-    while (( c = getopt( argc, argv, "Cc:D:h:iK:np:qrvVw:x:y:z:Z:" )) != EOF ) {
+    while (( c = getopt( argc, argv,
+	    "Cc:D:h:iK:np:P:qrvVw:x:y:z:Z:" )) != EOF ) {
 	switch( c ) {
 	case 'C':	/* clean up dir containing command.K */
 	    clean = 1;
@@ -605,6 +606,10 @@ main( int argc, char **argv )
 		port = se->s_port;
 	    }
 	    break;
+	
+        case 'P' :              /* ca dir */
+            caDir = optarg;
+            break;
 
 	case 'q':
 	    quiet = 1;
@@ -637,7 +642,7 @@ main( int argc, char **argv )
             break;
 
         case 'x' :              /* ca file */
-            ca = optarg;
+            caFile = optarg;
             break;
 
         case 'y' :              /* cert file */
@@ -676,7 +681,7 @@ main( int argc, char **argv )
 	fprintf( stderr, "[ -CinrV ] [ -q | -v ] " );
 	fprintf( stderr, "[ -c checksum ] [ -D radmind_path ] " );
 	fprintf( stderr, "[ -K command file ] " );
-	fprintf( stderr, "[ -h host ] [ -p port ] " );
+	fprintf( stderr, "[ -h host ] [ -p port ] [ -P ca-pem-directory ] " );
 	fprintf( stderr, "[ -w auth-level ] [ -x ca-pem-file ] " );
 	fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ] " );
 	fprintf( stderr, "[ -Z compression-level ]\n" );
@@ -717,7 +722,7 @@ main( int argc, char **argv )
     }           
 
     if ( authlevel != 0 ) {
-	if ( tls_client_setup( use_randfile, authlevel, ca, cert,
+	if ( tls_client_setup( use_randfile, authlevel, caFile, caDir, cert,
 		privatekey ) != 0 ) {
 	    /* error message printed in tls_setup */
 	    exit( 2 );

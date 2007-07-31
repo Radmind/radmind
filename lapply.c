@@ -64,7 +64,7 @@ extern int	showprogress;
 const EVP_MD    *md;
 SSL_CTX  	*ctx;
 
-extern char             *ca, *cert, *privatekey;
+extern char             *caFile, *caDir, *cert, *privatekey;
 
 struct node {
     char                *path;
@@ -253,7 +253,7 @@ main( int argc, char **argv )
 	char        **capa = NULL; /* capabilities */
 
     while (( c = getopt( argc, argv,
-	    "%c:CFh:iInp:qru:Vvw:x:y:z:Z:" )) != EOF ) {
+	    "%c:CFh:iInp:P:qru:Vvw:x:y:z:Z:" )) != EOF ) {
 	switch( c ) {
 	case '%':
 	    showprogress = 1;
@@ -303,6 +303,10 @@ main( int argc, char **argv )
 	    }
 	    break;
 
+        case 'P' :              /* ca dir */
+            caDir = optarg;
+            break;
+
 	case 'q':
 	    quiet = 1;
 	    break;
@@ -338,7 +342,7 @@ main( int argc, char **argv )
             break;
 
         case 'x' :              /* ca file */
-            ca = optarg;
+            caFile = optarg;
             break;
 
         case 'y' :              /* cert file */
@@ -402,7 +406,7 @@ main( int argc, char **argv )
 	fprintf( stderr, "usage: %s [ -CFiInrV ] [ -%% | -q | -v ] ",
 	    argv[ 0 ] );
 	fprintf( stderr, "[ -c checksum ] [ -h host ] [ -p port ] " );
-	fprintf( stderr, "[ -u umask ] " );
+	fprintf( stderr, "[ -P ca-pem-directory ] [ -u umask ] " );
 	fprintf( stderr, "[ -w auth-level ] [ -x ca-pem-file ] " );
 	fprintf( stderr, "[ -y cert-pem-file ] [ -z key-pem-file ] " );
 	fprintf( stderr, "[ -Z compression-level ] " );
@@ -415,7 +419,7 @@ main( int argc, char **argv )
     }
 
     if ( authlevel != 0 ) {
-        if ( tls_client_setup( use_randfile, authlevel, ca, cert, 
+        if ( tls_client_setup( use_randfile, authlevel, caFile, caDir, cert, 
                 privatekey ) != 0 ) {
             /* error message printed in tls_setup */
             exit( 2 );

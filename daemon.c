@@ -141,9 +141,7 @@ main( int ac, char **av )
     int			level = LOG_INFO;
     extern int		optind;
     extern char		*optarg;
-    char		*ca = "cert/ca.pem";
-    char		*cert = "cert/cert.pem";
-    char		*privatekey = "cert/cert.pem";
+    extern char		*caFile, *caDir, *cert, *privatekey;
     pid_t		pid;
     int			status;
     struct rusage	usage;
@@ -153,7 +151,6 @@ main( int ac, char **av )
     DNSServiceErrorType	dnsreg_err;
 #endif /* HAVE_DNSSD */
 
-
     if (( prog = strrchr( av[ 0 ], '/' )) == NULL ) {
 	prog = av[ 0 ];
     } else {
@@ -162,7 +159,7 @@ main( int ac, char **av )
 
      b_addr.s_addr = htonl( INADDR_ANY );
 
-    while (( c = getopt( ac, av, "a:Bb:dD:F:fL:m:p:Ru:UVw:x:y:z:Z:" ))
+    while (( c = getopt( ac, av, "a:Bb:dD:F:fL:m:p:P:Ru:UVw:x:y:z:Z:" ))
 		!= EOF ) {
 	switch ( c ) {
 	case 'a' :		/* bind address */ 
@@ -222,6 +219,10 @@ main( int ac, char **av )
 	    port = htons( atoi( optarg ));
 	    break;
 
+	case 'P' :		/* ca dir */
+	    caDir = optarg;
+	    break;
+
 	case 'r' :
 	    use_randfile = 1;
 	    break;
@@ -248,7 +249,7 @@ main( int ac, char **av )
 	    break;
 
 	case 'x' :		/* ca file */
-	    ca = optarg;
+	    caFile = optarg;
 	    break;
 
 	case 'y' :		/* cert file */
@@ -284,7 +285,7 @@ main( int ac, char **av )
 	fprintf( stderr, "Usage: radmind [ -dBrUV ] [ -a bind-address ] " );
 	fprintf( stderr, "[ -b backlog ] [ -D path ] [ -F syslog-facility " );
 	fprintf( stderr, "[ -L syslog-level ] [ -m max-connections ] " );
-	fprintf( stderr, "[ -p port ] [ -u umask ] " );
+	fprintf( stderr, "[ -p port ] [ -P ca-pem-directory ] [ -u umask ] " );
 	fprintf( stderr, "[ -w auth-level ] [ -x ca-pem-file ] " );
 	fprintf( stderr, "[ -y cert-pem-file] [ -z key-pem-file ] " );
 	fprintf( stderr, "[ -Z max-compression-level ]\n" );
@@ -354,7 +355,7 @@ main( int ac, char **av )
     }
 
     if ( authlevel != 0 ) {
-	if ( tls_server_setup( use_randfile, authlevel, ca, cert,
+	if ( tls_server_setup( use_randfile, authlevel, caFile, caDir, cert,
 		privatekey ) != 0 ) {
 	    exit( 1 );
 	}
