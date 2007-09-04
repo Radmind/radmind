@@ -157,7 +157,12 @@ main( int ac, char **av )
 	prog++;
     }
 
-     b_addr.s_addr = htonl( INADDR_ANY );
+    b_addr.s_addr = htonl( INADDR_ANY );
+
+    /* Set appropriate TLS paths for server; default values are for client  */
+    caFile = "cert/ca.pem";
+    cert = "cert/cert.pem"; 	 
+    privatekey = "cert/cert.pem";
 
     while (( c = getopt( ac, av, "a:Bb:dD:F:fL:m:p:P:Ru:UVw:x:y:z:Z:" ))
 		!= EOF ) {
