@@ -58,7 +58,7 @@ RADMIND_OBJ=    version.o daemon.o command.o argcargv.o code.o \
 
 FSDIFF_OBJ=     version.o fsdiff.o argcargv.o transcript.o llist.o code.o \
                 hardlink.o cksum.o base64.o pathcmp.o radstat.o applefile.o \
-		list.o
+		list.o wildcard.o
 
 KTCHECK_OBJ=    version.o ktcheck.o argcargv.o retr.o base64.o code.o \
                 cksum.o list.o llist.o connect.o applefile.o tls.o pathcmp.o \
@@ -79,13 +79,13 @@ LMERGE_OBJ=     version.o lmerge.o argcargv.o code.o pathcmp.o mkdirs.o \
 
 LFDIFF_OBJ=     version.o lfdiff.o argcargv.o connect.o retr.o cksum.o \
                 progress.o base64.o applefile.o code.o tls.o pathcmp.o \
-		transcript.o list.o radstat.o hardlink.o mkprefix.o
+		transcript.o list.o radstat.o hardlink.o mkprefix.o wildcard.o
 
 REPO_OBJ=	version.o repo.o report.o argcargv.o connect.o code.o tls.o
 
 TWHICH_OBJ=     version.o twhich.o argcargv.o transcript.o llist.o code.o \
                 hardlink.o cksum.o base64.o pathcmp.o radstat.o applefile.o \
-		list.o
+		list.o wildcard.o
 
 LSORT_OBJ=     version.o lsort.o pathcmp.o code.o argcargv.o
 

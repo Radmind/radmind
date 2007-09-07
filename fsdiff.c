@@ -27,11 +27,12 @@ void            (*logger)( char * ) = NULL;
 extern char	*version, *checksumlist;
 
 void		fs_walk( char *, struct stat *, char *, struct applefileinfo *,
-	int, int );
+	int, int, int );
 int		dodots = 0;
 int		dotfd;
 int		lastpercent = -1;
 int		case_sensitive = 1;
+extern int	exclude_warnings;
 const EVP_MD    *md;
 
 static struct fs_list *fs_insert( struct fs_list **, struct fs_list *,
@@ -79,13 +80,14 @@ fs_insert( struct fs_list **head, struct fs_list *last,
 
     void
 fs_walk( char *path, struct stat *st, char *type, struct applefileinfo *afinfo,
-	int start, int finish ) 
+	int start, int finish, int pdel ) 
 {
     DIR			*dir;
     struct dirent	*de;
     struct fs_list	*head = NULL, *cur, *new = NULL, *next;
     int			len;
     int			count = 0;
+    int			del_parent;
     float		chunk, f = start;
     char		temp[ MAXPATHLEN ];
     struct transcript	*tran;
@@ -98,7 +100,7 @@ fs_walk( char *path, struct stat *st, char *type, struct applefileinfo *afinfo,
     }
 
     /* call the transcript code */
-    switch ( transcript( path, st, type, afinfo )) {
+    switch ( transcript( path, st, type, afinfo, pdel )) {
     case 2 :			/* negative directory */
 	for (;;) {
 	    tran = transcript_select();
@@ -125,7 +127,7 @@ fs_walk( char *path, struct stat *st, char *type, struct applefileinfo *afinfo,
 		    }
 		}
 
-		fs_walk( temp, &st0, &type0, &afinfo0, start, finish );
+		fs_walk( temp, &st0, &type0, &afinfo0, start, finish, pdel );
 	    } else {
 		return;
 	    }
@@ -142,6 +144,18 @@ fs_walk( char *path, struct stat *st, char *type, struct applefileinfo *afinfo,
 	fprintf( stderr, "transcript returned an unexpected value!\n" );
 	exit( 2 );
     }
+
+    /*
+     * store whether object is to be deleted. if we get here, object
+     * is a directory, which should mean that if fs_minus == 1 all
+     * child objects should be removed as well. tracking this allows
+     * us to zap excluded objects whose parent dir will be deleted.
+     *
+     * del_parent is passed into subsequent fs_walk and transcript
+     * calls, where * it's checked when considering whether to
+     * exclude an object.
+     */
+    del_parent = fs_minus;
 
     if ( case_sensitive ) {
 	cmp = strcmp;
@@ -222,7 +236,7 @@ fs_walk( char *path, struct stat *st, char *type, struct applefileinfo *afinfo,
 	}
 
 	fs_walk( temp, &cur->fl_stat, &cur->fl_type, &cur->fl_afinfo,
-		(int)f, (int)( f + chunk ));
+		(int)f, (int)( f + chunk ), del_parent );
 
 	f += chunk;
 
@@ -251,7 +265,7 @@ main( int argc, char **argv )
     cksum = 0;
     outtran = stdout;
 
-    while (( c = getopt( argc, argv, "%1ACc:IK:o:Vv" )) != EOF ) {
+    while (( c = getopt( argc, argv, "%1ACc:IK:o:VvW" )) != EOF ) {
 	switch( c ) {
 	case '%':
 	case 'v':
@@ -300,6 +314,10 @@ main( int argc, char **argv )
 	    printf( "%s\n", version );
 	    printf( "%s\n", checksumlist );
 	    exit( 0 );
+
+	case 'W':		/* print a warning when excluding an object */
+	    exclude_warnings = 1;
+	    break;
 
 	case '?':
 	    printf( "bad %c\n", c );
@@ -354,7 +372,7 @@ main( int argc, char **argv )
     /* initialize the transcripts */
     transcript_init( kfile, K_CLIENT );
 
-    fs_walk( path_prefix, &st, &type, &afinfo, 0, finish );
+    fs_walk( path_prefix, &st, &type, &afinfo, 0, finish, 0 );
 
     if ( finish > 0 ) {
 	printf( "%%%d\n", ( int )finish );

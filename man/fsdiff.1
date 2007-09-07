@@ -179,8 +179,8 @@ Command files have the following format:
 	type	path
 .sp
 .br
-Type is 'k' for command file, 'p' for positive, 'n' for negative and 's'
-for special. The
+Type is 'k' for command file, 'p' for positive, 'n' for negative, 's'
+for special and 'x' for an exclude pattern. The
 argument path is either a command file name, transcript name,
 or in the case of type special, a full pathname.
 .br
@@ -197,9 +197,15 @@ or in the case of type special, a full pathname.
 	n	simta-neg.T
 .br
 	s	/etc/fstab
+.br
+	x	/etc/tsm*.pid
 .sp
 Lines beginning with "#" are comments, and are skipped. A comment must
-be on a line by itself. Blank lines are also skipped.
+be on a line by itself. Blank lines are also skipped. Exclude lines are
+wildcard patterns (see radmind(8) DESCRIPTION) of paths that will be
+ignored completely, that is, fsdiff will not care if an object matching
+an exclude line is present or absent, and will not print out anything
+relating to it.
 .sp
 If there is no command file, the transcript used is the null transcript.
 This means

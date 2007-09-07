@@ -9,7 +9,6 @@
 #define T_POSITIVE	1
 #define T_NEGATIVE	2 
 #define T_SPECIAL	3
-#define T_EXCLUDE	4
 
 #define T_MOVE_TRAN	1
 #define T_MOVE_FS	2
@@ -33,6 +32,7 @@
 extern int		edit_path;
 extern int		skip;
 extern int		cksum;
+extern int		fs_minus;
 extern FILE		*outtran;
 extern char		*path_prefix;
 
@@ -60,11 +60,12 @@ struct transcript {
     FILE		*t_in;
 };
 
-int			transcript( char *, struct stat *, char *, struct applefileinfo * );
+int			transcript( char *, struct stat *, char *, struct applefileinfo *, int );
 void			transcript_init( char *kfile, int location );
 struct transcript	*transcript_select( void );
 void			transcript_parse( struct transcript * );
 void			transcript_free( void );
+int			t_exclude( char *path );
 void			t_print( struct pathinfo *, struct transcript *, int );
 char			*hardlink( struct pathinfo * );
 int			hardlink_changed( struct pathinfo *, int );
