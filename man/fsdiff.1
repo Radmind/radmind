@@ -11,7 +11,7 @@
 |
 .B -1
 } [
-.BI -IV
+.BI -IVW
 ] [
 .BI \-K\  command
 ] [
@@ -305,6 +305,10 @@ displays the version number of
 .BR fsdiff ,
 a list  of supported checksumming algorithms in descending
 order of preference and then exits.
+.TP 19
+.B \-W
+prints a warning to the standard error when encountering an object
+matching an exclude pattern.
 .sp
 .SH FILES
 .TP 19
