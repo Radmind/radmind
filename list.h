@@ -17,7 +17,7 @@ struct node
     struct node 	*n_prev;
 };
 
-#define list_size( list )   ((list)->l_count)
+#define list_size( list )   ((list) ? (list)->l_count : 0 )
 
 struct list *	list_new( void );
 void		list_clear( struct list *list );
