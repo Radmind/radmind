@@ -26,6 +26,7 @@
 #include "pathcmp.h"
 #include "largefile.h"
 #include "list.h"
+#include "wildcard.h"
 
 int read_kfile( char *kfile, int location );
 static void t_new( int type, char *fullname, char *shortname, char *kfile );
@@ -39,11 +40,14 @@ extern int			case_sensitive;
 static char			*kdir;
 static struct list		*kfile_list;
 struct list			*special_list;
+struct list			*exclude_list;
 
 char				*path_prefix = NULL;
 int				edit_path;
 int				skip;
 int				cksum;
+int				fs_minus;
+int				exclude_warnings = 0;
 FILE				*outtran;
 
     void 
@@ -254,6 +258,8 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
     } 
 
     if ( print_minus ) {
+	/* set fs_minus so we can handle excluded files in dirs to be deleted */
+	fs_minus = 1;
 	fprintf( outtran, "- " );
     }
 
@@ -548,6 +554,22 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
     return T_MOVE_BOTH;
 }
 
+    int
+t_exclude( char *path )
+{
+    struct node		*cur;
+
+    if ( list_size( exclude_list ) > 0 ) {
+	for ( cur = exclude_list->l_head; cur != NULL; cur = cur->n_next ) {
+	    if ( wildcard( cur->n_path, path, case_sensitive )) {
+		return( 1 );
+	    }
+	}
+    }
+
+    return( 0 );
+}
+
 /* 
  * Loop through the list of transcripts and compare each
  * to find which transcript to start with. Only switch to the
@@ -609,7 +631,8 @@ transcript_select( void )
 }
 
     int
-transcript( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
+transcript( char *path, struct stat *st, char *type,
+		struct applefileinfo *afinfo, int parent_minus )
 {
     struct pathinfo	pi;
     int			enter = 0;
@@ -618,11 +641,32 @@ transcript( char *path, struct stat *st, char *type, struct applefileinfo *afinf
     char		*linkpath;
     struct transcript	*tran = NULL;
 
+    fs_minus = 0;
+
     /*
      * path is NULL when we've been called after the filesystem has been
      * exhausted, to consume any remaining transcripts.
      */
     if ( path != NULL ) {
+	/*
+	 * check for exclude match first to avoid any unnecessary work.
+	 * special files still have highest precedence.
+	 */
+	if ( t_exclude( path ) && !parent_minus ) {
+	    if ( list_size( special_list ) <= 0
+		    || list_check( special_list, path ) == 0 ) {
+		if ( exclude_warnings ) {
+		    fprintf( stderr, "Warning: excluding %s\n", path );
+		}
+
+		/* move the transcripts ahead */
+		tran = transcript_select();
+		transcript_parse( tran );
+
+		return( 0 );
+	    }
+	}
+
 	strcpy( pi.pi_name, path );
 	pi.pi_stat = *st;
 	pi.pi_type = *type;
@@ -708,10 +752,6 @@ t_new( int type, char *fullname, char *shortname, char *kfile )
 	    exit( 2 );
 	}
 	transcript_parse( new );
-	break;
-
-    case T_EXCLUDE :
-	/* read the whole file, keep a list of possibly wild pathnames */
 	break;
 
     default :
@@ -822,6 +862,10 @@ transcript_init( char *kfile, int location )
 	exit( 2 );
     }
     if (( special_list = list_new( )) == NULL ) {
+	perror( "list_new" );
+	exit( 2 );
+    }
+    if (( exclude_list = list_new()) == NULL ) {
 	perror( "list_new" );
 	exit( 2 );
     }
@@ -968,9 +1012,14 @@ read_kfile( char *kfile, int location )
 
 	case 'x':				/* exclude */
 	    if ( minus ) {
-		t_remove( T_EXCLUDE, av[ 1 ] );
+		list_remove( exclude_list, av[ 1 ] );
 	    } else {
-		t_new( T_EXCLUDE, fullpath, av[ 1 ], kfile );
+		if ( !list_check( exclude_list, av[ 1 ] )) {
+		    if ( list_insert( exclude_list, av[ 1 ] ) != 0 ) {
+			perror( "list_insert" );
+			return( -1 );
+		    }
+		}
 	    }
 	    break;
 
@@ -1014,7 +1063,7 @@ transcript_free( )
      * Call transcript() with NULL to indicate that we've run out of
      * filesystem to compare against.
      */
-    transcript( NULL, NULL, NULL, NULL );
+    transcript( NULL, NULL, NULL, NULL, 0 );
 
     while ( tran_head != NULL ) {
 	next = tran_head->t_next;

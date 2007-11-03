@@ -1402,6 +1402,7 @@ read_kfile( SNET *sn, char *kfile )
 	    break;
 
 	case 's':
+	case 'x':
 	    break;
 
 	default:

@@ -37,6 +37,7 @@
 #include "tls.h"
 #include "transcript.h"
 #include "code.h"
+#include "wildcard.h"
 
 void			(*logger)( char * ) = NULL;
 extern struct timeval	timeout;
@@ -47,6 +48,7 @@ int			cksum = 0;
 int             	case_sensitive = 1;
 int			create_prefix = 0;
 int			quiet = 1;
+int			excluded = 0;
 const EVP_MD    	*md;
 SSL_CTX  		*ctx;
 
@@ -56,10 +58,8 @@ extern char             *caFile, *caDir, *cert, *privatekey;
 precedent_transcript( char *kfile, char *file, int where )
 {
     extern struct transcript	*tran_head;
-    extern struct list	*special_list;
     struct stat		st;
     struct transcript	*tran;
-    struct node		*node;
     int			cmp = 0;
 
     /* verify that file exists on the local system */
@@ -73,20 +73,10 @@ precedent_transcript( char *kfile, char *file, int where )
     transcript_init( kfile, where );
     outtran = stdout;
 
-    /* identical to code in twhich.c */
-
-    /* check special list */
-    if ( special_list->l_count > 0 ) {
-        for ( node = list_pop_head( special_list ); node != NULL;
-                node = list_pop_head( special_list )) {
-            if ( pathcasecmp( node->n_path, file, case_sensitive ) == 0 ) {
-                printf( "# Special\n" );
-                printf( "special.T:\n" );
-                printf( "%s\n", node->n_path );
-                free( node );
-		break;
-            }
-        }
+    /* check exclude list */
+    if ( t_exclude( file )) {
+	excluded = 1;
+	return( NULL );
     }
 
     for ( tran = tran_head; !tran->t_eof; tran = tran->t_next ) {
@@ -156,7 +146,7 @@ main( int argc, char **argv, char **envp )
     diffargv[ diffargc++ ] = diff;
 
     while (( c = getopt ( argc, argv,
-	    "h:Ip:P:rST:u:Vvw:x:y:z:Z:bitcefnC:D:sX:" )) != EOF ) {
+	    "h:IK:p:P:rST:u:Vvw:x:y:z:Z:bitcefnC:D:sX:" )) != EOF ) {
 	switch( c ) {
 	case 'I':
 	    case_sensitive = 0;
@@ -164,6 +154,10 @@ main( int argc, char **argv, char **envp )
 
 	case 'h':
 	    host = optarg;
+	    break;
+
+	case 'K':
+	    kfile = optarg;
 	    break;
 
 	case 'p':
@@ -309,7 +303,11 @@ main( int argc, char **argv, char **envp )
 	} else {
 	    if (( tran = precedent_transcript( kfile,
 			file, K_CLIENT )) == NULL ) {
-		fprintf( stderr, "%s not found in any transcript\n", file );
+		if ( excluded ) {
+		    fprintf( stderr, "%s: excluded\n", file );
+		} else {
+		    fprintf( stderr, "%s not found in any transcript\n", file );
+		}
 		exit( 2 );
 	    }
 	    /* check for special */

@@ -18,6 +18,7 @@
 #include "code.h"
 #include "pathcmp.h"
 #include "list.h"
+#include "wildcard.h"
 
 const EVP_MD    *md;
 
@@ -37,6 +38,7 @@ twhich( char *pattern, int displayall )
     struct transcript	*tran;
     extern struct transcript	*tran_head;
     extern struct list	*special_list;
+    extern struct list	*exclude_list;
     int			cmp = 0, match = 0;
 
     /* check special list */
@@ -52,6 +54,21 @@ twhich( char *pattern, int displayall )
 		    goto done;
 		}
 	    }
+	}
+    }
+
+    /* check exclude list */
+    if ( exclude_list->l_count > 0 ) {
+	for ( node = list_pop_head( exclude_list ); node != NULL;
+		node = list_pop_head( exclude_list )) {
+	    if ( wildcard( node->n_path, pattern, case_sensitive )) {
+		printf( "# Exclude\n" );
+		printf( "# exclude pattern: %s\n", node->n_path );
+		if ( !displayall ) {
+		    goto done;
+		}
+	    }
+	    free( node );
 	}
     }
 

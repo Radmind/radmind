@@ -1021,6 +1021,10 @@ read_kfile( char * kfile )
 		exit( 2 );
 	    }
 	    break;
+
+	case 'x':
+	    /* exclude patterns have no associated transcript */
+	    break;
 	}
     }
     if ( ferror( f )) {
