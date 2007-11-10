@@ -139,7 +139,7 @@ done:
     int
 main( int argc, char **argv )
 {
-    int			c, err = 0, defaultkfile = 1, rc = 0;
+    int			c, err = 0, defaultkfile = 1, rc = 0, len;
     int			server = 0, displayall = 0, recursive = 0;
     extern char		*version;
     char		*kfile = _RADMIND_COMMANDFILE;
@@ -183,6 +183,7 @@ main( int argc, char **argv )
     }
 
     pattern = argv[ argc - 1 ];
+    len = strlen( pattern );
 
     if ( server && defaultkfile ) {
 	err++;
@@ -194,6 +195,11 @@ main( int argc, char **argv )
         fprintf( stderr, "Usage: %s -s -K command [ -aIV ] file\n",
 	    argv[ 0 ] );
         exit( 2 );
+    }
+
+    /* clip trailing slash */
+    if ( len > 1 && pattern[ len - 1 ] == '/' ) {
+	pattern[ len - 1 ] = '\0';
     }
 
     /* initialize the transcripts */
