@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Regents of The University of Michigan.
+ * Copyright (c) 2007 Regents of The University of Michigan.
  * All Rights Reserved.  See COPYRIGHT.
  */
 
@@ -33,11 +33,16 @@
 #include "connect.h"
 #include "argcargv.h"
 
+#define RADMIND_IANA_PORT	6222
+#define RADMIND_LEGACY_PORT	6662
+
 extern void            (*logger)( char * );
 extern int              verbose;
 struct timeval          timeout = { 60, 0 };
 extern int		errno;
 extern SSL_CTX  	*ctx;
+
+int			connectsn2_errno = 0;
 
 #ifdef HAVE_ZLIB
 int zlib_level = 0;
@@ -73,12 +78,12 @@ connectsn2( struct sockaddr_in *sin )
 	exit( 2 );
     }
 
-    if ( verbose ) printf( "trying %s... ", inet_ntoa( sin->sin_addr ));
+    if ( verbose ) printf( "trying %s:%u... ", inet_ntoa( sin->sin_addr ),
+				ntohs( sin->sin_port ));
     if ( connect( s, (struct sockaddr *)sin,
 	    sizeof( struct sockaddr_in )) != 0 ) {
+	connectsn2_errno = errno;
 	if ( verbose ) printf( "failed: %s\n", strerror( errno ));
-	fprintf( stderr, "connection to %s failed: %s\n",
-		inet_ntoa( sin->sin_addr ), strerror( errno ));
 	(void)close( s );
 	return( NULL );
     }
@@ -121,10 +126,26 @@ connectsn( char *host, int port )
     for ( i = 0; he->h_addr_list[ i ] != NULL; i++ ) {
 	memcpy( &sin.sin_addr.s_addr, he->h_addr_list[ i ],
 		(unsigned int)he->h_length );
-	if (( sn = connectsn2( &sin )) != NULL ) {
+
+	/*
+	 * radmind's original port was 6662, but got
+	 * registered as 6222 with IANA, and will show
+	 * up in future /etc/services as 6222. during
+	 * the transition, fall back to trying the
+	 * legacy port if the new port connection fails.
+	 */
+	if (( sn = connectsn2( &sin )) == NULL
+			&& port == htons( RADMIND_IANA_PORT )) {
+	    /* try connecting to old non-IANA registered port */
+	    sin.sin_port = htons( RADMIND_LEGACY_PORT );
+	    sn = connectsn2( &sin );
+	}
+	if ( sn != NULL ) {
 	    return( sn );
 	}
     }
+    fprintf( stderr, "connection to %s failed: %s\n",
+	    inet_ntoa( sin.sin_addr ), strerror( connectsn2_errno ));
     fprintf( stderr, "%s: connection failed\n", host );
     return( NULL );
 }
