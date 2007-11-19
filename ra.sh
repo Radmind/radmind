@@ -381,7 +381,7 @@ checkin)
     rm ${CHECKEDOUT}
     ;;
 
-update)
+update|up)
     update interactive
     cleanup
     ;;
