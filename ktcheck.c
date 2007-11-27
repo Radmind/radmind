@@ -168,7 +168,7 @@ cleandirs( char *path, struct llist *khead )
 	 */
 	if ( strcmp( fsitem, base_kfile ) == 0 ||
 		( strncmp( kdir, path, strlen( path )) == 0
-		&& strcmp( base_kfile, de->d_name )) == 0 ) {
+		&& strcmp( base_kfile, de->d_name ) == 0 )) {
 	    continue;
 	}
 
