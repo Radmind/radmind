@@ -230,7 +230,7 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
     int
 main( int argc, char **argv )
 {
-    int			c, port = htons( 6662 ), err = 0;
+    int			c, port = htons( 6222 ), err = 0;
     extern int          optind;
     FILE		*f = NULL; 
     char		*host = _RADMIND_HOST, *d_path;

@@ -46,7 +46,7 @@ SSL_CTX			*ctx;
 main( int argc, char *argv[] )
 {
     SNET		*sn;
-    int			c, port = htons( 6662 );
+    int			c, port = htons( 6222 );
     int			i = 0, err = 0, len;
     int			authlevel = _RADMIND_AUTHLEVEL;
     int			use_randfile = 0;

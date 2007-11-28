@@ -546,7 +546,7 @@ check( SNET *sn, char *type, char *file )
     int
 main( int argc, char **argv )
 {
-    int			c, port = htons( 6662 ), err = 0;
+    int			c, port = htons( 6222 ), err = 0;
     int			authlevel = _RADMIND_AUTHLEVEL;
     int			use_randfile = 0;
     int			clean = 0;

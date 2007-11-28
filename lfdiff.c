@@ -113,7 +113,7 @@ precedent_transcript( char *kfile, char *file, int where )
     int
 main( int argc, char **argv, char **envp )
 {
-    int			c, i, tac, port = htons( 6662 ), err = 0;
+    int			c, i, tac, port = htons( 6222 ), err = 0;
     int			special = 0, diffargc = 0;
     int			fd;
     extern int          optind; 

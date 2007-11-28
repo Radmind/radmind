@@ -72,7 +72,7 @@ extern char             *caFile, *caDir, *cert, *privatekey;
     int
 main( int argc, char **argv )
 {
-    int			c, err = 0, port = htons(6662), tac; 
+    int			c, err = 0, port = htons( 6222 ), tac; 
     int			network = 1, len = 0, rc;
     int			negative = 0, tran_only = 0;
     int			respcount = 0;
