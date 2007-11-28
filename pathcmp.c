@@ -5,6 +5,10 @@
 
 #include "config.h"
 
+#ifdef __APPLE__
+#define USE_ASCII	1
+#endif /* __APPLE__ */
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <ctype.h>
