@@ -368,7 +368,7 @@ main( int ac, char **av )
 
     if ( port == 0 ) {
 	if (( se = getservbyname( "radmind", "tcp" )) == NULL ) {
-	    port = htons( 6662 );
+	    port = htons( 6222 );
 	} else {
 	    port = se->s_port;
 	}

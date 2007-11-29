@@ -42,7 +42,7 @@ clients.
 On startup, radmind changes directory to _RADMIND_PATH, creates
 command, file, special, tmp, tmp/file, tmp/transcript and
 transcript ( with permissions 0750 ) if they do not
-exist, and begins listening on the radmind port ( by default 6662 ) for
+exist, and begins listening on the radmind port ( by default 6222 ) for
 incoming connections.
 With the
 -D option, radmind will use
@@ -232,7 +232,7 @@ Value must be greater than or equal to 0 with 0 indicating no limit.
 .TP 19
 .BI \-p\  port 
 specifies the port of the radmind server, by default
-.BR 6662 .
+.BR 6222 .
 .TP 19
 .BI \-P\  ca-directory
 specifies a directory that contains certificates to be used when verifying a client.  Certificates must be in PEM format and the directory must have been
