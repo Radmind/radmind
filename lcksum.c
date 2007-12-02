@@ -64,8 +64,8 @@ ckapplefile( char *applefile, int afd )
     /* check header */
     rr = read( afd, &header, AS_HEADERLEN );
     if ( rr < 0 ) {
-	perror( "read" );
-	exit( 2 );
+	fprintf( stderr, "%s: read failed: %s\n", applefile, strerror( errno ));
+	return( -1 );
     }
 
     if ( rr != AS_HEADERLEN ||
@@ -77,8 +77,8 @@ ckapplefile( char *applefile, int afd )
     /* check entries */
     rr = read( afd, &as_ents, ( 3 * sizeof( struct as_entry )));
     if ( rr < 0 ) {
-	perror( "read" );
-	exit( 2 );
+	fprintf( stderr, "%s: read failed: %s\n", applefile, strerror( errno ));
+	return( -1 );
     }
     if ( rr != ( 3 * sizeof( struct as_entry ))) {
 	goto invalid_applefile;
@@ -251,11 +251,10 @@ do_lcksum( char *tpath )
 	len = strlen( tline );
 	if (( tline[ len - 1 ] ) != '\n' ) {
 	    fprintf( stderr, "%s: %d: line too long\n", tpath, linenum);
-	    exitval = 1;
-	    goto done;
+	    goto badline;
 	}
 	/* save transcript line -- must free */
-	if ( ( line = strdup( tline ) ) == NULL ) {
+	if (( line = strdup( tline )) == NULL ) {
 	    perror( "strdup" );
 	    cleanup( updatetran, upath );
 	    exit( 2 );
@@ -272,8 +271,7 @@ do_lcksum( char *tpath )
         }
 	if ( tac == 1 ) {
 	    fprintf( stderr, "line %d: invalid transcript line\n", linenum );
-	    exitval = 1;
-	    goto done;
+	    goto badline;
 	}
 
 	if ( *targv[ 0 ] == '-' ) {
@@ -285,13 +283,11 @@ do_lcksum( char *tpath )
 
 	if (( d_path = decode( targv[ 1 ] )) == NULL ) {
 	    fprintf( stderr, "line %d: path too long\n", linenum );
-	    exitval = 1;
-	    goto done;
+	    goto badline;
 	} 
 	if ( strlen( d_path ) >= MAXPATHLEN ) {
 	    fprintf( stderr, "line %d: path too long\n", linenum );
-	    exitval = 1;
-	    goto done;
+	    goto badline;
 	}
 	strcpy( path, d_path );
 	    
@@ -314,12 +310,7 @@ do_lcksum( char *tpath )
 	/* Check transcript order */
 	if ( prepath != 0 ) {
 	    if ( pathcasecmp( path, prepath, case_sensitive ) < 0 ) {
-		if ( updatetran ) {
-		    fprintf( stderr, "line %d: bad sort order\n", linenum );
-		} else {
-		    fprintf( stderr,
-		    "line %d: bad sort order.  Not continuing.\n", linenum );
-		}
+		fprintf( stderr, "line %d: bad sort order\n", linenum );
 		cleanup( updatetran, upath );
 		exit( 2 );
 	    }
@@ -327,8 +318,7 @@ do_lcksum( char *tpath )
 
 	if ( strlen( path ) >= MAXPATHLEN ) {
 	    fprintf( stderr, "line %d: path too long\n", linenum );
-	    exitval = 1;
-	    goto done;
+	    goto badline;
 	}
 	strcpy( prepath, path );
 
@@ -343,16 +333,14 @@ do_lcksum( char *tpath )
 	if ( tac != 8 ) {
 	    fprintf( stderr, "line %d: %d arguments should be 8\n",
 		    linenum, tac );
-	    exitval = 1;
-	    goto done;
+	    goto badline;
 	}
 
 	if ( snprintf( path, MAXPATHLEN, "%s/%s/%s", file_root, tran_name,
-		d_path ) > MAXPATHLEN - 1 ) {
+		d_path ) >= MAXPATHLEN ) {
 	    fprintf( stderr, "%d: %s/%s/%s: path too long\n", linenum,
 		file_root, tran_name, d_path );
-	    exitval = 1;
-	    goto done;
+	    goto badline;
 	}
 
 	/*
@@ -368,22 +356,22 @@ do_lcksum( char *tpath )
 
 	/* open file here to save us some other open calls */
 	if (( fd = open( path, O_RDONLY, 0 )) < 0 ) {
-	    fprintf( stderr, "open %s: %s\n", d_path, strerror( errno ));
-	    cleanup( updatetran, upath );
-	    exit( 2 );
+	    fprintf( stderr, "line %d: open %s: %s\n",
+			linenum, d_path, strerror( errno ));
+	    goto badline;
 	}
 
 	/* check size */
 	if ( fstat( fd, &st) != 0 ) {
-	    perror( path );
-	    cleanup( updatetran, upath );
-	    exit( 2 );
+	    fprintf( stderr, "line %d: fstat failed: %s\n",
+			linenum, strerror( errno ));
+	    goto badline;
 	}
 
 	if (( cksumsize = do_fcksum( fd, lcksum )) < 0 ) {
-	    perror( path );
-	    cleanup( updatetran, upath );
-	    exit( 2 );
+	    fprintf( stderr, "line %d: %s: %s\n", linenum,
+			path, strerror( errno ));
+	    goto badline;
 	}
 
 	/* check size */
@@ -417,21 +405,21 @@ do_lcksum( char *tpath )
 	if ( *targv[ 0 ] == 'a' && checkapplefile ) {
 	    /* rewind the descriptor */
 	    if ( lseek( fd, 0, SEEK_SET ) < 0 ) {
-		perror( "lseek" );
-		exitval = 1;
-		goto done;
+		fprintf( stderr, "%s: lseek failed: %s\n",
+			path, strerror( errno ));
+		goto badline;
 	    }
 	    if ( ckapplefile( path, fd ) != st.st_size ) {
 		fprintf( stderr, "%s: corrupted applefile\n", path );
-		exitval = 1;
-		goto done;
+		goto badline;
 	    }
 	}
 
 	if ( close( fd ) != 0 ) {
-	    perror( "close" );
-	    exitval = 1;
-	    goto done;
+	    /* unrecoverable error. can't leak descriptors. */
+	    fprintf( stderr, "%s: close failed: %s\n", path, strerror( errno ));
+	    cleanup( updatetran, upath );
+	    exit( 2 );
 	}
 
 	if ( updatetran ) {
@@ -496,6 +484,17 @@ done:
 	    if ( verbose ) printf( "%s: incorrect\n", tran_name );
 	    return( 1 );
 	}
+    }
+
+    /* this restores -a functionality. can't wait to replace lcksum. */
+badline:
+    exitval = 1;
+
+    if ( checkall ) {
+	goto done;
+    } else {
+	cleanup( updatetran, upath );
+	exit( 2 );
     }
 }
 
