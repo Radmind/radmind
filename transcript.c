@@ -661,10 +661,6 @@ transcript( char *path, struct stat *st, char *type,
 
 		/* move the transcripts ahead */
 		tran = transcript_select();
-		if ( !tran->t_eof ) {
-		    /* only move ahead if we haven't exhausted transcripts */
-		    transcript_parse( tran );
-		}
 
 		return( 0 );
 	    }
