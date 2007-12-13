@@ -113,9 +113,10 @@ precedent_transcript( char *kfile, char *file, int where )
     int
 main( int argc, char **argv, char **envp )
 {
-    int			c, i, tac, port = htons( 6222 ), err = 0;
+    int			c, i, tac, err = 0;
     int			special = 0, diffargc = 0;
     int			fd;
+    unsigned short	port = 0;
     extern int          optind; 
     extern char		*version;
     char		*host = _RADMIND_HOST;
@@ -161,13 +162,8 @@ main( int argc, char **argv, char **envp )
 	    break;
 
 	case 'p':
-	    if (( port = htons ( atoi( optarg ))) == 0 ) {
-		if (( se = getservbyname( optarg, "tcp" )) == NULL ) {
-		    fprintf( stderr, "%s: service unknown\n", optarg );
-		    exit( 2 );
-		}
-		port = se->s_port;
-	    }
+	    /* connect.c handles things if atoi returns 0 */
+            port = htons( atoi( optarg ));
 	    break;
 
         case 'P' :              /* ca dir */

@@ -72,10 +72,11 @@ extern char             *caFile, *caDir, *cert, *privatekey;
     int
 main( int argc, char **argv )
 {
-    int			c, err = 0, port = htons( 6222 ), tac; 
+    int			c, err = 0, tac; 
     int			network = 1, len = 0, rc;
     int			negative = 0, tran_only = 0;
     int			respcount = 0;
+    unsigned short	port = 0;
     extern int		optind;
     struct servent	*se;
     SNET          	*sn = NULL;
@@ -139,13 +140,8 @@ main( int argc, char **argv )
 	    break;
 
 	case 'p':
-	    if (( port = htons( atoi( optarg ))) == 0 ) {
-		if (( se = getservbyname( optarg, "tcp" )) == NULL ) {
-		    fprintf( stderr, "%s: service unknown\n", optarg );
-		    exit( 2 );
-		}
-		port = se->s_port;
-	    }
+	    /* connect.c handles things if atoi returns 0 */
+            port = htons( atoi( optarg ));
 	    break;
 
         case 'P' :              /* ca dir */

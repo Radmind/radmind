@@ -46,11 +46,11 @@ SSL_CTX			*ctx;
 main( int argc, char *argv[] )
 {
     SNET		*sn;
-    int			c, port = htons( 6222 );
-    int			i = 0, err = 0, len;
+    int			c, i = 0, err = 0, len;
     int			authlevel = _RADMIND_AUTHLEVEL;
     int			use_randfile = 0;
     extern int		optind;
+    unsigned short	port = 0;
     struct servent      *se;
     char		*host = _RADMIND_HOST;
     char		*event = NULL;
@@ -68,13 +68,8 @@ main( int argc, char *argv[] )
 	    break;
 
 	case 'p':
-	    if (( port = htons( atoi( optarg ))) == 0 ) {
-		if (( se = getservbyname( optarg, "tcp" )) == NULL ) {
-		    fprintf( stderr, "%s: service unknown\n", optarg );
-		    exit( 2 );
-		}
-		port = se->s_port;
-	    }
+	    /* connect.c handles things if atoi returns 0 */
+            port = htons( atoi( optarg ));
 	    break;
 
 	case 'P':

@@ -97,16 +97,24 @@ connectsn2( struct sockaddr_in *sin )
 }
 
     SNET *
-connectsn( char *host, int port )
+connectsn( char *host, unsigned short port )
 {
     int			i;
     struct hostent      *he;
     struct sockaddr_in  sin;
+    struct servent	*se;
     SNET                *sn = NULL; 
 
     memset( &sin, 0, sizeof( struct sockaddr_in ));
     sin.sin_family = AF_INET;
-    sin.sin_port = port;
+    if (( sin.sin_port = port ) == 0 ) {
+	/* maybe radmind's in /etc/services. if not, use default. */
+	if (( se = getservbyname( "radmind", "tcp" )) != NULL ) {
+	    sin.sin_port = htons( se->s_port );
+	} else {
+	    sin.sin_port = htons( RADMIND_IANA_PORT );
+	}
+    }
 
 #ifdef notdef
     /*
@@ -134,8 +142,7 @@ connectsn( char *host, int port )
 	 * the transition, fall back to trying the
 	 * legacy port if the new port connection fails.
 	 */
-	if (( sn = connectsn2( &sin )) == NULL
-			&& port == htons( RADMIND_IANA_PORT )) {
+	if (( sn = connectsn2( &sin )) == NULL && port == 0 ) {
 	    /* try connecting to old non-IANA registered port */
 	    sin.sin_port = htons( RADMIND_LEGACY_PORT );
 	    sn = connectsn2( &sin );

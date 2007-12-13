@@ -3,7 +3,7 @@
  * All Rights Reserved.  See COPYRIGHT.
  */
 
-SNET * connectsn( char *host, int port );
+SNET * connectsn( char *host, unsigned short port );
 int closesn( SNET *sn );
 char **get_capabilities( SNET * );
 #ifdef HAVE_ZLIB
