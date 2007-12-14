@@ -3,5 +3,5 @@
  * All Rights Reserved.  See COPYRIGHT.
  */
 
-int update( const char *path, char *displaypath, int present, int newfile,
+int update( char *path, char *displaypath, int present, int newfile,
     struct stat *st, int tac, char **targv, struct applefileinfo *afinfo );
