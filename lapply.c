@@ -235,7 +235,6 @@ main( int argc, char **argv )
     extern int          optind;
     FILE		*f = NULL; 
     char		*host = _RADMIND_HOST, *d_path;
-    struct servent	*se;
     char		tline[ 2 * MAXPATHLEN ];
     char		targvline[ 2 * MAXPATHLEN ];
     char		path[ 2 * MAXPATHLEN ];

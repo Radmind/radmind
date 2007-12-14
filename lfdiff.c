@@ -131,8 +131,7 @@ main( int argc, char **argv, char **envp )
     char 		temppath[ MAXPATHLEN ];
     char		opt[ 3 ];
     char		*epath;		/* encoded path */
-	char        **capa = NULL; /* capabilities */
-    struct servent	*se;
+    char        	**capa = NULL; /* capabilities */
     SNET		*sn;
     int                 authlevel = _RADMIND_AUTHLEVEL;
     int                 use_randfile = 0;

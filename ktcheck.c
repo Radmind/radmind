@@ -558,7 +558,6 @@ main( int argc, char **argv )
     char		*host = _RADMIND_HOST, *p;
     char		path[ MAXPATHLEN ];
     char		tempfile[ MAXPATHLEN ];
-    struct servent	*se;
     char	        **capa = NULL;		/* capabilities */
 
     while (( c = getopt( argc, argv,

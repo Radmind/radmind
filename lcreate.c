@@ -78,7 +78,6 @@ main( int argc, char **argv )
     int			respcount = 0;
     unsigned short	port = 0;
     extern int		optind;
-    struct servent	*se;
     SNET          	*sn = NULL;
     char		type;
     char		*tname = NULL, *host = _RADMIND_HOST; 

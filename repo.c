@@ -51,7 +51,6 @@ main( int argc, char *argv[] )
     int			use_randfile = 0;
     extern int		optind;
     unsigned short	port = 0;
-    struct servent      *se;
     char		*host = _RADMIND_HOST;
     char		*event = NULL;
     char		repodata[ MAXPATHLEN * 2 ];
