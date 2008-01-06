@@ -110,7 +110,8 @@ connectsn( char *host, unsigned short port )
     if (( sin.sin_port = port ) == 0 ) {
 	/* maybe radmind's in /etc/services. if not, use default. */
 	if (( se = getservbyname( "radmind", "tcp" )) != NULL ) {
-	    sin.sin_port = htons( se->s_port );
+	    /* Port numbers are returned in network byte order */
+	    sin.sin_port = se->s_port;
 	} else {
 	    sin.sin_port = htons( RADMIND_IANA_PORT );
 	}
