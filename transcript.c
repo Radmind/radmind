@@ -898,6 +898,7 @@ read_kfile( char *kfile, int location )
     char	line[ MAXPATHLEN ];
     char	fullpath[ MAXPATHLEN ];
     char	*subpath;
+    char	*d_pattern;
     char	**av;
     FILE	*fp;
 
@@ -1010,11 +1011,15 @@ read_kfile( char *kfile, int location )
 	    break;
 
 	case 'x':				/* exclude */
+	    if (( d_pattern = decode( av[ 1 ] )) == NULL ) {
+		fprintf( stderr, "%s: line %d: decode buffer too small\n",
+			kfile, linenum );
+	    }
 	    if ( minus ) {
-		list_remove( exclude_list, av[ 1 ] );
+		list_remove( exclude_list, d_pattern );
 	    } else {
-		if ( !list_check( exclude_list, av[ 1 ] )) {
-		    if ( list_insert( exclude_list, av[ 1 ] ) != 0 ) {
+		if ( !list_check( exclude_list, d_pattern )) {
+		    if ( list_insert( exclude_list, d_pattern ) != 0 ) {
 			perror( "list_insert" );
 			return( -1 );
 		    }
