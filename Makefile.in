@@ -83,6 +83,10 @@ LFDIFF_OBJ=     version.o lfdiff.o argcargv.o connect.o retr.o cksum.o \
 
 REPO_OBJ=	version.o repo.o report.o argcargv.o connect.o code.o tls.o
 
+T2PKG_OBJ=	version.o t2pkg.o argcargv.o transcript.o connect.o code.o \
+		hardlink.o cksum.o base64.o pathcmp.o radstat.o applefile.o \
+		list.o rmdirs.o mkdirs.o wildcard.o progress.o
+
 TWHICH_OBJ=     version.o twhich.o argcargv.o transcript.o llist.o code.o \
                 hardlink.o cksum.o base64.o pathcmp.o radstat.o applefile.o \
 		list.o wildcard.o
@@ -174,6 +178,12 @@ root.o : root.c
 	${CC} ${CFLAGS} \
 		-c ${srcdir}/root.c
 
+t2pkg.o : t2pkg.c
+	${CC} ${CFLAGS} \
+		-D_RADMIND_COMMANDFILE=\"${COMMANDFILE}\" \
+		-D_RADMIND_PATH=\"${RADMINDDIR}\" \
+		-c ${srcdir}/t2pkg.c
+
 twhich.o : twhich.c
 	${CC} ${CFLAGS} \
 		-D_RADMIND_COMMANDFILE=\"${COMMANDFILE}\" \
@@ -215,6 +225,9 @@ lfdiff: ${LFDIFF_OBJ}
 
 repo : ${REPO_OBJ}
 	${CC} ${CFLAGS} -o repo ${REPO_OBJ} ${LDFLAGS}
+
+t2pkg: ${T2PKG_OBJ}
+	${CC} ${CFLAGS} -o t2pkg ${T2PKG_OBJ} ${LDFLAGS}
 
 twhich: ${TWHICH_OBJ}
 	${CC} ${CFLAGS} -o twhich ${TWHICH_OBJ} ${LDFLAGS}
