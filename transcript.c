@@ -29,7 +29,6 @@
 #include "wildcard.h"
 
 int read_kfile( char *kfile, int location );
-static void t_new( int type, char *fullname, char *shortname, char *kfile );
 static void t_remove( int type, char *shortname );
 static void t_display( void );
 
@@ -720,7 +719,7 @@ transcript( char *path, struct stat *st, char *type,
     }
 }
 
-    static void
+    void
 t_new( int type, char *fullname, char *shortname, char *kfile ) 
 {
     struct transcript	 *new;

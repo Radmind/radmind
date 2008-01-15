@@ -65,6 +65,7 @@ void			transcript_init( char *kfile, int location );
 struct transcript	*transcript_select( void );
 void			transcript_parse( struct transcript * );
 void			transcript_free( void );
+void			t_new( int, char *, char *, char * );
 int			t_exclude( char *path );
 void			t_print( struct pathinfo *, struct transcript *, int );
 char			*hardlink( struct pathinfo * );

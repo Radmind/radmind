@@ -36,11 +36,15 @@
 extern int	errno;
 extern int	showprogress;
 extern off_t	lsize;
+extern char	*version;
 
 int		cksum = 0;
 int		force = 0;
 int		case_sensitive = 1;
+int		verbose = 0;
 const EVP_MD    *md;
+
+void            (*logger)( char * ) = NULL;
 
 int copy_file( struct transcript *t, char *dst, char *src, int where );
 int local_update( struct transcript *t, char *dst, char *src, int where );
@@ -562,7 +566,7 @@ main( int ac, char *av[] )
     off_t		space;
     FILE		*f;
 
-    while (( c = getopt( ac, av, "%c:D:d:FIr:s" )) != EOF ) {
+    while (( c = getopt( ac, av, "%c:D:d:FIr:sV" )) != EOF ) {
 	switch ( c ) {
 	case '%':	/* % done progress */
 	    showprogress = 1;
@@ -609,6 +613,10 @@ main( int ac, char *av[] )
 	case 's':	/* running on server */
 	    where = K_SERVER;
 	    break;
+
+	case 'V':	/* version */
+	    printf( "%s\n", version );
+	    exit( 0 );
 
 	default:
 	    err++;
