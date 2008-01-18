@@ -1280,9 +1280,9 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --disable-largefile     omit support for large files
   --enable-universal-binaries
                           build universal binaries (default=no)
-  --disable-largefile     omit support for large files
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1923,16 +1923,7 @@ IFS=$ac_save_IFS
 case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
-
-    # Check whether --enable-universal_binaries was given.
-if test "${enable_universal_binaries+set}" = set; then
-  enableval=$enable_universal_binaries;
-else
-  enable_universal_binaries=no
-fi
-
-    if test "${enable_universal_binaries}" = "yes"; then
-        { echo "$as_me:$LINENO: checking target system type" >&5
+{ echo "$as_me:$LINENO: checking target system type" >&5
 echo $ECHO_N "checking target system type... $ECHO_C" >&6; }
 if test "${ac_cv_target+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -1975,33 +1966,6 @@ test -n "$target_alias" &&
   test "$program_prefix$program_suffix$program_transform_name" = \
     NONENONEs,x,x, &&
   program_prefix=${target_alias}-
-        case "${host_os}" in
-	  darwin8*)
-	    macosx_sdk="MacOSX10.4u.sdk"
-	    ;;
-
-	  darwin9*)
-	    macosx_sdk="MacOSX10.5.sdk"
-	    ;;
-
-	  *)
-	    ;;
-	esac
-
-	case "${host_os}" in
-          darwin*)
-            echo ===========================================================
-            echo Setting up universal binaries for ${host_os}
-            echo ===========================================================
-            OPTOPTS="$OPTOPTS -isysroot /Developer/SDKs/$macosx_sdk -arch i386 -arch ppc"
-            ;;
-          *)
-            { { echo "$as_me:$LINENO: error: Building universal binaries on ${host_os} is not supported" >&5
-echo "$as_me: error: Building universal binaries on ${host_os} is not supported" >&2;}
-   { (exit 1); exit 1; }; }
-          esac
-    fi
-
 
 # Checks for programs.
 for ac_prog in gawk mawk nawk awk
@@ -5970,6 +5934,38 @@ echo "${ECHO_T}no" >&6; }
     fi
 
 
+    # Check whether --enable-universal_binaries was given.
+if test "${enable_universal_binaries+set}" = set; then
+  enableval=$enable_universal_binaries;
+else
+  enable_universal_binaries=no
+fi
+
+    if test "${enable_universal_binaries}" = "yes"; then
+        case "${host_os}" in
+	  darwin8*)
+	    macosx_sdk="MacOSX10.4u.sdk"
+	    ;;
+
+	  darwin9*)
+	    export MACOSX_DEPLOYMENT_TARGET="10.4"
+	    macosx_sdk="MacOSX10.5.sdk"
+	    ;;
+
+	  *)
+            { { echo "$as_me:$LINENO: error: Building universal binaries on ${host_os} is not supported" >&5
+echo "$as_me: error: Building universal binaries on ${host_os} is not supported" >&2;}
+   { (exit 1); exit 1; }; }
+	    ;;
+	esac
+
+	echo ===========================================================
+	echo Setting up universal binaries for ${host_os}
+	echo ===========================================================
+	OPTOPTS="$OPTOPTS -isysroot /Developer/SDKs/$macosx_sdk -arch i386 -arch ppc"
+    fi
+
+
 # HPUX lacks wait4 and strtoll
 
 
@@ -6068,7 +6064,7 @@ done
 
 
 # Miscellaneous:
-if test x_$OPTOPTS = x_; then
+if test x_"$OPTOPTS" = x_; then
     if test x_$GCC = x_yes; then
         OPTOPTS="$OPTOPTS -Wall -Wmissing-prototypes"
     fi

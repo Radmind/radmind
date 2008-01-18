@@ -122,30 +122,25 @@ AC_DEFUN([CHECK_UNIVERSAL_BINARIES],
         AC_HELP_STRING([--enable-universal-binaries], [build universal binaries (default=no)]),
         ,[enable_universal_binaries=no])
     if test "${enable_universal_binaries}" = "yes"; then
-        AC_CANONICAL_SYSTEM
         case "${host_os}" in
 	  darwin8*)
 	    macosx_sdk="MacOSX10.4u.sdk"
 	    ;;
 
 	  darwin9*)
+	    export MACOSX_DEPLOYMENT_TARGET="10.4"
 	    macosx_sdk="MacOSX10.5.sdk"
 	    ;;
 
 	  *)
+            AC_MSG_ERROR([Building universal binaries on ${host_os} is not supported])
 	    ;;
 	esac
 
-	case "${host_os}" in
-          darwin*)
-            echo ===========================================================
-            echo Setting up universal binaries for ${host_os}
-            echo ===========================================================
-            OPTOPTS="$OPTOPTS -isysroot /Developer/SDKs/$macosx_sdk -arch i386 -arch ppc"
-            ;;
-          *)
-            AC_MSG_ERROR([Building universal binaries on ${host_os} is not supported])
-          esac
+	echo ===========================================================
+	echo Setting up universal binaries for ${host_os}
+	echo ===========================================================
+	OPTOPTS="$OPTOPTS -isysroot /Developer/SDKs/$macosx_sdk -arch i386 -arch ppc"
     fi
 ])
 

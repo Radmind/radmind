@@ -31,7 +31,7 @@ AC_SUBST(build_date)
 #AC_ARG_WITH(certdir, AC_HELP_STRING([--cert=DIR], [default certificate location]), certdir="$withval", certdir="/var/radmind/cert" )
 #AC_SUBST(certdir) 
 
-CHECK_UNIVERSAL_BINARIES
+AC_CANONICAL_SYSTEM
 
 # Checks for programs.
 AC_PROG_AWK
@@ -71,12 +71,13 @@ AC_CHECK_HEADER([dns_sd.h], [AC_DEFINE(HAVE_DNSSD)], [], [])
 AC_CHECK_LIB(dns_sd, DNSServiceRegister)
 
 CHECK_ZLIB
+CHECK_UNIVERSAL_BINARIES
 
 # HPUX lacks wait4 and strtoll
 AC_CHECK_FUNCS(wait4 strtoll)
 
 # Miscellaneous:
-if test x_$OPTOPTS = x_; then
+if test x_"$OPTOPTS" = x_; then
     if test x_$GCC = x_yes; then
         OPTOPTS="$OPTOPTS -Wall -Wmissing-prototypes"
     fi
