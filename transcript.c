@@ -162,6 +162,27 @@ transcript_parse( struct transcript *tran )
 	break;
 
     case 'l':				    /* link */
+	if ( ac == 3 ) {	/* link without owner, group, mode */
+	    tran->t_pinfo.pi_stat.st_mode = 0777;
+	    tran->t_pinfo.pi_stat.st_uid = 0;
+	    tran->t_pinfo.pi_stat.st_gid = 0;
+	} else if ( ac == 6 ) { /* link with owner, group, mode */
+	    tran->t_pinfo.pi_stat.st_mode = strtol( argv[ 2 ], NULL, 8 );
+	    tran->t_pinfo.pi_stat.st_uid = atoi( argv[ 3 ] );
+	    tran->t_pinfo.pi_stat.st_gid = atoi( argv[ 4 ] );
+	} else {
+	    fprintf( stderr, "%s: line %d: expected 3 or 6 arguments, got %d\n",
+		    tran->t_fullname, tran->t_linenum, ac );
+	    exit( 2 );
+	}
+	if (( epath = decode( argv[ ac - 1 ] )) == NULL ) {
+	    fprintf( stderr, "%s: line %d: target path too long\n",
+		tran->t_fullname, tran->t_linenum );
+	    exit( 2 );
+	}
+	strcpy( tran->t_pinfo.pi_link, epath );
+	break;
+
     case 'h':				    /* hard */
 	if ( ac != 3 ) {
 	    fprintf( stderr, "%s: line %d: expected 3 arguments, got %d\n",
@@ -298,6 +319,16 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 	break;
 
     case 'l':
+	fprintf( outtran, "%c %-37s\t%.4lo %5d %5d ", cur->pi_type, epath,
+		    (unsigned long)( T_MODE & cur->pi_stat.st_mode ),
+		    (int)cur->pi_stat.st_uid, (int)cur->pi_stat.st_gid );
+	if (( epath = encode( cur->pi_link )) == NULL ) {
+	    fprintf( stderr, "Filename too long: %s\n", cur->pi_link );
+	    exit( 2 );
+	}
+	fprintf( outtran, "%s\n", epath );
+	break;
+
     case 'h':
 	fprintf( outtran, "%c %-37s\t", cur->pi_type, epath );
 	if (( epath = encode( cur->pi_link )) == NULL ) {
@@ -503,7 +534,15 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 
     case 'l':			    /* link */
 	if ( tran->t_type != T_NEGATIVE ) {
-	    if ( strcmp( fs->pi_link, tran->t_pinfo.pi_link ) != 0 ) {
+	    if (( strcmp( fs->pi_link, tran->t_pinfo.pi_link ) != 0 )
+#ifdef HAVE_LCHOWN
+		 || ( fs->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
+		    ( fs->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid )
+#endif /* HAVE_LCHOWN */
+#ifdef HAVE_LCHMOD
+		 || ( mode != tran_mode )
+#endif /* HAVE_LCHMOD */
+	    /* strcmp */ ) {
 		t_print( fs, tran, PR_STATUS );
 	    }
 	}

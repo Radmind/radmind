@@ -50,6 +50,8 @@ AC_CHECK_LIB(c, inet_aton, libc_inet_aton=yes)
 if test x$libc_inet_aton != xyes; then 
     AC_CHECK_LIB(resolv, inet_aton) 
 fi 
+AC_CHECK_LIB(c, lchown)
+AC_CHECK_LIB(c, lchmod)
 AC_CHECK_LIB(nsl, gethostbyaddr)
 AC_CHECK_LIB([socket], [socket])
 AC_CHECK_LIB([ssl], [SSL_accept], , [CHECK_SSL])

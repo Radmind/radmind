@@ -36,6 +36,15 @@ extern int linenum;
 extern int showprogress;
 extern int create_prefix;
 
+/*
+ * lchmod is only available on Mac OS X 10.5
+ * right now. we use weak linking to avoid
+ * two different builds for 10.4 and 10.5.
+ */
+#ifdef HAVE_LCHMOD
+extern int	lchmod( const char *, mode_t ) __attribute__(( weak ));
+#endif /* HAVE_LCHMOD */
+
     int
 update( char *path, char *displaypath, int present, int newfile,
     struct stat *st, int tac, char **targv, struct applefileinfo *afinfo )
@@ -164,9 +173,18 @@ update( char *path, char *displaypath, int present, int newfile,
 	goto done;
 
     case 'l':
-	if ( tac != 3 ) {
-	    fprintf( stderr,
-		"%d: incorrect number of arguments\n", linenum );
+	if ( tac == 3 ) {
+	    /* legacy symlink entries get defaults */
+	    mode = ( mode_t )0777;
+	    uid = 0;
+	    gid = 0;
+	} else if ( tac == 6 ) {
+	    /* symlink with mode, uid, gid */
+	    mode = ( mode_t )strtol( targv[ 2 ], NULL, 8 );
+	    uid = atoi( targv[ 3 ] );
+	    gid = atoi( targv[ 4 ] );
+	} else {
+	    fprintf( stderr, "%d: incorrect number of arguments\n", linenum );
 	    return( 1 );
 	}
 	if ( present ) {
@@ -176,7 +194,7 @@ update( char *path, char *displaypath, int present, int newfile,
 	    }
 	    present = 0;
 	}
-	if (( d_target = decode( targv[ 2 ] )) == NULL ) {
+	if (( d_target = decode( targv[ tac - 1 ] )) == NULL ) {
 	    fprintf( stderr, "line %d: target path too long\n", linenum );
 	    return( 1 );
 	} 
@@ -196,8 +214,48 @@ update( char *path, char *displaypath, int present, int newfile,
 		return( 1 );
 	    }
 	}
-	if ( !quiet && !showprogress ) printf( "%s: symbolic linked to %s",
-		displaypath, d_target );
+	if ( !quiet && !showprogress ) {
+	    printf( "%s: symbolic linked to %s", displaypath, d_target );
+	}
+#if defined( HAVE_LCHOWN ) || defined( HAVE_LCHMOD )
+	if ( !quiet && !showprogress ) {
+	    printf( " updating" );
+	}
+#ifdef HAVE_LCHOWN
+	if ( uid != st->st_uid || gid != st->st_gid ) {
+	    if ( lchown( path, uid, gid ) != 0 ) {
+		perror( path );
+		return( 1 );
+	    }
+	}
+	if ( uid != st->st_uid && !quiet && !showprogress ) {
+	    printf( " uid" );
+	}
+	if ( gid != st->st_gid && !quiet && !showprogress ) {
+	    printf( " gid" );
+	}
+#endif /* HAVE_LCHOWN */
+
+#ifdef HAVE_LCHMOD
+	/*
+	 * if we compiled with weak linking and lchmod
+	 * isn't in the library, the symbol may be NULL. 
+	 */
+	if ( lchmod != NULL ) {
+	    if (( mode != ( T_MODE & st->st_mode )) ||
+		    (( uid != st->st_uid || gid != st->st_gid ) &&
+		    (( mode & ( S_ISUID | S_ISGID )) != 0 ))) {
+		if ( lchmod( path, mode ) != 0 ) {
+		    perror( path );
+		    return( 1 );
+		}
+		if ( !quiet && !showprogress ) {
+		    printf( " mode" );
+		}
+	    }
+	}
+#endif /* HAVE_LCHMOD */
+#endif /* defined( HAVE_LCHOWN ) || defined( HAVE_LCHMOD ) */
 	goto done;
 
     case 'p':
