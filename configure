@@ -6090,7 +6090,7 @@ fi
 	    ;;
 
 	  darwin9*)
-	    export MACOSX_DEPLOYMENT_TARGET="10.4"
+	    dep_target="-mmacosx-version-min=10.4"
 	    macosx_sdk="MacOSX10.5.sdk"
 	    ;;
 
@@ -6104,7 +6104,7 @@ echo "$as_me: error: Building universal binaries on ${host_os} is not supported"
 	echo ===========================================================
 	echo Setting up universal binaries for ${host_os}
 	echo ===========================================================
-	OPTOPTS="$OPTOPTS -isysroot /Developer/SDKs/$macosx_sdk -arch i386 -arch ppc"
+	OPTOPTS="$OPTOPTS -isysroot /Developer/SDKs/$macosx_sdk -arch i386 -arch ppc $dep_target"
     fi
 
 

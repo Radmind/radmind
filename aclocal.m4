@@ -87,29 +87,6 @@ AC_DEFUN([CHECK_ZLIB],
     fi
 ])
 
-AC_DEFUN([CHECK_ZEROCONF],
-[
-    AC_MSG_CHECKING(for zeroconf)
-    zeroconfdirs="/usr /usr/local"
-    AC_ARG_WITH(zeroconf,
-	    AC_HELP_STRING([--with-zeroconf=DIR], [path to zeroconf]),
-	    zeroconfdirs="$withval")
-    for dir in $zeroconfdirs; do
-	zcdir="$dir"
-	if test -f "$dir/include/DNSServiceDiscovery/DNSServiceDiscovery.h"; then
-	    found_zeroconf="yes";
-	    CPPFLAGS="$CPPFLAGS -I$zcdir/include";
-	    break;
-	fi
-    done
-    if test x_$found_zeroconf != x_yes; then
-	AC_MSG_RESULT(no)
-    else
-	AC_DEFINE(HAVE_ZEROCONF)
-	AC_MSG_RESULT(yes)
-    fi
-])
-
 AC_DEFUN([SET_NO_SASL],
 [
     ac_configure_args="$ac_configure_args --with-sasl=no";
@@ -128,7 +105,7 @@ AC_DEFUN([CHECK_UNIVERSAL_BINARIES],
 	    ;;
 
 	  darwin9*)
-	    export MACOSX_DEPLOYMENT_TARGET="10.4"
+	    dep_target="-mmacosx-version-min=10.4"
 	    macosx_sdk="MacOSX10.5.sdk"
 	    ;;
 
@@ -140,7 +117,7 @@ AC_DEFUN([CHECK_UNIVERSAL_BINARIES],
 	echo ===========================================================
 	echo Setting up universal binaries for ${host_os}
 	echo ===========================================================
-	OPTOPTS="$OPTOPTS -isysroot /Developer/SDKs/$macosx_sdk -arch i386 -arch ppc"
+	OPTOPTS="$OPTOPTS -isysroot /Developer/SDKs/$macosx_sdk -arch i386 -arch ppc $dep_target"
     fi
 ])
 
