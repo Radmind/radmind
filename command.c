@@ -57,6 +57,8 @@ extern SSL_CTX  *ctx;
 #include "mkdirs.h"
 #include "connect.h"
 
+#define RADMIND_MAX_INCLUDE_DEPTH	10
+
 #define	DEFAULT_MODE 0444
 #define DEFAULT_UID     0
 #define DEFAULT_GID     0
@@ -994,7 +996,7 @@ f_starttls( SNET *sn, int ac, char **av )
     }
 
     /* get command file */
-    if ( command_k( "config" ) < 0 ) {
+    if ( command_k( "config", 0 ) < 0 ) {
 	/* Client not in config */
 	commands  = noauth;
 	ncommands = sizeof( noauth ) / sizeof( noauth[ 0 ] );
@@ -1211,14 +1213,30 @@ f_compress( SNET *sn, int ac, char **av )
 #endif /* HAVE_ZLIB */
 
 
+    static char *
+match_config_entry( char *entry )
+{
+    if (( remote_cn != NULL ) && wildcard( entry, remote_cn, 0 )) {
+	return( remote_cn );
+    } else if ( wildcard( entry, remote_host, 0 )) {
+	return( remote_host );
+    } else if ( wildcard( entry, remote_addr, 1 )) {
+	return( remote_addr );
+    }
+
+    return( NULL );
+}
+
 /* sets command file for connected host */
     int
-command_k( char *path_config )
+command_k( char *path_config, int depth )
 {
     SNET	*sn;
     char	**av, *line, *p;
+    char	*valid_host;
     char	temp[ MAXPATHLEN ];
     int		ac;
+    int		rc = -1;
     int		linenum = 0;
 
     if (( sn = snet_open( path_config, O_RDONLY, 0, 0 )) == NULL ) {
@@ -1231,15 +1249,45 @@ command_k( char *path_config )
 
         if (( ac = argcargv( line, &av )) < 0 ) {
 	    syslog( LOG_ERR, "argvargc: %m" );
-	    return( -1 );
+	    goto command_k_done;
 	}
 
 	if ( ( ac == 0 ) || ( *av[ 0 ] == '#' ) ) {
 	    continue;
 	}
-	if (( ac < 2 ) || (( ac > 2 ) && ( *av[ 2 ] != '#' ))) { 
-	    syslog( LOG_ERR, "config file: line %d: invalid number of "
-		"arguments", linenum );
+	if ( ac < 2 ) {
+	    syslog( LOG_ERR, "%s: line %d: invalid number of arguments",
+			path_config, linenum );
+	    continue;
+	}
+	if ( strcmp( av[ 0 ], "@include" ) == 0 ) {
+	    depth++;
+	    if ( depth > RADMIND_MAX_INCLUDE_DEPTH ) {
+		syslog( LOG_ERR, "%s: line %d: include %s exceeds max depth",
+			path_config, linenum, av[ 1 ] );
+		goto command_k_done;
+	    }
+	    if ( ac > 3 ) {
+		syslog( LOG_ERR, "%s: line %d: invalid number of arguments",
+			path_config, linenum );
+		continue;
+	    } else if ( ac == 3 ) {
+		if ( match_config_entry( av[ 2 ] ) == NULL ) {
+		    /* connecting host doesn't match pattern, skip include. */
+		    continue;
+		}
+	    }
+	    if ( command_k( av[ 1 ], depth ) != 0 ) {
+		continue;
+	    }
+
+	    rc = 0;
+	    goto command_k_done;
+	}
+
+        if (( ac > 2 ) && ( *av[ 2 ] != '#' )) { 
+	    syslog( LOG_ERR, "%s: line %d: invalid number of arguments",
+		    path_config, linenum );
 	    continue;
 	}
 
@@ -1256,7 +1304,7 @@ command_k( char *path_config )
 	    *p = '/';
 	}
 
-	if (( remote_cn != NULL ) && wildcard( av[ 0 ], remote_cn, 0 )) {
+	if (( valid_host = match_config_entry( av[ 0 ] )) != NULL ) {
 	    if ( strlen( av[ 1 ] ) >= MAXPATHLEN ) {
 		syslog( LOG_ERR,
 		    "config file: line %d: command file too long\n", linenum );
@@ -1264,53 +1312,24 @@ command_k( char *path_config )
 	    }
 	    strcpy( command_file, av[ 1 ] );
 	    if ( snprintf( temp, MAXPATHLEN, "%s/%s", special_dir,
-		    remote_cn ) >= MAXPATHLEN ) {
+		    valid_host ) >= MAXPATHLEN ) {
 		syslog( LOG_ERR, "config file: line %d: special dir too long\n",
 		    linenum );
 		continue;
 	    }
 	    strcpy( special_dir, temp );
-	    return( 0 );
+	    rc = 0;
+	    goto command_k_done;
 	}
-	if ( wildcard( av[ 0 ], remote_host, 0 )) {
-	    if ( strlen( av[ 1 ] ) >= MAXPATHLEN ) {
-		syslog( LOG_ERR,
-		    "config file: line %d: command file too long\n", linenum );
-		continue;
-	    }
-	    strcpy( command_file, av[ 1 ] );
-	    if ( snprintf( temp, MAXPATHLEN, "%s/%s", special_dir,
-		    remote_host ) >= MAXPATHLEN ) {
-		syslog( LOG_ERR, "config file: line %d: special dir too long\n",
-		    linenum );
-		continue;
-	    }
-	    strcpy( special_dir, temp );
-	    return( 0 );
-	} 
-	if ( wildcard( av[ 0 ], remote_addr, 1 )) {
-	    if ( strlen( av[ 1 ] ) >= MAXPATHLEN ) {
-		syslog( LOG_ERR,
-		    "config file: line %d: command file too long\n", linenum );
-		continue;
-	    }
-	    strcpy( command_file, av[ 1 ] );
-	    if ( snprintf( temp, MAXPATHLEN, "%s/%s", special_dir,
-		    remote_addr ) >= MAXPATHLEN ) {
-		syslog( LOG_ERR, "config file: line %d: special dir too long\n",
-		    linenum );
-		continue;
-	    }
-	    strcpy( special_dir, temp );
-	    return( 0 );
-	} 
     }
 
     /* If we get here, the host that connected is not in the config
        file. So screw him. */
-
     syslog( LOG_ERR, "host not in config file: %s", remote_host );
-    return( -1 );
+
+command_k_done:
+    snet_close( sn );
+    return( rc );
 }
 
     int
@@ -1513,7 +1532,7 @@ cmdloop( int fd, struct sockaddr_in *sin )
     
     if ( authlevel == 0 ) {
 	/* lookup proper command file based on the hostname, IP or CN */
-	if ( command_k( "config" ) < 0 ) {
+	if ( command_k( "config", 0 ) < 0 ) {
 	    syslog( LOG_INFO, "%s: Access denied: Not in config file",
 		remote_host );
 	    snet_writef( sn, "%d No access for %s\r\n", 500, remote_host );

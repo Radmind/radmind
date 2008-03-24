@@ -4,7 +4,7 @@
  */
 
 int		cmdloop( int, struct sockaddr_in * );
-int		command_k( char * );
+int		command_k( char *, int );
 char		**special_t( char *, char * );
 int		keyword( int, char*[] );
 extern char	*path_radmind;

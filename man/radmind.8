@@ -79,6 +79,29 @@ can be used to escape any character.
 A client is only given access to command files and transcripts
 listed in their base command file as determined by the config
 file.
+.sp
+_RADMIND_PATH/config can include other config files using the keyword
+"@include", which can be used in two ways. The first is a simple include
+of another file. If the path does not begin with a slash (/), the path is
+interpreted as being relative to _RADMIND_PATH. For example:
+.sp
+.br
+	@include configs/ldap-servers.config
+.br
+.sp
+which would cause every connecting client to be checked against the contents
+of _RADMIND_PATH/configs/ldap-servers.config. The @include keyword can also
+take an optional third argument, a wildcard pattern limiting which clients
+will read the included config file. For example:
+.sp
+.br
+	@include configs/kerberos-kdcs.config *.kerberos.example.edu
+.br
+.sp
+would cause only clients with FQDNs matching '*.kerberos.example.edu' to
+read the included file. The wildcard is checked, in order, against the
+client's certificate CN (if the client presents one), the client's
+fully-qualified domain name, and the client's IP address.
 .SH DIRECTORY STRUCTURE
 .TP 19
 .B command
