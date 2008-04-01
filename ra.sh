@@ -27,6 +27,7 @@ KFILE="_RADMIND_COMMANDFILE"
 SERVER="_RADMIND_HOST"
 TLSLEVEL="_RADMIND_AUTHLEVEL"
 EDITOR=${EDITOR:-vi}
+PAGER=${PAGER:-cat}
 USER=${SUDO_USER:-$USER}
 TMPDIR="${TMPDIR:=/tmp}"
 DEFAULTS="/etc/defaults/radmind"
@@ -187,7 +188,7 @@ update() {
 	exit 0
     fi
     if [ x"$opt" = x"interactive" ]; then
-	cat ${FTMP}
+	${PAGER} ${FTMP}
 	infocmp >/dev/null 2>&1
 	if [ $? -eq 0 ]; then
 	    can_edit=yes
