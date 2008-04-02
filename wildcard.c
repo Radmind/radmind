@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Regents of The University of Michigan.
+ * Copyright (c) 2008 Regents of The University of Michigan.
  * All Rights Reserved.  See COPYRIGHT.
  */
 
@@ -14,8 +14,8 @@
 wildcard( char *wild, char *p, int sensitive )
 {
     int		min, max;
-    int		i, match;
-    char	*tmp;
+    int		i, len;
+    char	*comma, *end;
 
     for (;;) {
 	switch ( *wild ) {
@@ -72,113 +72,65 @@ wildcard( char *wild, char *p, int sensitive )
 	    break;
 
 	case '[' :
-	    wild++;
-	    match = 0;
-
-	    while ( isalnum((int)*wild )) {
-		if ( *wild == *p ) {
-		    match = 1;
-		    break;
-		}
-		wild++;
-	    }
-	    if ( *wild != ']' ) {
-		while ( *wild ) {
-		    if ( *wild == ']' ) {
-			break;
-		    }
-		    wild++;
-		}
-		if ( *wild == '\0' ) {
-		    return( 0 );
+	    for ( wild++; *wild != ']'; wild++ ) {
+		if ( sensitive ) {
+		    if ( *wild != *p ) break;
+		} else {
+		    if ( tolower(*wild) != tolower(*p) ) break;
 		}
 	    }
-	    p++;
-	    wild++;
-
-	    if ( match == 0 ) {
+	    if ( *wild == ']' ) {
 		return( 0 );
 	    }
+	    for ( ; *wild; wild++ ) {
+		if ( *wild == ']' ) {
+		    break;
+		}
+	    }
+	    if ( *wild == '\0' ) {
+		return( 0 );
+	    }
+
+	    p++;
+	    wild++;
 	    break;
 
 	case '{' :
-	    wild++;
-	    tmp = p;
-	    match = 1;
+	    comma = wild;
 
-	    while ( *wild == ',' ) wild++;
-	    while ( isprint((int)*wild )) {
-		if ( *wild == ',' ) {
-		    if ( match ) {
-			break;
-		    }
-
-		    match = 1;
-		    wild++;
-		    p = tmp;
-		}
-		while ( *wild == ',' ) wild++;
-
-		if ( *wild == '}' ) {
-		    break;
-		}
-
-		if ( sensitive ) {
-		    if ( *wild != *p ) {
-			match = 0;
-		    }
-		} else {
-		    if ( tolower( *wild ) != tolower( *p )) {
-			match = 0;
-		    }
-		}
-		
-		if ( !match ) {
-		    /* find next , or } or NUL */
-		    while ( *wild ) {
-			wild++;
-			if ( *wild == ',' || *wild == '}' ) {
-			    break;
-			}
-		    }
-		} else {
-		    wild++, p++;
-		}
-	    }
-
-	    if ( !match ) {
-		return( 0 );
-	    }
-
-	    /* verify remaining format */
-	    if ( *wild != '}' ) {
-		while ( *wild ) {
-		    if ( *wild == '}' ) {
-			break;
-		    }
-		    wild++;
-		}
-		if ( *wild == '\0' ) {
+	    for ( end = wild + 1; *end != '}'; end++ ) {
+		if ( *end == '{' || *end == '\0' ) {
+		    /* malformed pattern */
 		    return( 0 );
 		}
 	    }
-	    if ( *wild++ != '}' ) {
-		return( 0 );
-	    }
+	    end++;
 
-	    break;
+	    do {
+		for ( wild = ++comma; *comma != ',' && *comma != '}'; comma++ )
+		    ;
+		len = comma - wild;
+
+		for ( i = 0; i < len; i++ ) {
+		    if ( sensitive ) {
+			if ( wild[ i ] != p[ i ] ) break;
+		    } else {
+			if ( tolower( wild[ i ] ) != tolower( p[ i ] )) break;
+		    }
+		}
+		if ( i >= len && wildcard( end, &p[ i ], sensitive )) {
+		    return( 1 );
+		}
+	    } while ( *comma != '}' );
+	    return( 0 );
 
 	case '\\' :
 	    wild++;
 	default :
 	    if ( sensitive ) {
-	       if ( *wild != *p ) {
-		   return( 0 );
-	       }
+		if ( *wild != *p ) return( 0 );
 	    } else {
-	       if ( tolower(*wild) != tolower(*p) ) {
-		  return( 0 );
-		}
+		if ( tolower(*wild) != tolower(*p) ) return( 0 );
 	    }
 	    if ( *wild == '\0' ) {
 		return( 1 );
