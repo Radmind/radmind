@@ -32,6 +32,7 @@ USER=${SUDO_USER:-$USER}
 TMPDIR="${TMPDIR:=/tmp}"
 DEFAULTS="/etc/defaults/radmind"
 FSDIFFROOT="."
+DEFAULTWORKDIR="/"
 FLAG="_RADMIND_DIR/client/.RadmindRunning"
 CHECKEDOUT="_RADMIND_DIR/client/.CheckedOut"
 MAILDOMAIN="_RADMIND_MAIL_DOMAIN"
@@ -86,7 +87,7 @@ checkedout() {
 }
 
 usage() {
-    $ECHO "Usage:	$0 [ -ctV ] [ -h server ] [ -w authlevel ] { trip | update | create | auto | force | checkout | checkin } [ /path/or/file ]" >&2
+    $ECHO "Usage:	$0 [ -ctV ] [ -D working-directory ] [ -h server ] [ -w authlevel ] { trip | update | create | auto | force | checkout | checkin } [ /path/or/file ]" >&2
     exit 1
 }
 
@@ -279,7 +280,7 @@ if [ -f "${DEFAULTS}" ]; then
     . "${DEFAULTS}"
 fi
 
-while getopts %ch:Ilqr:tU:Vw: opt; do
+while getopts %cD:h:Ilqr:tU:Vw: opt; do
     case $opt in
     %)  PROGRESS="-%"
 	FPROGRESS="-%"
@@ -289,6 +290,9 @@ while getopts %ch:Ilqr:tU:Vw: opt; do
 	;;
 
     c)	CHECKSUM="-csha1"
+	;;
+
+    D)  WORKDIR="$OPTARG"
 	;;
 
     h)	SERVER="$OPTARG"
@@ -329,7 +333,7 @@ elif [ $# -ne 1 ]; then
     usage
 fi
 
-cd /
+cd "${WORKDIR:-$DEFAULTWORKDIR}"
 
 if [ ! -d "${RASHTMP}" ]; then
     mkdir -m 700 "${RASHTMP}"
