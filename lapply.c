@@ -142,13 +142,13 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
 
 	if ( special ) {
 	    if ( snprintf( pathdesc, MAXPATHLEN * 2, "SPECIAL %s",
-		    targv[ 1 ]) > ( MAXPATHLEN * 2 ) - 1 ) {
+		    targv[ 1 ]) >= ( MAXPATHLEN * 2 )) {
 		fprintf( stderr, "SPECIAL %s: too long\n", targv[ 1 ]);
 		return( 1 );
 	    }
 	} else {
 	    if ( snprintf( pathdesc, MAXPATHLEN * 2, "FILE %s %s",
-		    transcript, targv[ 1 ]) > ( MAXPATHLEN * 2 ) -1 ) {
+		    transcript, targv[ 1 ]) >= ( MAXPATHLEN * 2 )) {
 		fprintf( stderr, "FILE %s %s: command too long\n",
 		    transcript, targv[ 1 ]);
 		return( 1 );

@@ -360,7 +360,7 @@ main( int argc, char **argv )
 	}
 
 	if ( snprintf( pathdesc, MAXPATHLEN * 2, "STOR TRANSCRIPT %s",
-		tname ) > ( MAXPATHLEN * 2 ) - 1 ) {
+		tname ) >= ( MAXPATHLEN * 2 )) {
 	    fprintf( stderr, "STOR TRANSCRIPT %s: path description too long\n",
 		tname );
 	}
@@ -475,7 +475,7 @@ main( int argc, char **argv )
 		}
 	    } else {
 		if ( snprintf( pathdesc, MAXPATHLEN * 2, "STOR FILE %s %s", 
-			tname, targv[ 1 ] ) > ( MAXPATHLEN * 2 ) - 1 ) {
+			tname, targv[ 1 ] ) >= ( MAXPATHLEN * 2 )) {
 		    fprintf( stderr, "STOR FILE %s %s: path description too"
 			    " long\n", tname, d_path );
 		    exit( 2 );
