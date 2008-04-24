@@ -347,7 +347,7 @@ main( int argc, char **argv )
 	    strcpy( cwd, argv[ argc - 1 ] );
 	} else {
 	    if ( snprintf( temp, MAXPATHLEN, "%s/%s", cwd, argv[ argc - 1 ] )
-		    > MAXPATHLEN - 1 ) {
+		    >= MAXPATHLEN ) {
 		fprintf( stderr, "%s/%s: path too long\n", cwd,
 		    argv[ argc - 1 ] );
 		exit( 2 );
@@ -360,7 +360,7 @@ main( int argc, char **argv )
 
 	/* Create file/tname dir */
 	if ( snprintf( npath, MAXPATHLEN, "%s/%s.%d", file_root, tran_name,
-		(int)getpid()) > MAXPATHLEN -1 ) {
+		(int)getpid()) >= MAXPATHLEN ) {
 	    fprintf( stderr, "%s/%s.%d: path too long\n", file_root, tran_name,
 		(int)getpid());
 	    exit( 2 );
@@ -373,7 +373,7 @@ main( int argc, char **argv )
 
     /* Create temp transcript/tname file */
     if ( snprintf( opath, MAXPATHLEN, "%s/%s.%d", tran_root, tran_name,
-	    (int)getpid()) > MAXPATHLEN - 1 ) {
+	    (int)getpid()) >= MAXPATHLEN ) {
 	fprintf( stderr, "%s/%s.%d: path too long\n", tran_root, tran_name,
 	    (int)getpid());
 	exit( 2 );
@@ -435,7 +435,7 @@ main( int argc, char **argv )
 			if ( snprintf( opath, MAXPATHLEN, "%s/%s/%s",
 				trans[ j ]->t_file_root,
 				trans[ j ]->t_tran_name,
-				trans[ j ]->t_filepath ) > MAXPATHLEN -1 ) {
+				trans[ j ]->t_filepath ) >= MAXPATHLEN ) {
 			    fprintf( stderr,
 				"%s/%s/%s: path too long\n",
 				trans[ j ]->t_file_root,
@@ -489,7 +489,7 @@ main( int argc, char **argv )
 		if ( snprintf( opath, MAXPATHLEN, "%s/%s%s",
 			trans[ candidate ]->t_file_root,
 			trans[ fileloc ]->t_tran_name,
-			trans[ candidate ]->t_filepath ) > MAXPATHLEN - 1 ) {
+			trans[ candidate ]->t_filepath ) >= MAXPATHLEN ) {
 		    fprintf( stderr, "%s/%s/%s: path too long\n",
 			trans[ candidate ]->t_file_root,
 			trans[ fileloc ]->t_tran_name,
@@ -500,7 +500,7 @@ main( int argc, char **argv )
 		if ( snprintf( opath, MAXPATHLEN, "%s/%s/%s",
 			trans[ candidate ]->t_file_root,
 			trans[ fileloc ]->t_tran_name,
-			trans[ candidate ]->t_filepath ) > MAXPATHLEN - 1 ) {
+			trans[ candidate ]->t_filepath ) >= MAXPATHLEN ) {
 		    fprintf( stderr, "%s/%s/%s: path too long\n",
 			trans[ candidate ]->t_file_root,
 			trans[ fileloc ]->t_tran_name,
@@ -515,7 +515,7 @@ main( int argc, char **argv )
 		    if ( snprintf( npath, MAXPATHLEN, "%s/%s.%d/%s",
 			    file_root, tran_name, (int)getpid(),
 			    trans[ candidate ]->t_filepath )
-			    > MAXPATHLEN - 1 ) {
+			    >= MAXPATHLEN ) {
 			fprintf( stderr, "%s/%s.%d/%s: path too long\n",
 			    file_root, tran_name, (int)getpid(),
 			    trans[ candidate ]->t_filepath );
@@ -524,7 +524,7 @@ main( int argc, char **argv )
 		} else {
 		    if ( snprintf( npath, MAXPATHLEN, "%s/%s.%d/%s",
 			    file_root, tran_name, (int)getpid(),
-			    trans[ candidate ]->t_filepath ) > MAXPATHLEN - 1 ) {
+			    trans[ candidate ]->t_filepath ) >= MAXPATHLEN ) {
 			fprintf( stderr, "%s/%s.%d/%s: path too long\n",
 			    file_root, tran_name, (int)getpid(),
 			    trans[ candidate ]->t_filepath );
@@ -534,7 +534,7 @@ main( int argc, char **argv )
 	    } else {
 		if ( snprintf( npath, MAXPATHLEN, "%s/%s/%s", file_root,
 			tran_name, trans[ candidate ]->t_filepath )
-			> MAXPATHLEN - 1 ) {
+			>= MAXPATHLEN ) {
 		    fprintf( stderr, "%s/%s/%s: path too long\n", 
 			file_root, tran_name, trans[ candidate ]->t_filepath );
 		    exit( 2 );
@@ -554,7 +554,7 @@ main( int argc, char **argv )
 				    "%s/%s.%d%s",
 				    file_root, tran_name, (int)getpid(), 
 				    trans[ candidate ]->t_filepath )
-				    > MAXPATHLEN - 1 ) {
+				    >= MAXPATHLEN ) {
 				fprintf( stderr,
 				    "%s/%s.%d%s: path too long\n",
 				    file_root, tran_name, (int)getpid(),
@@ -566,7 +566,7 @@ main( int argc, char **argv )
 				    "%s/%s.%d/%s",
 				    file_root, tran_name, (int)getpid(), 
 				    trans[ candidate ]->t_filepath )
-				    > MAXPATHLEN - 1 ) {
+				    >= MAXPATHLEN ) {
 				fprintf( stderr,
 				    "%s/%s.%d/%s: path too long\n",
 				    file_root, tran_name, (int)getpid(),
@@ -579,7 +579,7 @@ main( int argc, char **argv )
 			    if ( snprintf( npath, MAXPATHLEN,
 				    "%s/%s%s", file_root, tran_name,
 				    trans[ candidate ]->t_filepath )
-				    > MAXPATHLEN - 1 ) {
+				    >= MAXPATHLEN ) {
 				fprintf( stderr,
 				    "%s/%s%s: path too long\n", file_root,
 				    tran_name, trans[ candidate ]->t_filepath );
@@ -589,7 +589,7 @@ main( int argc, char **argv )
 			    if ( snprintf( npath, MAXPATHLEN,
 				    "%s/%s/%s", file_root, tran_name,
 				    trans[ candidate ]->t_filepath )
-				    > MAXPATHLEN - 1 ) {
+				    >= MAXPATHLEN ) {
 				fprintf( stderr,
 				    "%s/%s/%s: path too long\n", file_root,
 				    tran_name, trans[ candidate ]->t_filepath );
@@ -670,13 +670,13 @@ skipline:
     /* Rename temp transcript and file structure */
     if ( !force ) {
 	if ( snprintf( opath, MAXPATHLEN, "%s/%s.%d", file_root,
-		tran_name, (int)getpid()) > MAXPATHLEN - 1 ) {
+		tran_name, (int)getpid()) >= MAXPATHLEN ) {
 	    fprintf( stderr, "%s/%s.%d: path too long\n",
 		file_root, tran_name, (int)getpid());
 	    exit( 2 );
 	}
 	if ( snprintf( npath, MAXPATHLEN, "%s/%s", file_root, tran_name )
-		> MAXPATHLEN - 1 ) {
+		>= MAXPATHLEN ) {
 	    fprintf( stderr, "%s/%s: path too long\n", file_root, tran_name );
 	    exit( 2 );
 	}
@@ -686,13 +686,13 @@ skipline:
 	}
     }
     if ( snprintf( opath, MAXPATHLEN, "%s/%s.%d", tran_root, tran_name,
-	    (int)getpid()) > MAXPATHLEN - 1 ) {
+	    (int)getpid()) >= MAXPATHLEN ) {
 	fprintf( stderr, "%s/%s.%d: path too long\n", tran_root, tran_name,
 	    (int)getpid());
 	exit( 2 );
     }
     if ( snprintf( npath, MAXPATHLEN, "%s/%s", tran_root, tran_name )
-	    > MAXPATHLEN - 1 ) {
+	    >= MAXPATHLEN ) {
 	fprintf( stderr, "%s/%s: path too long\n", tran_root, tran_name );
 	exit( 2 );
     }
