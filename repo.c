@@ -124,21 +124,9 @@ main( int argc, char *argv[] )
 	}
     }
 
-    /* Make sure event doesn't contain any white space */
+    /* repo is useless without an event defined */
     if ( event == NULL ) {
 	err++;
-    } else {
-	len = strlen( event );
-	if ( len == 0 ) {
-	    err++;
-	} else {
-	    for ( i = 0; i < len; i++ ) {
-		if ( isspace( (int)event[ i ] )) {
-		    err++;
-		    break;
-		}
-	    }
-	}
     }
 
     if ( err || (( argc - optind ) < 0 )) {

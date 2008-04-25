@@ -9,6 +9,7 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <netinet/in.h>
+#include <ctype.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <string.h>
@@ -45,6 +46,25 @@ report_event( SNET *sn, char *event, char *repodata )
     struct timeval	tv;
     char		*line;
     char		*e_repodata;
+    int			i, len;
+
+    /* sanity check the event */
+    if ( event == NULL ) {
+	fprintf( stderr, "report_event: event must be non-NULL\n" );
+	return( 1 );
+    }
+    if (( len = strlen( event )) == 0 ) {
+	fprintf( stderr, "report_event: invalid zero-length event\n" );
+	return( 1 );
+    } else {
+	for ( i = 0; i < len; i++ ) {
+	    if ( isspace(( int )event[ i ] )) {
+		fprintf( stderr, "report_event: event must not "
+			"contain whitespace\n" );
+		return( 1 );
+	    }
+	}
+    }
 
     if (( e_repodata = encode( repodata )) == NULL ) {
 	fprintf( stderr, "report_event: encode: buffer too small\n" );
