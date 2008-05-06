@@ -797,14 +797,15 @@ main( int argc, char **argv )
 			exit( 2 );
 		    }
 		    if ( !quiet ) printf( "%s: created\n", path ); 
-		    change++;
 		} else {
 		    /* special.T not updated */
 		    if ( unlink( tempfile ) !=0 ) {
 			perror( tempfile );
 			exit( 2 );
 		    }
+		    if ( !quiet ) printf ( "%s: missing\n", path );
 		}
+	        change++;
 		goto done;
 	    }
 	    perror( path );
@@ -845,13 +846,14 @@ main( int argc, char **argv )
 		}
 		if ( !quiet ) printf( "%s: updated\n", path ); 
 	    } else {
+		if ( !quiet ) printf ( "%s: out of date\n", path );
 		if ( unlink( tempfile ) !=0 ) {
 		    perror( tempfile );
 		    exit( 2 );
 		}
 	    }
 	} else {
-	    /* special.T not updated */
+	    /* local special.T correct */
 	    if ( unlink( tempfile ) !=0 ) {
 		perror( tempfile );
 		exit( 2 );
