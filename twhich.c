@@ -190,9 +190,9 @@ main( int argc, char **argv )
     }
 
     if ( err ) {
-        fprintf( stderr, "Usage: %s [ -aIV ] [ -K command file ] file\n",
+        fprintf( stderr, "Usage: %s [ -aIrV ] [ -K command file ] file\n",
 	    argv[ 0 ] );
-        fprintf( stderr, "Usage: %s -s -K command [ -aIV ] file\n",
+        fprintf( stderr, "Usage: %s -s -K command [ -aIrV ] file\n",
 	    argv[ 0 ] );
         exit( 2 );
     }
