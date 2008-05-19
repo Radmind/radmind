@@ -41,22 +41,6 @@ twhich( char *pattern, int displayall )
     extern struct list	*exclude_list;
     int			cmp = 0, match = 0;
 
-    /* check special list */
-    if ( special_list->l_count > 0 ) {
-	for ( node = list_pop_head( special_list ); node != NULL;
-		node = list_pop_head( special_list )) {
-	    if ( pathcasecmp( node->n_path, pattern, case_sensitive ) == 0 ) {
-		printf( "# Special\n" );
-		printf( "special.T:\n" );
-		printf( "%s\n", node->n_path );
-		free( node );
-		if ( !displayall ) {
-		    goto done;
-		}
-	    }
-	}
-    }
-
     /* check exclude list */
     if ( exclude_list->l_count > 0 ) {
 	for ( node = list_pop_head( exclude_list ); node != NULL;
