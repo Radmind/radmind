@@ -189,8 +189,11 @@ cleandirs( char *path, struct llist *khead )
 	}
 
 	for ( kcur = khead; kcur != NULL; kcur = kcur->ll_next ) {
-	    if ( strcmp( cur->ll_name, kcur->ll_name ) == 0
-			|| ischild( kcur->ll_name, cur->ll_name )) {
+	    if (( case_sensitive &&
+			strcmp( cur->ll_name, kcur->ll_name ) == 0 ) ||
+		    ( !case_sensitive &&
+			strcasecmp( cur->ll_name, kcur->ll_name ) == 0 ) ||
+		    ischildcase( kcur->ll_name, cur->ll_name, case_sensitive)) {
 		match = 1;
 		break;
 	    }
@@ -561,7 +564,7 @@ main( int argc, char **argv )
     char	        **capa = NULL;		/* capabilities */
 
     while (( c = getopt( argc, argv,
-	    "Cc:D:h:iK:np:P:qrvVw:x:y:z:Z:" )) != EOF ) {
+	    "Cc:D:h:IiK:np:P:qrvVw:x:y:z:Z:" )) != EOF ) {
 	switch( c ) {
 	case 'C':	/* clean up dir containing command.K */
 	    clean = 1;
@@ -583,6 +586,10 @@ main( int argc, char **argv )
 
 	case 'h':
 	    host = optarg;
+	    break;
+
+	case 'I':
+	    case_sensitive = 0;
 	    break;
 
 	case 'i':
@@ -803,9 +810,9 @@ main( int argc, char **argv )
 			perror( tempfile );
 			exit( 2 );
 		    }
-		    if ( !quiet ) printf ( "%s: missing\n", path );
+		    if ( !quiet ) printf( "%s: missing\n", path );
 		}
-	        change++;
+		change++;
 		goto done;
 	    }
 	    perror( path );
@@ -846,7 +853,7 @@ main( int argc, char **argv )
 		}
 		if ( !quiet ) printf( "%s: updated\n", path ); 
 	    } else {
-		if ( !quiet ) printf ( "%s: out of date\n", path );
+		if ( !quiet ) printf( "%s: out of date\n", path );
 		if ( unlink( tempfile ) !=0 ) {
 		    perror( tempfile );
 		    exit( 2 );
@@ -994,7 +1001,8 @@ read_kfile( char * kfile )
 		}
 	    } else {
 		if ( !list_check( special_list, av[ 1 ] )) {
-		    if ( list_insert( special_list, av[ 1 ] ) != 0 ) {
+		    if ( list_insert_case( special_list, av[ 1 ],
+				case_sensitive ) != 0 ) {
 			perror( "list_insert" );
 			exit( 2 );
 		    }

@@ -80,12 +80,12 @@ list_print( struct list *list )
 }
 
    int 
-list_insert( struct list *list, char *path )
+list_insert_case( struct list *list, char *path, int case_sensitive )
 {
     struct node		*new_node, *cur;
 
     for ( cur = list->l_head; cur != NULL; cur = cur->n_next ) {
-	if ( pathcmp( cur->n_path, path ) > 0 ) {
+	if ( pathcasecmp( cur->n_path, path, case_sensitive ) > 0 ) {
 	    break;
 	}
     }
@@ -111,6 +111,12 @@ list_insert( struct list *list, char *path )
 
     list->l_count++;
     return( 0 );
+}
+
+    int
+list_insert( struct list *list, char *path )
+{
+    return( list_insert_case( list, path, 1 ));
 }
 
    int 

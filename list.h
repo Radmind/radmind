@@ -24,7 +24,8 @@ void		list_clear( struct list *list );
 void		list_free( struct list *list );
 void 		list_print( struct list *list );
 int 		list_insert( struct list *list, char *path );
-int 		list_insert_case( struct list *list, char *path );
+int 		list_insert_case( struct list *list, char *path,
+			int case_sensitive );
 int 		list_insert_head( struct list *list, char *path );
 int 		list_insert_tail( struct list *list, char *path );
 int 		list_remove( struct list *list, char *path );
