@@ -393,7 +393,7 @@ update|up)
 
 create)
     # Since create does not modify the system, no need for checkedout
-    ktcheck -w ${TLSLEVEL} -h ${SERVER} -n -c sha1
+    ktcheck ${CASE} -w ${TLSLEVEL} -h ${SERVER} -n -c sha1
     case "$?" in
     0)	;;
 
