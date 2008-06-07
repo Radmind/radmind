@@ -37,7 +37,6 @@ twhich( char *pattern, int displayall )
     struct node		*node;
     struct transcript	*tran;
     extern struct transcript	*tran_head;
-    extern struct list	*special_list;
     extern struct list	*exclude_list;
     int			cmp = 0, match = 0;
 
