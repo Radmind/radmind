@@ -390,7 +390,7 @@ main( int argc, char **argv, char **envp )
 	}
     }
 
-    if ( retr( sn, pathdesc, path, (char *)&temppath, 0600, -1, "-" ) != 0 ) {
+    if ( retr( sn, pathdesc, path, temppath, 0600, -1, "-" ) != 0 ) {
 	exit( 2 );
     }
 

@@ -324,7 +324,7 @@ createspecial( SNET *sn, struct list *special_list )
 	    return( 1 );
 	}
 
-	if ( getstat( sn, (char *)&filedesc, stats ) != 0 ) {
+	if ( getstat( sn, filedesc, stats ) != 0 ) {
 	    return( 1 );
 	}
 
@@ -450,7 +450,7 @@ check( SNET *sn, char *type, char *file )
 	strcpy( path, base_kfile );
     }
 
-    if ( getstat( sn, (char *)&pathdesc, stats ) != 0 ) {
+    if ( getstat( sn, pathdesc, stats ) != 0 ) {
 	return( 2 );
     }
     tac = acav_parse( NULL, stats, &targv );
@@ -469,7 +469,7 @@ check( SNET *sn, char *type, char *file )
 	    /* Local file is missing */
 	    if ( update ) {
 		if ( !quiet ) { printf( "%s:", path ); fflush( stdout ); }
-		if ( retr( sn, pathdesc, path, (char *)&tempfile, 0666, 
+		if ( retr( sn, pathdesc, path, tempfile, 0666, 
 			strtoofft( targv[ 6 ], NULL, 10 ), targv[ 7 ] ) != 0 ) {
 		    return( 2 );
 		}
@@ -517,7 +517,7 @@ check( SNET *sn, char *type, char *file )
 		perror( path );
 		return( 2 );
 	    }
-	    if ( retr( sn, pathdesc, path, (char *)&tempfile, 0666, 
+	    if ( retr( sn, pathdesc, path, tempfile, 0666, 
 		    strtoofft( targv[ 6 ], NULL, 10 ), targv[ 7 ] ) != 0 ) {
 		return( 2 );
 	    }

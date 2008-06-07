@@ -167,7 +167,7 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
 		break;
 	    }
 	} else {
-	    switch ( retr( sn, pathdesc, path, (char *)&temppath, 0600,
+	    switch ( retr( sn, pathdesc, path, temppath, 0600,
 		strtoofft( targv[ 6 ], NULL, 10 ), cksum_b64 )) {
 	    case -1:
 		/* Network problem */
