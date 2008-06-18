@@ -56,3 +56,8 @@ COMPress
     C: COMP <compression> [optional-data] "\r\n"
     S: 320 Ready to start "\r\n"
     S: 220 <compression> compression [optional-string] enabled "\r\n"
+
+REPOrt an event on the client
+
+    C: REPO <event-to-report> <report-details> "\r\n"
+    S: 215 Report successful "\r\n"
