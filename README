@@ -17,8 +17,8 @@ More detailed instructions
 
 Download the source from http://radmind.org/ and uncompress it into a
 directory of your liking.  The current development source is also
-available through an anonymous CVS server.  See the radmind web site
-for more details.
+available through an anonymous CVS server. See the "Building from CVS"
+section below for more details.
 
 2: Configure the software
 
@@ -71,6 +71,29 @@ for the kerberos header files:
 
   % "env CPPFLAGS=-I/usr/kerberos/include ./configure"
 
+-----------------
+Building from CVS
+-----------------
+The Radmind Development Team occasionally asks for help testing a new feature
+or bug fix. The best way to assist is to download the source code from the
+CVS repository and build it manually. The following steps will result in
+a build from CVS.
+
+1) Download the source from CVS:
+
+cvs -d :pserver:anonymous@radmind.cvs.sourceforge.net:/cvsroot/radmind \
+	checkout radmind
+
+2) Move into the new radmind directory:
+
+cd radmind
+
+3) Download libsnet[1], the network library Radmind uses:
+
+sh bin/getsnet
+
+4) Follow steps 2 and 3 from "More detailed instructions" for building, above.
+
 ------------
 Known Issues
 ------------
@@ -88,3 +111,8 @@ team by e-mailing radmind@umich.edu.
 
 An archived e-mail discussion list has also been set up.  See the website
 for details on how to join.
+
+----------
+References
+----------
+[1]: http://sourceforge.net/projects/libsnet
