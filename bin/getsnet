@@ -1,0 +1,15 @@
+#! /bin/sh
+
+# getsnet: download libsnet source code from SF.net
+
+proj="libsnet"
+rev="${1}"
+cvsenv=":pserver:anonymous@${proj}.cvs.sourceforge.net:/cvsroot/${proj}"
+
+if [ -n "${rev}" ]; then
+    rev="-r ${rev}"
+fi
+
+cvs -d "${cvsenv}" checkout ${rev} "${proj}"
+
+exit $?
