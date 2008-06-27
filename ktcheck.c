@@ -237,6 +237,7 @@ clean_client_dir( void )
 
     while (( node = list_pop_head( kfile_seen )) != NULL ) {
 	expand_kfile( &khead, node->n_path );
+	free( node );
     }
 
     /*
