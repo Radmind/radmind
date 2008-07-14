@@ -178,6 +178,7 @@ main( int argc, char **argv )
 {
     int			c, i, j, cmpval, err = 0, tcount = 0, candidate = 0;
     int			force = 0, ofd, fileloc = 0, match = 0;
+    int			merge_trans_only = 0;
     char		*file = NULL;
     char		npath[ 2 * MAXPATHLEN ];
     char		opath[ 2 * MAXPATHLEN ];
@@ -194,7 +195,7 @@ main( int argc, char **argv )
     FILE		*ofs;
     mode_t		mask;
 
-    while ( ( c = getopt( argc, argv, "D:fInu:Vv" ) ) != EOF ) {
+    while ( ( c = getopt( argc, argv, "D:fInTu:Vv" ) ) != EOF ) {
 	switch( c ) {
 	case 'D':
 	    radmind_path = optarg;
@@ -223,6 +224,9 @@ main( int argc, char **argv )
 	case 'v':
 	    verbose = 1;
 	    break;
+	case 'T':
+		merge_trans_only = 1;
+		break;
 	default:
 	    err++;
 	    break;
@@ -231,6 +235,9 @@ main( int argc, char **argv )
 
     tcount = argc - ( optind + 1 );	/* "+ 1" accounts for dest tran */
 
+	if ( merge_trans_only && force ) {
+		err++;
+	}
     if ( noupload && ( tcount > 2 ) ) {
 	err++;
     }
@@ -246,13 +253,13 @@ main( int argc, char **argv )
     }
 
     if ( err ) {
-	fprintf( stderr, "Usage: %s [-vIV] [ -D path ] [ -u umask ] ",
+	fprintf( stderr, "Usage: %s [-vIVT] [ -D path ] [ -u umask ] ",
 	    argv[ 0 ] );
 	fprintf( stderr, "transcript... dest\n" );
 	fprintf( stderr, "       %s -f [-vIV] [ -D path ] [ -u umask ] ",
 	    argv[ 0 ] );
 	fprintf( stderr, "transcript1 transcript2\n" );
-	fprintf( stderr, "       %s -n [-vIV] [ -D path ] [ -u umask ] ",
+	fprintf( stderr, "       %s -n [-vIVT] [ -D path ] [ -u umask ] ",
 	    argv[ 0 ] );
 	fprintf( stderr, "transcript1 transcript2 dest\n" );
 	exit( 2 );
@@ -365,9 +372,12 @@ main( int argc, char **argv )
 		(int)getpid());
 	    exit( 2 );
 	}
-	if ( mkdir( npath, (mode_t)0777 ) != 0 ) {
-	    perror( npath );
-	    exit( 2 );
+	/* don't bother creating file/tname if only merging trans */
+	if ( !merge_trans_only ) {
+	    if ( mkdir( npath, (mode_t)0777 ) != 0 ) {
+		perror( npath );
+		exit( 2 );
+	    }
 	}
     }
 
@@ -473,9 +483,12 @@ main( int argc, char **argv )
 		}
 		goto skipline;
 	    }
-	    /* output non-files */
-	    if ( *trans[ candidate ]->t_argv[ 0 ] != 'f'
-		    && *trans[ candidate ]->t_argv[ 0 ] != 'a' ) {
+	    /* output non-files, or if we're only merging transcripts 
+	     * and there is no file linking necessary
+	     */
+	    if (( *trans[ candidate ]->t_argv[ 0 ] != 'f'
+		    && *trans[ candidate ]->t_argv[ 0 ] != 'a')
+		    || merge_trans_only ) {
 		goto outputline;
 	    }
 
@@ -680,9 +693,14 @@ skipline:
 	    fprintf( stderr, "%s/%s: path too long\n", file_root, tran_name );
 	    exit( 2 );
 	}
-	if ( rename( opath, npath ) != 0 ) {
-	    perror( npath );
-	    exit( 2 );
+	/* don't try and move file/tname if doing client only merge,
+	 * it was never created.
+	 */
+	if ( !merge_trans_only ) {
+	    if ( rename( opath, npath ) != 0 ) {
+		perror( npath );
+		exit( 2 );
+	    }
 	}
     }
     if ( snprintf( opath, MAXPATHLEN, "%s/%s.%d", tran_root, tran_name,

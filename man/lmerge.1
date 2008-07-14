@@ -4,7 +4,7 @@
 \- lmerge combines multiple transcripts into one.
 .SH SYNOPSIS
 .B lmerge
-.RB [ \-IiVv ]
+.RB [ \-IiVvT ]
 [
 .BI \-D\  path
 ] [
@@ -25,7 +25,7 @@
 .br
 .B lmerge 
 .B \-n
-.RB [ \-IiVv ]
+.RB [ \-IiVvT ]
 [
 .BI \-D\  path
 ] [
@@ -97,6 +97,10 @@ path comparisons are case-insensitive.
 .B \-n
 merge two transcripts linking all files from the lowest precedence
 transcript.
+.TP 19
+.B \-T
+merge transcripts only. Do not perform file system linking.
+May not be used with the \-f option.
 .TP 19
 .BI \-u\  umask
 use
