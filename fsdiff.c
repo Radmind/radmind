@@ -258,7 +258,7 @@ main( int argc, char **argv )
     int 		errflag = 0, use_outfile = 0;
     int			finish = 0;
     struct stat		st;
-    char		type;
+    char		type, buf[ MAXPATHLEN ];
     struct applefileinfo	afinfo;
 
     edit_path = CREATABLE;
@@ -357,6 +357,28 @@ main( int argc, char **argv )
     len = strlen( path_prefix );
     if (( len > 1 ) && ( path_prefix[ len - 1 ] == '/' )) {
 	path_prefix[ len - 1] = '\0';
+    }
+
+    /* If path_prefix doesn't contain a directory, canonicalize it by
+     * prepending a "./".  This allow paths to be dynamically converted between
+     * relative and absolute paths without breaking sort order.
+     */
+    switch( path_prefix[ 0 ] ) {
+    case '/':
+        break;
+
+    case '.':
+	if ( path_prefix[ 1 ] == '/' ) {
+	    break;
+	}
+    default:
+        if ( snprintf( buf, sizeof( buf ), "./%s",
+                path_prefix ) >= MAXPATHLEN ) {
+            fprintf( stderr, "path too long\n" );
+            exit( 2 );
+        }
+	path_prefix = buf;
+        break;
     }
 
     if ( radstat( path_prefix, &st, &type, &afinfo ) != 0 ) {
