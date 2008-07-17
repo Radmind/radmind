@@ -10,6 +10,8 @@
 ] [
 .BI \-c\  checksum
 ] [
+.BI \-e\  event
+] [
 .BI \-h\  host
 ] [
 .BI \-p\  port
@@ -87,6 +89,10 @@ enables checksuming.
 .TP 19
 .BI \-C
 create missing intermediate directories.
+.TP 19
+.BI \-e\  event
+the event type to report. This is limited to a single word, containing no
+white space. By default this is "lapply".
 .TP 19
 .BI \-h\  host
 specifies the radmind server, by default

@@ -10,6 +10,8 @@
 ] [
 .BI \-D\  path
 ] [
+.BI \-e\  event
+] [
 .BI \-c\  checksum 
 ] [
 .BI \-K\  command-file 
@@ -81,6 +83,10 @@ enables checksuming.
 .BI \-D\  path
 specifies the radmind working directory, by default
 .BR _RADMIND_PATH .
+.TP 19
+.BI \-e\  event
+the event type to report. This is limited to a single word, containing no
+white space. By default this is "ktcheck".
 .TP 19
 .BI \-I
 case-insensitive special.T, case-insensitive clean-up.
