@@ -32,6 +32,7 @@ int		dodots = 0;
 int		dotfd;
 int		lastpercent = -1;
 int		case_sensitive = 1;
+int		tran_format = -1; 
 extern int	exclude_warnings;
 const EVP_MD    *md;
 
@@ -353,8 +354,23 @@ main( int argc, char **argv )
     }
 
     path_prefix = argv[ optind ];
-    /* Clip trailing '/' */
     len = strlen( path_prefix );
+
+    /* Determine if called with relative or absolute pathing.  Path is relative
+     * if it's just '.' or starts with './'.  File names that start with a '.'
+     * are absolute.
+     */
+    if ( path_prefix[ 0 ] == '.' ) {
+	if ( len == 1 ) {
+	    tran_format = T_RELATIVE;
+	} else if ( path_prefix[ 1 ] == '/' ) {
+	    tran_format = T_RELATIVE;
+	}
+    } else {
+	tran_format = T_ABSOLUTE;
+    }
+
+    /* Clip trailing '/' */
     if (( len > 1 ) && ( path_prefix[ len - 1 ] == '/' )) {
 	path_prefix[ len - 1] = '\0';
     }

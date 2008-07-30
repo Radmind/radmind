@@ -28,6 +28,7 @@
 #include "list.h"
 #include "wildcard.h"
 
+char * convert_path_type( char *path );
 int read_kfile( char *kfile, int location );
 static void t_remove( int type, char *shortname );
 static void t_display( void );
@@ -36,6 +37,7 @@ struct transcript		*tran_head = NULL;
 static struct transcript	*prev_tran = NULL;
 extern int			edit_path;
 extern int			case_sensitive;
+extern int			tran_format;
 static char			*kdir;
 static struct list		*kfile_list;
 struct list			*special_list;
@@ -48,6 +50,55 @@ int				cksum;
 int				fs_minus;
 int				exclude_warnings = 0;
 FILE				*outtran;
+
+   char * 
+convert_path_type( char *path )
+{
+    int			len = 0;
+    static char		buf[ MAXPATHLEN ]; 
+
+    len = strlen( path );
+
+    if ( len == 1 ) {
+        if (( tran_format == T_ABSOLUTE ) && ( path[ 0 ] == '.' )) {
+            buf[ 0 ] = '/';
+            buf[ 1 ] = '\0';
+        } else if (( tran_format == T_RELATIVE ) && ( path[ 0 ] == '/' )) {
+            buf[ 0 ] = '.';
+            buf[ 1 ] = '\0';
+        } else {
+	    /* Nothing to convert */
+	    return( path );
+	}
+    } else {
+        if (( tran_format == T_ABSOLUTE ) && ( path[ 0 ] == '.' )) {
+            if ( path[ 1 ] == '/' ) {
+                /* Move past leading '.' */
+		path++;
+                if ( snprintf( buf, sizeof( buf ), "%s",
+			path ) >= MAXPATHLEN ) {
+		    return( NULL );
+                }
+            } else {
+                /* Instert leading '/' */
+		    if ( snprintf( buf, sizeof( buf ), "/%s",
+			    path ) >= MAXPATHLEN ) {
+		    return( NULL );
+                }
+            }
+        } else if (( tran_format == T_RELATIVE ) && ( path[ 0 ] == '/' )) {
+            /* Instert leading '.' */
+            if ( snprintf( buf, sizeof( buf ), ".%s", path ) >= MAXPATHLEN ) {
+		return( NULL );
+            }
+        } else { 
+	    /* Nothing to convert */
+	    return( path );
+	}
+    }
+
+    return( buf );
+}
 
     void 
 transcript_parse( struct transcript *tran ) 
@@ -105,6 +156,14 @@ transcript_parse( struct transcript *tran )
 	    tran->t_fullname, tran->t_linenum );
 	exit( 2 );
     }
+
+    /* Convert path to match transcript type */
+    if (( epath = convert_path_type( epath )) == NULL ) {;
+	fprintf( stderr, "%s: line %d: path too long\n", tran->t_fullname,
+	    tran->t_linenum );
+	exit( 2 );
+    }
+
     if ( pathcasecmp( epath, tran->t_pinfo.pi_name, case_sensitive ) < 0 ) {
 	fprintf( stderr, "%s: line %d: bad sort order\n",
 	    tran->t_fullname, tran->t_linenum );
@@ -936,7 +995,7 @@ read_kfile( char *kfile, int location )
     char	line[ MAXPATHLEN ];
     char	fullpath[ MAXPATHLEN ];
     char	*subpath;
-    char	*d_pattern;
+    char	*d_pattern, *path;
     char	**av;
     FILE	*fp;
 
@@ -1051,8 +1110,16 @@ read_kfile( char *kfile, int location )
 	case 'x':				/* exclude */
 	    if (( d_pattern = decode( av[ 1 ] )) == NULL ) {
 		fprintf( stderr, "%s: line %d: decode buffer too small\n",
-			kfile, linenum );
+		    kfile, linenum );
 	    }
+
+	    /* Convert path to match transcript type */
+	    if (( d_pattern = convert_path_type( d_pattern )) == NULL ) {
+		fprintf( stderr, "%s: line %d: path too long\n",
+		    kfile, linenum );
+		exit( 2 );
+	    }
+
 	    if ( minus ) {
 		list_remove( exclude_list, d_pattern );
 	    } else {
@@ -1066,13 +1133,22 @@ read_kfile( char *kfile, int location )
 	    break;
 
 	case 's':				/* special */
+	    path = av[ 1 ];
+
+	    /* Convert path to match transcript type */
+	    if (( path = convert_path_type( path )) == NULL ) {
+		fprintf( stderr, "%s: line %d: path too long\n",
+		    kfile, linenum );
+		exit( 2 );
+	    }
+
 	    if ( minus ) {
-		if ( list_check( special_list, av[ 1 ] )) {
-		    list_remove( special_list, av[ 1 ] );
+		if ( list_check( special_list, path )) {
+		    list_remove( special_list, path );
 		}
 	    } else {
-		if ( !list_check( special_list, av[ 1 ] )) {
-		    if ( list_insert( special_list, av[ 1 ] ) != 0 ) {
+		if ( !list_check( special_list, path )) {
+		    if ( list_insert( special_list, path ) != 0 ) {
 			perror( "list_insert" );
 			return( -1 );
 		    }

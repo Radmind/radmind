@@ -10,6 +10,9 @@
 #define T_NEGATIVE	2 
 #define T_SPECIAL	3
 
+#define T_RELATIVE	0
+#define T_ABSOLUTE	1
+
 #define T_MOVE_TRAN	1
 #define T_MOVE_FS	2
 #define T_MOVE_BOTH	3 

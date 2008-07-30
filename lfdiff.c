@@ -46,6 +46,7 @@ int			dodots = 0;
 int			linenum = 0;
 int			cksum = 0;
 int             	case_sensitive = 1;
+int			tran_format = -1; 
 int			create_prefix = 0;
 int			quiet = 1;
 int			excluded = 0;
@@ -113,7 +114,7 @@ precedent_transcript( char *kfile, char *file, int where )
     int
 main( int argc, char **argv, char **envp )
 {
-    int			c, i, tac, err = 0;
+    int			c, i, tac, err = 0, len;
     int			special = 0, diffargc = 0;
     int			fd;
     unsigned short	port = 0;
@@ -335,6 +336,21 @@ main( int argc, char **argv, char **envp )
 	exit( 2 );
     }
     file = argv[ optind ];
+    len = strlen( file );
+
+    /* Determine if called with relative or absolute pathing.  Path is relative
+     * if it's just '.' or starts with './'.  File names that start with a '.'
+     * are absolute.
+     */
+    if ( file[ 0 ] == '.' ) {
+	if ( len == 1 ) {
+	    tran_format = T_RELATIVE;
+	} else if ( file[ 1 ] == '/' ) {
+	    tran_format = T_RELATIVE;
+	}
+    } else {
+	tran_format = T_ABSOLUTE;
+    }
 
     if ( authlevel != 0 ) {
         if ( tls_client_setup( use_randfile, authlevel, caFile, caDir, cert, 

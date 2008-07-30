@@ -23,6 +23,7 @@
 const EVP_MD    *md;
 
 int		case_sensitive = 1;
+int		tran_format = -1; 
 
 /*
  * exit codes:
@@ -183,6 +184,21 @@ main( int argc, char **argv )
     /* clip trailing slash */
     if ( len > 1 && pattern[ len - 1 ] == '/' ) {
 	pattern[ len - 1 ] = '\0';
+	len--;
+    }
+
+    /* Determine if called with relative or absolute pathing.  Path is relative
+     * if it's just '.' or starts with './'.  File names that start with a '.'
+     * are absolute.
+     */
+    if ( path_prefix[ 0 ] == '.' ) {
+	if ( len == 1 ) {
+	    tran_format = T_RELATIVE;
+	} else if ( path_prefix[ 1 ] == '/' ) {
+	    tran_format = T_RELATIVE;
+	}
+    } else {
+	tran_format = T_ABSOLUTE;
     }
 
     /* initialize the transcripts */
