@@ -356,23 +356,10 @@ main( int argc, char **argv )
     path_prefix = argv[ optind ];
     len = strlen( path_prefix );
 
-    /* Determine if called with relative or absolute pathing.  Path is relative
-     * if it's just '.' or starts with './'.  File names that start with a '.'
-     * are absolute.
-     */
-    if ( path_prefix[ 0 ] == '.' ) {
-	if ( len == 1 ) {
-	    tran_format = T_RELATIVE;
-	} else if ( path_prefix[ 1 ] == '/' ) {
-	    tran_format = T_RELATIVE;
-	}
-    } else {
-	tran_format = T_ABSOLUTE;
-    }
-
     /* Clip trailing '/' */
     if (( len > 1 ) && ( path_prefix[ len - 1 ] == '/' )) {
-	path_prefix[ len - 1] = '\0';
+	path_prefix[ len - 1 ] = '\0';
+	len--;
     }
 
     /* If path_prefix doesn't contain a directory, canonicalize it by
@@ -384,7 +371,8 @@ main( int argc, char **argv )
         break;
 
     case '.':
-	if ( path_prefix[ 1 ] == '/' ) {
+	/* Don't rewrite '.' or paths starting with './' */
+	if (( len == 1 ) || (  path_prefix[ 1 ] == '/' )) {
 	    break;
 	}
     default:
@@ -395,6 +383,22 @@ main( int argc, char **argv )
         }
 	path_prefix = buf;
         break;
+    }
+
+    /* Determine if called with relative or absolute pathing.  Path is relative
+     * if it's just '.' or starts with './'.  File names that start with a '.'
+     * are absolute.
+     */
+    if ( path_prefix[ 0 ] == '.' ) {
+	if ( len == 1 ) {
+	    tran_format = T_RELATIVE;
+	} else if ( path_prefix[ 1 ] == '/' ) {
+	    tran_format = T_RELATIVE;
+	} else {
+	    tran_format = T_ABSOLUTE;
+	}
+    } else {
+	tran_format = T_ABSOLUTE;
     }
 
     if ( radstat( path_prefix, &st, &type, &afinfo ) != 0 ) {
