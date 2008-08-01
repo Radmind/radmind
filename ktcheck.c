@@ -54,7 +54,7 @@ int clean_client_dir( void );
 int check( SNET *sn, char *type, char *path); 
 int createspecial( SNET *sn, struct list *special_list );
 int getstat( SNET *sn, char *description, char *stats );
-int read_kfile( char * );
+int read_kfile( char *, char * );
 SNET *sn;
 
 void			(*logger)( char * ) = NULL;
@@ -563,9 +563,10 @@ main( int argc, char **argv )
     char		path[ MAXPATHLEN ];
     char		tempfile[ MAXPATHLEN ];
     char	        **capa = NULL;		/* capabilities */
+    char		*event = "ktcheck";	/* report event type */
 
     while (( c = getopt( argc, argv,
-	    "Cc:D:h:IiK:np:P:qrvVw:x:y:z:Z:" )) != EOF ) {
+	    "Cc:D:e:h:IiK:np:P:qrvVw:x:y:z:Z:" )) != EOF ) {
 	switch( c ) {
 	case 'C':	/* clean up dir containing command.K */
 	    clean = 1;
@@ -583,6 +584,10 @@ main( int argc, char **argv )
 
 	case 'D':
 	    radmind_path = optarg;
+	    break;
+
+	case 'e':		/* set the event label for reporting */
+	    event = optarg;
 	    break;
 
 	case 'h':
@@ -763,11 +768,15 @@ main( int argc, char **argv )
 	break;
 
     case 2:
-	if ( report ) report_event( sn, "ktcheck", "Error" );
+	if ( report ) {
+	    if ( report_event( sn, event, "Error" ) != 0 ) {
+		fprintf( stderr, "warning: could not report event\n" );
+	    }
+	}
 	exit( 2 );
     }
 
-    if ( read_kfile( base_kfile ) != 0 ) {
+    if ( read_kfile( base_kfile, event ) != 0 ) {
 	exit( 2 );
     }
 
@@ -881,20 +890,20 @@ done:
     if ( change ) {
 	if ( update ) {
 	    if ( report ) {
-		if ( report_event( sn, "ktcheck", "Updates retrieved" ) != 0 ) {
+		if ( report_event( sn, event, "Updates retrieved" ) != 0 ) {
 		    fprintf( stderr, "warning: could not report event\n" );
 		}
 	    }
 	} else {
 	    if ( report ) {
-		if ( report_event( sn, "ktcheck", "Updates available" ) != 0 ) {
+		if ( report_event( sn, event, "Updates available" ) != 0 ) {
 		    fprintf( stderr, "warning: could not report event\n" );
 		}
 	    }
 	}
     } else {
 	if ( report ) {
-	    if ( report_event( sn, "ktcheck", "No updates needed" ) != 0 ) {
+	    if ( report_event( sn, event, "No updates needed" ) != 0 ) {
 		fprintf( stderr, "warning: could not report event\n" );
 	    }
 	}
@@ -914,7 +923,7 @@ done:
 }
 
     int
-read_kfile( char * kfile )
+read_kfile( char * kfile,  char * event )
 {
     int		ac, minus = 0;
     char	**av;
@@ -986,10 +995,14 @@ read_kfile( char * kfile )
 		}
 		break;
 	    case 2:
-		if ( report ) report_event( sn, "ktcheck", "Error" );
+		if ( report ) {
+		    if ( report_event( sn, event, "Error" ) != 0 ) {
+			fprintf( stderr, "warning: could not report event\n" );
+		    }
+		}
 		goto error;
 	    }
-	    if ( read_kfile( path ) != 0 ) {
+	    if ( read_kfile( path, event ) != 0 ) {
 		exit( 2 );
 	    }
 	    break;
@@ -1023,7 +1036,11 @@ read_kfile( char * kfile )
 		}
 		break;
 	    case 2:
-		if ( report ) report_event( sn, "ktcheck", "Error" );
+		if ( report ) {
+		    if ( report_event( sn, event, "Error" ) != 0 ) {
+			fprintf( stderr, "warning: could not report event\n" );
+		    }
+		}
 		exit( 2 );
 	    }
 	    break;
@@ -1048,7 +1065,11 @@ done:
 	return( -1 );
     }
     if ( !update && change ) {
-	if ( report ) report_event( sn, "ktcheck", "Updates available" );
+	if ( report ) {
+	    if ( report_event( sn, event, "Updates available" ) != 0 ) {
+		fprintf( stderr, "warning: could not report event\n" );
+	    }
+	}
 	exit( 1 );
     }
     return( 0 );

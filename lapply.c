@@ -250,10 +250,11 @@ main( int argc, char **argv )
     int			authlevel = _RADMIND_AUTHLEVEL;
     int			force = 0;
     int			use_randfile = 0;
-	char        **capa = NULL; /* capabilities */
+    char	        **capa = NULL;		/* capabilities */
+    char		* event = "lapply";	/* report event type */
 
     while (( c = getopt( argc, argv,
-	    "%c:CFh:iInp:P:qru:Vvw:x:y:z:Z:" )) != EOF ) {
+	    "%c:Ce:Fh:iInp:P:qru:Vvw:x:y:z:Z:" )) != EOF ) {
 	switch( c ) {
 	case '%':
 	    showprogress = 1;
@@ -271,6 +272,10 @@ main( int argc, char **argv )
 
 	case 'C':
 	    create_prefix = 1;
+	    break;
+
+	case 'e':		/* set the event label for reporting */
+	    event = optarg;
 	    break;
 
 	case 'F':
@@ -728,7 +733,7 @@ filechecklist:
 
     if ( network ) {
 	if ( report ) {
-	    if ( report_event( sn, "lapply",
+	    if ( report_event( sn, event,
 		    "Changes applied successfully" ) != 0 ) {
 		fprintf( stderr, "warning: could not report event\n" );
 	    }
@@ -753,14 +758,13 @@ error1:
 #endif /* HAVE_ZLIB */
 	if ( change ) {
 	    if ( network && report ) {
-		if ( report_event( sn, "lapply",
-			"Error, changes made" ) != 0 ) {
+		if ( report_event( sn, event, "Error, changes made" ) != 0 ) {
 		    fprintf( stderr, "warning: could not report event\n" );
 		}
 	    }
 	} else {
 	    if ( network && report ) {
-		if ( report_event( sn, "lapply",
+		if ( report_event( sn, event,
 			"Error, no changes made" ) != 0 ) {
 		    fprintf( stderr, "warning: could not report event\n" );
 		}
