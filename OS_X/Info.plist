@@ -23,11 +23,11 @@
 	<key>IFPkgFlagIsRequired</key>
 	<false/>
 	<key>IFPkgFlagRelocatable</key>
-	<false/>
+	<true/>
 	<key>IFPkgFlagRestartAction</key>
 	<string>NoRestart</string>
 	<key>IFPkgFlagRootVolumeOnly</key>
-	<true/>
+	<false/>
 	<key>IFPkgFlagUpdateInstalledLanguages</key>
 	<false/>
 	<key>IFPkgFormatVersion</key>

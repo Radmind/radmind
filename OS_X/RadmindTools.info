@@ -3,13 +3,13 @@ Version              	_RADMIND_VERSION
 Description          	This package installs the radmind tools
 
 DefaultLocation      	/
-Relocatable          	NO
+Relocatable          	YES
 
 NeedsAuthorization   	YES
 Application          	NO
 InstallOnly          	NO
 DisableStop         	NO
-rootVolumeOnly		YES
+rootVolumeOnly		NO
 RequiresReboot 		NO
 UseUserMask 		YES
 OverwritePermissions 	NO
