@@ -714,6 +714,16 @@ transcript_select( void )
 		continue;
 	    }
 
+	    /* If we match an exclude pattern, pretend we don't see it */
+	    if ( t_exclude( begin_tran->t_pinfo.pi_name )) {
+		if ( exclude_warnings ) {
+		    fprintf( stderr, "Warning: excluding %s\n",
+				begin_tran->t_pinfo.pi_name );
+		}
+		transcript_parse( begin_tran );
+		continue;
+	    }
+
 	    /* Don't look outside of the initial path. */
 	
 	    if ( !ischildcase( begin_tran->t_pinfo.pi_name, path_prefix,
