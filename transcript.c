@@ -715,7 +715,8 @@ transcript_select( void )
 	    }
 
 	    /* If we match an exclude pattern, pretend we don't see it */
-	    if ( t_exclude( begin_tran->t_pinfo.pi_name )) {
+	    if ( begin_tran->t_type != T_SPECIAL &&
+		    t_exclude( begin_tran->t_pinfo.pi_name )) {
 		if ( exclude_warnings ) {
 		    fprintf( stderr, "Warning: excluding %s\n",
 				begin_tran->t_pinfo.pi_name );
