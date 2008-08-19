@@ -42,7 +42,6 @@ struct timeval          timeout = { 60, 0 };
 extern int		errno;
 extern SSL_CTX  	*ctx;
 
-int			connectsn2_errno = 0;
 
 #ifdef HAVE_ZLIB
 int zlib_level = 0;
@@ -60,6 +59,7 @@ connectsn2( struct sockaddr_in *sin )
 {
     int			s;
     int			one = 1;
+    int			connectsn2_errno = 0;
     SNET                *sn = NULL; 
     struct protoent	*proto;
 
@@ -85,6 +85,7 @@ connectsn2( struct sockaddr_in *sin )
 	connectsn2_errno = errno;
 	if ( verbose ) printf( "failed: %s\n", strerror( errno ));
 	(void)close( s );
+	errno = connectsn2_errno;
 	return( NULL );
     }
     if ( verbose ) printf( "success!\n" );
@@ -153,7 +154,7 @@ connectsn( char *host, unsigned short port )
 	}
     }
     fprintf( stderr, "connection to %s failed: %s\n",
-	    inet_ntoa( sin.sin_addr ), strerror( connectsn2_errno ));
+	    inet_ntoa( sin.sin_addr ), strerror( errno ));
     fprintf( stderr, "%s: connection failed\n", host );
     return( NULL );
 }
