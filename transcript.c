@@ -253,6 +253,11 @@ transcript_parse( struct transcript *tran )
 		tran->t_fullname, tran->t_linenum );
 	    exit( 2 );
 	}
+	if (( epath = convert_path_type( epath )) == NULL ) {
+	    fprintf( stderr, "%s: line %d: path too long\n",
+		    tran->t_fullname, tran->t_linenum );
+	    exit( 2 );
+	}
 	strcpy( tran->t_pinfo.pi_link, epath );
 	break;
 
