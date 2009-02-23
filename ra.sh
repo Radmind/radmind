@@ -442,7 +442,7 @@ create)
 	    fi
 	    USERNAME="-U ${USERNAME}"
 	fi
-	lcreate ${PROGRESS} -w ${TLSLEVEL} ${USERAUTH} ${USERNAME} \
+	lcreate ${PROGRESS} -w ${TLSLEVEL} ${USERAUTH} ${USERAUTH:+USERNAME} \
 			${CHECKSUM} -h ${SERVER} ${FTMP}
 	if [ $? -ne 0 ]; then
 	    cleanup
