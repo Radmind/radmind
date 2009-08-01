@@ -497,52 +497,25 @@ main( int argc, char **argv )
 	     * is not recreated for every file.  Only if link fails is
 	     * mkdirs() called.
 	     */
-	    /* Fix for broken mkdir on OS X */
-	    if ( *trans[ candidate ]->t_filepath == '/' ) {
-		if ( snprintf( opath, MAXPATHLEN, "%s/%s%s",
-			trans[ candidate ]->t_file_root,
-			trans[ fileloc ]->t_tran_name,
-			trans[ candidate ]->t_filepath ) >= MAXPATHLEN ) {
-		    fprintf( stderr, "%s/%s/%s: path too long\n",
-			trans[ candidate ]->t_file_root,
-			trans[ fileloc ]->t_tran_name,
-			trans[ candidate ]->t_filepath );
-		    exit( 2 );
-		}
-	    } else {
-		if ( snprintf( opath, MAXPATHLEN, "%s/%s/%s",
-			trans[ candidate ]->t_file_root,
-			trans[ fileloc ]->t_tran_name,
-			trans[ candidate ]->t_filepath ) >= MAXPATHLEN ) {
-		    fprintf( stderr, "%s/%s/%s: path too long\n",
-			trans[ candidate ]->t_file_root,
-			trans[ fileloc ]->t_tran_name,
-			trans[ candidate ]->t_filepath );
-		    exit( 2 );
-		}
+	    if ( snprintf( opath, MAXPATHLEN, "%s/%s/%s",
+		    trans[ candidate ]->t_file_root,
+		    trans[ fileloc ]->t_tran_name,
+		    trans[ candidate ]->t_filepath ) >= MAXPATHLEN ) {
+		fprintf( stderr, "%s/%s/%s: path too long\n",
+		    trans[ candidate ]->t_file_root,
+		    trans[ fileloc ]->t_tran_name,
+		    trans[ candidate ]->t_filepath );
+		exit( 2 );
 	    }
 
 	    if ( !force ) {
-		/* Fix for broken mkdir on OS X */
-		if ( *trans[ candidate ]->t_filepath == '/' ) {
-		    if ( snprintf( npath, MAXPATHLEN, "%s/%s.%d/%s",
-			    file_root, tran_name, (int)getpid(),
-			    trans[ candidate ]->t_filepath )
-			    >= MAXPATHLEN ) {
-			fprintf( stderr, "%s/%s.%d/%s: path too long\n",
-			    file_root, tran_name, (int)getpid(),
-			    trans[ candidate ]->t_filepath );
-			exit( 2 );
-		    }
-		} else {
-		    if ( snprintf( npath, MAXPATHLEN, "%s/%s.%d/%s",
-			    file_root, tran_name, (int)getpid(),
-			    trans[ candidate ]->t_filepath ) >= MAXPATHLEN ) {
-			fprintf( stderr, "%s/%s.%d/%s: path too long\n",
-			    file_root, tran_name, (int)getpid(),
-			    trans[ candidate ]->t_filepath );
-			exit( 2 );
-		    }
+		if ( snprintf( npath, MAXPATHLEN, "%s/%s.%d/%s",
+			file_root, tran_name, (int)getpid(),
+			trans[ candidate ]->t_filepath ) >= MAXPATHLEN ) {
+		    fprintf( stderr, "%s/%s.%d/%s: path too long\n",
+			file_root, tran_name, (int)getpid(),
+			trans[ candidate ]->t_filepath );
+		    exit( 2 );
 		}
 	    } else {
 		if ( snprintf( npath, MAXPATHLEN, "%s/%s/%s", file_root,
@@ -561,53 +534,26 @@ main( int argc, char **argv )
 		if ( ( file = strrchr( trans[ candidate ]->t_argv[ 1 ], '/' ) )
 			!= NULL ) {
 		    if ( !force ) {
-			/* Fix for broken mkdir on OS X */
-			if ( *trans[ candidate ]->t_filepath == '/' ) {
-			    if ( snprintf( npath, MAXPATHLEN,
-				    "%s/%s.%d%s",
-				    file_root, tran_name, (int)getpid(), 
-				    trans[ candidate ]->t_filepath )
-				    >= MAXPATHLEN ) {
-				fprintf( stderr,
-				    "%s/%s.%d%s: path too long\n",
-				    file_root, tran_name, (int)getpid(),
-				    trans[ candidate ]->t_filepath );
-				exit( 2 );
-			    }
-			} else {
-			    if ( snprintf( npath, MAXPATHLEN,
-				    "%s/%s.%d/%s",
-				    file_root, tran_name, (int)getpid(), 
-				    trans[ candidate ]->t_filepath )
-				    >= MAXPATHLEN ) {
-				fprintf( stderr,
-				    "%s/%s.%d/%s: path too long\n",
-				    file_root, tran_name, (int)getpid(),
-				    trans[ candidate ]->t_filepath );
-				exit( 2 );
-			    }
+			if ( snprintf( npath, MAXPATHLEN,
+				"%s/%s.%d/%s",
+				file_root, tran_name, (int)getpid(), 
+				trans[ candidate ]->t_filepath )
+				>= MAXPATHLEN ) {
+			    fprintf( stderr,
+				"%s/%s.%d/%s: path too long\n",
+				file_root, tran_name, (int)getpid(),
+				trans[ candidate ]->t_filepath );
+			    exit( 2 );
 			}
 		    } else {
-			if ( *trans[ candidate ]->t_filepath == '/' ) {
-			    if ( snprintf( npath, MAXPATHLEN,
-				    "%s/%s%s", file_root, tran_name,
-				    trans[ candidate ]->t_filepath )
-				    >= MAXPATHLEN ) {
-				fprintf( stderr,
-				    "%s/%s%s: path too long\n", file_root,
-				    tran_name, trans[ candidate ]->t_filepath );
-				exit( 2 );
-			    }
-			} else {
-			    if ( snprintf( npath, MAXPATHLEN,
-				    "%s/%s/%s", file_root, tran_name,
-				    trans[ candidate ]->t_filepath )
-				    >= MAXPATHLEN ) {
-				fprintf( stderr,
-				    "%s/%s/%s: path too long\n", file_root,
-				    tran_name, trans[ candidate ]->t_filepath );
-				exit( 2 );
-			    }
+			if ( snprintf( npath, MAXPATHLEN,
+				"%s/%s/%s", file_root, tran_name,
+				trans[ candidate ]->t_filepath )
+				>= MAXPATHLEN ) {
+			    fprintf( stderr,
+				"%s/%s/%s: path too long\n", file_root,
+				tran_name, trans[ candidate ]->t_filepath );
+			    exit( 2 );
 			}
 		    }
 		    if ( mkdirs( npath ) != 0 ) {
