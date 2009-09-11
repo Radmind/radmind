@@ -39,6 +39,7 @@
 #include "code.h"
 #include "largefile.h"
 #include "progress.h"
+#include "xattr.h"
 
 extern struct timeval	timeout;
 extern struct as_header as_header;
@@ -604,3 +605,119 @@ n_stor_applefile( SNET *sn, char *pathdesc, char *path )
     exit( 2 );
 }
 #endif /* __APPLE__ */
+
+#ifdef ENABLE_XATTR
+    int
+stor_xattr( SNET *sn, char *pathdesc, char *xpath, char *xname, off_t transize,
+    char *trancksum )
+{
+    ssize_t		xr, size;
+    char		*buf = NULL;
+    struct timeval	tv;
+    unsigned int	offset = 0;
+    unsigned int	md_len;
+    extern EVP_MD	*md;
+    EVP_MD_CTX		mdctx;
+    unsigned char	md_value[ EVP_MAX_MD_SIZE ];
+    char		cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
+
+    if ( cksum ) {
+	if ( strcmp( trancksum, "-" ) == 0 ) {
+	    fprintf( stderr, "line %d: No checksum listed\n", linenum );
+	    exit( 2 );
+	}
+	EVP_DigestInit( &mdctx, md );
+    }
+
+    /*
+     * only Apple's getxattr provides an offset for looped reads of
+     * large xattrs, but the offset is only valid for one xattr,
+     * com.apple.ResourceFork, and right now we're letting our
+     * AppleFile code handle rsrc forks. So just read the whole
+     * xattr into core here. xattr_get resizes an internal buffer
+     * as needed to hold the xattr data.
+     */
+    if (( xr = xattr_get( xpath, xname, &buf, 0 )) != transize ) {
+	if ( force ) {
+	    fprintf( stderr, "warning: " );
+	}
+	fprintf( stderr, "line %d: size in transcript does not match "
+			 "size of extended attribute\n", linenum );
+	if ( !force ) {
+	    exit( 2 );
+	}
+    }
+    if ( xr < 0 ) {
+	perror( xpath );
+	exit( 2 );
+    }
+
+    if ( cksum ) {
+	EVP_DigestUpdate( &mdctx, buf, (unsigned int)xr );
+    }
+
+    /* tell server what to expect */
+    if ( snet_writef( sn, "%s\r\n", pathdesc ) < 0 ) {
+	fprintf( stderr, "stor_xattr %s failed: %s\n", pathdesc,
+		strerror( errno ));
+	exit( 2 );
+    }
+    if ( verbose ) printf( ">>> %s\n", pathdesc );
+
+    /* tell server the data size */
+    if ( snet_writef( sn, "%" PRIofft "d\r\n", xr ) < 0 ) {
+	fprintf( stderr, "stor_xattr %s failed: %s\n", pathdesc,
+		strerror( errno ));
+	exit( 2 );
+    }
+
+    for ( size = xr, offset = 0; size > 0; size -= xr, offset += xr ) {
+	if ( size > 8192 ) {
+	    xr = 8192;
+	}
+	tv = timeout;
+	if ( snet_write( sn, buf + offset, xr, &tv ) != xr ) {
+	    fprintf( stderr, "stor_xattr %s failed: %s\n", pathdesc,
+			strerror( errno ));
+	    return( -1 );
+	}
+
+	if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
+	/* cksum update done above */
+
+	if ( showprogress ) {
+	    progressupdate( xr, xpath );
+	}
+    }
+    if ( size != 0 ) {
+	fprintf( stderr, "stor_xattr %s failed: Sent wrong number of "
+			 "bytes to server\n", pathdesc );
+	exit( 2 );
+    }
+
+    /* end transaction with server */
+    if ( snet_writef( sn, ".\r\n" ) < 0 ) {
+	fprintf( stderr, "stor_xattr %s failed: %s\n", pathdesc,
+		strerror( errno ));
+	return( -1 );
+    }
+    if ( verbose ) fputs( "\n>>> .\n", stdout );
+
+    if ( cksum ) {
+	EVP_DigestFinal( &mdctx, md_value, &md_len );
+	base64_e( md_value, md_len, cksum_b64 );
+	if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
+	    fprintf( stderr, "line %d: checksum listed in transcript "
+				"wrong\n", linenum );
+	    if ( !force ) {
+		exit( 2 );
+	    }
+	}
+    }
+
+    if ( !quiet && !showprogress ) {
+	printf( "%s/%s.%s: stored\n", xpath, xname, RADMIND_XATTR_XTN );
+    }
+    return( 0 );
+}
+#endif /* ENABLE_XATTR */

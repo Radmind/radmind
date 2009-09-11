@@ -358,6 +358,20 @@ main( int ac, char **av )
 	    exit( 1 );
 	}
     }
+#ifdef ENABLE_XATTR
+    if ( mkdir( "xattr", 0750 ) != 0 ) {
+	if ( errno != EEXIST ) {
+	    perror( "xattr" );
+	    exit( 1 );
+	}
+    }
+    if ( mkdir( "tmp/xattr", 0750 ) != 0 ) {
+	if ( errno != EEXIST ) {
+	    perror( "xattr" );
+	    exit( 1 );
+	}
+    }
+#endif /* ENABLE_XATTR */
 
     if ( authlevel != 0 ) {
 	if ( tls_server_setup( use_randfile, authlevel, caFile, caDir, cert,

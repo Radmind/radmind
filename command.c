@@ -63,10 +63,11 @@ extern SSL_CTX  *ctx;
 #define DEFAULT_UID     0
 #define DEFAULT_GID     0
 
-#define K_COMMAND 1
-#define K_TRANSCRIPT 2
-#define K_SPECIAL 3
-#define K_FILE 4
+#define K_COMMAND	1
+#define K_TRANSCRIPT	2
+#define K_SPECIAL	3
+#define K_FILE		4
+#define K_XATTR		5
 
 int 		read_kfile( SNET *sn, char *kfile );
 
@@ -262,6 +263,14 @@ keyword( int ac, char *av[] )
 	rc = K_TRANSCRIPT;
 
     } else if ( strcasecmp( av[ 1 ], "FILE" ) == 0 ) {
+	rc = K_FILE;
+    } else if ( strcasecmp( av[ 1 ], "XATTR" ) == 0 ) {
+	rc = K_XATTR;
+    } else {
+	return( -1 );
+    }
+
+    if ( rc == K_FILE || rc == K_XATTR ) {
 	if ( ac != 4 ) {
 	    return( -1 );
 	}
@@ -285,11 +294,6 @@ keyword( int ac, char *av[] )
 		    av[ 1 ], av[ 2 ], av[ 3 ] );
 	    return( -1 );
 	}
-
-	rc = K_FILE;
-
-    } else {
-	return( -1 );
     }
 
     if ( strstr( av[ 2 ], "../" ) != NULL ) {
@@ -310,9 +314,11 @@ f_retr( SNET *sn, int ac, char **av )
     char		buf[8192];
     char		path[ MAXPATHLEN ];
     char		*d_path, *d_tran;
-    int			fd;
+    char		*loc = "file";
+    int			rc, fd;
 
-    switch ( keyword( ac, av )) {
+    rc = keyword( ac, av );
+    switch ( rc ) {
     case K_COMMAND:
 	if ( ac == 2 ) { 
 
@@ -386,6 +392,19 @@ f_retr( SNET *sn, int ac, char **av )
 	break;
 
     case K_FILE:
+	/* location already set. */
+	break;
+
+    case K_XATTR:
+	loc = "xattr";
+	break;
+
+    default:
+	snet_writef( sn, "%d RETR Syntax error\r\n", 540 );
+	return( 1 );
+    }
+
+    if ( rc == K_FILE || rc == K_XATTR ) {
 	if (( d_path = decode( av[ 3 ] )) == NULL ) {
 	    syslog( LOG_ERR, "f_retr: decode: buffer too small" );
 	    snet_writef( sn, "%d Line too long\r\n", 540 );
@@ -409,18 +428,13 @@ f_retr( SNET *sn, int ac, char **av )
 	    return( 1 );
 	}
 
-	if ( snprintf( path, MAXPATHLEN, "file/%s/%s", d_tran, d_path )
+	if ( snprintf( path, MAXPATHLEN, "%s/%s/%s", loc, d_tran, d_path )
 		>= MAXPATHLEN ) {
 	    syslog( LOG_ERR, "f_retr: file path too long" );
 	    snet_writef( sn, "%d Path too long\r\n", 540 );
 	    return( 1 );
 	}
 	free( d_path );
-	break;
-
-    default:
-	snet_writef( sn, "%d RETR Syntax error\r\n", 540 );
-	return( 1 );
     }
 
     if (( fd = open( path, O_RDONLY, 0 )) < 0 ) {
@@ -712,6 +726,7 @@ f_stor( SNET *sn, int ac, char *av[] )
     char		buf[ 8192 ];
     char		*line;
     char		*d_tran, *d_path;
+    char		*loc = "file";
     int			fd;
     int			zero = 0;
     off_t		len;
@@ -749,7 +764,8 @@ f_stor( SNET *sn, int ac, char *av[] )
 	return( -1 );
     }
 
-    switch ( keyword( ac, av )) {
+    rc = keyword( ac, av );
+    switch ( rc ) {
 
     case K_TRANSCRIPT:
         if ( snprintf( xscriptdir, MAXPATHLEN, "tmp/file/%s", d_tran )
@@ -785,10 +801,48 @@ f_stor( SNET *sn, int ac, char *av[] )
 		    551, xscriptdir, strerror( errno ));
 	    exit( 1 );
 	}
+
+#ifdef ENABLE_XATTR
+	if ( snprintf( xscriptdir, MAXPATHLEN, "tmp/xattr/%s", d_tran )
+		>= MAXPATHLEN ) {
+	    syslog( LOG_ERR, "f_stor: tmp/xattr/%s: path too long", d_tran );
+	    snet_writef( sn, "%d Path too long\r\n", 540 );
+	    return( 1 );
+	}
+	if ( mkdir( xscriptdir, 0777 ) < 0 ) {
+	    if ( errno == EEXIST ) {
+		snet_writef( sn, "%d Transcript exists\r\n", 551 );
+		exit( 1 );
+	    }
+	    snet_writef( sn, "%d mkdir %s: %s\r\n", 551,
+		    xscriptdir, strerror( errno ));
+	    exit( 1 );
+	}
+#endif /* ENABLE_XATTR */
 	break;
 
     case K_FILE:
-	/* client must have provided a transcript name before giving 
+	/* upload location already set above. */
+	break;
+
+#ifdef ENABLE_XATTR
+    case K_XATTR:
+	loc = "xattr";
+	break;
+#endif /* ENABLE_XATTR */
+
+    default:
+        snet_writef( sn, "%d STOR Syntax error\r\n", 550 );
+	exit( 1 ); 
+    }
+
+    if ( rc == K_FILE 
+#ifdef ENABLE_XATTR
+		|| rc == K_XATTR
+#endif /* ENABLE_XATTR */
+		 ) {
+	/*
+	 * client must have provided a transcript name before giving 
 	 * files in that transcript
 	 */
 	if (( strcmp( upload_xscript, av[ 2 ] ) != 0 )) {
@@ -808,14 +862,14 @@ f_stor( SNET *sn, int ac, char *av[] )
 	}
 
 	if ( d_path[ 0 ] == '/' ) {
-	    if ( snprintf( upload, MAXPATHLEN, "tmp/file/%s%s", d_tran,
+	    if ( snprintf( upload, MAXPATHLEN, "tmp/%s/%s%s", loc, d_tran,
 		    d_path ) >= MAXPATHLEN ) {
 		syslog( LOG_ERR, "f_stor: upload path too long" );
 		snet_writef( sn, "%d Path too long\r\n", 540 );
 		return( 1 );
 	    }
 	} else {
-	    if ( snprintf( upload, MAXPATHLEN, "tmp/file/%s/%s", d_tran,
+	    if ( snprintf( upload, MAXPATHLEN, "tmp/%s/%s/%s", loc, d_tran,
 		    d_path ) >= MAXPATHLEN ) {
 		syslog( LOG_ERR, "f_stor: upload path too long" );
 		snet_writef( sn, "%d Path too long\r\n", 540 );
@@ -824,11 +878,6 @@ f_stor( SNET *sn, int ac, char *av[] )
 	}
 	free( d_path );
 	free( d_tran );
-	break;
-
-    default:
-        snet_writef( sn, "%d STOR Syntax error\r\n", 550 );
-	exit( 1 ); 
     }
 
     if (( fd = open( upload, O_CREAT|O_EXCL|O_WRONLY, 0666 )) < 0 ) {

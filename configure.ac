@@ -70,6 +70,7 @@ AC_CHECK_LIB(dns_sd, DNSServiceRegister)
 
 CHECK_ZLIB
 CHECK_UNIVERSAL_BINARIES
+CHECK_XATTR
 
 # HPUX lacks wait4 and strtoll
 AC_CHECK_FUNCS(wait4 strtoll)

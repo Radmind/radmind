@@ -153,9 +153,12 @@ do_lcksum( char *tpath )
     char		*line = NULL;
     char		*d_path = NULL;
     char                **targv;
+    char		*p;
     char		cwd[ MAXPATHLEN ];
     char		temp[ MAXPATHLEN ];
+    char		*obj_root = "/";
     char		file_root[ MAXPATHLEN ];
+    char		xattr_root[ MAXPATHLEN ];
     char		tran_root[ MAXPATHLEN ];
     char		tran_name[ MAXPATHLEN ];
     char                tline[ 2 * MAXPATHLEN ];
@@ -184,7 +187,8 @@ do_lcksum( char *tpath )
 	}
 	strcpy( cwd, temp );
     }
-    if ( get_root( radmind_path, cwd, file_root, tran_root, tran_name ) != 0 ) {
+    if ( get_root( radmind_path, cwd, file_root, xattr_root,
+		   tran_root, tran_name ) != 0 ) {
 	exit( 2 );
     }
 
@@ -322,7 +326,8 @@ do_lcksum( char *tpath )
 	}
 	strcpy( prepath, path );
 
-	if ((( *targv[ 0 ] != 'f' )  && ( *targv[ 0 ] != 'a' )) || ( remove )) {
+	if ((( *targv[ 0 ] != 'f' )  && ( *targv[ 0 ] != 'a' ) &&
+		( *targv[ 0 ] != 'e' )) || ( remove )) {
 	    if ( updatetran ) {
 		fprintf( ufs, "%s", line );
 	    }
@@ -330,13 +335,30 @@ do_lcksum( char *tpath )
 	    goto done;
 	}
 
-	if ( tac != 8 ) {
-	    fprintf( stderr, "line %d: %d arguments should be 8\n",
-		    linenum, tac );
+	if ( tac != 8 && tac != 4 ) {
+	    fprintf( stderr, "line %d: %d arguments should be %d\n",
+		    linenum, tac, ( *targv[ 0 ] == 'e' ? 4 : 8 ));
 	    goto badline;
 	}
 
-	if ( snprintf( path, MAXPATHLEN, "%s/%s/%s", file_root, tran_name,
+	switch ( *targv[ 0 ] ) {
+	case 'a' :
+	case 'f' :
+	    obj_root = file_root;
+	    break;
+
+	case 'e' :
+	    obj_root = xattr_root;
+	    break;
+
+	default :
+	    /* getting here should be impossible because of the check above. */
+	    fprintf( stderr, "lcksum: checksums for object type \'%c\' "
+			     "are invalid", *targv[ 0 ] );
+	    exit( 2 );
+	}
+
+	if ( snprintf( path, MAXPATHLEN, "%s/%s/%s", obj_root, tran_name,
 		d_path ) >= MAXPATHLEN ) {
 	    fprintf( stderr, "%d: %s/%s/%s: path too long\n", linenum,
 		file_root, tran_name, d_path );
@@ -375,7 +397,7 @@ do_lcksum( char *tpath )
 	}
 
 	/* check size */
-	if ( cksumsize != strtoofft( targv[ 6 ], NULL, 10 )) {
+	if ( cksumsize != strtoofft( targv[ tac - 2 ], NULL, 10 )) {
 	    if ( !updatetran ) {
 		if ( verbose ) printf( "line %d: %s: size wrong\n",
 		    linenum, d_path );
@@ -390,7 +412,7 @@ do_lcksum( char *tpath )
 	bytes += PROGRESSUNIT;
 
 	/* check cksum */
-	if ( strcmp( lcksum, targv[ 7 ] ) != 0 ) {
+	if ( strcmp( lcksum, targv[ tac - 1 ] ) != 0 ) {
 	    if ( !updatetran ) {
 		if ( verbose ) printf( "line %d: %s: "
 		    "checksum wrong\n", linenum, d_path );
@@ -425,9 +447,11 @@ do_lcksum( char *tpath )
 	if ( updatetran ) {
 	    if ( updateline ) {
 		/* Line incorrect */
-		/* Check to see if checksum is listed in transcript */
-		if ( strcmp( targv[ 7 ], "-" ) != 0) {
-		    /* use mtime from server */
+		if ( *targv[ 0 ] == 'e' ) {
+		    fprintf( ufs, "%s %-37s %7" PRIofft "d %s\n",
+			    targv[ 0 ], targv[ 1 ], st.st_size, lcksum );
+		} else if ( strcmp( targv[ tac - 1 ], "-" ) != 0 ) {
+		    /* no checksum listed, use mtime from server */
 		    fprintf( ufs, "%s %-37s %4s %5s %5s %9ld "
 			    "%7" PRIofft "d %s\n",
 			targv[ 0 ], targv[ 1 ], targv[ 2 ], targv[ 3 ],
@@ -438,7 +462,7 @@ do_lcksum( char *tpath )
 			    "%7" PRIofft "d %s\n",
 			targv[ 0 ], targv[ 1 ], targv[ 2 ], targv[ 3 ],
 			targv[ 4 ], targv[ 5 ], st.st_size, lcksum );
-		    }
+		}
 	    } else {
 		/* Line correct */
 		fprintf( ufs, "%s", line );

@@ -4,4 +4,4 @@
  */
 
 int update( char *path, char *displaypath, int present, int newfile,
-    struct stat *st, int tac, char **targv, struct applefileinfo *afinfo );
+	struct radstat *rs, int tac, char **targv );

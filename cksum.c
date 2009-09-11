@@ -24,6 +24,10 @@
 #include "cksum.h"
 #include "base64.h"
 
+#ifdef ENABLE_XATTR
+#include "xattr.h"
+#endif /* ENABLE_XATTR */
+
 /*
  * do_cksum calculates the checksum for PATH and returns it base64 encoded
  * in cksum_b64 which must be of size SZ_BASE64_E( EVP_MAX_MD_SIZE ).
@@ -167,7 +171,7 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
     }
 
     EVP_DigestFinal( &mdctx, md_value, &md_len );
-    base64_e( ( char*)&md_value, md_len, cksum_b64 );
+    base64_e( md_value, md_len, cksum_b64 );
 
     return( size );
 }
@@ -187,3 +191,39 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afino )
     return( -1 );
 }
 #endif /* __APPLE__ */
+
+#ifdef ENABLE_XATTR
+    off_t
+do_xcksum( char *path, char *cksum_b64, char *xname )
+{
+    ssize_t			xr;
+    unsigned int		offset = 0;
+    char			*buf = NULL;
+    unsigned int		md_len;
+    extern EVP_MD		*md;
+    EVP_MD_CTX          	mdctx;
+    unsigned char       	md_value[ EVP_MAX_MD_SIZE ];
+
+    EVP_DigestInit( &mdctx, md ); 
+
+    /*
+     * For now we're skipping Finder Info and Resource Fork, since our
+     * AppleFile code is handling them. Apple's getxattr call can take
+     * an offset, which would allow something like looping reads, but
+     * the offset "is only used with the resource fork attribute,"
+     * according to the manpage. "For all other extended attributes,
+     * this parameter is reserved and should be zero." Gah.
+     */
+    if (( xr = xattr_get( path, xname, &buf, offset )) < 0 ) {
+fprintf( stderr, "xattr_get failed: %s, %s\n", path, xname );
+	return( -1 );
+    }
+
+    EVP_DigestUpdate( &mdctx, buf, (unsigned int)xr );
+
+    EVP_DigestFinal( &mdctx, md_value, &md_len );
+    base64_e( md_value, md_len, cksum_b64 );
+
+    return((off_t)xr );
+}
+#endif /* ENABLE_XATTR */

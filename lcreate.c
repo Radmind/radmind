@@ -73,13 +73,12 @@ extern char             *caFile, *caDir, *cert, *privatekey;
 main( int argc, char **argv )
 {
     int			c, err = 0, tac; 
-    int			network = 1, len = 0, rc;
+    int			network = 1, len = 0, rc = 0;
     int			negative = 0, tran_only = 0;
     int			respcount = 0;
     unsigned short	port = 0;
     extern int		optind;
     SNET          	*sn = NULL;
-    char		type;
     char		*tname = NULL, *host = _RADMIND_HOST; 
     char		*p,*d_path = NULL, tline[ 2 * MAXPATHLEN ];
     char		pathdesc[ 2 * MAXPATHLEN ];
@@ -89,13 +88,15 @@ main( int argc, char **argv )
     struct timeval	tv;
     FILE		*tran = NULL;
     struct stat		st;
-    struct applefileinfo	afinfo;
+    struct radstat	rs;
+    ssize_t		sz;
     int                 authlevel = _RADMIND_AUTHLEVEL;
     int                 use_randfile = 0;
     int                 login = 0;
     char                *user = NULL;
     char                *password = NULL;
-	char               **capa = NULL; /* capabilities */
+    char		**capa = NULL; /* capabilities */
+    char		*xpath = NULL, *xname = NULL;
 
     while (( c = getopt( argc, argv, "%c:Fh:ilnNp:P:qrt:TU:vVw:x:y:z:Z:" ))
 	    != EOF ) {
@@ -413,98 +414,172 @@ main( int argc, char **argv )
 	    fprintf( stderr, "Appliable transcripts cannot be uploaded.\n" );
 	    exit( 2 );
 	}
-	if ( *targv[ 0 ] == 'f' || *targv[ 0 ] == 'a' ) {
+	switch ( *targv[ 0 ] ) {
+	case 'a' :
+	case 'f' :
 	    if ( tac != 8 ) {
 		fprintf( stderr, "line %d: invalid transcript line\n",
 			linenum );
 		exit( 2 );
 	    }
+	    break;
 
-	    if (( d_path = decode( targv[ 1 ] )) == NULL ) {
-		fprintf( stderr, "line %d: path too long\n", linenum );
+	case 'e' :
+	    if ( tac != 4 ) {
+		fprintf( stderr, "line %d: invalid transcript line\n",
+			linenum );
+	    }
+	    break;
+
+	default :	/* ignore other types */
+	    continue;
+	}
+
+	if (( d_path = decode( targv[ 1 ] )) == NULL ) {
+	    fprintf( stderr, "line %d: path too long\n", linenum );
+	    return( 1 );
+	} 
+
+#ifdef ENABLE_XATTR
+	if ( *targv[ 0 ] == 'e' ) {
+	    if (( xname = xattr_get_name( d_path, NULL )) == NULL ) {
+		fprintf( stderr, "line %d: bad xattr name\n", linenum );
 		return( 1 );
-	    } 
+	    }
+	    if (( xname = xattr_name_decode( xname )) == NULL ) {
+		fprintf( stderr, "line %d: %s\n", linenum, strerror( errno ));
+		return( 1 );
+	    }
+	    if (( xpath = xattr_get_path( d_path )) == NULL ) {
+		fprintf( stderr, "line %d: bad xattr path\n", linenum );
+		return( 1 );
+	    }
+	}
+#endif /* ENABLE_XATTR */
 
-	    if ( !negative ) {
-		/* Verify transcript line is correct */
-		if ( radstat( d_path, &st, &type, &afinfo ) != 0 ) {
+	if ( !negative ) {
+	    /*
+	     * Verify transcript line is correct. For an xattr line, just
+	     * check the size, which is a simple way of verifying both
+	     * xattr and file exist.
+	     */
+	    if ( *targv[ 0 ] == 'e' ) {
+		if (( sz = xattr_get_size( xpath, xname )) < 0 ) {
+		    fprintf( stderr, "line %d: xattr_get_size %s: %s\n",
+				linenum, xname, strerror( errno ));
+		    exit( 2 );
+		}
+	    } else {
+		if ( radstat( d_path, &rs ) != 0 ) {
 		    perror( d_path );
 		    exit( 2 );
 		}
-		if ( *targv[ 0 ] != type ) {
+		if ( *targv[ 0 ] != rs.rs_type ) {
 		    fprintf( stderr, "line %d: file type wrong\n", linenum );
 		    exit( 2 );
 		}
 	    }
+	}
 
-	    if ( !network ) {
-		/* Check size */
-		if ( radstat( d_path, &st, &type, &afinfo ) != 0 ) {
+	if ( !network ) {
+	    /* Check size */
+	    if ( *targv[ 0 ] == 'e' ) {
+		if (( sz = xattr_get_size( xpath, xname )) < 0 ) {
+		    fprintf( stderr, "line %d: xattr_get_size %s: %s\n",
+				linenum, xname, strerror( errno ));
+		    exit( 2 );
+		}
+		if ( sz != strtoofft( targv[ 2 ], NULL, 10 )) {
+		    fprintf( stderr, "line %d: size in transcript does "
+				"not match size of file\n", linenum );
+		    exit( 2 );
+		}
+	    } else {
+		if ( radstat( d_path, &rs ) != 0 ) {
 		    perror( d_path );
 		    exit( 2 );
 		}
-		if ( st.st_size != strtoofft( targv[ 6 ], NULL, 10 )) {
+		if ( rs.rs_stat.st_size != strtoofft( targv[ 6 ], NULL, 10 )) {
 		    fprintf( stderr, "line %d: size in transcript does "
 			"not match size of file\n", linenum );
 		    exit( 2 );
 		}
-		if ( cksum ) {
-		    if ( *targv[ 0 ] == 'f' ) {
-			if ( do_cksum( d_path, cksumval ) < 0 ) {
-			    perror( d_path );
-			    exit( 2 );
-			}
-		    } else {
-			/* apple file */
-			if ( do_acksum( d_path, cksumval, &afinfo ) < 0  ) {
-			    perror( d_path );
-			    exit( 2 );
-			}
+	    }
+	    if ( cksum ) {
+		if ( *targv[ 0 ] == 'f' ) {
+		    if ( do_cksum( d_path, cksumval ) < 0 ) {
+			perror( d_path );
+			exit( 2 );
 		    }
-		    if ( strcmp( cksumval, targv[ 7 ] ) != 0 ) {
-			fprintf( stderr,
-			    "line %d: checksum listed in transcript wrong\n",
-			    linenum );
-			return( -1 );
+		} else if ( *targv[ 0 ] == 'a' ) {
+		    /* apple file */
+		    if ( do_acksum( d_path, cksumval, &rs.rs_afinfo ) < 0  ) {
+			perror( d_path );
+			exit( 2 );
 		    }
-		} else {
-		    if ( access( d_path,  R_OK ) < 0 ) {
+		} else if ( *targv[ 0 ] == 'e' ) {
+		    if ( do_xcksum( xpath, cksumval, xname ) < 0 ) {
 			perror( d_path );
 			exit( 2 );
 		    }
 		}
+		    
+		if ( strcmp( cksumval, targv[ tac - 1 ] ) != 0 ) {
+		    fprintf( stderr,
+			"line %d: checksum listed in transcript wrong\n",
+			linenum );
+		    return( -1 );
+		}
 	    } else {
-		if ( snprintf( pathdesc, MAXPATHLEN * 2, "STOR FILE %s %s", 
-			tname, targv[ 1 ] ) >= ( MAXPATHLEN * 2 )) {
-		    fprintf( stderr, "STOR FILE %s %s: path description too"
-			    " long\n", tname, d_path );
-		    exit( 2 );
+		if ( *targv[ 0 ] == 'e' ) {
+		    /* again, a simple way to verify file & xattr exist. */
+		    if ( xattr_get_size( xpath, xname ) < 0 ) {
+			perror( d_path );
+			exit( 2 );
+		    }
+		} else {
+		    if ( access( d_path, R_OK ) < 0 ) {
+			perror( d_path );
+			exit( 2 );
+		    }
+		}
+	    }
+	} else {
+	    if ( snprintf( pathdesc, MAXPATHLEN * 2, "STOR %s %s %s", 
+		    *targv[ 0 ] == 'e' ? "XATTR" : "FILE",
+		    tname, targv[ 1 ] ) >= ( MAXPATHLEN * 2 )) {
+		fprintf( stderr, "STOR FILE %s %s: path description too"
+			" long\n", tname, d_path );
+		exit( 2 );
+	    }
+
+	    if ( negative ) {
+		if ( *targv[ 0 ] == 'a' ) {
+		    rc = n_stor_applefile( sn, pathdesc, d_path );
+		} else {
+		    /* this also works for zero-length xattrs */
+		    rc = n_stor_file( sn, pathdesc, d_path );
+		}
+		respcount += 2;
+		if ( rc < 0 ) {
+		    goto stor_failed;
 		}
 
-		if ( negative ) {
-		    if ( *targv[ 0 ] == 'a' ) {
-			rc = n_stor_applefile( sn, pathdesc, d_path );
-		    } else {
-			rc = n_stor_file( sn, pathdesc, d_path );
-		    }
-		    respcount += 2;
-		    if ( rc < 0 ) {
-			goto stor_failed;
-		    }
-
-		} else {
-		    if ( *targv[ 0 ] == 'a' ) {
-			rc = stor_applefile( sn, pathdesc, d_path,
-			    strtoofft( targv[ 6 ], NULL, 10 ), targv[ 7 ],
-			    &afinfo );
-		    } else {
-			rc = stor_file( sn, pathdesc, d_path, 
-			    strtoofft( targv[ 6 ], NULL, 10 ), targv[ 7 ]); 
-		    }
-		    respcount += 2;
-		    if ( rc < 0 ) {
-			goto stor_failed;
-		    }
+	    } else {
+		if ( *targv[ 0 ] == 'a' ) {
+		    rc = stor_applefile( sn, pathdesc, d_path,
+			strtoofft( targv[ 6 ], NULL, 10 ), targv[ 7 ],
+			&rs.rs_afinfo );
+		} else if ( *targv[ 0 ] == 'f' ) {
+		    rc = stor_file( sn, pathdesc, d_path, 
+			strtoofft( targv[ 6 ], NULL, 10 ), targv[ 7 ]); 
+		} else if ( *targv[ 0 ] == 'e' ) {
+		    rc = stor_xattr( sn, pathdesc, xpath, xname,
+			strtoofft( targv[ 2 ], NULL, 10 ), targv[ 3 ] );
+		}
+		respcount += 2;
+		if ( rc < 0 ) {
+		    goto stor_failed;
 		}
 	    }
 	}

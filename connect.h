@@ -16,6 +16,8 @@ int retr( SNET *sn, char *pathdesc, char *path, char *temppath,
     mode_t tempmode, off_t transize, char *trancksum );
 int retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     mode_t tempmode, off_t transize, char *trancksum );
+int retr_xattr( SNET *sn, char *pathdesc, char *path, char *xname,
+    off_t transize, char *trancksum );
 
 int n_stor_file( SNET *sn, char *pathdesc, char *path );
 int stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
@@ -23,6 +25,8 @@ int stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
 int n_stor_applefile( SNET *sn, char *pathdesc, char *path );
 int stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     char *trancksum, struct applefileinfo *afinfo );
+int stor_xattr( SNET *sn, char *pathdesc, char *path, char *xname,
+    off_t transize, char *trancksum );
 int stor_response( SNET *sn, int *respcount, struct timeval * );
 void v_logger( char *string);
 int check_capability( char *type, char **capa );

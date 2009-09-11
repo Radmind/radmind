@@ -121,3 +121,24 @@ AC_DEFUN([CHECK_UNIVERSAL_BINARIES],
     fi
 ])
 
+AC_DEFUN([CHECK_XATTR],
+[
+    AC_ARG_ENABLE(xattr, AC_HELP_STRING([--enable-xattr], [enable extended attribute support (default=no)]), [xattr_support=yes], [xattr_support=no])
+
+    AC_MSG_CHECKING(whether to enable extended attribute support)
+    if test x"${xattr_support}" = x"yes"; then
+	AC_MSG_RESULT( yes)
+	AC_DEFINE(ENABLE_XATTR)
+	AC_CHECK_HEADERS([sys/xattr.h], [have_sys_xattr_h=yes],
+			[have_sys_xattr_h=no], [])
+	AC_CHECK_HEADERS([sys/extattr.h], [have_sys_extattr_h=yes],
+			[have_sys_extattr_h=no], [])
+	if test x"$have_sys_xattr_h" = x"yes"; then
+	    AC_CHECK_FUNCS([lgetxattr getxattr lsetxattr setxattr lremovexattr removexattr])
+	elif test x"$have_sys_extattr_h" = x"yes"; then
+	    AC_CHECK_FUNCS([extattr_get_file extattr_get_link])
+	fi
+    else
+	AC_MSG_RESULT( no)
+    fi
+])

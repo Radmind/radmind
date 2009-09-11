@@ -18,38 +18,39 @@
 #include <openssl/evp.h>
 
 #include "applefile.h"
-#include "transcript.h"
 #include "pathcmp.h"
 #include "radstat.h"
+#include "transcript.h"
+
+#define FS_OBJECT_REG		0
+#define FS_OBJECT_DIR		1
+#define FS_OBJECT_DIR_NEG	2
 
 void            (*logger)( char * ) = NULL;
 
 extern char	*version, *checksumlist;
 
-void		fs_walk( char *, struct stat *, char *, struct applefileinfo *,
-	int, int, int );
+void		fs_walk( char *, struct radstat *, int, int, int );
 int		dodots = 0;
 int		dotfd;
 int		lastpercent = -1;
 int		case_sensitive = 1;
 int		tran_format = -1; 
+int		(*cmp)( const char *, const char * );
 extern int	exclude_warnings;
 const EVP_MD    *md;
 
 static struct fs_list *fs_insert( struct fs_list **, struct fs_list *,
-	char *, int (*)( const char *, const char * ));
+							char *name );
 
 struct fs_list {
-    struct fs_list		*fl_next;
-    char			*fl_name;
-    struct stat			fl_stat;
-    char			fl_type;
-    struct applefileinfo	fl_afinfo;
+    struct fs_list	*fl_next;
+    char		*fl_name;
+    struct radstat	fl_rstat;
 };
 
     static struct fs_list *
-fs_insert( struct fs_list **head, struct fs_list *last,
-	char *name, int (*cmp)( const char *, const char * ))
+fs_insert( struct fs_list **head, struct fs_list *last, char *name )
 {
     struct fs_list	**current, *new;
 
@@ -76,23 +77,92 @@ fs_insert( struct fs_list **head, struct fs_list *last,
 
     new->fl_next = *current;
     *current = new; 
+
     return( new ); 
 }
 
+#ifdef ENABLE_XATTR
+/*
+ * Add a given path's xattrs to the fs_list. returns number of xattrs,
+ * so %-done progress works correctly, or -1 on error.
+ */
+    static int
+fs_insert_xattrs( struct fs_list **xhead, char *path, struct radstat *rs,
+			struct fs_list **last )
+{
+    struct fs_list	*new = NULL;
+    ssize_t		xlen;
+    char		*xlist;
+    char		*p;
+    char		xtmp[ MAXPATHLEN ];
+    int			count = 0;
+
+    if (( xlen = rs->rs_xlist.x_len ) == 0 ) {
+	return( 0 );
+    }
+    xlist = rs->rs_xlist.x_data;
+
+    /* the xattr list is a blob of nul-separated strings */
+    for ( p = xlist; p != NULL && p < xlist + xlen; p += strlen( p ) + 1 ) {
+#ifdef __APPLE__
+	/*
+	 * skip Finder Info and Resource Fork for now, since we currently
+	 * capture and store them as part of AppleSingle files.
+	 */
+	if ( strcmp( p, XATTR_FINDERINFO_NAME ) == 0 ||
+		strcmp( p, XATTR_RESOURCEFORK_NAME ) == 0 ) {
+	    continue;
+	}
+#endif /* __APPLE__ */
+
+	count++;
+
+	if ( snprintf( xtmp, MAXPATHLEN, "%s%s", xattr_name_encode( p ),
+		RADMIND_XATTR_XTN ) >= MAXPATHLEN ) {
+	    fprintf( stderr, "%s%s: path too long\n", p, RADMIND_XATTR_XTN );
+	    exit( 2 );
+	}
+	    
+	if (( new = fs_insert( xhead, new, xtmp )) == NULL ) {
+	    return( -1 );
+	}
+
+	memset( &new->fl_rstat, 0, sizeof( struct radstat ));
+
+	if (( new->fl_rstat.rs_xname = strdup( p )) == NULL ) {
+	    return( -1 );
+	}
+
+	new->fl_rstat.rs_stat.st_mode |= S_IFREG;
+	new->fl_rstat.rs_stat.st_mode |= (mode_t)0444;
+	if (( new->fl_rstat.rs_stat.st_size =
+			(off_t)xattr_get_size( path, p )) < 0 ) {
+	    fprintf( stderr, "xattr_get_size %s:%s: %s\n", path, p,
+			strerror( errno ));
+	    exit( 2 );
+	}
+
+	new->fl_rstat.rs_type = 'e';
+    }
+
+    *last = new;
+
+    return( count );
+}
+#endif /* ENABLE_XATTR */
+
     void
-fs_walk( char *path, struct stat *st, char *type, struct applefileinfo *afinfo,
-	int start, int finish, int pdel ) 
+fs_walk( char *path, struct radstat *rs, int start, int finish, int pdel ) 
 {
     DIR			*dir;
     struct dirent	*de;
     struct fs_list	*head = NULL, *cur, *new = NULL, *next;
-    int			len;
+    int			len, tc;
     int			count = 0;
-    int			del_parent;
+    int			del_parent = 0;
     float		chunk, f = start;
     char		temp[ MAXPATHLEN ];
     struct transcript	*tran;
-    int			(*cmp)( const char *, const char * );
 
     if (( finish > 0 ) && ( start != lastpercent )) {
 	lastpercent = start;
@@ -101,8 +171,9 @@ fs_walk( char *path, struct stat *st, char *type, struct applefileinfo *afinfo,
     }
 
     /* call the transcript code */
-    switch ( transcript( path, st, type, afinfo, pdel )) {
-    case 2 :			/* negative directory */
+    tc = transcript( path, rs, pdel );
+    switch ( tc ) {
+    case FS_OBJECT_DIR_NEG:	/* negative directory */
 	for (;;) {
 	    tran = transcript_select();
 	    if ( tran->t_eof ) {
@@ -110,12 +181,10 @@ fs_walk( char *path, struct stat *st, char *type, struct applefileinfo *afinfo,
 	    }
 
 	    if ( ischildcase( tran->t_pinfo.pi_name, path, case_sensitive )) {
-		struct stat		st0;
-		char			type0;
-		struct applefileinfo	afinfo0;
+		struct radstat		rs0;
 
 		strcpy( temp, tran->t_pinfo.pi_name );
-		switch ( radstat( temp, &st0, &type0, &afinfo0 )) {
+		switch ( radstat( temp, &rs0 )) {
 		case 0:
 		    break;
 		case 1:
@@ -128,15 +197,14 @@ fs_walk( char *path, struct stat *st, char *type, struct applefileinfo *afinfo,
 		    }
 		}
 
-		fs_walk( temp, &st0, &type0, &afinfo0, start, finish, pdel );
+		fs_walk( temp, &rs0, start, finish, pdel );
 	    } else {
 		return;
 	    }
 	}
 
-    case 0 :			/* not a directory */
-	return;
-    case 1 :			/* directory */
+    case FS_OBJECT_REG :	/* not a directory */
+    case FS_OBJECT_DIR :	/* directory */
 	if ( skip ) {
 	    return;
 	}
@@ -146,74 +214,78 @@ fs_walk( char *path, struct stat *st, char *type, struct applefileinfo *afinfo,
 	exit( 2 );
     }
 
-    /*
-     * store whether object is to be deleted. if we get here, object
-     * is a directory, which should mean that if fs_minus == 1 all
-     * child objects should be removed as well. tracking this allows
-     * us to zap excluded objects whose parent dir will be deleted.
-     *
-     * del_parent is passed into subsequent fs_walk and transcript
-     * calls, where * it's checked when considering whether to
-     * exclude an object.
-     */
-    del_parent = fs_minus;
-
-    if ( case_sensitive ) {
-	cmp = strcmp;
-    } else {
-	cmp = strcasecmp;
-    }
-
-    if ( chdir( path ) < 0 ) {
-	perror( path );
+#ifdef ENABLE_XATTR
+    /* Add xattrs, if any, to the fs_list for processing below. */
+    if (( count = fs_insert_xattrs( &head, path, rs, &new )) < 0 ) {
+	perror( "malloc" );
 	exit( 2 );
     }
+#endif /* ENABLE_XATTR */
 
-    /* open directory */
-    if (( dir = opendir( "." )) == NULL ) {
-	perror( path );
-	exit( 2 );	
-    }
 
-    /* read contents of directory */
-    while (( de = readdir( dir )) != NULL ) {
+    if ( tc == FS_OBJECT_DIR ) {
+	/*
+	 * store whether object is to be deleted. if we get here, object
+	 * is a directory, which should mean that if fs_minus == 1 all
+	 * child objects should be removed as well. tracking this allows
+	 * us to zap excluded objects whose parent dir will be deleted.
+	 *
+	 * del_parent is passed into subsequent fs_walk and transcript
+	 * calls, where it's checked when considering whether to
+	 * exclude an object.
+	 */
+	del_parent = fs_minus;
 
-	/* don't include . and .. */
-	if (( strcmp( de->d_name, "." ) == 0 ) || 
-		( strcmp( de->d_name, ".." ) == 0 )) {
-	    continue;
-	}
-
-	count++;
-
-	if (( new = fs_insert( &head, new, de->d_name, cmp )) == NULL ) {
-	    perror( "malloc" );
-	    exit( 1 );
-	}
-
-	switch ( radstat( new->fl_name, &new->fl_stat, &new->fl_type,
-		&new->fl_afinfo )) {
-	case 0:
-	    break;
-	case 1:
-	    fprintf( stderr, "%s is of an unknown type\n", path );
+	if ( chdir( path ) < 0 ) {
+	    perror( path );
 	    exit( 2 );
-	default:
-	    if (( errno != ENOTDIR ) && ( errno != ENOENT )) {
-		perror( path );
+	}
+
+	/* open directory */
+	if (( dir = opendir( "." )) == NULL ) {
+	    perror( path );
+	    exit( 2 );	
+	}
+
+	/* read contents of directory */
+	while (( de = readdir( dir )) != NULL ) {
+
+	    /* don't include . and .. */
+	    if (( strcmp( de->d_name, "." ) == 0 ) || 
+		    ( strcmp( de->d_name, ".." ) == 0 )) {
+		continue;
+	    }
+
+	    count++;
+
+	    if (( new = fs_insert( &head, new, de->d_name )) == NULL ) {
+		perror( "malloc" );
+		exit( 1 );
+	    }
+
+	    switch ( radstat( new->fl_name, &new->fl_rstat )) {
+	    case 0:
+		break;
+	    case 1:
+		fprintf( stderr, "%s is of an unknown type\n", path );
 		exit( 2 );
+	    default:
+		if (( errno != ENOTDIR ) && ( errno != ENOENT )) {
+		    perror( path );
+		    exit( 2 );
+		}
 	    }
 	}
-    }
 
-    if ( closedir( dir ) != 0 ) {
-	perror( "closedir" );
-	exit( 2 );
-    }
+	if ( closedir( dir ) != 0 ) {
+	    perror( "closedir" );
+	    exit( 2 );
+	}
 
-    if ( fchdir( dotfd ) < 0 ) {
-	perror( "OOPS!" );
-	exit( 2 );
+	if ( fchdir( dotfd ) < 0 ) {
+	    perror( "OOPS!" );
+	    exit( 2 );
+	}
     }
 
     chunk = (( finish - start ) / ( float )count );
@@ -236,13 +308,22 @@ fs_walk( char *path, struct stat *st, char *type, struct applefileinfo *afinfo,
             }
 	}
 
-	fs_walk( temp, &cur->fl_stat, &cur->fl_type, &cur->fl_afinfo,
-		(int)f, (int)( f + chunk ), del_parent );
+	fs_walk( temp, &cur->fl_rstat, (int)f, (int)( f + chunk ), del_parent );
 
 	f += chunk;
 
 	next = cur->fl_next;
 	free( cur->fl_name );
+
+#ifdef ENABLE_XATTR
+	if ( cur->fl_rstat.rs_xlist.x_data != NULL ) {
+	    free( cur->fl_rstat.rs_xlist.x_data );
+	}
+	if ( cur->fl_rstat.rs_xname != NULL ) {
+	    free( cur->fl_rstat.rs_xname );
+	}
+#endif /* ENABLE_XATTR */
+
 	free( cur );
     }
 
@@ -258,9 +339,9 @@ main( int argc, char **argv )
     int 		c, len, edit_path_change = 0;
     int 		errflag = 0, use_outfile = 0;
     int			finish = 0;
-    struct stat		st;
-    char		type, buf[ MAXPATHLEN ];
-    struct applefileinfo	afinfo;
+    struct radstat	rs;
+    char		buf[ MAXPATHLEN ];
+    char		*p;
 
     edit_path = CREATABLE;
     cksum = 0;
@@ -401,9 +482,28 @@ main( int argc, char **argv )
 	tran_format = T_ABSOLUTE;
     }
 
-    if ( radstat( path_prefix, &st, &type, &afinfo ) != 0 ) {
+    memset( &rs, 0, sizeof( struct radstat ));
+#ifdef ENABLE_XATTR
+    /*
+     * if the path passed in ends in '.xattr', assume the path
+     * is an extended attribute and fake the details in the struct
+     */
+    if (( p = strrchr( path_prefix, '.' )) != NULL ) {
+	if ( strcmp( p, RADMIND_XATTR_XTN ) == 0 ) {
+	    rs.rs_stat.st_mode |= ( S_IFREG | (mode_t)0444);
+	    rs.rs_type = 'e';
+	}
+    }
+#endif /* ENABLE_XATTR */
+    if ( rs.rs_type != 'e' && radstat( path_prefix, &rs ) != 0 ) {
 	perror( path_prefix );
 	exit( 2 );
+    }
+
+    if ( case_sensitive ) {
+	cmp = strcmp;
+    } else {
+	cmp = strcasecmp;
     }
 
     if (( dotfd = open( ".", O_RDONLY, 0 )) < 0 ) {
@@ -414,7 +514,7 @@ main( int argc, char **argv )
     /* initialize the transcripts */
     transcript_init( kfile, K_CLIENT );
 
-    fs_walk( path_prefix, &st, &type, &afinfo, 0, finish, 0 );
+    fs_walk( path_prefix, &rs, 0, finish, 0 );
 
     if ( finish > 0 ) {
 	printf( "%%%d\n", ( int )finish );

@@ -28,7 +28,7 @@
  */
 
     int
-radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
+radstat( char *path, struct radstat *rs )
 {
 #ifdef __APPLE__
     static char			null_buf[ FINFOLEN ] = { 0 };
@@ -36,67 +36,63 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
     extern struct attrlist 	getdiralist;
 #endif /* __APPLE__ */
 
-    if ( lstat( path, st ) != 0 ) {
+    if ( lstat( path, &rs->rs_stat ) != 0 ) {
 	if (( errno == ENOTDIR ) || ( errno == ENOENT )) {
-	    memset( st, 0, sizeof( struct stat ));
-	    *type = 'X';
+	    memset( &rs->rs_stat, 0, sizeof( struct stat ));
+	    rs->rs_type = 'X';
 	}
 	return( -1 );
     }
 
-    switch( st->st_mode & S_IFMT ) {
+    switch( rs->rs_stat.st_mode & S_IFMT ) {
     case S_IFREG:
 #ifdef __APPLE__
 	/* Check to see if it's an HFS+ file */
-	if ( afinfo != NULL ) {
-	    if (( getattrlist( path, &getalist, &afinfo->ai,
-		    sizeof( struct attr_info ), FSOPT_NOFOLLOW ) == 0 )) {
-		if (( afinfo->ai.ai_rsrc_len > 0 ) ||
-	( memcmp( afinfo->ai.ai_data, null_buf, FINFOLEN ) != 0 )) {
-		    *type = 'a';
-		    break;
-		}
+	if (( getattrlist( path, &getalist, &rs->rs_afinfo.ai,
+		sizeof( struct attr_info ), FSOPT_NOFOLLOW ) == 0 )) {
+	    if (( rs->rs_afinfo.ai.ai_rsrc_len > 0 ) ||
+    ( memcmp( rs->rs_afinfo.ai.ai_data, null_buf, FINFOLEN ) != 0 )) {
+		rs->rs_type = 'a';
+		break;
 	    }
 	}
 #endif /* __APPLE__ */
-	*type = 'f';
+	rs->rs_type = 'f';
 	break;
 
     case S_IFDIR:
 #ifdef __APPLE__
 	/* Get any finder info */
-	if ( afinfo != NULL ) {
-	    getattrlist( path, &getdiralist, &afinfo->ai,
-		sizeof( struct attr_info ), FSOPT_NOFOLLOW );
-	}
+	getattrlist( path, &getdiralist, &rs->rs_afinfo.ai,
+	    sizeof( struct attr_info ), FSOPT_NOFOLLOW );
 #endif /* __APPLE__ */
-	*type = 'd';
+	rs->rs_type = 'd';
 	break;
 
     case S_IFLNK:
-	*type = 'l';
+	rs->rs_type = 'l';
 	break;
 
     case S_IFCHR:
-	*type = 'c';
+	rs->rs_type = 'c';
 	break;
 
     case S_IFBLK:
-	*type = 'b';
+	rs->rs_type = 'b';
 	break;
 
 #ifdef sun
     case S_IFDOOR:
-	*type = 'D';
+	rs->rs_type = 'D';
 	break;
 #endif /* sun */
 
     case S_IFIFO:
-	*type = 'p';
+	rs->rs_type = 'p';
 	break;
 
     case S_IFSOCK:
-	*type = 's';
+	rs->rs_type = 's';
 	break;
 
     default:
@@ -105,35 +101,52 @@ radstat( char *path, struct stat *st, char *type, struct applefileinfo *afinfo )
 
 #ifdef __APPLE__
     /* Calculate full size of applefile */
-    if ( *type == 'a' ) {
+    if ( rs->rs_type == 'a' ) {
 
 	/* Finder Info */
-	afinfo->as_ents[AS_FIE].ae_id = ASEID_FINFO;
-	afinfo->as_ents[AS_FIE].ae_offset = AS_HEADERLEN +
+	rs->rs_afinfo.as_ents[AS_FIE].ae_id = ASEID_FINFO;
+	rs->rs_afinfo.as_ents[AS_FIE].ae_offset = AS_HEADERLEN +
 		( 3 * sizeof( struct as_entry ));		/* 62 */
-	afinfo->as_ents[AS_FIE].ae_length = FINFOLEN;
+	rs->rs_afinfo.as_ents[AS_FIE].ae_length = FINFOLEN;
 
 	/* Resource Fork */
-	afinfo->as_ents[AS_RFE].ae_id = ASEID_RFORK;
-	afinfo->as_ents[AS_RFE].ae_offset =			/* 94 */
-		( afinfo->as_ents[ AS_FIE ].ae_offset
-		+ afinfo->as_ents[ AS_FIE ].ae_length );
-	afinfo->as_ents[ AS_RFE ].ae_length = afinfo->ai.ai_rsrc_len;
+	rs->rs_afinfo.as_ents[AS_RFE].ae_id = ASEID_RFORK;
+	rs->rs_afinfo.as_ents[AS_RFE].ae_offset =		/* 94 */
+		( rs->rs_afinfo.as_ents[ AS_FIE ].ae_offset
+		+ rs->rs_afinfo.as_ents[ AS_FIE ].ae_length );
+	rs->rs_afinfo.as_ents[ AS_RFE ].ae_length =
+		rs->rs_afinfo.ai.ai_rsrc_len;
 
 	/* Data Fork */
-	afinfo->as_ents[AS_DFE].ae_id = ASEID_DFORK;
-	afinfo->as_ents[ AS_DFE ].ae_offset =
-	    ( afinfo->as_ents[ AS_RFE ].ae_offset
-	    + afinfo->as_ents[ AS_RFE ].ae_length );
-	afinfo->as_ents[ AS_DFE ].ae_length = (u_int32_t)st->st_size;
+	rs->rs_afinfo.as_ents[AS_DFE].ae_id = ASEID_DFORK;
+	rs->rs_afinfo.as_ents[ AS_DFE ].ae_offset =
+	    ( rs->rs_afinfo.as_ents[ AS_RFE ].ae_offset
+	    + rs->rs_afinfo.as_ents[ AS_RFE ].ae_length );
+	rs->rs_afinfo.as_ents[ AS_DFE ].ae_length =
+		(u_int32_t)rs->rs_stat.st_size;
 
-	afinfo->as_size = afinfo->as_ents[ AS_DFE ].ae_offset
-	    + afinfo->as_ents[ AS_DFE ].ae_length;
+	rs->rs_afinfo.as_size = rs->rs_afinfo.as_ents[ AS_DFE ].ae_offset
+	    + rs->rs_afinfo.as_ents[ AS_DFE ].ae_length;
 
 	/* Set st->st_size to size of encoded apple single file */
-	st->st_size = afinfo->as_size;
+	rs->rs_stat.st_size = rs->rs_afinfo.as_size;
     }
 #endif /* __APPLE__ */
+
+#ifdef ENABLE_XATTR
+    memset( &rs->rs_xlist, 0, sizeof( struct xattrlist ));
+    switch ( rs->rs_type ) {
+    case 'a': case 'f': case 'd': case 'l':
+	if (( rs->rs_xlist.x_len = xattr_list( path,
+					&rs->rs_xlist.x_data )) < 0 ) {
+	    return( -1 );
+	}
+
+    default:
+	break;
+    }
+    rs->rs_xname = NULL;
+#endif /* ENABLE_XATTR */
 
     return( 0 );
 }

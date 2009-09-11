@@ -5,6 +5,8 @@
 
 #include <sys/stat.h>
 
+#include "radstat.h"
+
 #define T_NULL		0
 #define T_POSITIVE	1
 #define T_NEGATIVE	2 
@@ -47,6 +49,9 @@ struct pathinfo {
     struct stat			pi_stat;
     char			pi_cksum_b64[ MAXPATHLEN ];
     struct applefileinfo	pi_afinfo;
+#ifdef ENABLE_XATTR
+    char			pi_xattrname[ MAXPATHLEN ];
+#endif /* ENABLE_XATTR */
 };
 
 struct transcript {
@@ -63,7 +68,7 @@ struct transcript {
     FILE		*t_in;
 };
 
-int			transcript( char *, struct stat *, char *, struct applefileinfo *, int );
+int			transcript( char *, struct radstat *, int );
 void			transcript_init( char *kfile, int location );
 struct transcript	*transcript_select( void );
 void			transcript_parse( struct transcript * );

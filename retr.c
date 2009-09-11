@@ -39,6 +39,7 @@
 #include "largefile.h"
 #include "progress.h"
 #include "mkprefix.h"
+#include "xattr.h"
 
 extern void            (*logger)( char * );
 extern struct timeval  	timeout;
@@ -556,3 +557,134 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 }
 
 #endif /* __APPLE__ */
+
+#ifdef ENABLE_XATTR
+    int
+retr_xattr( SNET *sn, char *pathdesc, char *path, char *xname,
+    off_t transize, char *trancksum )
+{
+    struct timeval	tv;
+    char		*line;
+    ssize_t		size, xlen;
+    char		*buf = NULL;
+    int			rr = 0, rc = 0;
+    unsigned int	offset = 0;
+    unsigned int	md_len;
+    extern EVP_MD	*md;
+    EVP_MD_CTX		mdctx;
+    unsigned char	md_value[ EVP_MAX_MD_SIZE ];
+    char		cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
+
+    if ( cksum ) {
+	if ( strcmp( trancksum, "-" ) == 0 ) {
+	    fprintf( stderr, "line %d: No checksum\n", linenum );
+	    fprintf( stderr, "%s\n", pathdesc );
+	    return( 1 );
+	}
+	EVP_DigestInit( &mdctx, md );
+    }
+
+    if ( verbose ) printf( ">>> RETR %s\n", pathdesc );
+    if ( snet_writef( sn, "RETR %s\n", pathdesc ) < 0 ) {
+	fprintf( stderr, "retrieve xattr %s failed: 1-%s\n", pathdesc,
+		strerror( errno ));
+	return( -1 );
+    }
+
+    tv = timeout;
+    if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
+	fprintf( stderr, "retrieve xattr %s failed: 2-%s\n", pathdesc,
+		strerror( errno ));
+	return( -1 );
+    }
+    if ( *line != '2' ) {
+	fprintf( stderr, "%s\n", line );
+	return( 1 );
+    }
+
+    /* get xattr size from server */
+    tv = timeout;
+    if (( line = snet_getline( sn, &tv )) == NULL ) {
+	fprintf( stderr, "retrieve xattr %s failed: 3-%s\n", pathdesc,
+		strerror( errno ));
+	return( -1 );
+    }
+    size = strtoofft( line, NULL, 10 );
+    if ( verbose ) printf( "<<< %" PRIofft "d\n", (off_t)size );
+    if ( transize >= 0 && size != transize ) {
+	fprintf( stderr, "line %d: size in transcript does not "
+			 "match size from server\n", linenum );
+	return( -1 );
+    }
+    xlen = size;
+
+    if (( buf = malloc( xlen )) == NULL ) {
+	perror( "malloc" );
+	return( 1 );
+    }
+
+    /*
+     * retrieve xattr. because setting an xattr is an atomic operation,
+     * we read the whole thing into core before calling setxattr. Apple's
+     * implementation includes an offset, but it's only valid for
+     * com.apple.ResourceFork, and our AppleFile stuff handles the rsrc
+     * fork for now. if Apple ever gets its act together and allows an
+     * offset for other xattrs, we'll deal with it then.
+     *
+     * not holding my breath.
+     */
+    while ( size > 0 ) {
+	tv = timeout;
+	if (( rr = snet_read( sn, buf + offset, MIN( xlen, size ),
+		&tv )) <= 0 ) {
+	    fprintf( stderr, "retrieve xattr %s failed: 4-%s\n", pathdesc,
+		    strerror( errno ));
+	    return( -1 );
+	}
+	if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
+	offset += rr;
+	size -= rr;
+	if ( showprogress ) {
+	    progressupdate( rr, path );
+	}
+    }
+    if ( verbose ) printf( "\n" );
+
+    tv = timeout;
+    if (( line = snet_getline( sn, &tv )) == NULL ) {
+	fprintf( stderr, "retrieve %s failed: 5-%s\n", pathdesc,
+		strerror( errno ));
+	return( -1 );
+    }
+    if ( strcmp( line, "." ) != 0 ) {
+	fprintf( stderr, "%s", line );
+	fprintf( stderr, "%s\n", pathdesc );
+	return( 1 );
+    }
+    if ( verbose ) printf( "<<< .\n" );
+
+    if ( cksum ) {
+	EVP_DigestUpdate( &mdctx, buf, (unsigned int)rr );
+	EVP_DigestFinal( &mdctx, md_value, &md_len );
+	base64_e( md_value, md_len, cksum_b64 );
+	if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
+	    fprintf( stderr, "line %d: checksum in transcript does not "
+			     "match checksum from server\n", linenum );
+	    fprintf( stderr, "%s\n", pathdesc );
+	    return( 1 );
+	}
+    }
+
+    if ( xattr_set( path, xname, buf, xlen, 0 ) != 0 ) {
+	fprintf( stderr, "setxattr %s on %s: %s\n",
+			xname, path, strerror( errno ));
+	return( 1 );
+    }
+
+    if ( buf != NULL ) {
+	free( buf );
+    }
+
+    return( rc );
+}
+#endif /* ENABLE_XATTR */

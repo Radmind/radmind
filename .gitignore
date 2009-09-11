@@ -1,0 +1,17 @@
+Makefile
+config.h
+config.log
+config.status
+fsdiff
+ktcheck
+lapply
+lcksum
+lcreate
+lfdiff
+lmerge
+lsort
+radmind
+repo
+twhich
+*.o
+libsnet/

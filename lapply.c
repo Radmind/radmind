@@ -75,7 +75,7 @@ struct node {
 
 struct node* create_node( char *path, char *tline );
 void free_node( struct node *node );
-int do_line( char *tline, int present, struct stat *st, SNET *sn );
+int do_line( char *tline, int present, struct radstat *rs, SNET *sn );
 
    struct node *
 create_node( char *path, char *tline )
@@ -103,18 +103,18 @@ free_node( struct node *node )
 }
 
     int
-do_line( char *tline, int present, struct stat *st, SNET *sn )
+do_line( char *tline, int present, struct radstat *rs, SNET *sn )
 {
-    char                	fstype;
     char        	        *command = "", *d_path;
     ACAV               		*acav;
     int				tac;
     char 	               	**targv;
-    struct applefileinfo        afinfo;
     char     	       		path[ 2 * MAXPATHLEN ];
     char			temppath[ 2 * MAXPATHLEN ];
     char			pathdesc[ 2 * MAXPATHLEN ];
     char			cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
+    char			*xpath = NULL, *xname = NULL;
+    char			*p;
 
     acav = acav_alloc( );
 
@@ -133,12 +133,21 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
 
     /* DOWNLOAD */
     if ( *command == '+' ) {
-	if (( *targv[ 0 ] != 'f' ) && ( *targv[ 0 ] != 'a' )) {
+	switch ( *targv[ 0 ] ) {
+	case 'a':
+	case 'f':
+#ifdef ENABLE_XATTR
+	case 'e':
+#endif /* ENABLE_XATTR */
+	    break;
+
+	default:
 	    fprintf( stderr, "line %d: \"%c\" invalid download type\n",
 		    linenum, *targv[ 0 ] );
 	    return( 1 );
 	}
-	strcpy( cksum_b64, targv[ 7 ] );
+
+	strcpy( cksum_b64, targv[ tac - 1 ] );
 
 	if ( special ) {
 	    if ( snprintf( pathdesc, MAXPATHLEN * 2, "SPECIAL %s",
@@ -147,10 +156,23 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
 		return( 1 );
 	    }
 	} else {
-	    if ( snprintf( pathdesc, MAXPATHLEN * 2, "FILE %s %s",
+#ifdef ENABLE_XATTR
+	    if ( *targv[ 0 ] == 'e' ) {
+		if (( xpath = xattr_get_path( targv[ 1 ] )) == NULL ) {
+		    fprintf( stderr, "%s: bad xattr path\n", targv[ 1 ] );
+		    return( 1 );
+		}
+		if (( xname = xattr_get_name( targv[ 1 ], NULL )) == NULL ) {
+		    fprintf( stderr, "%s: bad xattr name\n", targv[ 1 ] );
+		    return( 1 );
+		}
+	    }
+#endif /* ENABLE_XATTR */
+	    if ( snprintf( pathdesc, MAXPATHLEN * 2, "%s %s %s",
+		    *targv[ 0 ] == 'e' ? "XATTR" : "FILE",
 		    transcript, targv[ 1 ]) >= ( MAXPATHLEN * 2 )) {
 		fprintf( stderr, "FILE %s %s: command too long\n",
-		    transcript, targv[ 1 ]);
+			transcript, targv[ 1 ]);
 		return( 1 );
 	    }
 	}
@@ -166,7 +188,7 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
 	    default:
 		break;
 	    }
-	} else {
+	} else if ( *targv[ 0 ] == 'f' ) {
 	    switch ( retr( sn, pathdesc, path, temppath, 0600,
 		strtoofft( targv[ 6 ], NULL, 10 ), cksum_b64 )) {
 	    case -1:
@@ -179,36 +201,60 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
 		break;
 	    }
 	}
-	if ( radstat( temppath, st, &fstype, &afinfo ) < 0 ) {
-	    perror( temppath );
-	    return( 1 );
+#ifdef ENABLE_XATTR
+	  else if ( *targv[ 0 ] == 'e' ) {
+	    if (( xname = xattr_name_decode( xname )) == NULL ) {
+		return( 1 );
+	    }
+
+	    switch ( retr_xattr( sn, pathdesc, xpath, xname,
+			strtoofft( targv[ 2 ], NULL, 10 ), cksum_b64 )) {
+	    case -1:
+		/* network problem */
+		network = 0;
+	    case 1 :
+		return( 1 );
+	    default:
+		if ( !quiet && !showprogress ) {
+		    printf( "%s: %s extended attributed applied\n",
+				xpath, xname );
+		}
+		break;
+	    }
 	}
-	/* Update temp file*/
-	switch( update( temppath, path, present, 1, st, tac, targv, &afinfo )) {
-	case 0:
-	    /* rename doesn't mangle forked files */
-	    if ( rename( temppath, path ) != 0 ) {
+#endif /* ENABLE_XATTR */
+
+	if ( *targv[ 0 ] != 'e' ) {
+	    if ( radstat( temppath, rs ) < 0 ) {
 		perror( temppath );
 		return( 1 );
 	    }
-	    break;
+	    /* Update temp file*/
+	    switch( update( temppath, path, present, 1, rs, tac, targv )) {
+	    case 0:
+		/* rename doesn't mangle forked files */
+		if ( rename( temppath, path ) != 0 ) {
+		    perror( temppath );
+		    return( 1 );
+		}
+		break;
 
-	case 2:
-	    break;
+	    case 2:
+		break;
 
-	default:
-	    return( 1 );
+	    default:
+		return( 1 );
+	    }
 	}
-
     } else { 
 	/* UPDATE */
 	if ( present ) {
-	    if ( radstat( path, st, &fstype, &afinfo ) < 0 ) {
+	    if ( radstat( path, rs ) < 0 ) {
 		perror( path );
 		return( 1 );
 	    }
 	}
-	switch ( update( path, path, present, 0, st, tac, targv, &afinfo )) {
+	switch ( update( path, path, present, 0, rs, tac, targv )) {
         case 0:
         case 2:	    /* door or socket, can't be created, but not an error */
             break;
@@ -238,12 +284,10 @@ main( int argc, char **argv )
     char		tline[ 2 * MAXPATHLEN ];
     char		targvline[ 2 * MAXPATHLEN ];
     char		path[ 2 * MAXPATHLEN ];
-    struct applefileinfo	afinfo;
-    int			tac, present, len;
+    struct radstat	rs;
+    int			tac, present = 0, len;
     char		**targv;
     char		*command = "";
-    char		fstype;
-    struct stat		st;
     struct node		*head = NULL, *new_node, *node;
     ACAV		*acav;
     SNET		*sn = NULL;
@@ -252,6 +296,10 @@ main( int argc, char **argv )
     int			use_randfile = 0;
     char	        **capa = NULL;		/* capabilities */
     char		* event = "lapply";	/* report event type */
+
+#ifdef ENABLE_XATTR
+    char		*xpath = NULL, *xname = NULL;
+#endif /* ENABLE_XATTR */
 
     while (( c = getopt( argc, argv,
 	    "%c:Ce:Fh:iInp:P:qru:Vvw:x:y:z:Z:" )) != EOF ) {
@@ -541,42 +589,66 @@ main( int argc, char **argv )
 	}
 	strcpy( prepath, path );
 
-	/* Do type check on local file */
-	switch ( radstat( path, &st, &fstype, &afinfo )) {
-	case 0:
-	    present = 1;
-	    break;
-	case 1:
-	    fprintf( stderr, "%s is of an unknown type\n", path );
-	    goto error2;
-	default:
-	    if ( errno == ENOENT ) { 
-		present = 0;
-	    } else {
-		perror( path );
+	if ( *targv[ 0 ] == 'e' ) {
+#ifdef ENABLE_XATTR
+	    if (( xpath = xattr_get_path( path )) == NULL ) {
+		fprintf( stderr, "line %d: bad xattr path\n", linenum );
 		goto error2;
 	    }
-	    break;
-	}
+	    if (( xname = xattr_get_name( path, NULL )) == NULL ) {
+		fprintf( stderr, "line %d: bad xattr name\n", linenum );
+		goto error2;
+	    }
+	    if (( xname = xattr_name_decode( xname )) == NULL ) {
+		fprintf( stderr, "line %d: %s\n", linenum, strerror( errno ));
+		goto error2;
+	    }
+
+	    memset( &rs, 0, sizeof( struct radstat ));
+	    rs.rs_type = 'e';
+
+#else /* ENABLE_XATTR */
+	    fprintf( stderr, "line %d: no xattr support\n", linenum );
+	    goto error2;
+#endif /* ENABLE_XATTR */
+	} else {
+	    /* Do type check on local file */
+	    switch ( radstat( path, &rs )) {
+	    case 0:
+		present = 1;
+		break;
+	    case 1:
+		fprintf( stderr, "%s is of an unknown type\n", path );
+		goto error2;
+	    default:
+		if ( errno == ENOENT ) { 
+		    present = 0;
+		} else {
+		    perror( path );
+		    goto error2;
+		}
+		break;
+	    }
 
 #ifdef UF_IMMUTABLE
 #define CHFLAGS	( UF_IMMUTABLE | UF_APPEND | SF_IMMUTABLE | SF_APPEND )
 
-	if ( present && force && ( st.st_flags & CHFLAGS )) {
-	    if ( chflags( path, st.st_flags & ~CHFLAGS ) < 0 ) {
-		perror( path );
-		goto error2;
+	    if ( present && force && ( rs.rs_stat.st_flags & CHFLAGS )) {
+		if ( chflags( path, rs.rs_stat.st_flags & ~CHFLAGS ) < 0 ) {
+		    perror( path );
+		    goto error2;
+		}
 	    }
-	}
 #endif /* UF_IMMUTABLE */
+	}
 
 	if ( *command == '-'
-		|| ( present && fstype != *targv[ 0 ] )) {
-	    if ( fstype == 'd' ) {
+		|| ( present && rs.rs_type != *targv[ 0 ] )) {
+	    if ( rs.rs_type == 'd' ) {
 dirchecklist:
 		if ( head == NULL ) {
 		    /* Add dir to empty list */
-		    if ( present && fstype != *targv[ 0 ] ) {
+		    if ( present && rs.rs_type != *targv[ 0 ] ) {
 		    	head = create_node( path, tline );
 		    } else {
 			head = create_node( path, NULL);
@@ -585,7 +657,7 @@ dirchecklist:
 		} else {
 		    if ( ischildcase( path, head->path, case_sensitive )) {
 			/* Add dir to list */
-			if ( present && fstype != *targv[ 0 ] ) {
+			if ( present && rs.rs_type != *targv[ 0 ] ) {
 			    new_node = create_node( path, tline );
 			} else {
 			    new_node = create_node( path, NULL);
@@ -607,7 +679,7 @@ dirchecklist:
 			node = head;
 			head = node->next;
 			if ( node->doline ) {
-			    if ( do_line( node->tline, 0, &st, sn ) != 0 ) {
+			    if ( do_line( node->tline, 0, &rs, sn ) != 0 ) {
 				goto error2;
 			    }
 			    change = 1;
@@ -616,6 +688,35 @@ dirchecklist:
 			goto dirchecklist;
 		    }
 		}
+#ifdef ENABLE_XATTR
+	    } else if ( rs.rs_type == 'e' ) {
+		/* we don't need to worry about depth-first removals yet. */
+		errno = 0;
+		if ( xattr_remove( xpath, xname ) != 0 ) {
+		    /*
+		     * We ignore ENOENT here because we're presuming that
+		     * it happens when the parent file of the xattr
+		     * was removed first. To do this properly, we'd need
+		     * to rewrite the logic of this deletion loop to handle
+		     * depth-first deletion of xattrs. That would involve
+		     * significant changes, such as allowing the head node
+		     * to be a file and all that entails. For this pass,
+		     * just pretend ENOENT means the parent was deleted by
+		     * lapply before we could delete the xattr.
+		     */
+		    if ( errno != ENOENT ) {
+			perror( path );
+			goto error2;
+		    }
+		    /* XXX xattr silently move on? warn? */
+		}
+		if ( !quiet && !showprogress ) {
+		    printf( "%s: xattr deleted\n", path );
+		}
+		if ( showprogress ) {
+		    progressupdate( PROGRESSUNIT, path );
+		}
+#endif /* ENABLE_XATTR */
 	    } else {
 filechecklist:
 		if ( head == NULL ) {
@@ -656,7 +757,7 @@ filechecklist:
 			node = head;
 			head = node->next;
 			if ( node->doline ) {
-			    if ( do_line( node->tline, 0, &st, sn ) != 0 ) {
+			    if ( do_line( node->tline, 0, &rs, sn ) != 0 ) {
 				goto error2;
 			    }
 			    change = 1;
@@ -689,7 +790,7 @@ filechecklist:
 	    node = head;
 	    head = node->next;
 	    if ( node->doline ) {
-		if ( do_line( node->tline, 0, &st, sn ) != 0 ) {
+		if ( do_line( node->tline, 0, &rs, sn ) != 0 ) {
 		    goto error2;
 		}
 		change = 1;
@@ -697,7 +798,7 @@ filechecklist:
 	    free_node( node );
 	}
 
-	if ( do_line( tline, present, &st, sn ) != 0 ) {
+	if ( do_line( tline, present, &rs, sn ) != 0 ) {
 	    goto error2;
 	}
 	change = 1;
@@ -717,7 +818,7 @@ filechecklist:
 	node = head;
 	head = node->next;
 	if ( node->doline ) {
-	    if ( do_line( node->tline, 0, &st, sn ) != 0 ) {
+	    if ( do_line( node->tline, 0, &rs, sn ) != 0 ) {
 		goto error2;
 	    }
 	    change = 1;

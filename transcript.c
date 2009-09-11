@@ -19,6 +19,7 @@
 
 #include "applefile.h"
 #include "base64.h"
+#include "radstat.h"
 #include "transcript.h"
 #include "argcargv.h"
 #include "code.h"
@@ -283,6 +284,29 @@ transcript_parse( struct transcript *tran )
 	strcpy( tran->t_pinfo.pi_cksum_b64, argv[ 7 ] );
 	break;
 
+    case 'e':				    /* extended attribute */
+	if ( ac != 4 ) {
+	    fprintf( stderr, "%s: line %d: expected 4 arguments, got %d\n",
+		    tran->t_fullname, tran->t_linenum, ac );
+	    exit( 2 );
+	}
+	tran->t_pinfo.pi_stat.st_mode = ( S_IFREG | (mode_t)0444 );
+	tran->t_pinfo.pi_stat.st_size = strtoofft( argv[ 2 ], NULL, 10 );
+	if ( tran->t_type != T_NEGATIVE ) {
+	    if ( cksum && strcmp( "-", argv[ 3 ] ) == 0 ) {
+		fprintf( stderr, "%s: line %d: no cksums in transcript\n",
+			tran->t_fullname, tran->t_linenum );
+		exit( 2 );
+	    }
+	}
+	if ( xattr_get_name( epath, tran->t_pinfo.pi_xattrname ) == NULL ) {
+	    fprintf( stderr, "%s: line %d: bad xattr name\n",
+			tran->t_fullname, tran->t_linenum );
+	    exit( 2 );
+	}
+	strcpy( tran->t_pinfo.pi_cksum_b64, argv[ 3 ] );
+	break;
+
     default:
 	fprintf( stderr,
 	    "%s: line %d: unknown file type '%c'\n",
@@ -445,6 +469,24 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 		cur->pi_stat.st_size, cur->pi_cksum_b64 );
 	break;
 
+    case 'e':
+	if (( edit_path == APPLICABLE ) && (( flag == PR_TRAN_ONLY ) || 
+		( flag == PR_DOWNLOAD ))) {
+	    fprintf( outtran, "+ " );
+	}
+
+	if (( *cur->pi_cksum_b64 == '-' ) && cksum && !print_minus ) {
+	    if ( do_xcksum( xattr_get_path( cur->pi_name ), cur->pi_cksum_b64,
+		    cur->pi_xattrname ) < 0 ) {
+		perror( cur->pi_name );
+		exit( 2 );
+	    }
+	}
+
+	fprintf( outtran, "%c %-37s\t%7" PRIofft "d %s\n",
+		cur->pi_type, epath, cur->pi_stat.st_size, cur->pi_cksum_b64 );
+	break;
+
     case 'c':
     case 'b':
 	dev = cur->pi_stat.st_rdev;
@@ -562,6 +604,25 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 		t_print( fs, tran, PR_STATUS_NEG );
 	    } else {
 		t_print( fs, tran, PR_STATUS );
+	    }
+	}
+	break;
+
+    case 'e':				/* extended attribute */
+	if ( tran->t_type != T_NEGATIVE ) {
+	    if ( cksum ) {
+		if ( do_xcksum( xattr_get_path( fs->pi_name ), fs->pi_cksum_b64,
+			fs->pi_xattrname ) < 0 ) {
+		    perror( fs->pi_name );
+		    exit( 2 );
+		}
+		if ( strcmp( fs->pi_cksum_b64,
+			tran->t_pinfo.pi_cksum_b64 ) != 0 ) {
+		    t_print( fs, tran, PR_DOWNLOAD );
+		    break;
+		}
+	    } else if ( fs->pi_stat.st_size != tran->t_pinfo.pi_stat.st_size ) {
+		t_print( fs, tran, PR_DOWNLOAD );
 	    }
 	}
 	break;
@@ -744,8 +805,7 @@ transcript_select( void )
 }
 
     int
-transcript( char *path, struct stat *st, char *type,
-		struct applefileinfo *afinfo, int parent_minus )
+transcript( char *path, struct radstat *rs, int parent_minus )
 {
     struct pathinfo	pi;
     int			enter = 0;
@@ -780,9 +840,17 @@ transcript( char *path, struct stat *st, char *type,
 	}
 
 	strcpy( pi.pi_name, path );
-	pi.pi_stat = *st;
-	pi.pi_type = *type;
-	pi.pi_afinfo = *afinfo;
+	pi.pi_stat = rs->rs_stat;
+	pi.pi_type = rs->rs_type;
+	pi.pi_afinfo = rs->rs_afinfo;
+
+#ifdef ENABLE_XATTR
+	if ( rs->rs_xname != NULL ) {
+	    strcpy( pi.pi_xattrname, rs->rs_xname );
+	} else {
+	    pi.pi_xattrname[ 0 ] = '\0';
+	}
+#endif /* ENABLE_XATTR */
 
 	/* if it's multiply referenced, check if it's a hardlink */
 	if ( !S_ISDIR( pi.pi_stat.st_mode ) && ( pi.pi_stat.st_nlink > 1 ) &&
@@ -1197,7 +1265,7 @@ transcript_free( )
      * Call transcript() with NULL to indicate that we've run out of
      * filesystem to compare against.
      */
-    transcript( NULL, NULL, NULL, NULL, 0 );
+    transcript( NULL, NULL, 0 );
 
     while ( tran_head != NULL ) {
 	next = tran_head->t_next;

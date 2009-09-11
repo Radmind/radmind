@@ -42,6 +42,7 @@ int		cksum = 0;
 int		force = 0;
 int		case_sensitive = 1;
 int		verbose = 0;
+int		tran_format = -1;
 const EVP_MD    *md;
 
 void            (*logger)( char * ) = NULL;

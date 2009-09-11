@@ -23,9 +23,9 @@
 
 #include "applefile.h"
 #include "base64.h"
-#include "update.h"
 #include "code.h"
 #include "radstat.h"
+#include "update.h"
 #include "transcript.h"
 #include "progress.h"
 #include "mkdirs.h"
@@ -47,7 +47,7 @@ extern int	lchmod( const char *, mode_t ) __attribute__(( weak ));
 
     int
 update( char *path, char *displaypath, int present, int newfile,
-    struct stat *st, int tac, char **targv, struct applefileinfo *afinfo )
+	struct radstat *rs, int tac, char **targv )
 {
     int			timeupdated = 0;
     mode_t              mode;
@@ -57,11 +57,17 @@ update( char *path, char *displaypath, int present, int newfile,
     dev_t               dev;
     char		type;
     char		*d_target;
+    struct stat		*st;
+    struct applefileinfo	*afinfo;
 #ifdef __APPLE__
     char			fi_data[ FINFOLEN ];
     extern struct attrlist	setalist;
     static char                 null_buf[ 32 ] = { 0 };
 #endif /* __APPLE__ */
+
+    st = &rs->rs_stat;
+    afinfo = &rs->rs_afinfo;
+    type = rs->rs_type;
 
     switch ( *targv[ 0 ] ) {
     case 'a':
@@ -115,11 +121,14 @@ update( char *path, char *displaypath, int present, int newfile,
 		}
 	    }
 	    newfile = 1;
-	    if ( radstat( (char*)path, st, &type, afinfo ) < 0 ) {
+	    if ( radstat( (char*)path, rs ) < 0 ) {
 		perror( path );
 		return( 1 );
 	    }
 	    present = 1;
+	    st = &rs->rs_stat;
+	    afinfo = &rs->rs_afinfo;
+	    type = rs->rs_type;
 	}
 
 #ifdef __APPLE__
