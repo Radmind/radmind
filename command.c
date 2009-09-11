@@ -1092,7 +1092,7 @@ f_login( SNET *sn, int ac, char **av )
     int				retval;
     pam_handle_t		*pamh;
     struct pam_conv		pam_conv = {
-	exchange,
+	(int (*)())exchange,
 	NULL
     };
 
