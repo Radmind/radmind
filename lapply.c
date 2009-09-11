@@ -528,7 +528,7 @@ main( int argc, char **argv )
 	strcpy( path, d_path );
 
 	/* Check transcript order */
-	if ( prepath != 0 ) {
+	if ( *prepath != '\0' ) {
 	    if ( pathcasecmp( path, prepath, case_sensitive ) < 0 ) {
 		fprintf( stderr, "line %d: bad sort order\n", linenum );
 		goto error2;
