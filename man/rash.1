@@ -3,19 +3,28 @@
 .B rash 
 \- Radmind Assistant
 .SH SYNOPSIS
-.B ra
+.B ra.sh
 [
-.BI -%cltV 
-] [ 
-.BI \-D\ workingdir 
-] [ 
-.BI \-h\ server 
-] [ 
-.BI \-r\ path 
-] [ 
-.BI \-U\ user 
-] [ 
-.BI \-w\ authlevel 
+.B -cIltV
+] [
+.B -%
+|
+.B -q
+] [
+.B \-D
+.I workingdir
+] [
+.B \-h
+.I server
+] [
+.B \-r
+.I path
+] [
+.B \-U
+.I user
+] [
+.B \-w
+.I authlevel
 ] {
 .B trip
 |
@@ -97,7 +106,13 @@ transcript.
 .SH OPTIONS
 .TP 19
 .B \-%
-percentage done progress output.
+Tell 
+.BR fsdiff (1)
+,
+.BR lapply (1)
+, and
+.BR lcreate (1)
+to use percentage done progress output.
 .TP 19
 .B \-c
 use sha1 checksums.
@@ -111,8 +126,24 @@ before running. Default is "/".
 specifies the radmind server, by default
 .BR _RADMIND_HOST .
 .TP 19
+.B \-I
+Tell 
+.BR fsdiff (1)
+,
+.BR ktcheck (1)
+, and
+.BR lapply (1)
+to use case-insensitive matching.
+.TP 19
 .B \-l
 Prompt for remote user name.  The -U option disables this prompt.
+.TP 19
+.B \-q
+Tell
+.BR lapply (1)
+and
+.BR lcreate (1)
+to operate quietly.
 .TP 19
 .BI \-r\  path
 specifies root path from which fsdiff will start its scan of the
