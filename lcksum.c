@@ -277,6 +277,12 @@ do_lcksum( char *tpath )
 	if ( *targv[ 0 ] == '-' ) {
 	    remove = 1;
 	    targv++;
+	    tac--;
+
+	    if ( tac == 1 ) {
+		fprintf( stderr, "line %d: invalid transcript line\n, linenum);
+		goto badline;
+	    }
 	} else {
 	    remove = 0;
 	}
