@@ -629,11 +629,11 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 	if ( tran->t_type != T_NEGATIVE ) {
 	    if (( fs->pi_stat.st_uid != tran->t_pinfo.pi_stat.st_uid ) ||
 		    ( fs->pi_stat.st_gid != tran->t_pinfo.pi_stat.st_gid ) || 
+		    ( dev != tran->t_pinfo.pi_stat.st_rdev ) ||
 		    ( mode != tran_mode )) {
 		t_print( fs, tran, PR_STATUS );
 	    }
-	}
-	if ( dev != tran->t_pinfo.pi_stat.st_rdev ) {
+	} else if ( dev != tran->t_pinfo.pi_stat.st_rdev ) {
 	    t_print( fs, tran, PR_STATUS );
 	}	
 	break;
