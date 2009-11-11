@@ -26,6 +26,7 @@
 KFILE="_RADMIND_COMMANDFILE"
 SERVER="_RADMIND_HOST"
 TLSLEVEL="_RADMIND_AUTHLEVEL"
+PORT="6222"
 EDITOR=${EDITOR:-vi}
 PAGER=${PAGER:-cat}
 USER=${SUDO_USER:-$USER}
@@ -38,6 +39,9 @@ CHECKEDOUT="_RADMIND_DIR/client/.CheckedOut"
 MAILDOMAIN="_RADMIND_MAIL_DOMAIN"
 ECHO="_RADMIND_ECHO_PATH"
 VERSION=_RADMIND_VERSION
+
+# variable containing all network-related flags (-w, -h, -p, etc.) 
+NETOPTS=
 
 PREAPPLY="_RADMIND_PREAPPLY"
 POSTAPPLY="_RADMIND_POSTAPPLY"
@@ -87,7 +91,7 @@ checkedout() {
 }
 
 usage() {
-    $ECHO "Usage:	$0 [ -ctV ] [ -D working-directory ] [ -h server ] [ -w authlevel ] { trip | update | create | auto | force | checkout | checkin } [ /path/or/file ]" >&2
+    $ECHO "Usage:	$0 [ -ctV ] [ -D working-directory ] [ -h server ] [ -p port ] [ -w authlevel ] { trip | update | create | auto | force | checkout | checkin } [ /path/or/file ]" >&2
     exit 1
 }
 
@@ -147,7 +151,7 @@ update() {
 	kopt="-n"
     fi
 
-    ktcheck ${kopt} -w ${TLSLEVEL} -h ${SERVER} -c sha1
+    ktcheck ${kopt} ${NETOPTS} -c sha1
     case "$?" in
     0)  
 	if [ x"$opt" = x"hook" -a ! -f "${FLAG}" ]; then
@@ -160,7 +164,7 @@ update() {
 	if [ x"$opt" = x"interactive" ]; then
 	    Yn "Update command file and/or transcripts?"
 	    if [ $? -eq 1 ]; then
-		ktcheck -w ${TLSLEVEL} -h ${SERVER} -c sha1
+		ktcheck ${NETOPTS} -c sha1
 		RC=$?
 		if [ $RC -ne 1 ]; then
 		    $ECHO Nothing to update
@@ -242,7 +246,7 @@ update() {
 	done
     fi
 		
-    lapply ${CASE} ${PROGRESS} -w ${TLSLEVEL} -h ${SERVER} ${CHECKSUM} ${FTMP}
+    lapply ${CASE} ${PROGRESS} ${NETOPTS} ${CHECKSUM} ${FTMP}
     case "$?" in
     0)	;;
 
@@ -304,6 +308,9 @@ while getopts %cD:h:Ilqr:tU:Vw: opt; do
     l)  USERAUTH="-l"
 	;;
 
+    p)  PORT="$OPTARG"
+	;;
+
     r)  FSDIFFROOT="$OPTARG"
 	;;
 
@@ -345,6 +352,9 @@ fi
 
 # Trap meaningful signals
 trap cleanup_and_exit HUP INT PIPE QUIT TERM TRAP XCPU XFSZ
+
+# combine network-related flags for ktcheck, lcreate, lapply
+NETOPTS="-w ${TLSLEVEL} -h ${SERVER} -p ${PORT}"
 
 case "$1" in
 checkout)
@@ -393,13 +403,13 @@ update|up)
 
 create)
     # Since create does not modify the system, no need for checkedout
-    ktcheck ${CASE} -w ${TLSLEVEL} -h ${SERVER} -n -c sha1
+    ktcheck ${CASE} ${NETOPTS} -n -c sha1
     case "$?" in
     0)	;;
 
     1)	Yn "Update command file and/or transcripts?"
 	if [ $? -eq 1 ]; then
-	    ktcheck -w ${TLSLEVEL} -h ${SERVER} -c sha1
+	    ktcheck ${NETOPTS} -c sha1
 	    RC=$?
 	    if [ $RC -ne 1 ]; then
 		$ECHO Nothing to update
@@ -442,8 +452,8 @@ create)
 	    fi
 	    USERNAME="-U ${USERNAME}"
 	fi
-	lcreate ${PROGRESS} -w ${TLSLEVEL} ${USERAUTH} ${USERAUTH:+USERNAME} \
-			${CHECKSUM} -h ${SERVER} ${FTMP}
+	lcreate ${PROGRESS} ${NETOPTS} ${USERAUTH} ${USERAUTH:+USERNAME} \
+			${CHECKSUM} ${FTMP}
 	if [ $? -ne 0 ]; then
 	    cleanup
 	    exit 1
@@ -459,7 +469,7 @@ trip)
 	exit 1
     fi
     # Since trip does not modify the system, no need for checkedout
-    ktcheck -w ${TLSLEVEL} -h ${SERVER} -qn -c sha1
+    ktcheck ${NETOPTS} -qn -c sha1
     case "$?" in
     0)
 	;;
@@ -505,7 +515,7 @@ auto)
     fi
 
     # XXX - if this fails, do we loop, or just report error?
-    ktcheck -w ${TLSLEVEL} -h ${SERVER} -q -c sha1
+    ktcheck ${NETOPTS} -q -c sha1
     if [ $? -eq 1 ]; then
 	while true; do
 	    fsdiff -A ${CASE} ${CHECKSUM} -o ${FTMP} ${FSDIFFROOT}
@@ -516,7 +526,7 @@ auto)
 	    fi
 	    dopreapply ${FTMP}
 	    if [ -s ${FTMP} ]; then
-		lapply -w ${TLSLEVEL} ${CASE} ${PROGRESS} -h ${SERVER} \
+		lapply ${NETOPTS} ${CASE} ${PROGRESS} \
 			-q ${CHECKSUM} ${FTMP} 2>&1 > ${LTMP}
 		case $? in
 		0)
@@ -538,7 +548,7 @@ auto)
 		    cat ${LTMP}
 		    sleep ${RETRY}
 		    RETRY=${RETRY}0
-		    ktcheck -w ${TLSLEVEL} -h ${SERVER} -q -c sha1
+		    ktcheck ${NETOPTS} -q -c sha1
 		    ;;
 		esac
 	    else
@@ -556,7 +566,7 @@ force)
 	$ECHO "Checked out by ${OWNER}"
 	exit 1
     fi
-    ktcheck -w ${TLSLEVEL} -h ${SERVER} -c sha1
+    ktcheck ${NETOPTS} -c sha1
     case "$?" in
     0)	;;
     1)	;;
@@ -579,7 +589,7 @@ force)
     fi
     
     dopreapply ${FTMP}
-    lapply ${CASE} ${PROGRESS} -w ${TLSLEVEL} -h ${SERVER} ${CHECKSUM} ${FTMP}
+    lapply ${CASE} ${PROGRESS} ${NETOPTS} ${CHECKSUM} ${FTMP}
     case "$?" in
     0)	;;
 
