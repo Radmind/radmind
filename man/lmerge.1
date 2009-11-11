@@ -4,7 +4,7 @@
 \- lmerge combines multiple transcripts into one.
 .SH SYNOPSIS
 .B lmerge
-.RB [ \-IiVvT ]
+.RB [ \-CIiVvT ]
 [
 .BI \-D\  path
 ] [
@@ -66,6 +66,12 @@ Since files are linked, all transcripts ( including
 .I dest
 ) and files must be located on the same volume.
 
+The \-C options runs
+.B lmerge
+in copy mode. Files listed in
+.I dest
+are copied from their original locations and are not linked.
+
 Using the \-f option,
 .B lmerge
 links all files from the lowest precedence
@@ -81,6 +87,9 @@ transcript.  A transcript line in the highest precedence transcript written to
 but files are linked from the lowest precedence transcript.  Only two
 transcripts can be merged with the \-n option.
 .SH OPTIONS
+.TP 19
+.B \-C
+enable copy mode.
 .TP 19
 .B \-f
 merge

@@ -167,6 +167,73 @@ getline:
     return( 0 );
 }
 
+    static int
+copy_file( const char *src_file, const char *dest_file )
+{
+    int			src_fd, dest_fd = -1;
+    int			rr, rc = -1;
+    char		buf[ 4096 ];
+    struct stat		st;
+
+    if (( src_fd = open( src_file, O_RDONLY )) < 0 ) {
+    	fprintf( stderr, "open %s failed: %s\n", src_file, strerror( errno ));
+	return( rc );
+    }
+    if ( fstat( src_fd, &st ) < 0 ) {
+	fprintf( stderr, "stat of %s failed: %s\n",
+		src_file, strerror( errno ));
+	goto cleanup;
+    }
+
+    if (( dest_fd = open( dest_file, O_WRONLY | O_CREAT | O_EXCL,
+	    st.st_mode & 07777 )) < 0 ) {
+	if ( errno == ENOENT ) {
+	    rc = errno;
+	} else {
+	    fprintf( stderr, "open %s failed: %s\n",
+		    dest_file, strerror( errno ));
+	}
+	goto cleanup;
+    }
+    while (( rr = read( src_fd, buf, sizeof( buf ))) > 0 ) {
+	if ( write( dest_fd, buf, rr ) != rr ) {
+	    fprintf( stderr, "write to %s failed: %s\n",
+		    dest_file, strerror( errno ));
+	    goto cleanup;
+	}
+    }
+    if ( rr < 0 ){
+	fprintf( stderr, "read from %s failed: %s\n",
+		src_file, strerror( errno ));
+	goto cleanup;
+    }
+    if ( fchown( dest_fd, st.st_uid, st.st_gid ) != 0 ) {
+	fprintf( stderr, "chown %d:%d %s failed: %s\n",
+		st.st_uid, st.st_gid, dest_file, strerror( errno ));
+	goto cleanup;
+    }
+
+    rc = 0;
+
+cleanup:
+    if ( src_fd >= 0 ) {
+	if ( close( src_fd ) != 0 ) {
+	    fprintf( stderr, "close %s failed: %s\n",
+		    src_file, strerror( errno ));
+	    rc = -1;
+	}
+    }
+    if ( dest_fd >= 0 ) {
+	if ( close( dest_fd ) != 0 ) {
+	    fprintf( stderr, "close %s failed: %s\n",
+		    dest_file, strerror( errno ));
+	    rc = -1;
+	}
+    }
+
+    return( rc );
+}
+
 /*
  * exit codes:
  *	0  	okay	
@@ -179,6 +246,7 @@ main( int argc, char **argv )
     int			c, i, j, cmpval, err = 0, tcount = 0, candidate = 0;
     int			force = 0, ofd, fileloc = 0, match = 0;
     int			merge_trans_only = 0;
+    int			copy = 0, rc;
     char		*file = NULL;
     char		npath[ 2 * MAXPATHLEN ];
     char		opath[ 2 * MAXPATHLEN ];
@@ -195,8 +263,11 @@ main( int argc, char **argv )
     FILE		*ofs;
     mode_t		mask;
 
-    while ( ( c = getopt( argc, argv, "D:fInTu:Vv" ) ) != EOF ) {
+    while ( ( c = getopt( argc, argv, "CD:fInTu:Vv" ) ) != EOF ) {
 	switch( c ) {
+	case 'C':		/* copy files instead of using hardlinks */
+	    copy = 1;
+	    break;
 	case 'D':
 	    radmind_path = optarg;
 	    break;
@@ -235,9 +306,12 @@ main( int argc, char **argv )
 
     tcount = argc - ( optind + 1 );	/* "+ 1" accounts for dest tran */
 
-	if ( merge_trans_only && force ) {
-		err++;
-	}
+    if ( merge_trans_only && force ) {
+	err++;
+    }
+    if ( merge_trans_only && copy ) {
+	err++;
+    }
     if ( noupload && ( tcount > 2 ) ) {
 	err++;
     }
@@ -253,13 +327,13 @@ main( int argc, char **argv )
     }
 
     if ( err ) {
-	fprintf( stderr, "Usage: %s [-vIVT] [ -D path ] [ -u umask ] ",
+	fprintf( stderr, "Usage: %s [-vCIVT] [ -D path ] [ -u umask ] ",
 	    argv[ 0 ] );
 	fprintf( stderr, "transcript... dest\n" );
-	fprintf( stderr, "       %s -f [-vIV] [ -D path ] [ -u umask ] ",
+	fprintf( stderr, "       %s -f [-vCIV] [ -D path ] [ -u umask ] ",
 	    argv[ 0 ] );
 	fprintf( stderr, "transcript1 transcript2\n" );
-	fprintf( stderr, "       %s -n [-vIVT] [ -D path ] [ -u umask ] ",
+	fprintf( stderr, "       %s -n [-vCIVT] [ -D path ] [ -u umask ] ",
 	    argv[ 0 ] );
 	fprintf( stderr, "transcript1 transcript2 dest\n" );
 	exit( 2 );
@@ -527,8 +601,19 @@ main( int argc, char **argv )
 		}
 	    }
 
-	    /* First try to link file */
-	    if ( link( opath, npath ) != 0 ) {
+	    /*
+	     * copy or link file into new loadset. it's possible the file's
+	     * directory hierarchy won't exist yet. in that case, we catch
+	     * ENOENT, call mkdirs to create the parents dirs for the file,
+	     * and try again. the second error is fatal.
+	     */
+	    if ( copy ) {
+		rc = copy_file( opath, npath );
+	    } else if (( rc = link( opath, npath )) != 0 ) {
+		rc = errno;
+	    }
+
+	    if ( rc == ENOENT ) {
 
 		/* If that fails, verify directory structure */
 		if ( ( file = strrchr( trans[ candidate ]->t_argv[ 1 ], '/' ) )
@@ -562,13 +647,28 @@ main( int argc, char **argv )
 		    }
 		} 
 
-		/* Try link again */
-		if ( link( opath, npath ) != 0 ) {
-		    fprintf( stderr, "linking %s -> %s: %s\n",
-			opath, npath, strerror( errno ));
-		    exit( 2 );
+		/* Try copy / link again */
+    		if ( copy ) {
+    		    if (( rc = copy_file( opath, npath )) != 0 ) {
+    			fprintf( stderr, "copy %s to %s failed\n",
+				opath, npath );
+    			exit( 2 );
+    		    }
+    		} else if ( link( opath, npath ) != 0 ){
+    		    fprintf( stderr, "link %s -> %s: %s\n",
+			    opath, npath, strerror( errno ));
+    		    exit( 2 );
+    		}
+	    } else if ( rc ) {
+		if ( copy ) {
+		    fprintf( stderr, "copy %s to %s failed\n", opath, npath );
+		} else {
+		    fprintf( stderr, "link %s to %s failed: %s\n",
+			    opath, npath, strerror( rc ));
 		}
+		exit( 2 );
 	    }
+
 	    if ( verbose ) printf( "%s: %s: merged into: %s\n",
 		trans[ candidate ]->t_tran_name, trans[ candidate ]->t_filepath,
 		tran_name );
