@@ -280,7 +280,7 @@ do_lcksum( char *tpath )
 	    tac--;
 
 	    if ( tac == 1 ) {
-		fprintf( stderr, "line %d: invalid transcript line\n, linenum);
+		fprintf( stderr, "line %d: invalid transcript line\n", linenum);
 		goto badline;
 	    }
 	} else {
