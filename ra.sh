@@ -284,7 +284,7 @@ if [ -f "${DEFAULTS}" ]; then
     . "${DEFAULTS}"
 fi
 
-while getopts %cD:h:Ilqr:tU:Vw: opt; do
+while getopts %cD:h:Ilp:qr:tU:Vw: opt; do
     case $opt in
     %)  PROGRESS="-%"
 	FPROGRESS="-%"
