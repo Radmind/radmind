@@ -58,15 +58,20 @@ AC_CHECK_LIB([ssl], [SSL_accept], , [CHECK_SSL])
 AC_CHECK_HEADER([openssl/ssl.h], [], [AC_MSG_ERROR([header file <openssl/ssl.h>
 is required for this software.  You may be running RedHat 9.  If so, see the FAQ or the README for further instructions.])])
 AC_CHECK_LIB([crypto], [SSLeay_version], , [CHECK_SSL])
-AC_CHECK_LIB([pam], [pam_start],
-    [
-    AC_CHECK_HEADERS(pam/pam_appl.h, , [AC_CHECK_HEADERS(security/pam_appl.h)])
-    AC_DEFINE(HAVE_LIBPAM)
-    LIBS="$LIBS -lpam";
-    ] 
-)
-AC_CHECK_HEADER([dns_sd.h], [AC_DEFINE(HAVE_DNSSD)], [], [])
-AC_CHECK_LIB(dns_sd, DNSServiceRegister)
+
+# PAM
+AC_ARG_WITH([pam], AC_HELP_STRING([--with-pam=DIR], [path to Pluggable Authentication Module headers and libraries]), [], with_pam=yes)
+if test x_"$with_pam" != x_no; then
+    AC_CHECK_LIB([pam], [pam_start],
+	[
+	AC_CHECK_HEADERS(pam/pam_appl.h, , [AC_CHECK_HEADERS(security/pam_appl.h)])
+	AC_DEFINE(HAVE_LIBPAM)
+	LIBS="$LIBS -lpam";
+	] 
+    )
+    AC_CHECK_HEADER([dns_sd.h], [AC_DEFINE(HAVE_DNSSD)], [], [])
+    AC_CHECK_LIB(dns_sd, DNSServiceRegister)
+fi
 
 CHECK_ZLIB
 CHECK_UNIVERSAL_BINARIES
