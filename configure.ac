@@ -60,7 +60,7 @@ is required for this software.  You may be running RedHat 9.  If so, see the FAQ
 AC_CHECK_LIB([crypto], [SSLeay_version], , [CHECK_SSL])
 
 # PAM
-AC_ARG_WITH([pam], AC_HELP_STRING([--with-pam=DIR], [path to Pluggable Authentication Module headers and libraries]), [], with_pam=yes)
+AC_ARG_WITH([pam], AC_HELP_STRING([--with-pam=yes], [Pluggable Authentication Module support (default: yes)]), [], with_pam=yes)
 if test x_"$with_pam" != x_no; then
     AC_CHECK_LIB([pam], [pam_start],
 	[
@@ -69,9 +69,9 @@ if test x_"$with_pam" != x_no; then
 	LIBS="$LIBS -lpam";
 	] 
     )
-    AC_CHECK_HEADER([dns_sd.h], [AC_DEFINE(HAVE_DNSSD)], [], [])
-    AC_CHECK_LIB(dns_sd, DNSServiceRegister)
 fi
+AC_CHECK_HEADER([dns_sd.h], [AC_DEFINE(HAVE_DNSSD)], [], [])
+AC_CHECK_LIB(dns_sd, DNSServiceRegister)
 
 CHECK_ZLIB
 CHECK_UNIVERSAL_BINARIES
