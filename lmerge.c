@@ -150,7 +150,7 @@ getline:
     if ( tran->t_prepath != 0 ) {
 	 
 	if ( pathcasecmp( tran->t_filepath, tran->t_prepath,
-		case_sensitive ) < 0 ) {
+		case_sensitive ) <= 0 ) {
 	    fprintf( stderr, "%s: line %d: bad sort order\n",
 			tran->t_tran_name, tran->t_linenum );
 	    return( 1 );

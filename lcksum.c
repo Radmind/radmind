@@ -315,7 +315,7 @@ do_lcksum( char *tpath )
 
 	/* Check transcript order */
 	if ( *prepath != '\0' ) {
-	    if ( pathcasecmp( path, prepath, case_sensitive ) < 0 ) {
+	    if ( pathcasecmp( path, prepath, case_sensitive ) <= 0 ) {
 		fprintf( stderr, "line %d: bad sort order\n", linenum );
 		cleanup( updatetran, upath );
 		exit( 2 );

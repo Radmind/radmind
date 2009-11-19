@@ -164,7 +164,7 @@ transcript_parse( struct transcript *tran )
 	exit( 2 );
     }
 
-    if ( pathcasecmp( epath, tran->t_pinfo.pi_name, case_sensitive ) < 0 ) {
+    if ( pathcasecmp( epath, tran->t_pinfo.pi_name, case_sensitive ) <= 0 ) {
 	fprintf( stderr, "%s: line %d: bad sort order\n",
 	    tran->t_fullname, tran->t_linenum );
 	exit( 2 );
