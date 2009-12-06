@@ -55,7 +55,6 @@ int		change = 0;
 int		case_sensitive = 1;
 int		report = 1;
 int		create_prefix = 0;
-char		transcript[ 2 * MAXPATHLEN ] = { 0 };
 char		prepath[ MAXPATHLEN ]  = { 0 };
 
 extern char	*version, *checksumlist;
@@ -69,25 +68,45 @@ extern char             *caFile, *caDir, *cert, *privatekey;
 struct node {
     char                *path;
     int			doline;
-    char		tline[ MAXPATHLEN * 2 ];
+    char		*tline;
+    char		*tran;
     struct node         *next;
 };
 
-struct node* create_node( char *path, char *tline );
-void free_node( struct node *node );
-int do_line( char *tline, int present, struct stat *st, SNET *sn );
+struct node 	*node_create( char *path, char *tline, char *tran );
+void 		node_free( struct node *node );
+int 		do_line( char *tline, char *tran, int present,
+				struct stat *st, SNET *sn );
 
    struct node *
-create_node( char *path, char *tline )
+node_create( char *path, char *tline, char *tran )
 {
     struct node         *new_node;
 
-    new_node = (struct node *) malloc( sizeof( struct node ));
-    new_node->path = strdup( path );
+    if (( new_node = (struct node *) malloc( sizeof( struct node ))) == NULL) {
+	perror( "create_node: malloc" );
+	exit( 2 );
+    }
+    if (( new_node->path = strdup( path )) == NULL ) {
+	fprintf( stderr, "create_node: strdup %s: %s\n",
+		path, strerror( errno ));
+	exit( 2 );
+    }
+    if (( new_node->tran = strdup( tran )) == NULL ) {
+	fprintf( stderr, "node_create: strdup %s: %s\n",
+		path, strerror( errno ));
+	exit( 2 );
+    }
+
     if ( tline != NULL ) {
-	sprintf( new_node->tline, "%s", tline );
+	if (( new_node->tline = strdup( tline )) == NULL ) {
+	    fprintf( stderr, "create_node: strdup: %s: %s\n",
+			tline, strerror( errno ));
+	    exit( 2 );
+	}
 	new_node->doline = 1;
     } else {
+	new_node->tline = NULL;
 	new_node->doline = 0;
     }
     new_node->next = NULL;
@@ -96,14 +115,18 @@ create_node( char *path, char *tline )
 }
 
     void 
-free_node( struct node *node )
+node_free( struct node *node )
 {
+    if ( node->tline != NULL ) {
+	free( node->tline );
+    }
+    free( node->tran );
     free( node->path );
     free( node );
 }
 
     int
-do_line( char *tline, int present, struct stat *st, SNET *sn )
+do_line( char *tline, char *tran, int present, struct stat *st, SNET *sn )
 {
     char                	fstype;
     char        	        *command = "", *d_path;
@@ -148,9 +171,9 @@ do_line( char *tline, int present, struct stat *st, SNET *sn )
 	    }
 	} else {
 	    if ( snprintf( pathdesc, MAXPATHLEN * 2, "FILE %s %s",
-		    transcript, targv[ 1 ]) >= ( MAXPATHLEN * 2 )) {
+		    tran, targv[ 1 ]) >= ( MAXPATHLEN * 2 )) {
 		fprintf( stderr, "FILE %s %s: command too long\n",
-		    transcript, targv[ 1 ]);
+		    tran, targv[ 1 ]);
 		return( 1 );
 	    }
 	}
@@ -238,6 +261,7 @@ main( int argc, char **argv )
     char		tline[ 2 * MAXPATHLEN ];
     char		targvline[ 2 * MAXPATHLEN ];
     char		path[ 2 * MAXPATHLEN ];
+    char		transcript[ 2 * MAXPATHLEN ] = { 0 };
     struct applefileinfo	afinfo;
     int			tac, present, len;
     char		**targv;
@@ -577,18 +601,19 @@ dirchecklist:
 		if ( head == NULL ) {
 		    /* Add dir to empty list */
 		    if ( present && fstype != *targv[ 0 ] ) {
-		    	head = create_node( path, tline );
+		    	head = node_create( path, tline, transcript );
 		    } else {
-			head = create_node( path, NULL);
+			/* just a removal, no context necessary */
+			head = node_create( path, NULL, NULL );
 		    }
 		    continue;
 		} else {
 		    if ( ischildcase( path, head->path, case_sensitive )) {
 			/* Add dir to list */
 			if ( present && fstype != *targv[ 0 ] ) {
-			    new_node = create_node( path, tline );
+			    new_node = node_create( path, tline, transcript );
 			} else {
-			    new_node = create_node( path, NULL);
+			    new_node = node_create( path, NULL, NULL );
 			}
 			new_node->next = head;
 			head = new_node;
@@ -607,12 +632,13 @@ dirchecklist:
 			node = head;
 			head = node->next;
 			if ( node->doline ) {
-			    if ( do_line( node->tline, 0, &st, sn ) != 0 ) {
+			    if ( do_line( node->tline, node->tran, 0,
+					&st, sn ) != 0 ) {
 				goto error2;
 			    }
 			    change = 1;
 			}
-			free_node( node );
+			node_free( node );
 			goto dirchecklist;
 		    }
 		}
@@ -656,12 +682,13 @@ filechecklist:
 			node = head;
 			head = node->next;
 			if ( node->doline ) {
-			    if ( do_line( node->tline, 0, &st, sn ) != 0 ) {
+			    if ( do_line( node->tline, node->tran, 0,
+					&st, sn ) != 0 ) {
 				goto error2;
 			    }
 			    change = 1;
 			}
-			free_node( node );
+			node_free( node );
 			goto filechecklist;
 		    }
 		}
@@ -672,6 +699,7 @@ filechecklist:
 		continue;
 	    }
 	}
+
 	/* Minimize remove list */
 	while ( head != NULL && !ischildcase( path, head->path,
 		case_sensitive )) {
@@ -689,15 +717,15 @@ filechecklist:
 	    node = head;
 	    head = node->next;
 	    if ( node->doline ) {
-		if ( do_line( node->tline, 0, &st, sn ) != 0 ) {
+		if ( do_line( node->tline, node->tran, 0, &st, sn ) != 0 ) {
 		    goto error2;
 		}
 		change = 1;
 	    }
-	    free_node( node );
+	    node_free( node );
 	}
 
-	if ( do_line( tline, present, &st, sn ) != 0 ) {
+	if ( do_line( tline, transcript, present, &st, sn ) != 0 ) {
 	    goto error2;
 	}
 	change = 1;
@@ -717,12 +745,12 @@ filechecklist:
 	node = head;
 	head = node->next;
 	if ( node->doline ) {
-	    if ( do_line( node->tline, 0, &st, sn ) != 0 ) {
+	    if ( do_line( node->tline, node->tran, 0, &st, sn ) != 0 ) {
 		goto error2;
 	    }
 	    change = 1;
 	}
-	free_node( node );
+	node_free( node );
     }
     acav_free( acav ); 
     
