@@ -92,12 +92,15 @@ node_create( char *path, char *tline, char *tran )
 		path, strerror( errno ));
 	exit( 2 );
     }
-    if (( new_node->tran = strdup( tran )) == NULL ) {
-	fprintf( stderr, "node_create: strdup %s: %s\n",
-		path, strerror( errno ));
-	exit( 2 );
+    if ( tran != NULL ) {
+	if (( new_node->tran = strdup( tran )) == NULL ) {
+	    fprintf( stderr, "node_create: strdup %s: %s\n",
+		    path, strerror( errno ));
+	    exit( 2 );
+	}
+    } else {
+	new_node->tran = NULL;
     }
-
     if ( tline != NULL ) {
 	if (( new_node->tline = strdup( tline )) == NULL ) {
 	    fprintf( stderr, "create_node: strdup: %s: %s\n",
@@ -120,7 +123,9 @@ node_free( struct node *node )
     if ( node->tline != NULL ) {
 	free( node->tline );
     }
-    free( node->tran );
+    if ( node->tran != NULL ) {
+	free( node->tran );
+    }
     free( node->path );
     free( node );
 }
