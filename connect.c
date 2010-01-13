@@ -103,20 +103,11 @@ connectsn( char *host, unsigned short port )
     int			i;
     struct hostent      *he;
     struct sockaddr_in  sin;
-    struct servent	*se;
+    struct servent	*se = NULL;
     SNET                *sn = NULL; 
 
     memset( &sin, 0, sizeof( struct sockaddr_in ));
     sin.sin_family = AF_INET;
-    if (( sin.sin_port = port ) == 0 ) {
-	/* maybe radmind's in /etc/services. if not, use default. */
-	if (( se = getservbyname( "radmind", "tcp" )) != NULL ) {
-	    /* Port numbers are returned in network byte order */
-	    sin.sin_port = se->s_port;
-	} else {
-	    sin.sin_port = htons( RADMIND_IANA_PORT );
-	}
-    }
 
 #ifdef notdef
     /*
@@ -132,10 +123,21 @@ connectsn( char *host, unsigned short port )
 	fprintf( stderr, "%s: Unknown host\n", host );
 	return( NULL );
     }
-    
+
+    if ( port == 0 ) { 
+	/* maybe radmind's in /etc/services. if not, use default. */
+	se = getservbyname( "radmind", "tcp" );
+    }
+	
     for ( i = 0; he->h_addr_list[ i ] != NULL; i++ ) {
 	memcpy( &sin.sin_addr.s_addr, he->h_addr_list[ i ],
 		(unsigned int)he->h_length );
+	if ( se != NULL ) {
+	    /* getservbyname returns port numbers in network byte order */
+	    sin.sin_port = se->s_port;
+	} else if (( sin.sin_port = port ) == 0 ) {
+	    sin.sin_port = htons( RADMIND_IANA_PORT );
+	}
 
 	/*
 	 * radmind's original port was 6662, but got
