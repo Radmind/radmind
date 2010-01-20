@@ -164,7 +164,7 @@ main( int ac, char **av )
     cert = "cert/cert.pem"; 	 
     privatekey = "cert/cert.pem";
 
-    while (( c = getopt( ac, av, "a:Bb:dD:F:fL:m:p:P:Ru:UVw:x:y:z:Z:" ))
+    while (( c = getopt( ac, av, "a:Bb:dD:F:fL:m:p:P:Rru:UVw:x:y:z:Z:" ))
 		!= EOF ) {
 	switch ( c ) {
 	case 'a' :		/* bind address */ 
