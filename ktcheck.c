@@ -925,7 +925,7 @@ done:
     int
 read_kfile( char * kfile,  char * event )
 {
-    int		ac, minus = 0;
+    int		ac, minus = 0, kline = 0;
     char	**av;
     char        line[ MAXPATHLEN ];
     char	path[ MAXPATHLEN ];
@@ -944,6 +944,7 @@ read_kfile( char * kfile,  char * event )
 
     while ( fgets( line, MAXPATHLEN, f ) != NULL ) {
 	linenum++;
+	kline++;
 
 	ac = acav_parse( acav, line, &av );
 
@@ -978,7 +979,12 @@ read_kfile( char * kfile,  char * event )
 		fprintf( stderr, "path too long: %s%s\n", kdir, av[ 1 ] );
 		goto error;
 	    }
-	    if ( !list_check( kfile_seen, path )) {
+	    if ( list_check( kfile_seen, path )) {
+		fprintf( stderr,
+		    "command file %s loop at line %i: %s already included\n",
+		    kfile, kline, av[1] );
+		goto error;
+	    } else {
 		if ( list_insert_tail( kfile_seen, path ) != 0 ) {
 		    perror( "list_insert_tail" );
 		    goto error;
