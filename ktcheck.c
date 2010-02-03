@@ -954,6 +954,11 @@ read_kfile( char * kfile,  char * event )
 
 	/* Skip non-special minus lines */
 	if ( *av[ 0 ] == '-' ) {
+	    if ( ac != 3 ) {
+		fprintf( stderr, "%s: line %d: invalid command line\n",
+			 kfile, kline );
+		goto error;
+	    }
 	    if ( *av[ 1 ] == 's' ) {
 		minus = 1;
 		av++;
