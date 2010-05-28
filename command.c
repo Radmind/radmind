@@ -974,7 +974,7 @@ f_starttls( SNET *sn, int ac, char **av )
         return( 1 );
     }
 
-    if ( authlevel == 2 ) {
+    if ( authlevel >= 2 ) {
 	if (( peer = SSL_get_peer_certificate( sn->sn_ssl ))
 		== NULL ) {
 	    syslog( LOG_ERR, "no peer certificate" );

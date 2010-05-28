@@ -42,6 +42,8 @@ extern struct timeval	timeout;
 
 char 			*caFile = NULL;
 char 			*caDir = NULL;
+char 			*crlFile = NULL;
+char 			*crlDir = NULL;
 char 			*cert = _RADMIND_TLS_CERT;
 char 			*privatekey = _RADMIND_TLS_CERT;
 
@@ -74,10 +76,15 @@ _randfile( void )
 }
 
     int
-tls_server_setup( int use_randfile, int authlevel, char *caFile, char *caDir, char *cert, char *privatekey )
+tls_server_setup( int use_randfile, int authlevel, char *caFile, char *caDir, char *crlFile, char *crlDir, char *cert, char *privatekey )
 {
     extern SSL_CTX	*ctx;
     int                 ssl_mode = 0;
+    X509_STORE          *store = NULL;
+#ifdef HAVE_X509_VERIFY_PARAM
+    X509_VERIFY_PARAM   *param;
+#endif /*HAVE_X509_VERIFY_PARAM*/
+    int                 vflags = 0;
 
     SSL_load_error_strings();
     SSL_library_init();    
@@ -113,7 +120,7 @@ tls_server_setup( int use_randfile, int authlevel, char *caFile, char *caDir, ch
 	return( -1 );
     }
 
-    if ( authlevel == 2 ) {
+    if ( authlevel >= 2 ) {
 	/* Set default CA location of not specified */
 	if ( caFile == NULL && caDir == NULL ) {
 	    caFile = _RADMIND_TLS_CA;
@@ -136,13 +143,56 @@ tls_server_setup( int use_randfile, int authlevel, char *caFile, char *caDir, ch
 	}
     }
 
-    /* Set level of security expecations */
-    if ( authlevel == 1 ) {
-	ssl_mode = SSL_VERIFY_NONE; 
-    } else {
-	/* authlevel == 2 */
-	ssl_mode = SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
+    if ( authlevel >= 3 ) {
+        /* Load CRL */
+	if ( crlFile != NULL ) {
+	    if ( SSL_CTX_load_verify_locations( ctx, crlFile, NULL ) != 1 ) {
+		fprintf( stderr, "SSL_CTX_load_verify_locations: %s: %s\n",
+			crlFile, ERR_error_string( ERR_get_error(), NULL ));
+		return( -1 );
+	    }
+	}
+	if ( crlDir != NULL ) {
+	    if ( SSL_CTX_load_verify_locations( ctx, NULL, crlDir ) != 1 ) {
+		fprintf( stderr, "SSL_CTX_load_verify_locations: %s: %s\n",
+			crlDir, ERR_error_string( ERR_get_error(), NULL ));
+		return( -1 );
+	    }
+	}
     }
+
+    /* Set level of security expectations */
+    switch ( authlevel ) {
+    case 1:
+	ssl_mode = SSL_VERIFY_NONE;
+        break;
+
+    case 2:
+	ssl_mode = SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
+        break;
+
+    case 3:
+        ssl_mode = SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
+        vflags |= X509_V_FLAG_CRL_CHECK;
+        break;
+
+    case 4:
+        ssl_mode = SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
+        vflags |= X509_V_FLAG_CRL_CHECK|X509_V_FLAG_CRL_CHECK_ALL;
+        break;
+    }
+
+    store = SSL_CTX_get_cert_store(ctx);
+
+#ifdef HAVE_X509_VERIFY_PARAM
+    param = X509_VERIFY_PARAM_new();
+    X509_VERIFY_PARAM_set_flags(param, vflags);
+    X509_STORE_set1_param(store, param);
+    X509_VERIFY_PARAM_free(param);
+#else /*HAVE_X509_VERIFY_PARAM*/
+    X509_STORE_set_flags(store, vflags);
+#endif /*HAVE_X509_VERIFY_PARAM*/
+
     SSL_CTX_set_verify( ctx, ssl_mode, NULL );
 
     return( 0 );

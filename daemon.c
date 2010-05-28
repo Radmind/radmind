@@ -58,6 +58,7 @@ int		connections = 0;
 int             child_signal = 0;
 int		maxconnections = _RADMIND_MAXCONNECTIONS; /* 0 = no limit */
 int		rap_extensions = 1;			/* 1 for REPO */
+int             reinit_ssl_signal = 0;
 char		*radmind_path = _RADMIND_PATH;
 SSL_CTX         *ctx = NULL;
 
@@ -68,6 +69,7 @@ extern int 	max_zlib_level;
 extern char	*version;
 
 void		hup( int );
+void		usr1( int );
 void		chld( int );
 int		main( int, char *av[] );
 
@@ -75,6 +77,14 @@ int		main( int, char *av[] );
 hup( int sig )
 {
     /* Hup does nothing at the moment */
+    return;
+}
+
+    void
+usr1( int sig )
+{
+    /* Set trigger for reinitializing SSL context */
+    reinit_ssl_signal = 1;
     return;
 }
 
@@ -127,7 +137,7 @@ register_service( DNSServiceRef *dnssrv, unsigned int port,
     int
 main( int ac, char **av )
 {
-    struct sigaction	sa, osahup, osachld;
+    struct sigaction	sa, osahup, osausr1, osachld;
     struct sockaddr_in	sin;
     struct in_addr	b_addr;
     struct servent	*se;
@@ -141,7 +151,8 @@ main( int ac, char **av )
     int			level = LOG_INFO;
     extern int		optind;
     extern char		*optarg;
-    extern char		*caFile, *caDir, *cert, *privatekey;
+    extern char		*caFile, *caDir, *crlFile, *crlDir, *cert, *privatekey;
+    struct stat		st;
     pid_t		pid;
     int			status;
     struct rusage	usage;
@@ -164,8 +175,8 @@ main( int ac, char **av )
     cert = "cert/cert.pem"; 	 
     privatekey = "cert/cert.pem";
 
-    while (( c = getopt( ac, av, "a:Bb:dD:F:fL:m:p:P:Rru:UVw:x:y:z:Z:" ))
-		!= EOF ) {
+#define RADMIND_DAEMON_OPTS	"a:Bb:C:dD:F:fL:m:p:P:Rru:UVw:x:y:z:Z:"
+    while (( c = getopt( ac, av, RADMIND_DAEMON_OPTS )) != EOF ) {
 	switch ( c ) {
 	case 'a' :		/* bind address */ 
 	    if ( !inet_aton( optarg, &b_addr )) {
@@ -191,6 +202,19 @@ main( int ac, char **av )
 	case 'd' :		/* debug */
 	    debug++;
 	    verbose++;
+	    break;
+
+	case 'C' :		/* crl file or dir */
+	    if ( stat( optarg, &st ) < 0 ) {
+	        fprintf( stderr, "stat CRL path %s: %s\n",
+			optarg, strerror( errno ));
+	        exit( 2 );
+	    }
+	    if ( S_ISDIR( st.st_mode ) ) {
+	        crlDir = optarg;
+	    } else {
+	        crlFile = optarg;
+	    }
 	    break;
 
 	case 'D':		/* Set radmind path */
@@ -244,9 +268,18 @@ main( int ac, char **av )
 	    printf( "%s\n", version );
 	    exit( 0 );
 
-	case 'w' :		/* authlevel 0:none, 1:serv, 2:client & serv */
+	case 'w' :
+	    /*
+	     * TLS authlevel
+	     *
+	     * 0: none
+	     * 1: verify server
+	     * 2: verify client & server
+	     * 3: verify client & server with crl check
+	     * 4: client & serv with full-chain crl check
+	     */
 	    authlevel = atoi( optarg );
-	    if (( authlevel < 0 ) || ( authlevel > 2 )) {
+	    if (( authlevel < 0 ) || ( authlevel > 4 )) {
 		fprintf( stderr, "%s: %s: invalid authorization level\n",
 			prog, optarg );
 		exit( 1 );
@@ -288,7 +321,8 @@ main( int ac, char **av )
 
     if ( err || optind != ac ) {
 	fprintf( stderr, "Usage: radmind [ -dBrUV ] [ -a bind-address ] " );
-	fprintf( stderr, "[ -b backlog ] [ -D path ] [ -F syslog-facility " );
+	fprintf( stderr, "[ -b backlog ] [ -C crl-pem-file-or-dir ] " );
+	fprintf( stderr, "[ -D path ] [ -F syslog-facility ]" );
 	fprintf( stderr, "[ -L syslog-level ] [ -m max-connections ] " );
 	fprintf( stderr, "[ -p port ] [ -P ca-pem-directory ] [ -u umask ] " );
 	fprintf( stderr, "[ -w auth-level ] [ -x ca-pem-file ] " );
@@ -304,6 +338,11 @@ main( int ac, char **av )
 
     if ( checkuser && ( authlevel < 1 )) {
 	fprintf( stderr, "-U requires auth-level > 0\n" );
+	exit( 1 );
+    }
+
+    if (( crlFile || crlDir ) && authlevel < 3 ) {
+	fprintf( stderr, "-C requires auth-level > 2\n" );
 	exit( 1 );
     }
 
@@ -360,7 +399,7 @@ main( int ac, char **av )
     }
 
     if ( authlevel != 0 ) {
-	if ( tls_server_setup( use_randfile, authlevel, caFile, caDir, cert,
+      if ( tls_server_setup( use_randfile, authlevel, caFile, caDir, crlFile, crlDir, cert,
 		privatekey ) != 0 ) {
 	    exit( 1 );
 	}
@@ -450,6 +489,14 @@ main( int ac, char **av )
 	exit( 1 );
     }
 
+    /* catch SIGUSR1 */
+    memset( &sa, 0, sizeof( struct sigaction ));
+    sa.sa_handler = usr1;
+    if ( sigaction( SIGUSR1, &sa, &osausr1 ) < 0 ) {
+	syslog( LOG_ERR, "sigaction: %m" );
+	exit( 1 );
+    }
+
     /* catch SIGCHLD */
     memset( &sa, 0, sizeof( struct sigaction ));
     sa.sa_handler = chld;
@@ -478,6 +525,20 @@ main( int ac, char **av )
      * Begin accepting connections.
      */
     for (;;) {
+
+        if ( reinit_ssl_signal > 0 ) {
+
+            if ( authlevel != 0 ) {
+                if ( tls_server_setup( use_randfile, authlevel, caFile,
+				       caDir, crlFile, crlDir, cert, privatekey ) != 0 ) {
+                    exit( 1 );
+                }
+            }
+
+            reinit_ssl_signal = 0;
+
+            syslog( LOG_NOTICE, "reinitialized SSL context" );
+        }
 
 	if ( child_signal > 0 ) {
 	    double	utime, stime;
@@ -545,12 +606,16 @@ main( int ac, char **av )
 	case 0 :
 	    close( s );
 
-	    /* reset CHLD and HUP */
+	    /* reset CHLD, HUP, and SIGUSR1 */
 	    if ( sigaction( SIGCHLD, &osachld, 0 ) < 0 ) {
 		syslog( LOG_ERR, "sigaction: %m" );
 		exit( 1 );
 	    }
 	    if ( sigaction( SIGHUP, &osahup, 0 ) < 0 ) {
+		syslog( LOG_ERR, "sigaction: %m" );
+		exit( 1 );
+	    }
+	    if ( sigaction( SIGUSR1, &osausr1, 0 ) < 0 ) {
 		syslog( LOG_ERR, "sigaction: %m" );
 		exit( 1 );
 	    }

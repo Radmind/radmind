@@ -58,6 +58,7 @@ AC_CHECK_LIB([ssl], [SSL_accept], , [CHECK_SSL])
 AC_CHECK_HEADER([openssl/ssl.h], [], [AC_MSG_ERROR([header file <openssl/ssl.h>
 is required for this software.  You may be running RedHat 9.  If so, see the FAQ or the README for further instructions.])])
 AC_CHECK_LIB([crypto], [SSLeay_version], , [CHECK_SSL])
+AC_CHECK_FUNC([X509_VERIFY_PARAM_set_flags], [AC_DEFINE(HAVE_X509_VERIFY_PARAM)], [])
 
 # PAM
 AC_ARG_WITH([pam], AC_HELP_STRING([--with-pam=yes], [Pluggable Authentication Module support (default: yes)]), [], with_pam=yes)
