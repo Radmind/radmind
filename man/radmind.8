@@ -11,6 +11,8 @@
 ] [
 .BI \-b\  backlog
 ] [
+.BI \-C\  crl-pem-file-or-dir
+] [
 .BI \-D\  path
 ] [
 .BI \-F\  syslog-facility
@@ -49,6 +51,8 @@ With the
 .I path
 as its working directory.
 Radmind forks a child for each connection.
+On receiving a SIGUSR1 signal, radmind will reread its TLS
+configuration.
 .sp
 The file config contains a list of known clients that
 can connect to radmind, one per line.  Each line contains the
@@ -233,6 +237,12 @@ Defines the maximum queue of pending connections to
 .BR listen (2),
 by default five.
 .TP 19
+.BI \-C\  crl-pem-file-or-dir
+specifies either a single PEM-formatted file containing the CRL(s) or
+a directory that contains the CRL(s).  Any CRLs in a directory must be
+in PEM format and the directory must have been processed with the
+openssl c_rehash utility. 
+.TP 19
 .BI \-D\  path
 specifies the radmind working directory, by default _RADMIND_PATH
 .TP 19
@@ -282,7 +292,9 @@ and exits.
 .TP 19
 .BI \-w\  auth-level
 TLS authorization level, by default _RADMIND_AUTHLEVEL.
-0 = no TLS, 1 = server verification, 2 = server and client verification.
+0 = no TLS, 1 = server verification, 2 = server and client verification,
+3 = server and client verification with crl checking, 4 = server and client
+verification with full-chain crl checking.
 .TP 19
 .BI \-x\  ca-pem-file
 Certificate authority's public certificate, by default _RADMIND_TLS_CA.
