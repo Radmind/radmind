@@ -368,7 +368,7 @@ package	: all man info rash
 	   -r ${PKGSRCDIR}/${PKGRSRCDIR} \
 	   -i ${PKGSRCDIR}/tmp/OS_X/Info.plist \
 	   -d ${PKGSRCDIR}/tmp/OS_X/Description.plist
-	tar cvfz ../${PKGNAME}.pkg.tar.gz ../${PKGNAME}.pkg
+	(cd .. && tar cvfz ${PKGNAME}.pkg.tar.gz ${PKGNAME}.pkg)
 	sudo rm -rf ${PKGDIR}
 
 clean :
