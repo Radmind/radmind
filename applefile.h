@@ -67,11 +67,18 @@ struct as_header {
     uint16_t	ah_num_entries;
 };
 
+#if defined(__APPLE__) && defined(__LP64__) && defined(__GNUC__)
+#pragma pack(push)
+#pragma pack(4)
+#endif /* __APPLE__ && __LP64__ && __GNUC__ */
 struct attr_info {
     uint32_t   	ai_size;
     uint8_t	ai_data[ FINFOLEN ];
     off_t 	ai_rsrc_len;
 };
+#if defined(__APPLE__) && defined(__LP64__) && defined(__GNUC__)
+#pragma pack(pop)
+#endif /* __APPLE__ && __LP64__ && __GNUC__ */
 
 struct applefileinfo {
     struct attr_info	ai;		// finder info
