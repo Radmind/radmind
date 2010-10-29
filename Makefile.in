@@ -243,20 +243,20 @@ libsnet/libsnet.la : FRC
 	cd libsnet; ${MAKE}
 
 VERSION=$(shell date +%Y%m%d)
-DISTDIR=../radmind-${VERSION}
+DISTDIR=radmind-${VERSION}
 
 dist   : distclean
-	mkdir ${DISTDIR}
-	tar -h -c -f - -X EXCLUDE . | tar xpf - -C ${DISTDIR}
-	echo ${VERSION} > ${DISTDIR}/VERSION
-	-mkdir ${DISTDIR}/tmp
+	mkdir ../${DISTDIR}
+	tar -h -c -f - -X EXCLUDE . | tar xpf - -C ../${DISTDIR}
+	echo ${VERSION} > ../${DISTDIR}/VERSION
+	-mkdir ../${DISTDIR}/tmp
 	for i in ${MANTARGETS}; do \
 	    sed -e 's@_RADMIND_BUILD_DATE@${RADMIND_BUILD_DATE}@g' \
-		${DISTDIR}/man/$$i > ${DISTDIR}/tmp/$$i; \
+		../${DISTDIR}/man/$$i > ../${DISTDIR}/tmp/$$i; \
 	done
-	rm -rf ${DISTDIR}/man
-	mv ${DISTDIR}/tmp ${DISTDIR}/man
-	tar cvfz ${DISTDIR}.tar.gz ${DISTDIR}
+	rm -rf ../${DISTDIR}/man
+	mv ../${DISTDIR}/tmp ../${DISTDIR}/man
+	(cd .. && tar cvfz ${DISTDIR}.tar.gz ${DISTDIR})
 
 rash : FRC
 	-mkdir tmp
