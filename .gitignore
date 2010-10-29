@@ -1,0 +1,31 @@
+# Autoconf Generated Files #
+############################
+autom4te.cache
+configure
+
+# Configure Generated Files #
+#############################
+Makefile
+config.h
+config.log
+config.status
+
+# External Libraries #
+######################
+libsnet
+
+# Comiled Files #
+#################
+*.o
+fsdiff
+ktcheck
+lapply
+lcksum
+lcreate
+lfdiff
+lmerge
+lsort
+radmind
+repo
+twhich
+
