@@ -3,13 +3,12 @@
 # getsnet: download libsnet source code from SF.net
 
 proj="libsnet"
-rev="${1}"
-cvsenv=":pserver:anonymous@${proj}.cvs.sourceforge.net:/cvsroot/${proj}"
+rev="1.0.0"
+gitroot="git://${proj}.git.sourceforge.net/gitroot/${proj}/${proj}"
 
-if [ -n "${rev}" ]; then
-    rev="-r ${rev}"
-fi
-
-cvs -d "${cvsenv}" checkout ${rev} "${proj}"
+git clone ${gitroot}							\
+	&& (cd "${proj}"						\
+	    && git checkout -b "${proj}-${rev}-branch" "${proj}-${rev}"	\
+	    && autoconf)
 
 exit $?
