@@ -3,10 +3,12 @@
 # getsnet: download libsnet source code from SF.net
 
 proj="libsnet"
-rev="1.0.0"
+rev="1.0.1"
 gitroot="git://${proj}.git.sourceforge.net/gitroot/${proj}/${proj}"
 
-git clone ${gitroot}							\
+[ -e "${proj}" ] && echo "${proj} already retrieved" && exit 1
+[ ! -e "${proj}" ]							\
+	&& git clone ${gitroot}						\
 	&& (cd "${proj}"						\
 	    && git checkout -b "${proj}-${rev}-branch" "${proj}-${rev}"	\
 	    && autoconf)
