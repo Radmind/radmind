@@ -125,7 +125,7 @@ AC_DEFUN([CHECK_UNIVERSAL_BINARIES],
 	echo ===========================================================
 	echo Setting up universal binaries for ${host_os}
 	echo ===========================================================
-	OPTOPTS="$OPTOPTS -isysroot /Developer/SDKs/$macosx_sdk $arches"
+	OPTOPTS="$OPTOPTS -isysroot /Developer/SDKs/$macosx_sdk $dep_target $arches"
     fi
 ])
 
