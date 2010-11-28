@@ -112,7 +112,7 @@ AC_DEFUN([CHECK_UNIVERSAL_BINARIES],
 	    ;;
 
 	  darwin10*)
-	    dep_target="-mmacosx-version-min=10.5"
+	    dep_target="-mmacosx-version-min=10.4"
 	    macosx_sdk="MacOSX10.6.sdk"
 	    arches="-arch i386 -arch x86_64 -arch ppc"
 	    ;;
