@@ -50,7 +50,9 @@ mkdirs( char *path )
 	for ( p = strchr( p, '/' ); p != NULL; p = strchr( p, '/' )) {
 	    *p = '\0';
 	    if ( mkdir( path, 0777 ) < 0 ) {
-		return( -1 );
+		if ( errno != EEXIST ) {
+		    return( -1 );
+		}
 	    }
 	    *p++ = '/';
 	}
