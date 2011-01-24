@@ -105,16 +105,11 @@ AC_DEFUN([CHECK_UNIVERSAL_BINARIES],
 	    arches="-arch i386 -arch ppc"
 	    ;;
 
-	  darwin9*)
+	  darwin9*|darwin10*|darwin11*)
 	    dep_target="-mmacosx-version-min=10.4"
 	    macosx_sdk="MacOSX10.5.sdk"
 	    arches="-arch i386 -arch x86_64 -arch ppc -arch ppc64"
-	    ;;
-
-	  darwin10*)
-	    dep_target="-mmacosx-version-min=10.4"
-	    macosx_sdk="MacOSX10.6.sdk"
-	    arches="-arch i386 -arch x86_64 -arch ppc"
+	    LDFLAGS="$LDFLAGS -L/Developer/SDKs/$macosx_sdk/usr/lib"
 	    ;;
 
 	  *)
