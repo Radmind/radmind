@@ -37,7 +37,9 @@ mkdirs( char *path )
 	if ( mkdir( path, 0777 ) == 0 ) {
 	    break;
 	}
-	if ( errno != ENOENT ) {
+	if ( errno == EEXIST ) {
+	    break;
+	} else if ( errno != ENOENT ) {
 	    return( -1 );
 	}
 	q = p;
