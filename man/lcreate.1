@@ -45,12 +45,6 @@ will store the file on the server and give a warning.
 .sp
 If the -n option is given, no files or transcripts are uploaded.  Instead,
 .B lcreate
-verifies that all files exist in the filesystem and have
-the same size as listed in the transcript.  If used with the -c option,
-checksums are also verified.
-.sp
-If the -n option is given, no files or transcripts are uploaded.  Instead,
-.B lcreate
 uses 
 .BR access (2)
 to verify that all files in the transcript exist in the
