@@ -1,0 +1,3 @@
+[submodule "libsnet"]
+	path = libsnet
+	url = git://libsnet.git.sourceforge.net/gitroot/libsnet/libsnet
