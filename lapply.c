@@ -651,26 +651,36 @@ dirchecklist:
 filechecklist:
 		if ( head == NULL ) {
 		    if ( unlink( path ) != 0 ) {
-			perror( path );
-			goto error2;
-		    }
-		    if ( !quiet && !showprogress ) {
-			printf( "%s: deleted\n", path );
-		    }
-		    if ( showprogress ) {
-			progressupdate( PROGRESSUNIT, path );
-		    }
-		} else {
-		    if ( ischildcase( path, head->path, case_sensitive )) {
-			if ( unlink( path ) != 0 ) {
+			if ( !force || errno != ENOENT ) {
 			    perror( path );
 			    goto error2;
 			}
+			fprintf( stderr, "Warning: failed to remove %s: %s\n",
+				path, strerror( errno ));
+		    } else {
 			if ( !quiet && !showprogress ) {
 			    printf( "%s: deleted\n", path );
 			}
 			if ( showprogress ) {
 			    progressupdate( PROGRESSUNIT, path );
+			}
+		    }
+		} else {
+		    if ( ischildcase( path, head->path, case_sensitive )) {
+			if ( unlink( path ) != 0 ) {
+			    if ( !force || errno != ENOENT ) {
+				perror( path );
+				goto error2;
+			    }
+			    fprintf( stderr, "Warning: failed to remove %s: "
+				    "%s\n", path, strerror( errno ));
+			} else {
+			    if ( !quiet && !showprogress ) {
+				printf( "%s: deleted\n", path );
+			    }
+			    if ( showprogress ) {
+				progressupdate( PROGRESSUNIT, path );
+			    }
 			}
 		    } else {
 			/* remove head */
