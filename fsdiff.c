@@ -333,6 +333,9 @@ fsdiff( char *path, char *kfile, int start, int finish, int pdel )
     }
 
     if ( skip && strcmp( path, "-" ) == 0 ) {
+	path_prefix = "/";
+	transcript_init( kfile, K_CLIENT );
+
 	/* run -1 against every line we get from stdin */
 	while ( fgets( lpath, sizeof( lpath ), stdin ) != NULL ) {
 	    len = strlen( lpath );
