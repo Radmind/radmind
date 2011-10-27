@@ -347,10 +347,15 @@ fsdiff( char *path, char *kfile, int start, int finish, int pdel )
 	    path = canonicalized_path( lpath );
 
 	    if ( radstat( path, &st, &type, &afinfo ) != 0 ) {
-		perror( lpath );
-		exit( 2 );
+		if ( errno != ENOENT ) {
+		    perror( lpath );
+		    exit( 2 );
+		}
+
+		fprintf( stderr, "Warning: %s: %s\n", path, strerror( errno ));
+		continue;
 	    }
-	    fs_walk( path, &st, &type, &afinfo, start, finish, pdel );
+	    (void)transcript( path, &st, &type, &afinfo, pdel );
 	}
 	if ( ferror( stdin )) {
 	    perror( "fgets" );
