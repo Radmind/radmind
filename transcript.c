@@ -723,7 +723,7 @@ transcript_select( void )
 	    if ( begin_tran->t_type != T_SPECIAL &&
 		    t_exclude( begin_tran->t_pinfo.pi_name )) {
 		if ( exclude_warnings ) {
-		    fprintf( stderr, "Warning: excluding %s\n",
+		    printf( "#! Warning: excluding %s\n",
 				begin_tran->t_pinfo.pi_name );
 		}
 		transcript_parse( begin_tran );
@@ -769,7 +769,7 @@ transcript( char *path, struct stat *st, char *type,
 	    if ( list_size( special_list ) <= 0
 		    || list_check( special_list, path ) == 0 ) {
 		if ( exclude_warnings ) {
-		    fprintf( stderr, "Warning: excluding %s\n", path );
+		    printf( "#! Warning: excluding %s\n", path );
 		}
 
 		/* move the transcripts ahead */
@@ -949,7 +949,8 @@ transcript_init( char *kfile, int location )
      */
     t_new( T_NULL, NULL, NULL, NULL );
 
-    if ( skip ) {
+    if ( skip == T_SKIP_ALL ) {
+fprintf( stderr, "transcript_init: skipping all\n" );
 	return;
     }
 
@@ -985,15 +986,17 @@ transcript_init( char *kfile, int location )
 	exit( 2 );
     }
 
-    if (( list_size( special_list ) > 0 ) && ( location == K_CLIENT )) {
-	/* open the special transcript if there were any special files */
-	if ( strlen( kdir ) + strlen( special ) + 2 > MAXPATHLEN ) {
-	    fprintf( stderr, 
-		    "special path too long: %s%s\n", kdir, special );
-	    exit( 2 );
+    if ( skip & ~T_SKIP_SPECIAL ) {
+	if (( list_size( special_list ) > 0 ) && ( location == K_CLIENT )) {
+	    /* open the special transcript if there were any special files */
+	    if ( strlen( kdir ) + strlen( special ) + 2 > MAXPATHLEN ) {
+		fprintf( stderr, 
+			"special path too long: %s%s\n", kdir, special );
+		exit( 2 );
+	    }
+	    sprintf( fullpath, "%s%s", kdir, special );
+	    t_new( T_SPECIAL, fullpath, special, "special" );
 	}
-	sprintf( fullpath, "%s%s", kdir, special );
-	t_new( T_SPECIAL, fullpath, special, "special" );
     }
 
     if ( tran_head->t_type == T_NULL  && edit_path == APPLICABLE ) {
@@ -1108,6 +1111,10 @@ read_kfile( char *kfile, int location )
 	    break;
 
 	case 'n':				/* negative */
+	    if ( skip & T_SKIP_NEGATIVE ) {
+		break;
+	    }
+
 	    if ( minus ) { 
 		t_remove( T_NEGATIVE, av[ 1 ] );
 	    } else {
@@ -1116,6 +1123,10 @@ read_kfile( char *kfile, int location )
 	    break;
 
 	case 'p':				/* positive */
+	    if ( skip & T_SKIP_POSITIVE ) {
+		break;
+	    }
+
 	    if ( minus ) {
 		t_remove( T_POSITIVE, av[ 1 ] );
 	    } else {
@@ -1124,6 +1135,10 @@ read_kfile( char *kfile, int location )
 	    break;
 
 	case 'x':				/* exclude */
+	    if ( skip & T_SKIP_EXCLUDES ) {
+		break;
+	    }
+
 	    if (( d_pattern = decode( av[ 1 ] )) == NULL ) {
 		fprintf( stderr, "%s: line %d: decode buffer too small\n",
 		    kfile, linenum );
@@ -1149,6 +1164,10 @@ read_kfile( char *kfile, int location )
 	    break;
 
 	case 's':				/* special */
+	    if ( skip & T_SKIP_SPECIAL ) {
+		break;
+	    }
+
 	    path = av[ 1 ];
 
 	    /* Convert path to match transcript type */

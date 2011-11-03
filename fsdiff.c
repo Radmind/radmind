@@ -333,6 +333,9 @@ fsdiff( char *path, char *kfile, int start, int finish, int pdel )
     }
 
     if ( skip && strcmp( path, "-" ) == 0 ) {
+	/* leave excludes in place */
+	skip = skip & ~T_SKIP_EXCLUDES;
+
 	path_prefix = "/";
 	transcript_init( kfile, K_CLIENT );
 
@@ -432,7 +435,7 @@ main( int argc, char **argv )
 	    break;
 
 	case '1':
-	    skip = 1;
+	    skip = T_SKIP_ALL;
 	case 'C':
 	    edit_path_change++;
 	    edit_path = CREATABLE;
