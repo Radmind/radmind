@@ -45,7 +45,7 @@ struct list			*exclude_list;
 
 char				*path_prefix = NULL;
 int				edit_path;
-int				skip;
+int				skip = 0;
 int				cksum;
 int				fs_minus;
 int				exclude_warnings = 0;
@@ -950,7 +950,6 @@ transcript_init( char *kfile, int location )
     t_new( T_NULL, NULL, NULL, NULL );
 
     if ( skip == T_SKIP_ALL ) {
-fprintf( stderr, "transcript_init: skipping all\n" );
 	return;
     }
 
@@ -986,7 +985,7 @@ fprintf( stderr, "transcript_init: skipping all\n" );
 	exit( 2 );
     }
 
-    if ( skip & ~T_SKIP_SPECIAL ) {
+    if ( !( skip & T_SKIP_SPECIAL )) {
 	if (( list_size( special_list ) > 0 ) && ( location == K_CLIENT )) {
 	    /* open the special transcript if there were any special files */
 	    if ( strlen( kdir ) + strlen( special ) + 2 > MAXPATHLEN ) {
