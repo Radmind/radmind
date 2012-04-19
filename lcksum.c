@@ -457,6 +457,12 @@ done:
 	}
 	free( line );
     }
+    if ( fclose( f ) != 0 ) {
+	fprintf( stderr, "%s: fclose failed: %s\n", path, strerror( errno ));
+	cleanup( updatetran, upath );
+	exit( 2 );
+    }
+
     if ( showprogress ) {
 	progressupdate( bytes, "" );
     }
@@ -495,6 +501,10 @@ done:
     /* this restores -a functionality. can't wait to replace lcksum. */
 badline:
     exitval = 1;
+
+    if ( fclose( f ) != 0 ) {
+	fprintf( stderr, "%s: fclose failed: %s\n", path, strerror( errno ));
+    }
 
     if ( checkall ) {
 	goto done;
