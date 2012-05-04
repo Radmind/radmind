@@ -48,6 +48,9 @@ AC_CHECK_SIZEOF(off_t)
 # check early to make any required changes to environment for following tests.
 CHECK_UNIVERSAL_BINARIES
 
+# mute Mac OS X's helpful notices that using dylib OpenSSL
+MACOSX_MUTE_DEPRECATION_WARNINGS
+
 # Checks for libraries.
 AC_CHECK_LIB(c, inet_aton, libc_inet_aton=yes) 
 if test x$libc_inet_aton != xyes; then 
