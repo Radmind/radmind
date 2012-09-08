@@ -26,6 +26,7 @@
 #include "update.h"
 #include "code.h"
 #include "radstat.h"
+#include "largefile.h"
 #include "transcript.h"
 #include "progress.h"
 #include "mkdirs.h"
@@ -73,7 +74,7 @@ update( char *path, char *displaypath, int present, int newfile,
 
 	mode = strtol( targv[ 2 ], (char **)NULL, 8 );
 
-	times.modtime = atoi( targv[ 5 ] );
+	times.modtime = strtotimet( targv[ 5 ], NULL, 10 );
 	if ( times.modtime != st->st_mtime ) {
 	    times.actime = st->st_atime;
 	    if ( utime( path, &times ) != 0 ) {

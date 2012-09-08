@@ -434,7 +434,7 @@ do_lcksum( char *tpath )
 		/* Check to see if checksum is listed in transcript */
 		if ( strcmp( targv[ 7 ], "-" ) != 0) {
 		    /* use mtime from server */
-		    fprintf( ufs, "%s %-37s %4s %5s %5s %9ld "
+		    fprintf( ufs, "%s %-37s %4s %5s %5s %9" PRItimet "d "
 			    "%7" PRIofft "d %s\n",
 			targv[ 0 ], targv[ 1 ], targv[ 2 ], targv[ 3 ],
 			targv[ 4 ], st.st_mtime, st.st_size, lcksum );

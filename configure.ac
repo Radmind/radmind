@@ -44,6 +44,7 @@ AC_SYS_LARGEFILE
 
 # Check sizes
 AC_CHECK_SIZEOF(off_t)
+AC_CHECK_SIZEOF(time_t)
 
 # check early to make any required changes to environment for following tests.
 CHECK_UNIVERSAL_BINARIES

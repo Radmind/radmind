@@ -13,3 +13,5 @@ struct command {
     char	*c_name;
     int		(*c_func)( SNET *, int, char *[] );
 };
+
+#define RADMIND_STAT_FMT "%s %s %o %d %d %" PRItimet "d %" PRIofft "d %s\r\n"

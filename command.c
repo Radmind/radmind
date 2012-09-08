@@ -676,11 +676,11 @@ f_stat( SNET *sn, int ac, char *av[] )
     switch ( key ) {
     case K_COMMAND:
 	if ( ac == 2 ) {
-	    snet_writef( sn, "%s %s %o %d %d %d %" PRIofft "d %s\r\n",
+	    snet_writef( sn, RADMIND_STAT_FMT,
 		"f", "command", DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID,
 		st.st_mtime, st.st_size, cksum_b64 );
 	} else {
-	    snet_writef( sn, "%s %s %o %d %d %d %" PRIofft "d %s\r\n",
+	    snet_writef( sn, RADMIND_STAT_FMT,
 		"f", av[ 2 ], DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID,
 		st.st_mtime, st.st_size, cksum_b64 );
 	}
@@ -688,7 +688,7 @@ f_stat( SNET *sn, int ac, char *av[] )
         
 		    
     case K_TRANSCRIPT:
-	snet_writef( sn, "%s %s %o %d %d %d %" PRIofft "d %s\r\n",
+	snet_writef( sn, RADMIND_STAT_FMT,
 		"f", av[ 2 ], 
 		DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID,
 		st.st_mtime, st.st_size, cksum_b64 );
@@ -707,14 +707,14 @@ f_stat( SNET *sn, int ac, char *av[] )
 
 	if (( av = special_t( path, enc_file )) == NULL ) {
 	    /* no special transcript match found, return defaults. */
-	    snet_writef( sn, "%s %s %o %d %d %d %" PRIofft "d %s\r\n",
+	    snet_writef( sn, RADMIND_STAT_FMT,
 		    "f", enc_file, 
 		    DEFAULT_MODE, DEFAULT_UID, DEFAULT_GID, 
 		    st.st_mtime, st.st_size, cksum_b64 );
 	    free( enc_file );
 	    return( 0 );
 	}
-	snet_writef( sn, "%s %s %s %s %s %d %" PRIofft "d %s\r\n",
+	snet_writef( sn, RADMIND_STAT_FMT,
 		av[ 0 ], enc_file,
 		av[ 2 ], av[ 3 ], av[ 4 ],
 		st.st_mtime, st.st_size, cksum_b64 );
