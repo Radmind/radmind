@@ -1348,7 +1348,8 @@ command_k( char *path_config, int depth )
 
     /* If we get here, the host that connected is not in the config
        file. So screw him. */
-    syslog( LOG_ERR, "host not in config file: %s", remote_host );
+    syslog( LOG_ERR, "host %s not in config file %s",
+		remote_host, path_config );
 
 command_k_done:
     snet_close( sn );
