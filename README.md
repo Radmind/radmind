@@ -105,6 +105,8 @@ An archived e-mail discussion list has also been set up. See the website for det
 
 In June of 2015, management of this project was transferred from the University of Michigan to the University of Utah. The University of Utah decided to migrate the project from the rapidly-deteriorating SourceForge hosting site over to GitHub. We felt that this would help keep the project alive and make it easier to maintain. Note that the University of Utah, while longtime users of Radmind, are no longer contributing to the upkeep of the project. If you feel you would be a better steward for Radmind's future, contact us.
 
+The transfer of issues/bugs and their comments was automated using the [gosf2github](https://github.com/cmungall/gosf2github) script. Because no username map was readily available, all of the issues and comments were automatically assigned to the member of the University of Utah's team who managed the migration, [@pdarragh](https://github.com/pdarragh).
+
 ## References
 
 [1]: Current submodules:
