@@ -17,7 +17,7 @@
 #include "pathcmp.h"
 
     int
-pathcasecmp( const unsigned char *p1, const unsigned char *p2,
+pathcasecmp( const char *p1, const char *p2,
     int case_sensitive )
 {
     int		rc;
@@ -46,13 +46,13 @@ pathcasecmp( const unsigned char *p1, const unsigned char *p2,
 
 /* Just like strcmp(), but pays attention to the meaning of '/'.  */
     int 
-pathcmp( const unsigned char *p1, const unsigned char *p2 )
+pathcmp( const char *p1, const char *p2 )
 {
     return( pathcasecmp( p1, p2, 1 ));
 }
 
     int
-ischildcase( const unsigned char *child, const unsigned char *parent, int
+ischildcase( const char *child, const char *parent, int
     case_sensitive )
 {
     int		rc;
@@ -85,7 +85,7 @@ ischildcase( const unsigned char *child, const unsigned char *parent, int
 }
 
     int
-ischild( const unsigned char *child, const unsigned char *parent )
+ischild( const char *child, const char *parent )
 {
     return( ischildcase( child, parent, 1 ));
 }
