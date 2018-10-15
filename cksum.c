@@ -20,7 +20,7 @@
 
 #include <openssl/evp.h>
 
-#include "openssl_compat.c" // Compatibility shims for OpenSSL < 1.1.0
+#include "openssl_compat.h" // Compatibility shims for OpenSSL < 1.1.0
 #include "applefile.h"
 #include "cksum.h"
 #include "base64.h"
