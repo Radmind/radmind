@@ -9,8 +9,8 @@
 #include <string.h>
 #include <openssl/engine.h>
 
-static void *OPENSSL_zalloc(size_t num);
 EVP_MD_CTX *EVP_MD_CTX_new(void);
 void EVP_MD_CTX_free(EVP_MD_CTX *ctx);
+
 #endif // OPENSSL_RADMIND_SHIMS
 #endif // OLD OPENSSL <1.1.0
