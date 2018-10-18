@@ -252,7 +252,7 @@ FRC :
 libsnet/libsnet.la : FRC
 	cd libsnet; ${MAKE}
 
-VERSION=$(shell date +%Y%m%d)
+VERSION=$(shell cat VERSION)
 DISTDIR=radmind-${VERSION}
 
 dist   : distclean
