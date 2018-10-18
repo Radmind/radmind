@@ -714,7 +714,11 @@ f_stat( SNET *sn, int ac, char *av[] )
 	    free( enc_file );
 	    return( 0 );
 	}
-	snet_writef( sn, RADMIND_STAT_FMT,
+	/*
+	 * Cannot use RADMIND_STAT_FMT shorthand here, since custom
+	 * permission, user, and group information are strings.
+         */
+	snet_writef( sn, "%s %s %s %s %s %" PRItimet "d %" PRIofft "d %s\r\n",
 		av[ 0 ], enc_file,
 		av[ 2 ], av[ 3 ], av[ 4 ],
 		st.st_mtime, st.st_size, cksum_b64 );
