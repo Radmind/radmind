@@ -186,7 +186,7 @@ transcript_parse( struct transcript *tran )
 	tran->t_pinfo.pi_stat.st_gid = atoi( argv[ 4 ] );
 	if ( ac == 6 ) {
 	    base64_d( argv[ 5 ], strlen( argv[ 5 ] ),
-		    (char *)tran->t_pinfo.pi_afinfo.ai.ai_data );
+		    (unsigned char *)tran->t_pinfo.pi_afinfo.ai.ai_data );
 	} else {
 	    memset( tran->t_pinfo.pi_afinfo.ai.ai_data, 0, FINFOLEN );
 	}
