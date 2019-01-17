@@ -58,6 +58,24 @@ To properly build Radmind on RedHat 9 with SSL support, you have to specify the 
 $ export CPPFLAGS=-I/usr/kerberos/include
 ```
 
+### Configuring for macOS X 10.12
+
+macOS no longer includes everything needed to build radmind.  Install Xcode.  Download libsnet and place it in your radmind source directory.  The easiest way to get the other components is with [brew](https://brew.sh).
+
+```
+$ brew install autoconf
+$ brew install openssl
+```
+
+From within the source directory:
+
+```
+$ /usr/local/bin/autoconf
+$ ./configure CPPFLAGS="-I/usr/local/opt/openssl/include" LDFLAGS="-L/usr/local/opt/openssl/lib"
+$ make
+$ make install
+```
+
 ### Configuring and Building
 
 Now that everything is set up, we have to actually do the configuration and installation. Configure the build:
