@@ -56,48 +56,42 @@ TARGETS=        radmind ${BINTARGETS}
 
 RADMIND_OBJ=    version.o daemon.o command.o argcargv.o code.o \
                 cksum.o base64.o mkdirs.o applefile.o connect.o \
-		list.o wildcard.o logname.o pathcmp.o tls.o \
-		openssl_compat.o
+		list.o wildcard.o logname.o pathcmp.o tls.o
 
 FSDIFF_OBJ=     version.o fsdiff.o argcargv.o transcript.o llist.o code.o \
                 hardlink.o cksum.o base64.o pathcmp.o radstat.o applefile.o \
-		list.o wildcard.o openssl_compat.o
+		list.o wildcard.o
 
 KTCHECK_OBJ=    version.o ktcheck.o argcargv.o retr.o base64.o code.o \
                 cksum.o list.o llist.o connect.o applefile.o tls.o pathcmp.o \
-		progress.o mkdirs.o report.o rmdirs.o mkprefix.o \
-		openssl_compat.o
+		progress.o mkdirs.o report.o rmdirs.o mkprefix.o
 
 LAPPLY_OBJ=     version.o lapply.o argcargv.o code.o base64.o retr.o \
                 radstat.o update.o cksum.o connect.o pathcmp.o progress.o \
-                applefile.o report.o tls.o mkprefix.o openssl_compat.o
+                applefile.o report.o tls.o mkprefix.o
 
 LCREATE_OBJ=    version.o lcreate.o argcargv.o code.o connect.o progress.o \
-                stor.o applefile.o base64.o cksum.o radstat.o tls.o \
-		openssl_compat.o
+                stor.o applefile.o base64.o cksum.o radstat.o tls.o
 
 LCKSUM_OBJ=     version.o lcksum.o argcargv.o cksum.o base64.o code.o \
-                progress.o pathcmp.o applefile.o connect.o root.o \
-		openssl_compat.o
+                progress.o pathcmp.o applefile.o connect.o root.o
 
 LMERGE_OBJ=     version.o lmerge.o argcargv.o code.o pathcmp.o mkdirs.o \
 		root.o
 
 LFDIFF_OBJ=     version.o lfdiff.o argcargv.o connect.o retr.o cksum.o \
                 progress.o base64.o applefile.o code.o tls.o pathcmp.o \
-		transcript.o list.o radstat.o hardlink.o mkprefix.o \
-		wildcard.o openssl_compat.o
+		transcript.o list.o radstat.o hardlink.o mkprefix.o wildcard.o
 
 REPO_OBJ=	version.o repo.o report.o argcargv.o connect.o code.o tls.o
 
 T2PKG_OBJ=	version.o t2pkg.o argcargv.o transcript.o connect.o code.o \
 		hardlink.o cksum.o base64.o pathcmp.o radstat.o applefile.o \
-		list.o rmdirs.o mkdirs.o wildcard.o progress.o \
-		openssl_compat.o
+		list.o rmdirs.o mkdirs.o wildcard.o progress.o
 
 TWHICH_OBJ=     version.o twhich.o argcargv.o transcript.o llist.o code.o \
                 hardlink.o cksum.o base64.o pathcmp.o radstat.o applefile.o \
-		list.o wildcard.o openssl_compat.o
+		list.o wildcard.o
 
 LSORT_OBJ=     version.o lsort.o pathcmp.o code.o argcargv.o
 
@@ -107,10 +101,6 @@ version.o : version.c
 	${CC} ${CFLAGS} \
 		-DVERSION=\"`cat ${srcdir}/VERSION`\" \
 		-c ${srcdir}/version.c
-
-openssl_compat.o : openssl_compat.c
-	${CC} ${CFLAGS} \
-	-c ${srcdir}/openssl_compat.c
 
 transcript.o : transcript.c
 	${CC} ${CFLAGS} \

@@ -32,7 +32,6 @@
 
 #include <snet.h>
 
-#include "openssl_compat.h" // Compatibility shims for OpenSSL < 1.1.0
 #include "applefile.h"
 #include "connect.h"
 #include "cksum.h"
@@ -137,7 +136,7 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
     ssize_t             rr, size = 0;
     unsigned int	md_len;
     extern EVP_MD       *md;
-    EVP_MD_CTX          *mdctx = EVP_MD_CTX_new();
+    EVP_MD_CTX          mdctx;
     unsigned char       md_value[ EVP_MAX_MD_SIZE ];
     char       cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
 
@@ -147,7 +146,7 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
 	    fprintf( stderr, "line %d: No checksum listed\n", linenum );
 	    exit( 2 );
         }
-	EVP_DigestInit( mdctx, md );
+	EVP_DigestInit( &mdctx, md );
     }
 
     /* Open and stat file */
@@ -203,7 +202,7 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
 	size -= rr;
 	if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 	if ( cksum ) {
-	    EVP_DigestUpdate( mdctx, buf, (unsigned int)rr );
+	    EVP_DigestUpdate( &mdctx, buf, (unsigned int)rr );
 	}
 	
 	if ( showprogress ) {
@@ -238,9 +237,8 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
 
     /* cksum data sent */
     if ( cksum ) {
-	EVP_DigestFinal( mdctx, md_value, &md_len );
+	EVP_DigestFinal( &mdctx, md_value, &md_len );
 	base64_e( md_value, md_len, cksum_b64 );
-	EVP_MD_CTX_free(mdctx);
         if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
 	    fprintf( stderr,
 		"line %d: checksum listed in transcript wrong\n", linenum );
@@ -264,7 +262,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     unsigned int      	md_len;
     unsigned int	rsrc_len;
     extern EVP_MD      	*md;
-    EVP_MD_CTX         	*mdctx = EVP_MD_CTX_new();
+    EVP_MD_CTX         	mdctx;
     unsigned char 	md_value[ EVP_MAX_MD_SIZE ];
     char		cksum_b64[ EVP_MAX_MD_SIZE ];
 
@@ -274,7 +272,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 	    fprintf( stderr, "line %d: No checksum listed\n", linenum );
 	    exit( 2 );
         }
-        EVP_DigestInit( mdctx, md );
+        EVP_DigestInit( &mdctx, md );
     }
 
     /* Check size listed in transcript */
@@ -341,7 +339,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     }
     size -= AS_HEADERLEN;
     if ( cksum ) {
-	EVP_DigestUpdate( mdctx, (char *)&as_header, AS_HEADERLEN );
+	EVP_DigestUpdate( &mdctx, (char *)&as_header, AS_HEADERLEN );
     }
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
     if ( showprogress ) {
@@ -359,7 +357,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     }
     size -= ( 3 * sizeof( struct as_entry ));
     if ( cksum ) {
-	EVP_DigestUpdate( mdctx, (char *)&afinfo->as_ents,
+	EVP_DigestUpdate( &mdctx, (char *)&afinfo->as_ents,
 	    (unsigned int)( 3 * sizeof( struct as_entry )));
     }
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
@@ -377,7 +375,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     }
     size -= FINFOLEN;
     if ( cksum ) {
-	EVP_DigestUpdate( mdctx, afinfo->ai.ai_data, FINFOLEN );
+	EVP_DigestUpdate( &mdctx, afinfo->ai.ai_data, FINFOLEN );
     }
     if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
     if ( showprogress ) {
@@ -395,7 +393,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 	    }
 	    size -= rc;
 	    if ( cksum ) {
-		EVP_DigestUpdate( mdctx, buf, (unsigned int)rc );
+		EVP_DigestUpdate( &mdctx, buf, (unsigned int)rc );
 	    } 
 	    if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 	    if ( showprogress ) {
@@ -419,7 +417,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 	}
 	size -= rc;
 	if ( cksum ) {
-	    EVP_DigestUpdate( mdctx, buf, (unsigned int)rc );
+	    EVP_DigestUpdate( &mdctx, buf, (unsigned int)rc );
 	}
     	if ( dodots ) { putc( '.', stdout ); fflush( stdout ); }
 	if ( showprogress ) {
@@ -465,9 +463,8 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 
     /* cksum data sent */
     if ( cksum ) {
-        EVP_DigestFinal( mdctx, md_value, &md_len );
+        EVP_DigestFinal( &mdctx, md_value, &md_len );
         base64_e( ( char*)&md_value, md_len, cksum_b64 );
-	EVP_MD_CTX_free(mdctx);
         if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
 	    fprintf( stderr,
 		"line %d: checksum listed in transcript wrong\n", linenum );
