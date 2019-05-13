@@ -34,6 +34,9 @@
 #undef HAVE_WAIT4
 #undef HAVE_STRTOLL
 
+#undef MAJOR_IN_SYSMACROS
+#undef MAJOR_IN_MKDEV
+
 #ifndef MIN
 #define MIN(a,b)        ((a)<(b)?(a):(b))
 #endif /* MIN */
