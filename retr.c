@@ -12,6 +12,7 @@
 #ifdef __APPLE__
 #include <sys/attr.h>
 #include <sys/paths.h>
+#include <sys/xattr.h>
 #endif /* __APPLE__ */
 #include <errno.h>
 #include <fcntl.h>
@@ -424,6 +425,11 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	    returnval = -1;
 	    goto error2;
 	}
+
+	/* APFS won't create a new resource fork with _PATH_RSRCFORKSPEC - ugh */
+	const char *rsrcvalue = "";
+	int rsrcresult = fsetxattr( dfd, XATTR_RESOURCEFORK_NAME, &rsrcvalue,
+		sizeof(rsrcvalue), 0, 0 );
 
 	/* No need to mkprefix as dfd is already present */
 	if (( rfd = open( rsrc_path, O_WRONLY, 0 )) < 0 ) {
