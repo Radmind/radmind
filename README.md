@@ -10,8 +10,12 @@ All Rights Reserved. See COPYRIGHT.
 
 * [Quick Installation Instructions](#quick-installation-instructions)
 * [Detailed Installation Instructions](#detailed-installation-instructions)
-  * [Getting the Source](#getting-the-source)
+  * [Configuring for Ubuntu 18.04](#configuring-for-ubuntu-18.04)
+  * [Configuring for CentOS 7](#configuring-for-centos-7)
+  * [Configuring for FreeBSD 11](#configuring-for-freebsd-11)
   * [Configuring for RedHat 9](#configuring-for-redhat-9)
+  * [Configuring for macOS](#configuring-for-macOS)
+  * [Getting the Source](#getting-the-source)
   * [Configuring and Building](#configuring-and-building)
 * [Building an OS X Installer Package](#building-an-os-x-installer-package)
 * [Known Issues](#known-issues)
@@ -73,8 +77,8 @@ export CPPFLAGS=-I/usr/kerberos/include
 
 ### Configuring for macOS X (tested on 10.14)
 
-- Install [Xcode](https://developer.apple.com/xcode/)
-- Install [brew](https://brew.sh)
+- Install [Xcode](https://developer.apple.com/xcode/).
+- Install [brew](https://brew.sh).
 
 Run these commands as an admin user.
 
