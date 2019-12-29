@@ -83,7 +83,12 @@ get_root( char *radmind_path, char *path, char *file_root, char *tran_root, char
 		return( -1 );
 	    }
         } else {
-            snprintf( file_root, MAXPATHLEN, "%s/../file", real_path );
+            if ( snprintf( file_root, MAXPATHLEN, "%s/../file",
+		    real_path ) >= MAXPATHLEN ) {
+		fprintf( stderr, "%s/../file: path too long\n",
+		    real_path);
+		return( -1);
+	    }
             snprintf( tran_root, MAXPATHLEN, "%s", real_path );
         }
     }
