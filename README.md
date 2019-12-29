@@ -10,7 +10,7 @@ All Rights Reserved. See COPYRIGHT.
 
 * [Quick Installation Instructions](#quick-installation-instructions)
 * [Detailed Installation Instructions](#detailed-installation-instructions)
-  * [Configuring for Ubuntu 18.04](#configuring-for-ubuntu-18.04)
+  * [Configuring for Ubuntu 18.04](#configuring-for-ubuntu-1804)
   * [Configuring for CentOS 7](#configuring-for-centos-7)
   * [Configuring for FreeBSD 11](#configuring-for-freebsd-11)
   * [Configuring for RedHat 9](#configuring-for-redhat-9)
@@ -75,7 +75,9 @@ To properly build Radmind on RedHat 9 with SSL support, you have to specify the 
 export CPPFLAGS=-I/usr/kerberos/include
 ```
 
-### Configuring for macOS X (tested on 10.14)
+### Configuring for macOS
+
+Last tested on 10.14
 
 - Install [Xcode](https://developer.apple.com/xcode/).
 - Install [brew](https://brew.sh).
