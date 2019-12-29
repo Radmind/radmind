@@ -8,9 +8,14 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
-#ifdef sun
+
+#ifdef MAJOR_IN_SYSMACROS
+#include <sys/sysmacros.h>
+#endif
+#ifdef MAJOR_IN_MKDEV
 #include <sys/mkdev.h>
-#endif /* sun */
+#endif
+
 #ifdef __APPLE__
 #include <sys/attr.h>
 #endif /* __APPLE__ */
