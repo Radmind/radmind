@@ -76,7 +76,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, mode_t tempmode,
     ssize_t		rr;
     extern EVP_MD	*md;
     EVP_MD_CTX		*mdctx = EVP_MD_CTX_new();
-    unsigned char	md_value[ EVP_MAX_MD_SIZE ];
+    unsigned char	md_value[ SZ_BASE64_D( SZ_BASE64_E( EVP_MAX_MD_SIZE ) ) ];
     char		cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
 
     if ( cksum ) {
@@ -249,7 +249,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     struct timeval		tv;
     extern EVP_MD       	*md;
     EVP_MD_CTX   	       	*mdctx;
-    unsigned char       	md_value[ EVP_MAX_MD_SIZE ];
+    unsigned char       	md_value[ SZ_BASE64_D( SZ_BASE64_E( EVP_MAX_MD_SIZE ) ) ];
     char		       	cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
 
     if ( cksum ) {

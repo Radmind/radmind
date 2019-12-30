@@ -138,8 +138,8 @@ stor_file( SNET *sn, char *pathdesc, char *path, off_t transize,
     unsigned int	md_len;
     extern EVP_MD       *md;
     EVP_MD_CTX          *mdctx = EVP_MD_CTX_new();
-    unsigned char       md_value[ EVP_MAX_MD_SIZE ];
-    char       cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
+    unsigned char       md_value[ SZ_BASE64_D( SZ_BASE64_E( EVP_MAX_MD_SIZE ) ) ];
+    char                cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
 
     /* Check for checksum in transcript */
     if ( cksum ) {
@@ -265,8 +265,8 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     unsigned int	rsrc_len;
     extern EVP_MD      	*md;
     EVP_MD_CTX         	*mdctx = EVP_MD_CTX_new();
-    unsigned char 	md_value[ EVP_MAX_MD_SIZE ];
-    char		cksum_b64[ EVP_MAX_MD_SIZE ];
+    unsigned char 	md_value[ SZ_BASE64_D( SZ_BASE64_E( EVP_MAX_MD_SIZE ) ) ];
+    char		cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
 
     /* Check for checksum in transcript */
     if ( cksum ) {

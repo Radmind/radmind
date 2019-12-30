@@ -77,7 +77,7 @@ export CPPFLAGS=-I/usr/kerberos/include
 
 ### Configuring for macOS
 
-Last tested on 10.14
+Last tested on 10.14 (using homebrew)
 
 - Install [Xcode](https://developer.apple.com/xcode/).
 - Install [brew](https://brew.sh).
@@ -89,6 +89,19 @@ brew install autoconf
 brew install openssl
 sudo ln -s /usr/local/opt/openssl /usr/local/openssl 
 ```
+
+Last tested on 10.14 (using fink)
+
+- Install [Xcode](https://developer.apple.com/xcode/).
+- Install [fink](https://finkproject.org).
+
+Run these commands as an admin user.
+
+```
+fink install autoconf
+fink install openssl
+```
+
 
 ### Getting the Source
 
@@ -110,6 +123,13 @@ sh bootstrap.sh
 ```
 
 ### Configuring and Building
+If configure files are to be rebuilt (because we installed it), issue the following commands
+```
+autoconf
+cd libsnet
+autoconf
+cd ..
+```
 
 Now that everything is set up, we have to actually do the configuration and installation. Configure the build:
 

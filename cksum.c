@@ -43,7 +43,7 @@ do_fcksum( int fd, char *cksum_b64 )
     unsigned char	buf[ 8192 ];
     extern EVP_MD	*md;
     EVP_MD_CTX		*mdctx = EVP_MD_CTX_new();
-    unsigned char 	md_value[ EVP_MAX_MD_SIZE ];
+    unsigned char	md_value[ SZ_BASE64_D( SZ_BASE64_E( EVP_MAX_MD_SIZE ) ) ];
 
     EVP_DigestInit( mdctx, md );
 
@@ -106,7 +106,7 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
     unsigned int		md_len;
     extern EVP_MD		*md;
     EVP_MD_CTX          	*mdctx = EVP_MD_CTX_new();
-    unsigned char       	md_value[ EVP_MAX_MD_SIZE ];
+    unsigned char		md_value[ SZ_BASE64_D( SZ_BASE64_E( EVP_MAX_MD_SIZE ) ) ];
 
     EVP_DigestInit( mdctx, md );
 
@@ -169,7 +169,7 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
     }
 
     EVP_DigestFinal( mdctx, md_value, &md_len );
-    base64_e( md_value, md_len, cksum_b64 );
+    base64_e( ( unsigned char* ) md_value, md_len, cksum_b64 );
     EVP_MD_CTX_free( mdctx );
 
     return( size );

@@ -208,7 +208,7 @@ fsevent_callback( ConstFSEventStreamRef ref, void *info,
 	event_insert( &event_head, new );
 
 	if ( debug ) {
-	    printf( "%-10llu %-10lu %s\n", eids[ i ], eflags[ i ], paths[ i ] );
+	  printf( "%-10llu %-10lu %s\n", eids[ i ], ( unsigned long )eflags[ i ], paths[ i ] );
 	}
     }
 
