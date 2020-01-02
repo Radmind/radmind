@@ -64,8 +64,8 @@ copy_file( struct transcript *t, char *dst, char *src, int where )
     char		*path = t->t_pinfo.pi_name;
     ssize_t		rr, size = 0;
     EVP_MD_CTX          *mdctx = EVP_MD_CTX_new();
-    unsigned char       md_value[ EVP_MAX_MD_SIZE ];
-    char       		cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
+    unsigned char       md_value[ SZ_BASE64_D( SZ_BASE64_E( EVP_MAX_MD_SIZE ) ) ];
+    char       	        cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
 #ifdef __APPLE__
     extern struct as_header as_header;
     extern struct attrlist  getalist;
@@ -559,7 +559,7 @@ main( int ac, char *av[] )
     struct stat		st;
     char		*transcript;
     char		shortname[ MAXPATHLEN ], fullpath[ MAXPATHLEN ];
-    char		tmp[ MAXPATHLEN ], src[ MAXPATHLEN ], dst[ MAXPATHLEN ];
+    char		src[ MAXPATHLEN ], dst[ MAXPATHLEN ];
     char		root[ MAXPATHLEN ] = "/";
     char		*kfile = "/dev/null";
     char		*p, *dstdir = NULL;

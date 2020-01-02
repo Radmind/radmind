@@ -356,7 +356,7 @@ tls_client_start( SNET *sn, char *host, int authlevel )
 		    if ( ntype != IS_DNS ) {
 			continue;
 		    };
-		    sn = (char *) ASN1_STRING_data( gn->d.ia5 );
+		    sn = (char *) ASN1_STRING_get0_data( gn->d.ia5 );
 		    sl = ASN1_STRING_length( gn->d.ia5 );
 
 		    /* ignore empty */
@@ -391,7 +391,7 @@ tls_client_start( SNET *sn, char *host, int authlevel )
 			continue;
 		    }
 
-		    sn = (char *) ASN1_STRING_data( gn->d.ia5 );
+		    sn = (char *) ASN1_STRING_get0_data( gn->d.ia5 );
 		    sl = ASN1_STRING_length( gn->d.ia5 );
 
 		    if ( ntype == IS_IP4 && sl != sizeof( struct in_addr )) {
