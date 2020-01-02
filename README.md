@@ -102,6 +102,14 @@ fink install autoconf
 fink install openssl
 ```
 
+### Configuring for Raspbian Stretch (Debian 9)
+
+```
+sudo apt-get -y update
+sudo apt-get -y install git
+sudo apt-get -y install autoconf
+sudo apt-get -y install libssl-dev
+```
 
 ### Getting the Source
 
