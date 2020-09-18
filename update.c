@@ -8,9 +8,14 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
-#ifdef sun
+
+#ifdef MAJOR_IN_SYSMACROS
+#include <sys/sysmacros.h>
+#endif
+#ifdef MAJOR_IN_MKDEV
 #include <sys/mkdev.h>
-#endif /* sun */
+#endif
+
 #ifdef __APPLE__
 #include <sys/attr.h>
 #endif /* __APPLE__ */
@@ -59,9 +64,9 @@ update( char *path, char *displaypath, int present, int newfile,
     char		type;
     char		*d_target;
 #ifdef __APPLE__
-    char			fi_data[ FINFOLEN ];
+    unsigned char		fi_data[ SZ_BASE64_D( SZ_BASE64_E( FINFOLEN ) ) ];
     extern struct attrlist	setalist;
-    static char                 null_buf[ 32 ] = { 0 };
+    static char                 null_buf[ SZ_BASE64_D( SZ_BASE64_E( FINFOLEN ) ) ] = { 0 };
 #endif /* __APPLE__ */
 
     switch ( *targv[ 0 ] ) {
@@ -135,7 +140,7 @@ update( char *path, char *displaypath, int present, int newfile,
 	    if ( setattrlist( path, &setalist,
 		    fi_data, FINFOLEN, FSOPT_NOFOLLOW ) != 0 ) {
 		fprintf( stderr,
-		    "retrieve %s failed: Could not set attributes\n", path );
+		    "retrieve %s failed: Could not set Finder Info attribute\n", path );
 		return( -1 );
 	    }
 	}

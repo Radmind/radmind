@@ -23,7 +23,7 @@ AC_DEFUN([CHECK_SSL],
     AC_MSG_CHECKING(for ssl)
     ssldirs="/usr/local/openssl /usr/lib/openssl /usr/openssl \
 	    /usr/local/ssl /usr/lib/ssl /usr/ssl \
-	    /usr/pkg /usr/local /usr"
+	    /usr/pkg /usr/local /usr /sw /opt/sw"
     AC_ARG_WITH(ssl,
 	    AC_HELP_STRING([--with-ssl=DIR], [path to ssl]),
 	    ssldirs="$withval")
@@ -53,7 +53,7 @@ AC_DEFUN([CHECK_SSL],
 AC_DEFUN([CHECK_ZLIB],
 [
     AC_MSG_CHECKING(for zlib)
-    zlibdirs="/usr /usr/local"
+    zlibdirs="/usr /usr/local /sw /opt/sw"
 	withval=""
     AC_ARG_WITH(zlib,
             [AC_HELP_STRING([--with-zlib=DIR], [path to zlib])],

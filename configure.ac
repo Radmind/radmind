@@ -52,6 +52,17 @@ CHECK_UNIVERSAL_BINARIES
 # mute Mac OS X's helpful notices that using dylib OpenSSL
 MACOSX_MUTE_DEPRECATION_WARNINGS
 
+# Checks for header files
+
+# glibc 2.25 still includes sys/sysmacros.h in sys/types.h but emits
+# deprecation warning which causes compilation failure later with -Werror.
+# So use -Werror here as well to force proper sys/sysmacros.h detection.
+SAVED_CFLAGS="$CFLAGS"
+CFLAGS="$HOST_CFLAGS -Werror"
+AC_HEADER_MAJOR
+CFLAGS="$SAVED_CFLAGS"
+
+
 # Checks for libraries.
 AC_CHECK_LIB(c, inet_aton, libc_inet_aton=yes) 
 if test x$libc_inet_aton != xyes; then 

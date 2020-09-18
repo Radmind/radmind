@@ -147,7 +147,7 @@ getline:
     strcpy( tran->t_filepath, d_path );
 
     /* Check transcript order */
-    if ( tran->t_prepath != 0 ) {
+    if ( strlen( tran->t_prepath ) != 0 ) {
 	 
 	if ( pathcasecmp( tran->t_filepath, tran->t_prepath,
 		case_sensitive ) <= 0 ) {

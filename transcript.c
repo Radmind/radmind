@@ -7,9 +7,14 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
-#ifdef sun
+
+#ifdef MAJOR_IN_SYSMACROS
+#include <sys/sysmacros.h>
+#endif
+#ifdef MAJOR_IN_MKDEV
 #include <sys/mkdev.h>
-#endif /* sun */
+#endif
+
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
