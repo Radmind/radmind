@@ -11,5 +11,6 @@
 
 EVP_MD_CTX *EVP_MD_CTX_new(void);
 void EVP_MD_CTX_free(EVP_MD_CTX *ctx);
+const char *ASN1_STRING_get0_data(const ASN1_STRING *x);
 
 #endif // OLD OPENSSL <1.1.0

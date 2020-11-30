@@ -88,7 +88,8 @@ LFDIFF_OBJ=     version.o lfdiff.o argcargv.o connect.o retr.o cksum.o \
 		transcript.o list.o radstat.o hardlink.o mkprefix.o \
 		wildcard.o openssl_compat.o
 
-REPO_OBJ=	version.o repo.o report.o argcargv.o connect.o code.o tls.o
+REPO_OBJ=	version.o repo.o report.o argcargv.o connect.o code.o tls.o \
+		openssl_compat.o
 
 T2PKG_OBJ=	version.o t2pkg.o argcargv.o transcript.o connect.o code.o \
 		hardlink.o cksum.o base64.o pathcmp.o radstat.o applefile.o \
