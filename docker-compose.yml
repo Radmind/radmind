@@ -1,0 +1,10 @@
+version: "3"
+services:
+  app:
+    image: "ghcr.io/magnusviri/radmind:master"
+    build:
+      context: ./
+    ports:
+      - "6222:6222"
+    volumes:
+      - ./radmind:/var/radmind
