@@ -252,7 +252,7 @@ FRC :
 libsnet/libsnet.la : FRC
 	cd libsnet; ${MAKE}
 
-VERSION=	$(shell date +%Y%m%d)
+VERSION=	$(shell date +%Y%m%d%H%M)
 DISTDIR=	radmind-${VERSION}
 
 dist : distclean
@@ -384,6 +384,7 @@ package	: all man info rash
 		--version ${VERSION} \
 		${PKGSRCDIR}/../${PRODNAME}.pkg
 	(cd .. && tar cvfz ${PRODNAME}.pkg.tar.gz ${PRODNAME}.pkg)
+	rm  ${PKGSRCDIR}/../${PKGNAME}.pkg
 	rm -rf ${PKGDIR}
 
 clean :
