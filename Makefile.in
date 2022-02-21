@@ -325,7 +325,7 @@ install	: all man rash
 	-mkdir -p ${DESTDIR}/${POSTAPPLYDIR}
 	-mkdir -p ${DESTDIR}/${CERTDIR}
 
-INFOLIST=	$(wildcard OS_X/*.plist)	
+INFOLIST=	$(wildcard OS_X/*.xml)
 
 info :
 	-mkdir tmp
@@ -335,7 +335,8 @@ info :
 			$$i > tmp/$$i; \
 	done
 
-PKGNAME=	RadmindTools-${VERSION}
+PKGNAME=	RadmindTools
+PRODNAME=	RadmindTools-${VERSION}
 PKGDIR=		tmp/RadmindToolsInstaller
 PKGRSRCDIR=	tmp/Resources
 PKGSRCDIR=	`pwd`
@@ -370,16 +371,20 @@ package	: all man info rash
 	${INSTALL} -m 0644 -c OS_X/ReadMe.rtf ${PKGRSRCDIR}
 	${INSTALL} -m 0644 -c OS_X/Welcome.rtf ${PKGRSRCDIR}
 	${INSTALL} -m 0644 -c OS_X/background.tiff ${PKGRSRCDIR}
-	sudo chown -R root:wheel ${PKGDIR}
-	sudo chgrp admin ${PKGDIR}
-	/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/packagemaker \
-		-build -p ${PKGSRCDIR}/../${PKGNAME}.pkg \
-		-f ${PKGSRCDIR}/${PKGDIR} \
-		-r ${PKGSRCDIR}/${PKGRSRCDIR} \
-		-i ${PKGSRCDIR}/tmp/OS_X/Info.plist \
-		-d ${PKGSRCDIR}/tmp/OS_X/Description.plist
-	(cd .. && tar cvfz ${PKGNAME}.pkg.tar.gz ${PKGNAME}.pkg)
-	sudo rm -rf ${PKGDIR}
+	/usr/bin/pkgbuild \
+		--root ${PKGSRCDIR}/${PKGDIR} \
+		--identifier edu.umich.radmind \
+		--version ${VERSION} \
+		--install-location /\
+		${PKGSRCDIR}/../${PKGNAME}.pkg
+	/usr/bin/productbuild \
+		--distribution tmp/OS_X/distribution.xml \
+		--package-path ./${PKGSRCDIR}/../${PKGNAME}.pkg \
+		--resources ${PKGRSRCDIR} \
+		--version ${VERSION} \
+		${PKGSRCDIR}/../${PRODNAME}.pkg
+	(cd .. && tar cvfz ${PRODNAME}.pkg.tar.gz ${PRODNAME}.pkg)
+	rm -rf ${PKGDIR}
 
 clean :
 	(cd libsnet; ${MAKE} clean)

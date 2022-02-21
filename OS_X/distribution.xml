@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="1">
+    <pkg-ref id="edu.umich.radmind"/>
+	<background file="background.tiff" mime-type="image/tiff" />
+	<welcome file="Welcome.rtf" mime-type="text/rtf"/>
+	<readme file="ReadMe.rtf" mime-type="text/rtf"/>
+	<license file="License.rtf" mime-type="text/rtf"/>
+    <options customize="allow" require-scripts="false" hostArchitectures="x86_64,arm64"/>
+    <choices-outline>
+		<line choice="edu.umich.radmind"/>
+    </choices-outline>
+    <choice id="edu.umich.radmind"
+	        title="radmind"
+			enabled="false"
+			selected="true"
+    		visible="true"
+			customLocation="/"
+			customLocationAllowAlternateVolumes="true">
+        <pkg-ref id="edu.umich.radmind"/>
+    </choice>
+    <pkg-ref id="edu.umich.radmind" version="_RADMIND_VERSION" onConclusion="none">RadmindTools.pkg</pkg-ref>
+</installer-gui-script>
