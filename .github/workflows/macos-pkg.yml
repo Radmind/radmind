@@ -1,14 +1,14 @@
-name: Build
+name: Build Pkg
 on: 
   push:
     branches: [ master ]
   pull_request:
     branches: [ master ]
 jobs:
-  build:
+  build-pkg:
     strategy:
       matrix:
-        os: [ macos-10.15, macos-11 ]
+        os: [ macos-10.15 ]
     name: ${{ matrix.os }} radmind
     runs-on: ${{ matrix.os }}
 
@@ -23,6 +23,6 @@ jobs:
           fi
           sh bootstrap.sh
           ./configure
-      - name: Build
+      - name: make package
         run: |
           make package
