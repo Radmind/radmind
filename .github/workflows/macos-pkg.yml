@@ -31,6 +31,6 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: "../RadmindTools-*.pkg"
           file_glob: true
-          tag: ${{ env.VERSION }}
+          tag: ${{ github.ref }}
           overwrite: true
           asset_name: RadmindTools.pkg
