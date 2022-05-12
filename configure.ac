@@ -69,8 +69,8 @@ if test x$libc_inet_aton != xyes; then
     AC_CHECK_LIB(resolv, inet_aton) 
 fi 
 if test x$host_vendor = xapply; then
-    AC_CHECK_LIB(c, lchown, [AC_DEFINE(HAVE_LCHOWN)], [])
-    AC_CHECK_LIB(c, lchmod, [AC_DEFINE(HAVE_LCHMOD)], [])
+    AC_CHECK_LIB(c, lchown, [AC_DEFINE([HAVE_LCHOWN], [], [lchown])])
+    AC_CHECK_LIB(c, lchmod, [AC_DEFINE([HAVE_LCHMOD], [], [lchmod])])
 fi
 AC_CHECK_LIB(nsl, gethostbyaddr)
 AC_CHECK_LIB([socket], [socket])
@@ -78,7 +78,7 @@ AC_CHECK_LIB([ssl], [SSL_accept], , [CHECK_SSL])
 AC_CHECK_HEADER([openssl/ssl.h], [], [AC_MSG_ERROR([header file <openssl/ssl.h>
 is required for this software.  You may be running RedHat 9.  If so, see the FAQ or the README for further instructions.])])
 AC_CHECK_LIB([crypto], [SSLeay_version], , [CHECK_SSL])
-AC_CHECK_LIB([crypto], [X509_VERIFY_PARAM_set_flags], [AC_DEFINE(HAVE_X509_VERIFY_PARAM)], [])
+AC_CHECK_LIB([crypto], [X509_VERIFY_PARAM_set_flags], [AC_DEFINE([HAVE_X509_VERIFY_PARAM], [], [X509_verify_param])])
 
 # PAM
 AC_ARG_WITH([pam], AC_HELP_STRING([--with-pam=PATH], [Pluggable Authentication Module support (default: /usr)]), [], with_pam=/usr)
@@ -88,12 +88,12 @@ if test x_"$with_pam" != x_no; then
     AC_CHECK_LIB([pam], [pam_start],
 	[
 	AC_CHECK_HEADERS(pam/pam_appl.h, , [AC_CHECK_HEADERS(security/pam_appl.h)])
-	AC_DEFINE(HAVE_LIBPAM)
+	AC_DEFINE([HAVE_LIBPAM], [], [libpam])
 	LIBS="$LIBS -lpam";
 	] 
     )
 fi
-AC_CHECK_HEADER([dns_sd.h], [AC_DEFINE(HAVE_DNSSD)], [], [])
+AC_CHECK_HEADER([dns_sd.h], [AC_DEFINE([HAVE_DNSSD], [], [dnssd])])
 AC_CHECK_LIB(dns_sd, DNSServiceRegister)
 
 CHECK_ZLIB
