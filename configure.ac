@@ -46,12 +46,6 @@ AC_SYS_LARGEFILE
 AC_CHECK_SIZEOF(off_t)
 AC_CHECK_SIZEOF(time_t)
 
-# check early to make any required changes to environment for following tests.
-CHECK_UNIVERSAL_BINARIES
-
-# mute Mac OS X's helpful notices that using dylib OpenSSL
-MACOSX_MUTE_DEPRECATION_WARNINGS
-
 # Checks for header files
 
 # glibc 2.25 still includes sys/sysmacros.h in sys/types.h but emits
@@ -74,17 +68,20 @@ if test x$host_vendor = xapply; then
 fi
 AC_CHECK_LIB(nsl, gethostbyaddr)
 AC_CHECK_LIB([socket], [socket])
-AC_CHECK_LIB([ssl], [SSL_accept], , [CHECK_SSL])
+
+PKG_CHECK_MODULES([ssl], [openssl],
+    [AC_DEFINE([HAVE_LIBSSL], [1], [libssl])])
+AC_SUBST([ssl_LIBS])
+AC_SUBST([ssl_CFLAGS])
+
 AC_CHECK_HEADER([openssl/ssl.h], [], [AC_MSG_ERROR([header file <openssl/ssl.h>
 is required for this software.  You may be running RedHat 9.  If so, see the FAQ or the README for further instructions.])])
-AC_CHECK_LIB([crypto], [SSLeay_version], , [CHECK_SSL])
 AC_CHECK_LIB([crypto], [X509_VERIFY_PARAM_set_flags], [AC_DEFINE([HAVE_X509_VERIFY_PARAM], [], [X509_verify_param])])
 
 # PAM
 AC_ARG_WITH([pam], AC_HELP_STRING([--with-pam=PATH], [Pluggable Authentication Module support (default: /usr)]), [], with_pam=/usr)
 if test x_"$with_pam" != x_no; then
     CPPFLAGS="${CPPFLAGS} -I$with_pam/include"
-    LDFLAGS="${LDFLAGS} -L$with_pam/lib"
     AC_CHECK_LIB([pam], [pam_start],
 	[
 	AC_CHECK_HEADERS(pam/pam_appl.h, , [AC_CHECK_HEADERS(security/pam_appl.h)])
@@ -96,7 +93,11 @@ fi
 AC_CHECK_HEADER([dns_sd.h], [AC_DEFINE([HAVE_DNSSD], [], [dnssd])])
 AC_CHECK_LIB(dns_sd, DNSServiceRegister)
 
-CHECK_ZLIB
+PKG_CHECK_MODULES([zlib], [zlib],
+    [AC_DEFINE([HAVE_ZLIB], [1], [zlib])],
+    [AC_MSG_WARN(zlib.pc not found, building without zlib support)])
+AC_SUBST([zlib_LIBS])
+AC_SUBST([zlib_CFLAGS])
 
 # HPUX lacks wait4 and strtoll
 AC_CHECK_FUNCS(wait4 strtoll)
