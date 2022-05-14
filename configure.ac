@@ -56,6 +56,25 @@ CFLAGS="$HOST_CFLAGS -Werror"
 AC_HEADER_MAJOR
 CFLAGS="$SAVED_CFLAGS"
 
+# Enable features.
+
+AC_ARG_ENABLE([pam],
+    AS_HELP_STRING([--enable-pam], [Build with pam @<:@default=yes@:>@]),
+    [AS_CASE(${enableval}, [yes], [], [no], [],
+        [AC_MSG_ERROR([bad value '${enableval}' for --enable-pam])])],
+    [enable_pam=check])
+
+AC_ARG_ENABLE([ssl],
+    AS_HELP_STRING([--enable-ssl], [Build with openssl @<:@default=yes@:>@]),
+    [AS_CASE(${enableval}, [yes], [], [no], [],
+        [AC_MSG_ERROR([bad value '${enableval}' for --enable-ssl])])],
+    [enable_ssl=check])
+
+AC_ARG_ENABLE([zlib],
+    AS_HELP_STRING([--enable-zlib], [Build with zlib @<:@default=yes@:>@]),
+    [AS_CASE(${enableval}, [yes], [], [no], [],
+        [AC_MSG_ERROR([bad value '${enableval}' for --enable-zlib])])],
+    [enable_zlib=check])
 
 # Checks for libraries.
 AC_CHECK_LIB(c, inet_aton, libc_inet_aton=yes) 
@@ -69,35 +88,65 @@ fi
 AC_CHECK_LIB(nsl, gethostbyaddr)
 AC_CHECK_LIB([socket], [socket])
 
-PKG_CHECK_MODULES([ssl], [openssl],
-    [AC_DEFINE([HAVE_LIBSSL], [1], [libssl])])
-AC_SUBST([ssl_LIBS])
-AC_SUBST([ssl_CFLAGS])
+# Checks for pam.
+AS_IF([test x$enable_pam != xno],
+    [PKG_CHECK_MODULES([pam], [pam],
+	[AC_CHECK_HEADERS([pam/pam_appl.h],
+	    [], [AC_CHECK_HEADERS([security/pam_appl.h])])]
+        [AC_DEFINE([HAVE_LIBPAM], [1], [libpam])],
+        [AS_IF([test x$enable_pam != xyes],
+            [AC_MSG_WARN([cannot find pam.pc, disabling pam support])],
+            [enable_pam=error])
+        ])
+    ])
+
+AS_IF([test x$enable_pam = xerror],
+    [AC_MSG_ERROR([cannot find pam.pc and pam support requested])])
+
+AM_CONDITIONAL([ENABLE_PAM], [test x$enable_pam = xyes])
+AC_SUBST([pam_CFLAGS])
+AC_SUBST([pam_LIBS])
+
+# Checks for openssl.
+AS_IF([test x$enable_ssl != xno],
+    [PKG_CHECK_MODULES([ssl], [openssl],
+        [AC_DEFINE([HAVE_LIBSSL], [1], [libssl])],
+        [AS_IF([test x$enable_ssl != xyes],
+            [AC_MSG_WARN([cannot find openssl.pc, disabling libssl support])],
+            [enable_ssl=error])
+        ])
+    ])
 
 AC_CHECK_HEADER([openssl/ssl.h], [], [AC_MSG_ERROR([header file <openssl/ssl.h>
 is required for this software.  You may be running RedHat 9.  If so, see the FAQ or the README for further instructions.])])
 AC_CHECK_LIB([crypto], [X509_VERIFY_PARAM_set_flags], [AC_DEFINE([HAVE_X509_VERIFY_PARAM], [], [X509_verify_param])])
 
-# PAM
-AC_ARG_WITH([pam], AC_HELP_STRING([--with-pam=PATH], [Pluggable Authentication Module support (default: /usr)]), [], with_pam=/usr)
-if test x_"$with_pam" != x_no; then
-    CPPFLAGS="${CPPFLAGS} -I$with_pam/include"
-    AC_CHECK_LIB([pam], [pam_start],
-	[
-	AC_CHECK_HEADERS(pam/pam_appl.h, , [AC_CHECK_HEADERS(security/pam_appl.h)])
-	AC_DEFINE([HAVE_LIBPAM], [], [libpam])
-	LIBS="$LIBS -lpam";
-	] 
-    )
-fi
+AS_IF([test x$enable_ssl = xerror],
+    [AC_MSG_ERROR([cannot find openssl.pc and libssl support requested])])
+
+AM_CONDITIONAL([ENABLE_LIBSSL], [test x$enable_ssl = xyes])
+AC_SUBST([ssl_CFLAGS])
+AC_SUBST([ssl_LIBS])
+
 AC_CHECK_HEADER([dns_sd.h], [AC_DEFINE([HAVE_DNSSD], [], [dnssd])])
 AC_CHECK_LIB(dns_sd, DNSServiceRegister)
 
-PKG_CHECK_MODULES([zlib], [zlib],
-    [AC_DEFINE([HAVE_ZLIB], [1], [zlib])],
-    [AC_MSG_WARN(zlib.pc not found, building without zlib support)])
-AC_SUBST([zlib_LIBS])
+# Checks for zlib.
+AS_IF([test x$enable_zlib != xno],
+    [PKG_CHECK_MODULES([zlib], [zlib],
+        [AC_DEFINE([HAVE_ZLIB], [1], [zlib])],
+        [AS_IF([test x$enable_zlib != xyes],
+            [AC_MSG_WARN([cannot find zlib.pc, disabling zlib support])],
+            [enable_zlib=error])
+        ])
+    ])
+
+AS_IF([test x$enable_zlib = xerror],
+    [AC_MSG_ERROR([cannot find zlib.pc and zlib support requested])])
+
+AM_CONDITIONAL([ENABLE_ZLIB], [test x$enable_zlib = xyes])
 AC_SUBST([zlib_CFLAGS])
+AC_SUBST([zlib_LIBS])
 
 # HPUX lacks wait4 and strtoll
 AC_CHECK_FUNCS(wait4 strtoll)

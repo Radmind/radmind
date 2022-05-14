@@ -39,12 +39,12 @@ INCPATH=        @CPPFLAGS@ -I${srcdir}/libsnet -I.
 OPTOPTS=	@OPTOPTS@
 CC=		@CC@
 DEFS=		
-LIBS=		-lsnet @LIBS@ @ssl_LIBS@ @zlib_LIBS@
+LIBS=		-lsnet @LIBS@ @pam_LIBS@ @ssl_LIBS@ @zlib_LIBS@
 LDFLAGS=	-Llibsnet/.libs @LDFLAGS@ ${LIBS}
 INSTALL=	@INSTALL@
 
 CFLAGS=		${DEFS} ${OPTOPTS} ${INCPATH} \
-			@ssl_CFLAGS@ @zlib_CFLAGS@ @CFLAGS@
+			@pam_CFLAGS@ @ssl_CFLAGS@ @zlib_CFLAGS@ @CFLAGS@
 
 BINTARGETS=     fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff repo \
 		twhich lsort
