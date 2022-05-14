@@ -39,11 +39,12 @@ INCPATH=        @CPPFLAGS@ -I${srcdir}/libsnet -I.
 OPTOPTS=	@OPTOPTS@
 CC=		@CC@
 DEFS=		
-LIBS=		-lsnet @LIBS@
+LIBS=		-lsnet @LIBS@ @pam_LIBS@ @ssl_LIBS@ @zlib_LIBS@
 LDFLAGS=	-Llibsnet/.libs @LDFLAGS@ ${LIBS}
 INSTALL=	@INSTALL@
 
-CFLAGS=		${DEFS} ${OPTOPTS} @CFLAGS@ ${INCPATH}
+CFLAGS=		${DEFS} ${OPTOPTS} ${INCPATH} \
+			@pam_CFLAGS@ @ssl_CFLAGS@ @zlib_CFLAGS@ @CFLAGS@
 
 BINTARGETS=     fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff repo \
 		twhich lsort
@@ -256,10 +257,10 @@ VERSION=$(shell date +%Y%m%d)
 DISTDIR=radmind-${VERSION}
 
 dist   : distclean
-	mkdir ../${DISTDIR}
+	mkdir -p ../${DISTDIR}
 	tar -h -c -f - -X EXCLUDE . | tar xpf - -C ../${DISTDIR}
 	echo ${VERSION} > ../${DISTDIR}/VERSION
-	-mkdir ../${DISTDIR}/tmp
+	-mkdir -p ../${DISTDIR}/tmp
 	for i in ${MANTARGETS}; do \
 	    sed -e 's@_RADMIND_BUILD_DATE@${RADMIND_BUILD_DATE}@g' \
 		../${DISTDIR}/man/$$i > ../${DISTDIR}/tmp/$$i; \
@@ -269,7 +270,7 @@ dist   : distclean
 	(cd .. && tar cvfz ${DISTDIR}.tar.gz ${DISTDIR})
 
 rash : FRC
-	-mkdir tmp
+	-mkdir -p tmp
 	sed -e 's@_RADMIND_HOST@${RADMIND_HOST}@g' \
 	    -e 's@_RADMIND_AUTHLEVEL@${RADMIND_AUTHLEVEL}@g' \
 	    -e 's@_RADMIND_PREAPPLY@${PREAPPLYDIR}@g' \
@@ -283,8 +284,8 @@ rash : FRC
 	    ${srcdir}/ra.sh > tmp/ra.sh; 
 
 man : FRC
-	-mkdir tmp
-	-mkdir tmp/man
+	-mkdir -p tmp
+	-mkdir -p tmp/man
 	pwd
 	for i in ${MANTARGETS}; do \
 	    sed -e 's@_RADMIND_PATH@${RADMINDDIR}@g'  \
@@ -308,15 +309,15 @@ install	: all man rash
 	${INSTALL} -m 0755 -c tmp/ra.sh ${DESTDIR}/${BINDIR}/
 	-mkdir -p ${DESTDIR}/${prefix}
 	-mkdir -p ${DESTDIR}/${MANDIR}
-	-mkdir ${DESTDIR}/${MANDIR}/man1
+	-mkdir -p ${DESTDIR}/${MANDIR}/man1
 	for i in ${MAN1TARGETS}; do \
 	    ${INSTALL} -m 0644 -c tmp/man/$$i ${DESTDIR}/${MANDIR}/man1/; \
 	done
-	-mkdir ${DESTDIR}/${MANDIR}/man5
+	-mkdir -p ${DESTDIR}/${MANDIR}/man5
 	for i in ${MAN5TARGETS}; do \
 	    ${INSTALL} -m 0644 -c tmp/man/$$i ${DESTDIR}/${MANDIR}/man5/; \
 	done
-	-mkdir ${DESTDIR}/${MANDIR}/man8
+	-mkdir -p ${DESTDIR}/${MANDIR}/man8
 	 for i in ${MAN8TARGETS}; do \
 	    ${INSTALL} -m 0644 -c tmp/man/$$i ${DESTDIR}/${MANDIR}/man8/; \
 	done
@@ -333,8 +334,8 @@ PKGSRCDIR=`pwd`
 INFOLIST=	$(wildcard OS_X/*.plist)	
 
 info :
-	-mkdir tmp
-	-mkdir tmp/OS_X
+	-mkdir -p tmp
+	-mkdir -p tmp/OS_X
 	for i in ${INFOLIST}; do \
 	    sed -e 's@_RADMIND_VERSION@${VERSION}@g'  \
 		$$i > tmp/$$i; \
