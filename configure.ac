@@ -113,7 +113,9 @@ if test x_"$OPTOPTS" = x_; then
 fi
 AC_SUBST(OPTOPTS)
 
-SET_NO_SASL
+ac_configure_args="$ac_configure_args --enable-sasl=no";
+AC_MSG_RESULT([Disabling SASL for libsnet])
+
 AC_CONFIG_SUBDIRS(libsnet)
 AC_CONFIG_FILES(Makefile)
 AC_OUTPUT
