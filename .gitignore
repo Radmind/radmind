@@ -24,3 +24,7 @@ lsort
 radmind
 repo
 twhich
+
+# macOS garbage #
+#################
+.DS_Store

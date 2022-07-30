@@ -1,105 +1,105 @@
 # Copyright (c) 2003 Regents of The University of Michigan.
 # All Rights Reserved.  See COPYRIGHT.
 
-SHELL = /bin/sh
+SHELL =			/bin/sh
 
-srcdir = @srcdir@
-VPATH = @srcdir@
+srcdir =		@srcdir@
+VPATH =			@srcdir@
 
-prefix=@prefix@
-exec_prefix=@exec_prefix@
-datarootdir=@datarootdir@
-datadir=@datadir@
-MANDIR=@mandir@
-BINDIR=@bindir@
-SBINDIR=@sbindir@
+prefix=			@prefix@
+exec_prefix=	@exec_prefix@
+datarootdir=	@datarootdir@
+datadir=		@datadir@
+MANDIR=			@mandir@
+BINDIR=			@bindir@
+SBINDIR=		@sbindir@
 
 # For server
-RADMINDDIR=@radminddir@
+RADMINDDIR=		@radminddir@
 
 # For client
-COMMANDFILE=${RADMINDDIR}/client/command.K
-CERTDIR=${RADMINDDIR}/cert
-PREAPPLYDIR=${RADMINDDIR}/preapply
-POSTAPPLYDIR=${RADMINDDIR}/postapply
-TLS_CA=${CERTDIR}/ca.pem
-TLS_CERT=${CERTDIR}/cert.pem
-GNU_DIFF=@diffpath@
-ECHO=@echopath@
-MKTEMP=@mktemppath@
-RADMIND_HOST=@server@
-RADMIND_AUTHLEVEL=@authlevel@
-RADMIND_MAXCONNECTIONS=@maxconnections@
-RADMIND_BUILD_DATE=@build_date@
-RADMIND_MAIL_DOMAIN=@maildomain@
+COMMANDFILE=	${RADMINDDIR}/client/command.K
+CERTDIR=		${RADMINDDIR}/cert
+PREAPPLYDIR=	${RADMINDDIR}/preapply
+POSTAPPLYDIR=	${RADMINDDIR}/postapply
+TLS_CA=			${CERTDIR}/ca.pem
+TLS_CERT=		${CERTDIR}/cert.pem
+GNU_DIFF=		@diffpath@
+ECHO=			@echopath@
+MKTEMP=			@mktemppath@
+RADMIND_HOST=	@server@
+RADMIND_AUTHLEVEL=		@authlevel@
+RADMIND_MAXCONNECTIONS=	@maxconnections@
+RADMIND_BUILD_DATE=		@build_date@
+RADMIND_MAIL_DOMAIN=	@maildomain@
 
-RADMINDSYSLOG=LOG_LOCAL7
+RADMINDSYSLOG=	LOG_LOCAL7
 
-INCPATH=        @CPPFLAGS@ -I${srcdir}/libsnet -I.
-OPTOPTS=	@OPTOPTS@
-CC=		@CC@
+INCPATH=		@CPPFLAGS@ -I${srcdir}/libsnet -I.
+OPTOPTS=		@OPTOPTS@
+CC=				@CC@
 DEFS=		
-LIBS=		-lsnet @LIBS@
-LDFLAGS=	-Llibsnet/.libs @LDFLAGS@ ${LIBS}
-INSTALL=	@INSTALL@
+LIBS=			-lsnet @LIBS@
+LDFLAGS=		-Llibsnet/.libs @LDFLAGS@ ${LIBS}
+INSTALL=		@INSTALL@
 
-CFLAGS=		${DEFS} ${OPTOPTS} @CFLAGS@ ${INCPATH}
+CFLAGS=			${DEFS} ${OPTOPTS} @CFLAGS@ ${INCPATH}
 
-BINTARGETS=     fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff repo \
-		twhich lsort
-MAN1TARGETS=    fsdiff.1 ktcheck.1 lapply.1 lcksum.1 lcreate.1 lfdiff.1 \
-		lmerge.1 twhich.1 rash.1 repo.1 lsort.1
+BINTARGETS=		fsdiff ktcheck lapply lcksum lcreate lmerge lfdiff repo \
+				twhich lsort
+MAN1TARGETS=	fsdiff.1 ktcheck.1 lapply.1 lcksum.1 lcreate.1 lfdiff.1 \
+				lmerge.1 twhich.1 rash.1 repo.1 lsort.1
 MAN5TARGETS= 	applefile.5
 MAN8TARGETS=	radmind.8
-MANTARGETS=	${MAN1TARGETS} ${MAN5TARGETS} ${MAN8TARGETS}
-TARGETS=        radmind ${BINTARGETS}
+MANTARGETS=		${MAN1TARGETS} ${MAN5TARGETS} ${MAN8TARGETS}
+TARGETS=		radmind ${BINTARGETS}
 
-RADMIND_OBJ=    version.o daemon.o command.o argcargv.o code.o \
-                cksum.o base64.o mkdirs.o applefile.o connect.o \
-		list.o wildcard.o logname.o pathcmp.o tls.o \
-		openssl_compat.o
+RADMIND_OBJ=	version.o daemon.o command.o argcargv.o code.o \
+				cksum.o base64.o mkdirs.o applefile.o connect.o \
+				list.o wildcard.o logname.o pathcmp.o tls.o \
+				openssl_compat.o
 
-FSDIFF_OBJ=     version.o fsdiff.o argcargv.o transcript.o llist.o code.o \
-                hardlink.o cksum.o base64.o pathcmp.o radstat.o applefile.o \
-		list.o wildcard.o openssl_compat.o
+FSDIFF_OBJ=		version.o fsdiff.o argcargv.o transcript.o llist.o code.o \
+				hardlink.o cksum.o base64.o pathcmp.o radstat.o applefile.o \
+				list.o wildcard.o openssl_compat.o
 
-KTCHECK_OBJ=    version.o ktcheck.o argcargv.o retr.o base64.o code.o \
-                cksum.o list.o llist.o connect.o applefile.o tls.o pathcmp.o \
-		progress.o mkdirs.o report.o rmdirs.o mkprefix.o \
-		openssl_compat.o
+KTCHECK_OBJ=	version.o ktcheck.o argcargv.o retr.o base64.o code.o \
+				cksum.o list.o llist.o connect.o applefile.o tls.o pathcmp.o \
+				progress.o mkdirs.o report.o rmdirs.o mkprefix.o \
+				openssl_compat.o
 
-LAPPLY_OBJ=     version.o lapply.o argcargv.o code.o base64.o retr.o \
-                radstat.o update.o cksum.o connect.o pathcmp.o progress.o \
-                applefile.o report.o tls.o mkprefix.o openssl_compat.o
+LAPPLY_OBJ=		version.o lapply.o argcargv.o code.o base64.o retr.o \
+				radstat.o update.o cksum.o connect.o pathcmp.o progress.o \
+				applefile.o report.o tls.o mkprefix.o openssl_compat.o
 
-LCREATE_OBJ=    version.o lcreate.o argcargv.o code.o connect.o progress.o \
-                stor.o applefile.o base64.o cksum.o radstat.o tls.o \
-		openssl_compat.o
+LCREATE_OBJ=	version.o lcreate.o argcargv.o code.o connect.o progress.o \
+				stor.o applefile.o base64.o cksum.o radstat.o tls.o \
+				openssl_compat.o
 
-LCKSUM_OBJ=     version.o lcksum.o argcargv.o cksum.o base64.o code.o \
-                progress.o pathcmp.o applefile.o connect.o root.o \
-		openssl_compat.o
+LCKSUM_OBJ=		version.o lcksum.o argcargv.o cksum.o base64.o code.o \
+				progress.o pathcmp.o applefile.o connect.o root.o \
+				openssl_compat.o
 
-LMERGE_OBJ=     version.o lmerge.o argcargv.o code.o pathcmp.o mkdirs.o \
-		root.o
+LMERGE_OBJ=		version.o lmerge.o argcargv.o code.o pathcmp.o mkdirs.o \
+				root.o
 
-LFDIFF_OBJ=     version.o lfdiff.o argcargv.o connect.o retr.o cksum.o \
-                progress.o base64.o applefile.o code.o tls.o pathcmp.o \
-		transcript.o list.o radstat.o hardlink.o mkprefix.o \
-		wildcard.o openssl_compat.o
+LFDIFF_OBJ=		version.o lfdiff.o argcargv.o connect.o retr.o cksum.o \
+				progress.o base64.o applefile.o code.o tls.o pathcmp.o \
+				transcript.o list.o radstat.o hardlink.o mkprefix.o \
+				wildcard.o openssl_compat.o
 
-REPO_OBJ=	version.o repo.o report.o argcargv.o connect.o code.o tls.o
+REPO_OBJ=		version.o repo.o report.o argcargv.o connect.o code.o tls.o
 
-T2PKG_OBJ=	version.o t2pkg.o argcargv.o transcript.o connect.o code.o \
-		hardlink.o cksum.o base64.o pathcmp.o radstat.o applefile.o \
-		list.o rmdirs.o mkdirs.o wildcard.o progress.o \
-		openssl_compat.o
+T2PKG_OBJ=		version.o t2pkg.o argcargv.o transcript.o connect.o code.o \
+				hardlink.o cksum.o base64.o pathcmp.o radstat.o applefile.o \
+				list.o rmdirs.o mkdirs.o wildcard.o progress.o \
+				openssl_compat.o
 
-TWHICH_OBJ=     version.o twhich.o argcargv.o transcript.o llist.o code.o \
-                hardlink.o cksum.o base64.o pathcmp.o radstat.o applefile.o \
-		list.o wildcard.o openssl_compat.o
+TWHICH_OBJ=		version.o twhich.o argcargv.o transcript.o llist.o code.o \
+				hardlink.o cksum.o base64.o pathcmp.o radstat.o applefile.o \
+				list.o wildcard.o openssl_compat.o
 
-LSORT_OBJ=     version.o lsort.o pathcmp.o code.o argcargv.o
+LSORT_OBJ=		version.o lsort.o pathcmp.o code.o argcargv.o
 
 all : ${TARGETS}
 
@@ -252,17 +252,17 @@ FRC :
 libsnet/libsnet.la : FRC
 	cd libsnet; ${MAKE}
 
-VERSION=$(shell date +%Y%m%d)
-DISTDIR=radmind-${VERSION}
+VERSION=	$(shell date +%Y%m%d%H%M)
+DISTDIR=	radmind-${VERSION}
 
-dist   : distclean
+dist : distclean
 	mkdir ../${DISTDIR}
 	tar -h -c -f - -X EXCLUDE . | tar xpf - -C ../${DISTDIR}
 	echo ${VERSION} > ../${DISTDIR}/VERSION
 	-mkdir ../${DISTDIR}/tmp
 	for i in ${MANTARGETS}; do \
-	    sed -e 's@_RADMIND_BUILD_DATE@${RADMIND_BUILD_DATE}@g' \
-		../${DISTDIR}/man/$$i > ../${DISTDIR}/tmp/$$i; \
+		sed -e 's@_RADMIND_BUILD_DATE@${RADMIND_BUILD_DATE}@g' \
+			../${DISTDIR}/man/$$i > ../${DISTDIR}/tmp/$$i; \
 	done
 	rm -rf ../${DISTDIR}/man
 	mv ../${DISTDIR}/tmp ../${DISTDIR}/man
@@ -271,30 +271,30 @@ dist   : distclean
 rash : FRC
 	-mkdir tmp
 	sed -e 's@_RADMIND_HOST@${RADMIND_HOST}@g' \
-	    -e 's@_RADMIND_AUTHLEVEL@${RADMIND_AUTHLEVEL}@g' \
-	    -e 's@_RADMIND_PREAPPLY@${PREAPPLYDIR}@g' \
-	    -e 's@_RADMIND_POSTAPPLY@${POSTAPPLYDIR}@g' \
-	    -e 's@_RADMIND_MKTEMP@${MKTEMP}@g' \
-	    -e 's@_RADMIND_DIR@${RADMINDDIR}@g' \
-	    -e 's@_RADMIND_MAIL_DOMAIN@${RADMIND_MAIL_DOMAIN}@g' \
-	    -e 's@_RADMIND_COMMANDFILE@${COMMANDFILE}@g' \
-	    -e 's@_RADMIND_VERSION@$(shell cat VERSION)@g' \
-	    -e 's@_RADMIND_ECHO_PATH@${ECHO}@g' \
-	    ${srcdir}/ra.sh > tmp/ra.sh; 
+		-e 's@_RADMIND_AUTHLEVEL@${RADMIND_AUTHLEVEL}@g' \
+		-e 's@_RADMIND_PREAPPLY@${PREAPPLYDIR}@g' \
+		-e 's@_RADMIND_POSTAPPLY@${POSTAPPLYDIR}@g' \
+		-e 's@_RADMIND_MKTEMP@${MKTEMP}@g' \
+		-e 's@_RADMIND_DIR@${RADMINDDIR}@g' \
+		-e 's@_RADMIND_MAIL_DOMAIN@${RADMIND_MAIL_DOMAIN}@g' \
+		-e 's@_RADMIND_COMMANDFILE@${COMMANDFILE}@g' \
+		-e 's@_RADMIND_VERSION@$(shell cat VERSION)@g' \
+		-e 's@_RADMIND_ECHO_PATH@${ECHO}@g' \
+		${srcdir}/ra.sh > tmp/ra.sh; 
 
 man : FRC
 	-mkdir tmp
 	-mkdir tmp/man
 	pwd
 	for i in ${MANTARGETS}; do \
-	    sed -e 's@_RADMIND_PATH@${RADMINDDIR}@g'  \
-		-e 's@_RADMIND_COMMANDFILE@${COMMANDFILE}@g' \
-		-e 's@_RADMIND_HOST@${RADMIND_HOST}@g' \
-		-e 's@_RADMIND_AUTHLEVEL@${RADMIND_AUTHLEVEL}@g' \
-		-e 's@_RADMIND_TLS_CA@${TLS_CA}@g' \
-		-e 's@_RADMIND_TLS_CERT@${TLS_CERT}@g' \
-		-e 's@_RADMIND_MAXCONNECTIONS@${RADMIND_MAXCONNECTIONS}@g' \
-		${srcdir}/man/$$i > tmp/man/$$i; \
+		sed -e 's@_RADMIND_PATH@${RADMINDDIR}@g' \
+			-e 's@_RADMIND_COMMANDFILE@${COMMANDFILE}@g' \
+			-e 's@_RADMIND_HOST@${RADMIND_HOST}@g' \
+			-e 's@_RADMIND_AUTHLEVEL@${RADMIND_AUTHLEVEL}@g' \
+			-e 's@_RADMIND_TLS_CA@${TLS_CA}@g' \
+			-e 's@_RADMIND_TLS_CERT@${TLS_CERT}@g' \
+			-e 's@_RADMIND_MAXCONNECTIONS@${RADMIND_MAXCONNECTIONS}@g' \
+			${srcdir}/man/$$i > tmp/man/$$i; \
 	done
 
 install	: all man rash
@@ -303,63 +303,64 @@ install	: all man rash
 	${INSTALL} -m 0755 -c radmind ${DESTDIR}/${SBINDIR}/
 	-mkdir -p ${DESTDIR}/${BINDIR}
 	for i in ${BINTARGETS}; do \
-	    ${INSTALL} -m 0755 -c $$i ${DESTDIR}/${BINDIR}/; \
+		${INSTALL} -m 0755 -c $$i ${DESTDIR}/${BINDIR}/; \
 	done
 	${INSTALL} -m 0755 -c tmp/ra.sh ${DESTDIR}/${BINDIR}/
 	-mkdir -p ${DESTDIR}/${prefix}
 	-mkdir -p ${DESTDIR}/${MANDIR}
 	-mkdir ${DESTDIR}/${MANDIR}/man1
 	for i in ${MAN1TARGETS}; do \
-	    ${INSTALL} -m 0644 -c tmp/man/$$i ${DESTDIR}/${MANDIR}/man1/; \
+		${INSTALL} -m 0644 -c tmp/man/$$i ${DESTDIR}/${MANDIR}/man1/; \
 	done
 	-mkdir ${DESTDIR}/${MANDIR}/man5
 	for i in ${MAN5TARGETS}; do \
-	    ${INSTALL} -m 0644 -c tmp/man/$$i ${DESTDIR}/${MANDIR}/man5/; \
+		${INSTALL} -m 0644 -c tmp/man/$$i ${DESTDIR}/${MANDIR}/man5/; \
 	done
 	-mkdir ${DESTDIR}/${MANDIR}/man8
-	 for i in ${MAN8TARGETS}; do \
-	    ${INSTALL} -m 0644 -c tmp/man/$$i ${DESTDIR}/${MANDIR}/man8/; \
+	for i in ${MAN8TARGETS}; do \
+		${INSTALL} -m 0644 -c tmp/man/$$i ${DESTDIR}/${MANDIR}/man8/; \
 	done
 	-mkdir -p ${DESTDIR}/${RADMINDDIR}/client
 	-mkdir -p ${DESTDIR}/${PREAPPLYDIR}
 	-mkdir -p ${DESTDIR}/${POSTAPPLYDIR}
 	-mkdir -p ${DESTDIR}/${CERTDIR}
 
-PKGNAME=RadmindTools-${VERSION}
-PKGDIR=tmp/RadmindToolsInstaller
-PKGRSRCDIR=tmp/Resources
-PKGSRCDIR=`pwd`
-
-INFOLIST=	$(wildcard OS_X/*.plist)	
+INFOLIST=	$(wildcard OS_X/*.xml)
 
 info :
 	-mkdir tmp
 	-mkdir tmp/OS_X
 	for i in ${INFOLIST}; do \
-	    sed -e 's@_RADMIND_VERSION@${VERSION}@g'  \
-		$$i > tmp/$$i; \
+		sed -e 's@_RADMIND_VERSION@${VERSION}@g' \
+			$$i > tmp/$$i; \
 	done
+
+PKGNAME=	RadmindTools
+PRODNAME=	RadmindTools-${VERSION}
+PKGDIR=		tmp/RadmindToolsInstaller
+PKGRSRCDIR=	tmp/Resources
+PKGSRCDIR=	`pwd`
 
 package	: all man info rash
 	-mkdir -p -m 0755 ${PKGDIR}/${SBINDIR}
 	${INSTALL} -m 0755 -c radmind ${PKGDIR}/${SBINDIR}/
 	-mkdir -p -m 0755 ${PKGDIR}/${BINDIR}
 	for i in ${BINTARGETS}; do \
-	    ${INSTALL} -m 0755 -c $$i ${PKGDIR}/${BINDIR}/; \
+		${INSTALL} -m 0755 -c $$i ${PKGDIR}/${BINDIR}/; \
 	done
 	${INSTALL} -m 0755 -c tmp/ra.sh ${PKGDIR}/${BINDIR}/
 	-mkdir -p -m 0755 ${PKGDIR}/${MANDIR}
 	-mkdir -p -m 0755 ${PKGDIR}/${MANDIR}/man1
 	for i in ${MAN1TARGETS}; do \
-	    ${INSTALL} -m 0644 -c tmp/man/$$i ${PKGDIR}/${MANDIR}/man1/; \
+		${INSTALL} -m 0644 -c tmp/man/$$i ${PKGDIR}/${MANDIR}/man1/; \
 	done
 	-mkdir -p -m 0755 ${PKGDIR}/${MANDIR}/man5
 	for i in ${MAN5TARGETS}; do \
-	    ${INSTALL} -m 0644 -c tmp/man/$$i ${PKGDIR}/${MANDIR}/man5/; \
+		${INSTALL} -m 0644 -c tmp/man/$$i ${PKGDIR}/${MANDIR}/man5/; \
 	done
 	-mkdir -p -m 0755 ${PKGDIR}/${MANDIR}/man8
-	 for i in ${MAN8TARGETS}; do \
-	    ${INSTALL} -m 0644 -c tmp/man/$$i ${PKGDIR}/${MANDIR}/man8/; \
+	for i in ${MAN8TARGETS}; do \
+		${INSTALL} -m 0644 -c tmp/man/$$i ${PKGDIR}/${MANDIR}/man8/; \
 	done
 	-mkdir -p -m 0755 ${PKGDIR}${CERTDIR}
 	-mkdir -p -m 0755 ${PKGDIR}${PREAPPLYDIR}
@@ -370,16 +371,21 @@ package	: all man info rash
 	${INSTALL} -m 0644 -c OS_X/ReadMe.rtf ${PKGRSRCDIR}
 	${INSTALL} -m 0644 -c OS_X/Welcome.rtf ${PKGRSRCDIR}
 	${INSTALL} -m 0644 -c OS_X/background.tiff ${PKGRSRCDIR}
-	sudo chown -R root:wheel ${PKGDIR}
-	sudo chgrp admin ${PKGDIR}
-	/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/packagemaker \
-	   -build -p ${PKGSRCDIR}/../${PKGNAME}.pkg \
-	   -f ${PKGSRCDIR}/${PKGDIR} \
-	   -r ${PKGSRCDIR}/${PKGRSRCDIR} \
-	   -i ${PKGSRCDIR}/tmp/OS_X/Info.plist \
-	   -d ${PKGSRCDIR}/tmp/OS_X/Description.plist
-	(cd .. && tar cvfz ${PKGNAME}.pkg.tar.gz ${PKGNAME}.pkg)
-	sudo rm -rf ${PKGDIR}
+	/usr/bin/pkgbuild \
+		--root ${PKGSRCDIR}/${PKGDIR} \
+		--identifier edu.umich.radmind \
+		--version ${VERSION} \
+		--install-location /\
+		${PKGSRCDIR}/../${PKGNAME}.pkg
+	/usr/bin/productbuild \
+		--distribution tmp/OS_X/distribution.xml \
+		--package-path ./${PKGSRCDIR}/../${PKGNAME}.pkg \
+		--resources ${PKGRSRCDIR} \
+		--version ${VERSION} \
+		${PKGSRCDIR}/../${PRODNAME}.pkg
+	(cd .. && tar cvfz ${PRODNAME}.pkg.tar.gz ${PRODNAME}.pkg)
+	rm  ${PKGSRCDIR}/../${PKGNAME}.pkg
+	rm -rf ${PKGDIR}
 
 clean :
 	(cd libsnet; ${MAKE} clean)

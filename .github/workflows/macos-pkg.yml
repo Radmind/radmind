@@ -1,0 +1,36 @@
+name: Build Pkg
+on: 
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+jobs:
+  build-pkg:
+    strategy:
+      matrix:
+        os: [ macos-10.15 ]
+    name: ${{ matrix.os }} radmind
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+      - name: Configure
+        run: |
+          if [ "$RUNNER_OS" == "macOS" ]; then
+              brew install openssl
+              sudo ln -s /usr/local/opt/openssl /usr/local/openssl 
+          fi
+          sh bootstrap.sh
+          ./configure
+      - name: make package
+        run: |
+          make package
+      - name: Upload to GitHub Release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: "../RadmindTools-*.pkg"
+          file_glob: true
+          tag: ${{ github.ref }}
+          overwrite: true
+          asset_name: RadmindTools.pkg
