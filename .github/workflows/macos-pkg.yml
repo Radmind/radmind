@@ -1,8 +1,6 @@
 name: Build Pkg
-on:
-  push:
-    tags:
-      - '*'
+on: 
+  workflow_dispatch
 jobs:
   build-pkg:
     strategy:
