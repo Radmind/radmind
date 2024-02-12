@@ -149,6 +149,7 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
 	    size += (size_t)rc;
 	}
 	if ( close( rfd ) < 0 ) {
+	    EVP_MD_CTX_free(mdctx);
 	    return( -1 );
 	}
 	if ( rc < 0 ) {
