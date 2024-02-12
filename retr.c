@@ -83,6 +83,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, mode_t tempmode,
 	if ( strcmp( trancksum, "-" ) == 0 ) {
 	    fprintf( stderr, "line %d: No checksum\n", linenum);
 	    fprintf( stderr, "%s\n", pathdesc );
+	    EVP_MD_CTX_free( mdctx );
 	    return( 1 );
 	}
 	EVP_DigestInit( mdctx, md );
@@ -92,6 +93,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, mode_t tempmode,
     if ( snet_writef( sn, "RETR %s\n", pathdesc ) < 0 ) {
 	fprintf( stderr, "retrieve %s failed: 1-%s\n", pathdesc,
 	    strerror( errno ));
+        EVP_MD_CTX_free( mdctx );
 	return( -1 );
     }
 
@@ -99,6 +101,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, mode_t tempmode,
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
 	fprintf( stderr, "retrieve %s failed: 2-%s\n", pathdesc,
 	    strerror( errno ));
+        EVP_MD_CTX_free( mdctx );
 	return( -1 );
     }
 
@@ -112,6 +115,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, mode_t tempmode,
     if (( line = snet_getline( sn, &tv )) == NULL ) {
 	fprintf( stderr, "retrieve %s failed: 3-%s\n", pathdesc,
 	    strerror( errno ));
+        EVP_MD_CTX_free( mdctx );
 	return( -1 );
     }
     size = strtoofft( line, NULL, 10 );
@@ -120,6 +124,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, mode_t tempmode,
 	fprintf( stderr, "line %d: size in transcript does not match size "
 	    "from server\n", linenum );
 	fprintf( stderr, "%s\n", pathdesc );
+        EVP_MD_CTX_free( mdctx );
 	return( -1 );
     }
 
@@ -128,6 +133,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, mode_t tempmode,
 	    path, getpid()) >= MAXPATHLEN ) {
 	fprintf( stderr, "%s.radmind.%i: too long", path,
 		(int)getpid());
+        EVP_MD_CTX_free( mdctx );
 	return( -1 );
     }
     /* Open file */
@@ -136,14 +142,17 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, mode_t tempmode,
 	    errno = 0;
 	    if ( mkprefix( temppath ) != 0 ) {
 		perror( temppath );
+	        EVP_MD_CTX_free( mdctx );
 		return( -1 );
 	    }
 	    if (( fd = open( temppath, O_WRONLY | O_CREAT, tempmode )) < 0 ) {
 		perror( temppath );
+	        EVP_MD_CTX_free( mdctx );
 		return( -1 );
 	    }
 	} else {
 	    perror( temppath );
+	    EVP_MD_CTX_free( mdctx );
 	    return( -1 );
 	}
     }
@@ -209,7 +218,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, mode_t tempmode,
 	    goto error1;
 	}
     }
-
+    EVP_MD_CTX_free( mdctx );
     return( 0 );
 
 error2:
@@ -248,7 +257,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     struct as_entry		ae_ents[ 3 ]; 
     struct timeval		tv;
     extern EVP_MD       	*md;
-    EVP_MD_CTX   	       	*mdctx;
+    EVP_MD_CTX   	       	*mdctx = EVP_MD_CTX_new();
     unsigned char       	md_value[ SZ_BASE64_D( SZ_BASE64_E( EVP_MAX_MD_SIZE ) ) ];
     char		       	cksum_b64[ SZ_BASE64_E( EVP_MAX_MD_SIZE ) ];
 
@@ -256,6 +265,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
         if ( strcmp( trancksum, "-" ) == 0 ) {
 	    fprintf( stderr, "line %d: No checksum\n", linenum);
 	    fprintf( stderr, "%s\n", pathdesc );
+            EVP_MD_CTX_free( mdctx );
             return( 1 );
         }
         EVP_DigestInit( mdctx, md );
@@ -265,18 +275,21 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     if ( snet_writef( sn, "RETR %s\n", pathdesc ) < 0 ) {
 	fprintf( stderr, "retrieve applefile %s failed: 1-%s\n", pathdesc,
 	    strerror( errno ));
-	return( -1 );
+         EVP_MD_CTX_free( mdctx );
+	 return( -1 );
     }
 
     tv = timeout;
     if (( line = snet_getline_multi( sn, logger, &tv )) == NULL ) {
 	fprintf( stderr, "retrieve applefile %s failed: 2-%s\n", pathdesc,
 	    strerror( errno ));
+        EVP_MD_CTX_free( mdctx );
 	return( -1 );
     }
 
     if ( *line != '2' ) {
         fprintf( stderr, "%s\n", line );
+        EVP_MD_CTX_free( mdctx );
         return( 1 );
     }
 
@@ -285,6 +298,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     if (( line = snet_getline( sn, &tv )) == NULL ) {
 	fprintf( stderr, "retrieve applefile %s failed: 3-%s\n", pathdesc,
 	    strerror( errno ));
+        EVP_MD_CTX_free( mdctx );
 	return( -1 );
     }
     size = strtoofft( line, NULL, 10 );
@@ -293,6 +307,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	fprintf( stderr, "line %d: size in transcript does not match size"
 	    "from server\n", linenum );
 	fprintf( stderr, "%s\n", pathdesc );
+        EVP_MD_CTX_free( mdctx );
 	return( -1 );
     }  
     if ( size < ( AS_HEADERLEN + ( 3 * sizeof( struct as_entry )) +
@@ -300,6 +315,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	fprintf( stderr,
 	    "retrieve applefile %s failed: AppleSingle-encoded file too "
 	    "short\n", path );
+        EVP_MD_CTX_free( mdctx );
 	return( -1 );
     }
 
@@ -308,6 +324,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     if (( rc = snet_read( sn, ( char * )&ah, AS_HEADERLEN, &tv )) <= 0 ) {
 	fprintf( stderr, "retrieve applefile %s failed: 4-%s\n", pathdesc,
 	    strerror( errno ));
+        EVP_MD_CTX_free( mdctx );
 	return( -1 );
     }
     if (( rc != AS_HEADERLEN ) ||
@@ -315,6 +332,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	fprintf( stderr,
 	    "retrieve applefile %s failed: corrupt AppleSingle-encoded file\n",
 	    path );
+        EVP_MD_CTX_free( mdctx );
 	return( -1 );
     }
     if ( cksum ) {
@@ -325,6 +343,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
     if ( snprintf( temppath, MAXPATHLEN, "%s.radmind.%i", path,
 	    getpid()) >= MAXPATHLEN ) {
 	fprintf( stderr, "%s.radmind.%i: too long", path, ( int )getpid());
+        EVP_MD_CTX_free( mdctx );
 	return( -1 );
     }
 
@@ -335,15 +354,18 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 	    errno = 0;
 	    if ( mkprefix( temppath ) != 0 ) {
 		perror( temppath );
+	        EVP_MD_CTX_free( mdctx );
 		return( -1 );
 	    }
 	    if (( dfd = open( temppath, O_CREAT | O_EXCL | O_WRONLY,
 		    tempmode )) < 0 ) {
 		perror( temppath );
+	        EVP_MD_CTX_free( mdctx );
 		return( -1 );
 	    }
 	} else {
 	    perror( temppath );
+	    EVP_MD_CTX_free( mdctx );
 	    return( -1 );
 	}
     }
@@ -537,6 +559,7 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
         }
     }
 
+    EVP_MD_CTX_free( mdctx );
     return( 0 );
 
 error3:
