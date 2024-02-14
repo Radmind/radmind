@@ -90,16 +90,20 @@ brew install openssl
 sudo ln -s /usr/local/opt/openssl /usr/local/openssl 
 ```
 
-Last tested on 10.14 (using fink)
+Last tested on MacOS 13.6 (using fink)
 
 - Install [Xcode](https://developer.apple.com/xcode/).
 - Install [fink](https://finkproject.org).
 
-Run these commands as an admin user.
-
+Run these commands as and admin user.
 ```
-fink install autoconf
-fink install openssl
+fink install autoconf2.6 openssl110-dev cyrus-sasl2.3-dev
+cd libsnet
+autoconf
+cd ..
+autoconf
+./configure LDFLAGS='-L/opt/sw/lib -lsasl2' CFLAGS='-I/opt/sw/include'
+make all
 ```
 
 ### Configuring for Raspbian Stretch (Debian 9)
