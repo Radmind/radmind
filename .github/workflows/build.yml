@@ -15,8 +15,8 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
-	with:
-	  submodules: recursive
+        with:
+          submodules: recursive
       - name: Configure
         run: |
           if [ "$RUNNER_OS" == "macOS" ]; then
