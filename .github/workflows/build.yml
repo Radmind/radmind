@@ -15,10 +15,12 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
+	with:
+	  submodules: recursive
       - name: Configure
         run: |
           if [ "$RUNNER_OS" == "macOS" ]; then
-              brew install openssl
+              brew install openssl cyrus-sasl autoconf
               sudo ln -s /usr/local/opt/openssl /usr/local/openssl 
           fi
           sh bootstrap.sh
