@@ -43,6 +43,7 @@ static struct transcript	*prev_tran = NULL;
 extern int			edit_path;
 extern int			case_sensitive;
 extern int			tran_format;
+extern int			ignore_timestamps;
 static char			*kdir;
 static struct list		*kfile_list;
 struct list			*special_list;
@@ -50,6 +51,7 @@ struct list			*exclude_list;
 
 char				*path_prefix = NULL;
 int				edit_path;
+int				ignore_timestamps;
 int				skip = 0;
 int				cksum;
 int				fs_minus;
@@ -550,14 +552,16 @@ t_compare( struct pathinfo *fs, struct transcript *tran )
 		    t_print( fs, tran, PR_DOWNLOAD );
 		    break;
 		}
-	    } else if ( fs->pi_stat.st_mtime != tran->t_pinfo.pi_stat.st_mtime ) {
-		t_print( fs, tran, PR_DOWNLOAD );
-		break;
+	    } else if ( ignore_timestamps == 0 &&
+			fs->pi_stat.st_mtime != tran->t_pinfo.pi_stat.st_mtime) {
+		    t_print( fs, tran, PR_DOWNLOAD );
+		    break;
 	    }
 
-	    if ( fs->pi_stat.st_mtime != tran->t_pinfo.pi_stat.st_mtime ) {
-		t_print( fs, tran, PR_STATUS );
-		break;
+	    if ( ignore_timestamps == 0 &&
+		 fs->pi_stat.st_mtime != tran->t_pinfo.pi_stat.st_mtime ) {
+		    t_print( fs, tran, PR_STATUS );
+		    break;
 	    }
 	}
 
