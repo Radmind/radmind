@@ -548,12 +548,11 @@ retr_applefile( SNET *sn, char *pathdesc, char *path, char *temppath,
 
     if ( cksum ) {
 	EVP_DigestFinal( mdctx, md_value, &md_len );
-	base64_e(( char*)&md_value, md_len, cksum_b64 );
-        EVP_MD_CTX_free(mdctx);
+	base64_e( ( unsigned char * ) &md_value, md_len, cksum_b64 );
         if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
 	    fprintf( stderr, "line %d: checksum in transcript does not match "
 		"checksum from server\n", linenum );
-	fprintf( stderr, "%s\n", pathdesc );
+	    fprintf( stderr, "%s\n", pathdesc );
             returnval = 1;
 	    goto error1;
         }
@@ -568,6 +567,7 @@ error2:
     close( dfd );
 error1:
     unlink( temppath );
+    EVP_MD_CTX_free(mdctx);
     return( returnval );
 }
 
