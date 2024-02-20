@@ -112,6 +112,13 @@ AC_DEFUN([CHECK_UNIVERSAL_BINARIES],
 	    LDFLAGS="$LDFLAGS -L/Developer/SDKs/$macosx_sdk/usr/lib"
 	    ;;
 
+	  darwin22*|darwin21*|darwin20*)
+	    dep_target="-mmacosx-version-min=10.9"
+	    arches="-arch x86_64 -arch arm64"
+	    macosx_sdk="`xcrun --show-sdk-path`"
+	    LDFLAGS="$LDFLAGS -L$macosx_sdk/usr/lib"
+	    ;;
+
 	  *)
             AC_MSG_ERROR([Building universal binaries on ${host_os} is not supported])
 	    ;;
@@ -120,7 +127,7 @@ AC_DEFUN([CHECK_UNIVERSAL_BINARIES],
 	echo ===========================================================
 	echo Setting up universal binaries for ${host_os}
 	echo ===========================================================
-	OPTOPTS="$OPTOPTS -isysroot /Developer/SDKs/$macosx_sdk $dep_target $arches"
+	OPTOPTS="$OPTOPTS -isysroot $macosx_sdk $dep_target $arches"
     fi
 ])
 

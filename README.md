@@ -96,13 +96,23 @@ Last tested on MacOS 13.6 (using fink)
 - Install [fink](https://finkproject.org).
 
 Run these commands as and admin user.
+
+If making universal binaries -use lipo after fink, to create universal binaries, for libsasl2.3.dylib, libssl.1.1.dylib, and libcrypto.1.1.dylib)
+For example if you have another architecture mounted remotely
+```
+cd /opt/sw/lib
+sudo lipo -create -output libsasl2.3.dylib libsasl2.3.dylib /Volumes/<remote with other arch>/opt/sw/lib/libsasl2.3.dylib
+```
+Will create the library on the local volume for the libsasl, the other 2 libraries can be merged the same way.
+
 ```
 fink install autoconf2.6 openssl110-dev cyrus-sasl2.3-dev
+
 cd libsnet
 autoconf
 cd ..
 autoconf
-./configure LDFLAGS='-L/opt/sw/lib -lsasl2' CFLAGS='-I/opt/sw/include'
+./configure LDFLAGS='-L/opt/sw/lib -lsasl2' CFLAGS='-I/opt/sw/include' --with-zlib=/opt/sw/lib/ --enable-universal-binaries
 make all
 ```
 
