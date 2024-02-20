@@ -34,7 +34,7 @@ encode( char *line )
 	case ' ' :
 	    *temp = '\\';
 	    temp++;
-	    *temp = 'b';
+	    *temp = ' ';
 	    break;
 	case '\t' :
 	    *temp = '\\';
@@ -96,6 +96,7 @@ decode( char *line )
 		*temp = '\t';
 		break;
 	    case 'b':
+	    case ' ':
 		*temp = ' ';
 		break;
 	    case 'r':
