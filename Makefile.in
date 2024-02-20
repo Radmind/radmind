@@ -249,8 +249,10 @@ lsort: libsnet/libsnet.la ${LSORT_OBJ}
 
 FRC :
 
+# build of universal library (lipo) fails on macOS if jobs > 1
+# Scott Hannahs <shannahs@users.sourceforge.net>
 libsnet/libsnet.la : FRC
-	cd libsnet; ${MAKE}
+	cd libsnet; ${MAKE} -j 1
 
 VERSION=	$(shell date +%Y%m%d%H%M)
 DISTDIR=	radmind-${VERSION}
