@@ -108,6 +108,7 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, mode_t tempmode,
 
     if ( *line != '2' ) {
 	fprintf( stderr, "%s\n", line );
+        EVP_MD_CTX_free( mdctx );
 	return( 1 );
     }
 
@@ -210,7 +211,6 @@ retr( SNET *sn, char *pathdesc, char *path, char *temppath, mode_t tempmode,
     if ( cksum ) {
 	EVP_DigestFinal( mdctx, md_value, &md_len );
 	base64_e( md_value, md_len, cksum_b64 );
-	EVP_MD_CTX_free(mdctx);
 	if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
 	    fprintf( stderr, "line %d: checksum in transcript does not match "
 		"checksum from server\n", linenum );
@@ -226,6 +226,7 @@ error2:
     close( fd );
 error1:
     unlink( temppath );
+    EVP_MD_CTX_free(mdctx);
     return( returnval );
 }
 
