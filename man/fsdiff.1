@@ -11,7 +11,7 @@
 |
 .B -1
 } [
-.BI -IVW
+.BI -IVWt
 ] [
 .BI \-K\  command
 ] [
@@ -312,6 +312,9 @@ order of preference and then exits.
 prints a warning to the standard error when encountering an object
 matching an exclude pattern.
 .sp
+.TP 19
+.B \-t
+ignores files where only the timestamp has changed.
 .SH FILES
 .TP 19
 .B _RADMIND_COMMANDFILE

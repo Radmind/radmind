@@ -337,6 +337,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 		AS_HEADERLEN  ) {
 	fprintf( stderr, "stor_applefile %s failed: %s\n", pathdesc,
 	    strerror( errno ));
+        EVP_MD_CTX_free( mdctx );
 	return( -1 );
     }
     size -= AS_HEADERLEN;
@@ -355,6 +356,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 		!= ( 3 * sizeof( struct as_entry ))) {
 	fprintf( stderr, "stor_applefile %s failed: %s\n", pathdesc,
 	    strerror( errno ));
+        EVP_MD_CTX_free( mdctx );
 	return( -1 );
     }
     size -= ( 3 * sizeof( struct as_entry ));
@@ -373,6 +375,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 	    &tv ) != FINFOLEN ) {
 	fprintf( stderr, "stor_applefile %s failed: %s\n", pathdesc,
 	    strerror( errno ));
+        EVP_MD_CTX_free( mdctx );
 	return( -1 );
     }
     size -= FINFOLEN;
@@ -391,6 +394,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
 	    if ( snet_write( sn, buf, rc, &tv ) != rc ) {
 		fprintf( stderr, "stor_applefile %s failed: %s\n", pathdesc,
 		    strerror( errno ));
+                EVP_MD_CTX_free( mdctx );
 		return( -1 );
 	    }
 	    size -= rc;
@@ -444,6 +448,7 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     if ( snet_writef( sn, ".\r\n" ) < 0 ) {
 	fprintf( stderr, "stor_applefile %s failed: %s\n", pathdesc,
 	    strerror( errno ));
+        EVP_MD_CTX_free( mdctx );
 	return( -1 );
     }
     if ( verbose ) fputs( "\n>>> .\n", stdout );
@@ -467,14 +472,17 @@ stor_applefile( SNET *sn, char *pathdesc, char *path, off_t transize,
     if ( cksum ) {
         EVP_DigestFinal( mdctx, md_value, &md_len );
         base64_e( ( char*)&md_value, md_len, cksum_b64 );
-	EVP_MD_CTX_free(mdctx);
         if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
 	    fprintf( stderr,
 		"line %d: checksum listed in transcript wrong\n", linenum );
-	    if ( ! force ) exit( 2 );
+	    if ( ! force ) {
+		EVP_MD_CTX_free(mdctx);
+		exit( 2 );
+	    }
         }
     }
 
+    EVP_MD_CTX_free( mdctx );
     if ( !quiet && !showprogress ) printf( "%s: stored\n", path );
     return( 0 );
 }

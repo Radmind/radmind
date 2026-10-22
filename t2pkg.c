@@ -83,6 +83,7 @@ copy_file( struct transcript *t, char *dst, char *src, int where )
     if ( cksum ) {
 	if ( strcmp( trancksum, "-" ) == 0 ) {
 	    fprintf( stderr, "line %d: no checksum\n", t->t_linenum );
+	    EVP_MD_CTX_free( mdctx );
 	    return( -1 );
 	}
 	EVP_DigestInit( mdctx, md );
@@ -90,6 +91,7 @@ copy_file( struct transcript *t, char *dst, char *src, int where )
 
     if (( rfd = open( src, O_RDONLY, 0 )) < 0 ) {
 	perror( src );
+	EVP_MD_CTX_free( mdctx );
 	return( -1 );
     }
     if (( wfd = open( dst, O_CREAT | O_WRONLY | O_EXCL, 0666 )) < 0 ) {
@@ -105,6 +107,7 @@ copy_file( struct transcript *t, char *dst, char *src, int where )
     if ( snprintf( rsrcpath, MAXPATHLEN, "%s%s", dst, _PATH_RSRCFORKSPEC )
 		>= MAXPATHLEN ) {
 	fprintf( stderr, "%s%s: path too long.\n", dst, _PATH_RSRCFORKSPEC );
+	EVP_MD_CTX_free( mdctx );
 	return( -1 );
     } 
 
@@ -387,7 +390,6 @@ copy_file( struct transcript *t, char *dst, char *src, int where )
     if ( cksum ) {
 	EVP_DigestFinal( mdctx, md_value, &md_len );
 	base64_e( md_value, md_len, ( char * )cksum_b64 );
-        EVP_MD_CTX_free(mdctx);
 	if ( strcmp( trancksum, cksum_b64 ) != 0 ) {
 	    if ( force ) {
 		fprintf( stderr, "warning: " );
@@ -398,7 +400,7 @@ copy_file( struct transcript *t, char *dst, char *src, int where )
 	    }
 	}
     }
-
+    EVP_MD_CTX_free( mdctx );
     return( 0 );
 
 error2:
@@ -413,6 +415,7 @@ error2:
     }
 
 error1:
+    EVP_MD_CTX_free( mdctx );
     return( -1 );
 }
 

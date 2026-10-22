@@ -52,6 +52,7 @@ do_fcksum( int fd, char *cksum_b64 )
 	EVP_DigestUpdate( mdctx, buf, (unsigned int)rr );
     }
     if ( rr < 0 ) {
+	EVP_MD_CTX_free(mdctx);
 	return( -1 );
     }
 
@@ -135,10 +136,12 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
         if ( snprintf( rsrc_path, MAXPATHLEN, "%s%s",
 		path, _PATH_RSRCFORKSPEC ) >= MAXPATHLEN ) {
             errno = ENAMETOOLONG;
+	    EVP_MD_CTX_free(mdctx);
             return( -1 );
         }
 
 	if (( rfd = open( rsrc_path, O_RDONLY )) < 0 ) {
+	    EVP_MD_CTX_free(mdctx);
 	    return( -1 );
 	}
 	while (( rc = read( rfd, buf, sizeof( buf ))) > 0 ) {
@@ -146,14 +149,17 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
 	    size += (size_t)rc;
 	}
 	if ( close( rfd ) < 0 ) {
+	    EVP_MD_CTX_free(mdctx);
 	    return( -1 );
 	}
 	if ( rc < 0 ) {
+	    EVP_MD_CTX_free(mdctx);
 	    return( -1 );
 	}
     }
 
     if (( dfd = open( path, O_RDONLY, 0 )) < 0 ) {
+        EVP_MD_CTX_free( mdctx );
 	return( -1 );
     }
     /* checksum data fork */
@@ -162,9 +168,11 @@ do_acksum( char *path, char *cksum_b64, struct applefileinfo *afinfo )
 	size += (size_t)rc;
     }
     if ( rc < 0 ) {
+        EVP_MD_CTX_free( mdctx );
 	return( -1 );
     }
     if ( close( dfd ) < 0 ) {
+        EVP_MD_CTX_free( mdctx );
 	return( -1 );
     }
 

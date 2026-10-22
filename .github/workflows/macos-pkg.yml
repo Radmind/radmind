@@ -1,9 +1,6 @@
 name: Build Pkg
 on: 
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+  workflow_dispatch
 jobs:
   build-pkg:
     strategy:
