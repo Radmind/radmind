@@ -13,16 +13,12 @@ jobs:
     name: Publish source archive and formula
     runs-on: ubuntu-24.04
     env:
-      HOMEBREW_TAP: ${{ vars.HOMEBREW_TAP }}
+      HOMEBREW_TAP: Radmind/homebrew-tap
       HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
 
     steps:
       - name: Validate tap configuration
         run: |
-          test -n "$HOMEBREW_TAP" || {
-            echo "Set the HOMEBREW_TAP repository variable (for example, magnusviri/homebrew-tap)." >&2
-            exit 1
-          }
           test -n "$HOMEBREW_TAP_TOKEN" || {
             echo "Set the HOMEBREW_TAP_TOKEN secret with write access to $HOMEBREW_TAP." >&2
             exit 1
