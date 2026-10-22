@@ -104,6 +104,7 @@ jobs:
           # replace its checked-out formula with the generated (uncommitted)
           # version that this workflow will publish.
           brew tap "$HOMEBREW_TAP"
+          brew trust "$HOMEBREW_TAP"
           tap_dir="$(brew --repository "$HOMEBREW_TAP")"
           mkdir -p "$tap_dir/Formula"
           cp homebrew-tap/Formula/radmind.rb "$tap_dir/Formula/radmind.rb"
