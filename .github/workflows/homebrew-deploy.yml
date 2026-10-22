@@ -97,9 +97,19 @@ jobs:
           EOF
       - name: Audit and test formula
         run: |
-          brew audit --strict --formula homebrew-tap/Formula/radmind.rb
-          brew install --build-from-source homebrew-tap/Formula/radmind.rb
-          brew test radmind
+          set -eu
+          formula="${HOMEBREW_TAP}/radmind"
+
+          # brew audit only accepts formula names.  Register the tap, then
+          # replace its checked-out formula with the generated (uncommitted)
+          # version that this workflow will publish.
+          brew tap "$HOMEBREW_TAP"
+          tap_dir="$(brew --repository "$HOMEBREW_TAP")"
+          cp homebrew-tap/Formula/radmind.rb "$tap_dir/Formula/radmind.rb"
+
+          brew audit --strict --formula "$formula"
+          brew install --build-from-source "$formula"
+          brew test "$formula"
       - name: Commit and push formula
         working-directory: homebrew-tap
         env:
