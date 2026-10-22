@@ -82,7 +82,7 @@ int		f_starttls( SNET *, int, char *[] );
 int		f_repo( SNET *, int, char *[] );
 #ifdef HAVE_LIBPAM
 int		f_login( SNET *, int, char *[] );
-int 		exchange( int num_msg, struct pam_message **msgm,
+int 		exchange( int num_msg, const struct pam_message **msgm,
 		    struct pam_response **response, void *appdata_ptr );
 #endif /* HAVE_LIBPAM */
 #ifdef HAVE_ZLIB
@@ -1044,7 +1044,7 @@ f_starttls( SNET *sn, int ac, char **av )
 
 #ifdef HAVE_LIBPAM
     int
-exchange( int num_msg, struct pam_message **msg,
+exchange( int num_msg, const struct pam_message **msg,
     struct pam_response **resp, void *appdata_ptr)
 {
     int				count = 0;
@@ -1120,7 +1120,7 @@ f_login( SNET *sn, int ac, char **av )
     int				retval;
     pam_handle_t		*pamh;
     struct pam_conv		pam_conv = {
-	(int (*)())exchange,
+	exchange,
 	NULL
     };
 

@@ -44,7 +44,6 @@ extern struct timeval	timeout;
 int			verbose = 0;
 int			dodots = 0;
 int			linenum = 0;
-int			cksum = 0;
 int             	case_sensitive = 1;
 int			tran_format = -1; 
 int			create_prefix = 0;

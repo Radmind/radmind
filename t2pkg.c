@@ -40,7 +40,6 @@ extern off_t	lsize;
 extern char	*version;
 
 int		tran_format = -1;
-int		cksum = 0;
 int		force = 0;
 int		case_sensitive = 1;
 int		verbose = 0;
