@@ -105,6 +105,7 @@ jobs:
           # version that this workflow will publish.
           brew tap "$HOMEBREW_TAP"
           tap_dir="$(brew --repository "$HOMEBREW_TAP")"
+          mkdir -p "$tap_dir/Formula"
           cp homebrew-tap/Formula/radmind.rb "$tap_dir/Formula/radmind.rb"
 
           brew audit --strict --formula "$formula"
