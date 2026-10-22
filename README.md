@@ -187,4 +187,4 @@ The transfer of issues/bugs and their comments was automated using the [gosf2git
 ## References
 
 [1]: Current submodules:
-* [libsnet](http://sourceforge.net/projects/libsnet), a networking library with TLS support
+* [libsnet](https://github.com/Radmind/libsnet), a networking library with TLS support
