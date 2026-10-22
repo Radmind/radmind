@@ -1,0 +1,44 @@
+name: Build Ubuntu binaries
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-binaries:
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+    name: ${{ matrix.os }} radmind
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v6
+      - name: Configure and build
+        run: |
+          sh bootstrap.sh
+          ./configure
+          make
+      - name: Package binaries
+        id: package
+        run: |
+          version="$(tr -d '\n' < VERSION)"
+          architecture="$(dpkg --print-architecture)"
+          asset="radmind-${version}-${{ matrix.os }}-${architecture}.tar.gz"
+          staging_directory="${RUNNER_TEMP}/radmind"
+
+          make install DESTDIR="${staging_directory}"
+          tar -C "${staging_directory}" -czf "../${asset}" .
+          echo "asset=../${asset}" >> "$GITHUB_OUTPUT"
+      - name: Upload to GitHub Release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ${{ steps.package.outputs.asset }}
+          tag: ${{ github.event.release.tag_name || github.ref_name }}
+          overwrite: true

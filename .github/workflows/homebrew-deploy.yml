@@ -1,0 +1,111 @@
+name: Publish Homebrew formula
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: Publish source archive and formula
+    runs-on: ubuntu-24.04
+    env:
+      HOMEBREW_TAP: Radmind/homebrew-tap
+      HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+
+    steps:
+      - name: Validate tap configuration
+        run: |
+          test -n "$HOMEBREW_TAP_TOKEN" || {
+            echo "Set the HOMEBREW_TAP_TOKEN secret with write access to $HOMEBREW_TAP." >&2
+            exit 1
+          }
+      - name: Check out release sources
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.release.tag_name || github.ref_name }}
+          submodules: recursive
+      - name: Build source distribution
+        id: source
+        run: |
+          set -eu
+          version="$(tr -d '\n' < VERSION)"
+          archive="${RUNNER_TEMP}/radmind-${version}.tar.gz"
+
+          sh bootstrap.sh
+          ./configure
+          make dist VERSION="$version"
+          mv "../radmind-${version}.tar.gz" "$archive"
+
+          echo "archive=$archive" >> "$GITHUB_OUTPUT"
+          echo "filename=radmind-${version}.tar.gz" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(sha256sum "$archive" | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+      - name: Upload source distribution to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || github.ref_name }}
+        run: gh release upload "$TAG" "${{ steps.source.outputs.archive }}#${{ steps.source.outputs.filename }}" --clobber
+      - name: Check out Homebrew tap
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ env.HOMEBREW_TAP }}
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-tap
+      - name: Write formula
+        env:
+          ARCHIVE: ${{ steps.source.outputs.filename }}
+          SHA256: ${{ steps.source.outputs.sha256 }}
+          TAG: ${{ github.event.release.tag_name || github.ref_name }}
+          VERSION: ${{ steps.source.outputs.version }}
+        run: |
+          set -eu
+          mkdir -p homebrew-tap/Formula
+          cat > homebrew-tap/Formula/radmind.rb <<EOF
+          class Radmind < Formula
+            desc "Tools and server for remotely administering Unix file systems"
+            homepage "https://github.com/${GITHUB_REPOSITORY}"
+            url "https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/${ARCHIVE}"
+            version "${VERSION}"
+            sha256 "${SHA256}"
+            license "BSD-3-Clause"
+
+            depends_on "openssl@3"
+
+            def install
+              openssl = Formula["openssl@3"].opt_prefix
+              ENV.append "CPPFLAGS", "-I#{openssl}/include"
+              ENV.append "LDFLAGS", "-L#{openssl}/lib"
+              ENV.prepend_path "PKG_CONFIG_PATH", openssl/"lib/pkgconfig"
+
+              system "./configure", "--prefix=#{prefix}", "--with-radminddir=#{var}/radmind"
+              system "make", "install"
+            end
+
+            test do
+              system bin/"fsdiff", "-c", "sha1", "-K", "/dev/null", testpath
+            end
+          end
+          EOF
+      - name: Audit and test formula
+        run: |
+          brew audit --strict --formula homebrew-tap/Formula/radmind.rb
+          brew install --build-from-source homebrew-tap/Formula/radmind.rb
+          brew test radmind
+      - name: Commit and push formula
+        working-directory: homebrew-tap
+        env:
+          VERSION: ${{ steps.source.outputs.version }}
+        run: |
+          set -eu
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/radmind.rb
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "radmind ${VERSION}"
+          git push

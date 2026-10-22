@@ -336,7 +336,8 @@ info :
 	done
 
 PKGNAME=	RadmindTools
-PRODNAME=	RadmindTools-${VERSION}
+ARCH ?= 	$(shell uname -m)
+PRODNAME=	RadmindTools-${VERSION}-${ARCH}
 PKGDIR=		tmp/RadmindToolsInstaller
 PKGRSRCDIR=	tmp/Resources
 PKGSRCDIR=	`pwd`

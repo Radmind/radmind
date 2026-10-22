@@ -11,7 +11,7 @@
 |
 .B -1
 } [
-.BI -IVWt
+.BI -EIVWt
 ] [
 .BI \-K\  command
 ] [
@@ -82,6 +82,13 @@ Type is a single letter: h, l, d, c, b, p, s, D, f, a. Path is the encoded
 path, where space is "\\b", tab is "\\t", newline is "\\n", carriage return
 is "\\r", and 
 \\ is "\\\\". The type specific information varies.
+.sp
+With the
+.B -E
+option,
+.B fsdiff
+writes spaces as "\\ " instead. This form is convenient when copying paths
+to a shell, but requires readers that support it.
 .sp
 .br
 	l path target
@@ -287,6 +294,10 @@ produces an applicable transcript.
 .TP 19
 .B \-C
 produces a creatable transcript.
+.TP 19
+.B \-E
+writes spaces in generated paths and link targets as "\\ ". The default
+encoding is "\\b", which remains compatible with older readers.
 .TP 19
 .BI \-c\  checksum
 enables checksuming.

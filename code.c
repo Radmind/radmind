@@ -17,8 +17,8 @@
  * Escape certain characters.  This code must match decode() *and*
  * argcargv().
  */
-    char *
-encode( char *line )
+    static char *
+encode_internal( char *line, int shell_spaces )
 {
     /* static */
     static char	    buf[ 2 * MAXPATHLEN ];
@@ -34,7 +34,7 @@ encode( char *line )
 	case ' ' :
 	    *temp = '\\';
 	    temp++;
-	    *temp = ' ';
+	    *temp = shell_spaces ? ' ' : 'b';
 	    break;
 	case '\t' :
 	    *temp = '\\';
@@ -64,6 +64,18 @@ encode( char *line )
 
     *temp = '\0';
     return( buf );
+}
+
+    char *
+encode( char *line )
+{
+    return( encode_internal( line, 0 ));
+}
+
+    char *
+encode_space( char *line )
+{
+    return( encode_internal( line, 1 ));
 }
 
     char *

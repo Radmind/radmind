@@ -57,6 +57,7 @@ int				cksum;
 int				fs_minus;
 int				exclude_warnings = 0;
 FILE				*outtran;
+int				transcript_shell_escapes = 0;
 
    char * 
 convert_path_type( char *path )
@@ -354,7 +355,8 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 	fprintf( outtran, "- " );
     }
 
-    if (( epath = encode( cur->pi_name )) == NULL ) {
+    if (( epath = ( transcript_shell_escapes ? encode_space : encode )
+	    ( cur->pi_name )) == NULL ) {
 	fprintf( stderr, "Filename too long: %s\n", cur->pi_name );
 	exit( 2 );
     }
@@ -393,7 +395,8 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 	fprintf( outtran, "%c %-37s\t%.4lo %5d %5d ", cur->pi_type, epath,
 		    (unsigned long)( T_MODE & cur->pi_stat.st_mode ),
 		    (int)cur->pi_stat.st_uid, (int)cur->pi_stat.st_gid );
-	if (( epath = encode( cur->pi_link )) == NULL ) {
+	if (( epath = ( transcript_shell_escapes ? encode_space : encode )
+		( cur->pi_link )) == NULL ) {
 	    fprintf( stderr, "Filename too long: %s\n", cur->pi_link );
 	    exit( 2 );
 	}
@@ -402,7 +405,8 @@ t_print( struct pathinfo *fs, struct transcript *tran, int flag )
 
     case 'h':
 	fprintf( outtran, "%c %-37s\t", cur->pi_type, epath );
-	if (( epath = encode( cur->pi_link )) == NULL ) {
+	if (( epath = ( transcript_shell_escapes ? encode_space : encode )
+		( cur->pi_link )) == NULL ) {
 	    fprintf( stderr, "Filename too long: %s\n", cur->pi_link );
 	    exit( 2 );
 	}
