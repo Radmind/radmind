@@ -8,7 +8,6 @@ All Rights Reserved. See COPYRIGHT.
 
 ## Contents
 
-* [Quick Installation Instructions](#quick-installation-instructions)
 * [Detailed Installation Instructions](#detailed-installation-instructions)
   * [Configuring for Ubuntu 18.04](#configuring-for-ubuntu-1804)
   * [Configuring for CentOS 7](#configuring-for-centos-7)
@@ -21,16 +20,6 @@ All Rights Reserved. See COPYRIGHT.
 * [Known Issues](#known-issues)
 * [More Information](#more-informatino)
 * [References](#references)
-
-## Quick Installation Instructions
-
-From within the source directory:
-
-```
-./configure
-make
-make install
-```
 
 ## Detailed Installation Instructions
 
@@ -77,7 +66,7 @@ export CPPFLAGS=-I/usr/kerberos/include
 
 ### Configuring for macOS
 
-Last tested on 10.14 (using homebrew)
+Last tested on macOS 27 (using homebrew)
 
 - Install [Xcode](https://developer.apple.com/xcode/).
 - Install [brew](https://brew.sh).
@@ -87,7 +76,15 @@ Run these commands as an admin user.
 ```
 brew install autoconf
 brew install openssl
-sudo ln -s /usr/local/opt/openssl /usr/local/openssl 
+```
+
+When configuring, do this.
+
+```
+sh bootstrap.sh
+CPPFLAGS="-I$(brew --prefix openssl@3)/include" \
+LDFLAGS="-L$(brew --prefix openssl@3)/lib" \
+./configure --with-ssl="$(brew --prefix openssl@3)"
 ```
 
 Last tested on 10.14 (using fink)
@@ -132,6 +129,7 @@ sh bootstrap.sh
 
 ### Configuring and Building
 If configure files are to be rebuilt (because we installed it), issue the following commands
+
 ```
 autoconf
 cd libsnet

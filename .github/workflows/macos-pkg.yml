@@ -1,21 +1,25 @@
 name: Build Pkg
-on: 
-  workflow_dispatch
+
+on:
+  workflow_dispatch:
 jobs:
   build-pkg:
     strategy:
       matrix:
-        os: [ macos-10.15 ]
+        os: [ macos-13 ]
     name: ${{ matrix.os }} radmind
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
       - name: Configure
         run: |
           if [ "$RUNNER_OS" == "macOS" ]; then
-              brew install openssl
-              sudo ln -s /usr/local/opt/openssl /usr/local/openssl 
+              brew install openssl@3
+              OPENSSL_PREFIX="$( brew --prefix openssl@3 )"
+              export CPPFLAGS="-I${OPENSSL_PREFIX}/include"
+              export LDFLAGS="-L${OPENSSL_PREFIX}/lib"
+              export PKG_CONFIG_PATH="${OPENSSL_PREFIX}/lib/pkgconfig"
           fi
           sh bootstrap.sh
           ./configure

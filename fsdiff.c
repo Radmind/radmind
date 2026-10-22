@@ -33,7 +33,7 @@ int		dotfd;
 int		lastpercent = -1;
 int		case_sensitive = 1;
 int		tran_format = -1; 
-int		ignore_timestamps = 0;
+extern int	ignore_timestamps;
 extern int	exclude_warnings;
 const EVP_MD    *md;
 
