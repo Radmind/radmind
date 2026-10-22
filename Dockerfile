@@ -1,70 +1,77 @@
-FROM ubuntu:latest AS builder
+ARG UBUNTU_VERSION=22.04
+
+FROM ubuntu:${UBUNTU_VERSION} AS builder
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG RSYSLOG_VERSION=8.2112.0
+ARG RSYSLOG_SHA256=6a2a973861e9266db37bd2b7b9f672b6b970bfcd743a397b8eee6b0dc4852c41
 
 RUN apt-get update && \
-    apt-get install -q -y \
-            autoconf \
-            git \
-            gcc \
-            libssl-dev \
-            make \
-            wget
-
-COPY . /radmind/
-COPY ./.git /radmind/.git/
-COPY ./.gitmodules /radmind/
-
-RUN cd radmind && \
-	if [ -e radmind ]; then rm -r radmind; fi && \
-    sh bootstrap.sh && \
- 	wget -O config.sub 'https://git.savannah.gnu.org/cgit/config.git/plain/config.sub' && \
- 	wget -O config.guess 'https://git.savannah.gnu.org/cgit/config.git/plain/config.guess' && \
- 	cp config.guess libsnet && \
- 	cp config.sub libsnet && \
- 	autoconf && \
- 	cd libsnet && \
- 	autoconf && \
- 	cd .. && \
- 	./configure && \
- 	make && \
- 	make install && \
- 	mkdir -p /var/radmind/{cert,client,postapply,preapply}
-
-# Build rsyslog so we can grab omstdout.so
-
-RUN wget https://www.rsyslog.com/files/download/rsyslog/rsyslog-8.2112.0.tar.gz && \
-	tar xzf rsyslog-8.2112.0.tar.gz && \
-	cd rsyslog-8.2112.0 && \
-	ln -snf /usr/share/zoneinfo/Europe/London /etc/localtime && echo Europe/London > /etc/timezone && \
-	apt install -q -y \
+	apt-get install -y --no-install-recommends \
+		autoconf \
+		autotools-dev \
+		ca-certificates \
+		gcc \
 		libcurl4-gnutls-dev \
 		libestr-dev \
 		libfastjson-dev \
 		libgcrypt-dev \
+		libssl-dev \
+		make \
 		pkg-config \
 		uuid-dev \
+		wget \
 		zlib1g-dev && \
-	./configure --prefix=/usr --enable-omstdout && \
-	make && \
+	rm -rf /var/lib/apt/lists/*
+
+WORKDIR /radmind
+COPY . .
+
+RUN test -f libsnet/configure.ac && \
+	(cd libsnet && autoconf) && \
+	autoconf && \
+	cp /usr/share/misc/config.sub . && \
+	cp /usr/share/misc/config.guess . && \
+	cp config.sub config.guess libsnet/ && \
+	./configure && \
+	make clean && \
+	make -j"$(nproc)" && \
 	make install
 
-FROM ubuntu:latest
+# Build the output module that forwards radmind's syslog messages to stdout.
+RUN wget --https-only --tries=3 \
+		-O /tmp/rsyslog.tar.gz \
+		"https://www.rsyslog.com/files/download/rsyslog/rsyslog-${RSYSLOG_VERSION}.tar.gz" && \
+	echo "${RSYSLOG_SHA256}  /tmp/rsyslog.tar.gz" | sha256sum -c - && \
+	mkdir /tmp/rsyslog && \
+	tar -xzf /tmp/rsyslog.tar.gz --strip-components=1 -C /tmp/rsyslog && \
+	cd /tmp/rsyslog && \
+	./configure --prefix=/usr --enable-omstdout && \
+	make -j"$(nproc)" && \
+	make install
+
+FROM ubuntu:${UBUNTU_VERSION}
+
+ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
-    apt-get install -y \
-    	libssl-dev
+	apt-get install -y --no-install-recommends \
+		libssl3 \
+		rsyslog && \
+	rm -rf /var/lib/apt/lists/* && \
+	rm -f /etc/rsyslog.d/50-default.conf
 
-# Add rsyslog (because radmind doesn't log to stdout but rsyslog can w/ omstdout)
-
-COPY ./docker/etc /etc/
-COPY --from=builder /usr/lib/rsyslog/omstdout.so /usr/local/lib/omstdout.so
-RUN apt-get install -y rsyslog && \
-	mv /usr/local/lib/omstdout.so /lib/*-linux-gnu/rsyslog/ && \
-	rm /etc/rsyslog.d/50-default.conf
-
-
-# Copy radmind
+# Add rsyslog because radmind logs through syslog rather than stdout.
+COPY docker/etc/ /etc/
+COPY --from=builder /usr/lib/rsyslog/omstdout.so /tmp/omstdout.so
+RUN module_dir="$(find /usr/lib -type d -name rsyslog -print -quit)" && \
+	test -n "${module_dir}" && \
+	install -m 0755 /tmp/omstdout.so "${module_dir}/omstdout.so" && \
+	rm /tmp/omstdout.so
 
 COPY --from=builder /usr/local/ /usr/local/
 COPY docker/entrypoint /usr/local/bin/entrypoint
+
+EXPOSE 6222
 
 ENTRYPOINT ["/usr/local/bin/entrypoint"]

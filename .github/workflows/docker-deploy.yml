@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Check Out Repo
         uses: actions/checkout@v6
+        with:
+          submodules: recursive
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v6
