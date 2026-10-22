@@ -45,7 +45,9 @@ acav_parse( ACAV *acav, char *line, char **argv[] )
 {
     int		ac;
     int		state;
-    char *      pline = line;
+    int		slashes;
+    char		*start;
+    char		*slash;
 
     if ( acav == NULL ) {
 	if ( acavg == NULL ) {
@@ -56,6 +58,7 @@ acav_parse( ACAV *acav, char *line, char **argv[] )
 	acav = acavg;
     }
 
+    start = line;
     ac = 0;
     state = ACV_WHITE;
 
@@ -69,12 +72,17 @@ acav_parse( ACAV *acav, char *line, char **argv[] )
 	    }
 	    break;
 	case ' ' :
-	  if ( ( line == pline ) || ( *(line-1) != '\\') ) {
-	        if ( state == ACV_WORD ) {
+	    slashes = 0;
+	    for ( slash = line; ( slash > start ) &&
+		    ( *(slash - 1) == '\\' ); slash-- ) {
+		slashes++;
+	    }
+	    if ( ( slashes % 2 ) == 0 ) {
+		if ( state == ACV_WORD ) {
 		    *line = '\0';
 		    state = ACV_WHITE;
-	        }
-	        break;
+		}
+		break;
 	    }
 	default :
 	    if ( state == ACV_WHITE ) {

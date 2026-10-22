@@ -402,7 +402,7 @@ main( int argc, char **argv )
     cksum = 0;
     outtran = stdout;
 
-    while (( c = getopt( argc, argv, "%1ACc:IK:o:tVvW" )) != EOF ) {
+    while (( c = getopt( argc, argv, "%1ACc:EIK:o:tVvW" )) != EOF ) {
 	switch( c ) {
 	case '%':
 	case 'v':
@@ -421,6 +421,10 @@ main( int argc, char **argv )
 
 	case 'I':
 	    case_sensitive = 0;
+	    break;
+
+	case 'E':
+	    transcript_shell_escapes = 1;
 	    break;
 
 	case 'o':
@@ -487,7 +491,7 @@ main( int argc, char **argv )
     }
 
     if ( errflag || ( argc - optind != 1 )) {
-	fprintf( stderr, "usage: %s { -C | -A | -1 } " "[ -IVW ] ", argv[ 0 ] );
+	fprintf( stderr, "usage: %s { -C | -A | -1 } " "[ -EIVW ] ", argv[ 0 ] );
 	fprintf( stderr, "[ -K command ] " );
 	fprintf( stderr, "[ -c checksum ] [ -o file [ -%% ] ] path\n" );
 	exit ( 2 );

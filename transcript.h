@@ -36,6 +36,7 @@ extern int		edit_path;
 extern int		skip;
 extern int		cksum;
 extern int		fs_minus;
+extern int		transcript_shell_escapes;
 extern FILE		*outtran;
 extern char		*path_prefix;
 

@@ -4,4 +4,5 @@
  */
 
 char *encode( char * );
+char *encode_space( char * );
 char *decode( char * );
