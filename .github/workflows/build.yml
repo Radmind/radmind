@@ -9,7 +9,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ ubuntu-22.04, ubuntu-24.04, macos-13 ]
+        os: [ ubuntu-22.04, ubuntu-24.04, macos-26, macos-15-intel ]
     name: ${{ matrix.os }} radmind
     runs-on: ${{ matrix.os }}
 

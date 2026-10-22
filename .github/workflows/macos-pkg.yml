@@ -1,12 +1,17 @@
-name: Build Pkg
+name: Build macOS packages
 
 on:
+  release:
+    types: [published]
   workflow_dispatch:
+
+permissions:
+  contents: write
 jobs:
   build-pkg:
     strategy:
       matrix:
-        os: [ macos-13 ]
+        os: [ macos-26, macos-15-intel ]
     name: ${{ matrix.os }} radmind
     runs-on: ${{ matrix.os }}
     steps:
@@ -32,6 +37,5 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: "../RadmindTools-*.pkg"
           file_glob: true
-          tag: ${{ github.ref }}
+          tag: ${{ github.event.release.tag_name || github.ref_name }}
           overwrite: true
-          asset_name: RadmindTools.pkg
