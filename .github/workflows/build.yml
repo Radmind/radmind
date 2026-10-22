@@ -19,7 +19,7 @@ jobs:
       - name: Configure
         run: |
           if [ "$RUNNER_OS" == "macOS" ]; then
-              brew install openssl@3
+              brew install autoconf openssl@3
               OPENSSL_PREFIX="$( brew --prefix openssl@3 )"
               export CPPFLAGS="-I${OPENSSL_PREFIX}/include"
               export LDFLAGS="-L${OPENSSL_PREFIX}/lib"
