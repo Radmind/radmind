@@ -5,18 +5,44 @@ Radmind is a suite of Unix command-line tools and a server designed to remotely 
 
 Radmind was popular in Mac OS X administration from about 2003 to 2008 and was slowly superceeded by people switching to Jamf or other utilties. The project is barely being maintained, but it is still useful. However, it lacks support for modern changes like macOS SIPS and SELinux. With the advent of AI Coding Agents, this project might get more attention to bring it up to spec again.
 
+If you have questions or want to discuss this please do it on the radmind channel on the [MacAdmins Slack](https://www.macadmins.org/).
+
 ## Contents
 
 * [Installation](#installation)
+* [Documentation](#documentation)
+* [Example Config Files](#example-config-files)
 * [Known Issues](#known-issues)
 * [History](#history)
 * [References](#references)
 
 ## Installation
 
-There should be a macOS package and Ubuntu binaries in the [Releases](releases). We are working on a Homebrew tap.
+macOS package and Ubuntu binaries are in the [Releases](releases).
+
+To install via Homebrew, run these commands.
+
+```
+brew tap radmind/tap
+brew trust --formula radmind/tap/radmind
+brew install radmind
+```
+
+There is Dockerfile and docker-compose.yml to start the server quick and easy.
 
 To compile it, [please see BUILD.md](BUILD.md).
+
+## Documentation
+
+The docs have all disappeared from the internet. You might need to search archive.org.
+
+1. Archived Radmind home page, 16 July 2024: <https://web.archive.org/web/20240716213408/https://radmind.org/>.
+
+2. Archived University of Utah, *Radmind Resources* PDF, 7 January 2026 capture: <https://web.archive.org/web/20260107222140/https://www.macos.utah.edu/documentation/system_deployment/radmind/resources/related/mainColumnParagraphs/02/document/UofU_Radmind_Resources.pdf>.
+
+## Example Config Files
+
+See the [radmind-examples](https://github.com/Radmind/radmind-examples) repo.
 
 ## Known Issues
 
@@ -66,7 +92,3 @@ The transfer of issues/bugs and their comments was automated using the [gosf2git
 Current submodules:
 
 * [libsnet](https://github.com/Radmind/libsnet), a networking library with TLS support
-
-1. Archived Radmind home page, 16 July 2024: <https://web.archive.org/web/20240716213408/https://radmind.org/>.
-
-2. Archived University of Utah, *Radmind Resources* PDF, 7 January 2026 capture: <https://web.archive.org/web/20260107222140/https://www.macos.utah.edu/documentation/system_deployment/radmind/resources/related/mainColumnParagraphs/02/document/UofU_Radmind_Resources.pdf>.
